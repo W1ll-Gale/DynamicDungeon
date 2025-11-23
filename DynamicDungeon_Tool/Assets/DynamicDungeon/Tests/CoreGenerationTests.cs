@@ -41,6 +41,8 @@ namespace Tests
 
             Object.DestroyImmediate(gameObject);
             Object.DestroyImmediate(texture);
+            Object.DestroyImmediate(mockTile);
+            Object.DestroyImmediate(mockTileData);
         }
     }
 }
