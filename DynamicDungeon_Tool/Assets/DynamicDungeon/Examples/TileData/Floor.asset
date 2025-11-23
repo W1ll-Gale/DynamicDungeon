@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11ba03b763128df4e89d436aa1ac1afe, type: 3}
   m_Name: Floor
   m_EditorClassIdentifier: 
-  tileID: 
-  tileVisual: {fileID: 0}
+  tileID: Floor
+  tileVisual: {fileID: 11400000, guid: b8b8515f1aaff3a4e8af092d1c66daea, type: 2}
   isWalkable: 1
   movementCost: 1
