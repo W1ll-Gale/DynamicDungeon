@@ -36,6 +36,12 @@ public class DungeonGenerator : MonoBehaviour
 
     public void GenerateEmptyMap(int w, int h)
     {
+        if (w <= 0 || h <= 0)
+        {
+            Debug.LogWarning("Width and height must be positive values!");
+            return;
+        }
+
         InitializeGrid();
         tilemap.ClearAllTiles();
 
