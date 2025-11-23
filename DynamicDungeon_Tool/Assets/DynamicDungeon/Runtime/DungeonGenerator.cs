@@ -51,20 +51,32 @@ public class DungeonGenerator : MonoBehaviour
             return;
         }
 
-        Vector3Int[] positions = new Vector3Int[w * h];
-        TileBase[] tileArray = new TileBase[w * h];
-
+        const int batchSize = 10000; 
+        int totalTiles = w * h;
         int index = 0;
-        for (int x = 0; x < w; x++)
+
+        while (index < totalTiles)
         {
-            for (int y = 0; y < h; y++)
+            int currentBatchSize = Mathf.Min(batchSize, totalTiles - index);
+            Vector3Int[] positions = new Vector3Int[currentBatchSize];
+            TileBase[] tileArray = new TileBase[currentBatchSize];
+
+            for (int i = 0; i < currentBatchSize; i++)
             {
-                positions[index] = new Vector3Int(x, y, 0);
-                tileArray[index] = defaultTile.tileVisual;
-                index++;
+                int flat = index + i;
+                int x = flat / h;
+                int y = flat % h;
+                positions[i] = new Vector3Int(x, y, 0);
+                tileArray[i] = defaultTile.tileVisual;
             }
+
+            tilemap.SetTiles(positions, tileArray);
+            index += currentBatchSize;
         }
 
-        tilemap.SetTiles(positions, tileArray);
+        if (totalTiles > batchSize * 10)
+        {
+            Debug.Log("Large map generated in batches for performance. Total tiles: " + totalTiles);
+        }
     }
 }
