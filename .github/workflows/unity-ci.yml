@@ -3,8 +3,6 @@ name: Unity Build Minimal
 on:
   push:
     branches:
-      - main
-      - Development
 
 jobs:
   buildWebGL:
