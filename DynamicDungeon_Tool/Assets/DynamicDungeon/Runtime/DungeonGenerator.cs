@@ -16,8 +16,8 @@ public class DungeonGenerator : MonoBehaviour
     {
         if (tilemap == null)
         {
-            Grid grid = GetComponent<Grid>();
-            if (grid == null) grid = gameObject.AddComponent<Grid>();
+            if (GetComponent<Grid>() == null)
+                gameObject.AddComponent<Grid>();
 
             TilemapRenderer rend = GetComponentInChildren<TilemapRenderer>();
             if (rend == null)
