@@ -14,6 +14,8 @@ public class DungeonGeneratorEditor : Editor
 
         if (GUILayout.Button("Generate Map", GUILayout.Height(40)))
         {
+            if (generator.tilemap != null)
+                Undo.RecordObject(generator.tilemap, "Generate Map");
             generator.GenerateEmptyMap(generator.width, generator.height);
         }
 
