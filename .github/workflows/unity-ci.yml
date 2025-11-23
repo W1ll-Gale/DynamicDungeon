@@ -3,26 +3,81 @@ name: Unity Build Minimal
 on:
   push:
     branches:
+      - main
+      - development
 
 jobs:
-  buildWebGL:
+
+  test:
+    name: Run Unity Tests
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  
-
       - name: Free up disk space on runner 🗑️
         run: |
-          # Remove large, unnecessary SDKs and tools
+          echo "Clearing large SDKs to free up disk space for the Test image..."
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
-          # The runner now has enough space for the Unity 6 Docker image
+          df -h /
 
-      - name: Build WebGL
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Unity Library (Restore)
+        uses: actions/cache@v4
+        with:
+          path: DynamicDungeon_Tool/Library
+          key: Library-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      - name: Run Tests (EditMode and PlayMode)
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          projectPath: "DynamicDungeon_Tool"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload Test Results Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ github.ref_name }}-Test-Results
+          path: artifacts/TestResults
+
+  buildWebGL:
+    needs: test
+    name: Build WebGL
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Free up disk space on runner 🗑️
+        run: |
+          echo "Clearing large SDKs to free up disk space for Build image..."
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Unity Library (Restore/Save)
+        uses: actions/cache@v4
+        with:
+          path: DynamicDungeon_Tool/Library
+          key: Library-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+
+      - name: Build WebGL Player
         uses: game-ci/unity-builder@v4
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -30,4 +85,10 @@ jobs:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         with:
           targetPlatform: WebGL
-          projectPath: "DynamicDungeon_Tool" 
+          projectPath: "DynamicDungeon_Tool"
+          
+      - name: Upload WebGL Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.ref_name }}-WebGL-Build
+          path: build/WebGL
