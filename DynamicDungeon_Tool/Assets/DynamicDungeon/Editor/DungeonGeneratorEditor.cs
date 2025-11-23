@@ -17,13 +17,10 @@ public class DungeonGeneratorEditor : Editor
             generator.GenerateEmptyMap(generator.width, generator.height);
         }
 
-        if (GUILayout.Button("Clear Map"))
+        if (GUILayout.Button("Clear Map") && generator.tilemap != null)
         {
-            if (generator.tilemap != null)
-            {
-                Undo.RecordObject(generator.tilemap, "Clear Map");
-                generator.tilemap.ClearAllTiles();
-            }
+            Undo.RecordObject(generator.tilemap, "Clear Map");
+            generator.tilemap.ClearAllTiles();
         }
     }
 }
