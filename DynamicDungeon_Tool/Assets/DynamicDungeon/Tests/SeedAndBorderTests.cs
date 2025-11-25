@@ -111,6 +111,7 @@ namespace Tests
             generator.height = 25;
             generator.randomFillPercent = 0;
             generator.useRandomSeed = false;
+            generator.useBorderWalls = true;
             generator.seed = "ZERO_INTERIOR";
             generator.GenerateTilemap();
             int[,] map = generator.CurrentMapData;

@@ -4457,6 +4457,8 @@ MonoBehaviour:
   randomFillPercentageSlider: {fileID: 1104039959}
   randomFillPercentageValueText: {fileID: 1274217545}
   useBorderWallsToggle: {fileID: 133494937}
+  seedInputField: {fileID: 1648247523}
+  useRandomSeedToggle: {fileID: 1718449131}
   tileMapGenerator: {fileID: 1137901832}
 --- !u!1 &1485226580
 GameObject:
