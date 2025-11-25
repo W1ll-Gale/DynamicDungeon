@@ -41,7 +41,7 @@ public class TilemapGenerator : MonoBehaviour
             seed = GenerateRandomSeed();
         }
 
-        CurrentMapData = GenerateMapData(width, height, seed, randomFillPercent);
+        CurrentMapData = GenerateMapData(width, height, seed, randomFillPercent, useBorderWalls);
 
         RenderMap(CurrentMapData, tilemap);
     }
@@ -52,7 +52,7 @@ public class TilemapGenerator : MonoBehaviour
         return $"{DateTime.UtcNow.Ticks:x}_{counter}_{Guid.NewGuid():N}";
     }
 
-    public int[,] GenerateMapData(int w, int h, string currentSeed, int fillPercent)
+    public int[,] GenerateMapData(int w, int h, string currentSeed, int fillPercent, bool edgesAreWalls)
     {
         if (w <= 0 || h <= 0) return new int[0, 0];
 
@@ -63,9 +63,9 @@ public class TilemapGenerator : MonoBehaviour
         {
             for (int y = 0; y < h; y++)
             {
-                if (x == 0 || x == w - 1 || y == 0 || y == h - 1)
+                if (edgesAreWalls && (x == 0 || x == w - 1 || y == 0 || y == h - 1))
                 {
-                    newMap[x, y] = 1; 
+                    newMap[x, y] = 1;
                 }
                 else
                 {

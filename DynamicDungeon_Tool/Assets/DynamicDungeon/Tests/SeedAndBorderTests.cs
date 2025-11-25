@@ -84,7 +84,6 @@ namespace Tests
             Object.DestroyImmediate(generator.gameObject);
         }
 
-        [Ignore("Border toggle OFF not yet supported: runtime still forces borders to walls.")]
         [Test]
         public void BorderToggle_Disabled_AllowsFloorAtEdge()
         {

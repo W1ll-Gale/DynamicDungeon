@@ -14,7 +14,7 @@ namespace Tests
             int width = 50;
             int height = 50;
 
-            int[,] map = generator.GenerateMapData(width, height, "testSeed", 50);
+            int[,] map = generator.GenerateMapData(width, height, "testSeed", 50, true);
 
             for (int x = 0; x < width; x++)
             {
@@ -41,7 +41,7 @@ namespace Tests
             int height = 100;
             int fillPercent = 45; 
 
-            int[,] map = generator.GenerateMapData(width, height, "seed12345", fillPercent);
+            int[,] map = generator.GenerateMapData(width, height, "seed12345", fillPercent, true);
 
             int wallCount = 0;
             for (int x = 0; x < width; x++)
