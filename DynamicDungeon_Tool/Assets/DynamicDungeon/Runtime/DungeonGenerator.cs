@@ -55,6 +55,9 @@ public class DungeonGenerator : MonoBehaviour
         int totalTiles = w * h;
         int index = 0;
 
+        int xOffset = -(w / 2);
+        int yOffset = -(h / 2);
+
         while (index < totalTiles)
         {
             int currentBatchSize = Mathf.Min(batchSize, totalTiles - index);
@@ -66,7 +69,7 @@ public class DungeonGenerator : MonoBehaviour
                 int flat = index + i;
                 int x = flat / h;
                 int y = flat % h;
-                positions[i] = new Vector3Int(x, y, 0);
+                positions[i] = new Vector3Int(x + xOffset, y + yOffset, 0);
                 tileArray[i] = defaultTile.tileVisual;
             }
 
