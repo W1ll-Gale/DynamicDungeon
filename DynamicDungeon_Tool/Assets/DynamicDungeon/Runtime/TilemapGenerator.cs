@@ -68,7 +68,7 @@ public class TilemapGenerator : MonoBehaviour
         }
     }
 
-    private string GenerateRandomSeed()
+    private static string GenerateRandomSeed()
     {
         long counter = System.Threading.Interlocked.Increment(ref _autoSeedCounter);
         return $"{DateTime.UtcNow.Ticks:x}_{counter}_{Guid.NewGuid():N}";
