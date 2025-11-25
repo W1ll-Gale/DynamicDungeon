@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using System;
 
 [ExecuteAlways]
 public class TilemapGenerator : MonoBehaviour
@@ -16,10 +17,14 @@ public class TilemapGenerator : MonoBehaviour
     [Range(0, 100)]
     public int randomFillPercent = 45;
 
+    public bool useBorderWalls = true;
+
     public string seed;
     public bool useRandomSeed = true;
 
     public int[,] CurrentMapData { get; private set; }
+
+    private static long _autoSeedCounter = 0;
 
     public void GenerateTilemap()
     {
@@ -33,12 +38,18 @@ public class TilemapGenerator : MonoBehaviour
 
         if (useRandomSeed)
         {
-            seed = System.DateTime.Now.Ticks.ToString();
+            seed = GenerateRandomSeed();
         }
 
         CurrentMapData = GenerateMapData(width, height, seed, randomFillPercent);
 
         RenderMap(CurrentMapData, tilemap);
+    }
+
+    private string GenerateRandomSeed()
+    {
+        long counter = System.Threading.Interlocked.Increment(ref _autoSeedCounter);
+        return $"{DateTime.UtcNow.Ticks:x}_{counter}_{Guid.NewGuid():N}";
     }
 
     public int[,] GenerateMapData(int w, int h, string currentSeed, int fillPercent)
