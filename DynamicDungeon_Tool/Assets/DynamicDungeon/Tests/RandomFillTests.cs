@@ -9,7 +9,7 @@ namespace Tests
         public void Map_Borders_Are_Always_Walls()
         {
             GameObject go = new GameObject("Generator");
-            DungeonGenerator generator = go.AddComponent<DungeonGenerator>();
+            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
 
             int width = 50;
             int height = 50;
@@ -35,7 +35,7 @@ namespace Tests
         public void Map_Fill_Ratio_Is_Within_Tolerance()
         {
             GameObject go = new GameObject("Generator");
-            DungeonGenerator generator = go.AddComponent<DungeonGenerator>();
+            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
 
             int width = 100;
             int height = 100;

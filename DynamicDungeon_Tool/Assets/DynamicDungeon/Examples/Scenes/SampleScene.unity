@@ -494,9 +494,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tilemap: {fileID: 737545474}
+  floorTile: {fileID: 11400000, guid: 3d26e679a9e5908468516dc4c4132ebf, type: 2}
+  wallTile: {fileID: 0}
   defaultTile: {fileID: 11400000, guid: 3d26e679a9e5908468516dc4c4132ebf, type: 2}
-  width: 1000
-  height: 1000
+  width: 100
+  height: 100
+  randomFillPercent: 45
+  seed: 
+  useRandomSeed: 1
 --- !u!156049354 &1137901833
 Grid:
   m_ObjectHideFlags: 0

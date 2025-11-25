@@ -1,14 +1,14 @@
 using UnityEngine;
 using UnityEditor;
 
-[CustomEditor(typeof(DungeonGenerator))]
+[CustomEditor(typeof(TilemapGenerator))]
 public class DungeonGeneratorEditor : Editor
 {
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector(); 
 
-        DungeonGenerator generator = (DungeonGenerator)target;
+        TilemapGenerator generator = (TilemapGenerator)target;
 
         GUILayout.Space(10);
 
@@ -16,7 +16,7 @@ public class DungeonGeneratorEditor : Editor
         {
             if (generator.tilemap != null)
                 Undo.RecordObject(generator.tilemap, "Generate Map");
-            generator.GenerateEmptyMap(generator.width, generator.height);
+            generator.GenerateTilemap();
         }
 
         if (GUILayout.Button("Clear Map") && generator.tilemap != null)

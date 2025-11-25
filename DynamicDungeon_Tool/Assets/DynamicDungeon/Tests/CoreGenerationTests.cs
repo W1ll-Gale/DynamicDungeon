@@ -12,7 +12,7 @@ namespace Tests
         public void Generator_Creates_100x100_Map()
         {
             GameObject gameObject = new GameObject("Generator");
-            DungeonGenerator generator = gameObject.AddComponent<DungeonGenerator>();
+            TilemapGenerator generator = gameObject.AddComponent<TilemapGenerator>();
 
             generator.InitializeGrid();
 
@@ -49,7 +49,7 @@ namespace Tests
         public void GenerateEmptyMap_WithPositiveDimensions_Succeeds()
         {
             GameObject gameObject = new GameObject("Generator");
-            DungeonGenerator generator = gameObject.AddComponent<DungeonGenerator>();
+            TilemapGenerator generator = gameObject.AddComponent<TilemapGenerator>();
 
             generator.InitializeGrid();
 
@@ -85,7 +85,7 @@ namespace Tests
         public void GenerateEmptyMap_WithNonPositiveDimensions_FailsGracefully()
         {
             GameObject gameObject = new GameObject("Generator");
-            DungeonGenerator generator = gameObject.AddComponent<DungeonGenerator>();
+            TilemapGenerator generator = gameObject.AddComponent<TilemapGenerator>();
 
             generator.InitializeGrid();
 
