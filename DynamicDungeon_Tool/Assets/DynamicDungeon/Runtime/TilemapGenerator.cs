@@ -46,6 +46,28 @@ public class TilemapGenerator : MonoBehaviour
         RenderMap(CurrentMapData, tilemap);
     }
 
+    public void InitializeGrid()
+    {
+        if (tilemap == null)
+        {
+            if (GetComponent<Grid>() == null)
+                gameObject.AddComponent<Grid>();
+
+            TilemapRenderer rend = GetComponentInChildren<TilemapRenderer>();
+            if (rend == null)
+            {
+                GameObject child = new GameObject("Tilemap");
+                child.transform.SetParent(transform);
+                tilemap = child.AddComponent<Tilemap>();
+                child.AddComponent<TilemapRenderer>();
+            }
+            else
+            {
+                tilemap = rend.GetComponent<Tilemap>();
+            }
+        }
+    }
+
     private string GenerateRandomSeed()
     {
         long counter = System.Threading.Interlocked.Increment(ref _autoSeedCounter);
@@ -124,25 +146,12 @@ public class TilemapGenerator : MonoBehaviour
         }
     }
 
-    public void InitializeGrid()
+    public void ClearGeneratedMap()
     {
-        if (tilemap == null)
+        if (tilemap != null)
         {
-            if (GetComponent<Grid>() == null)
-                gameObject.AddComponent<Grid>();
-
-            TilemapRenderer rend = GetComponentInChildren<TilemapRenderer>();
-            if (rend == null)
-            {
-                GameObject child = new GameObject("Tilemap");
-                child.transform.SetParent(transform);
-                tilemap = child.AddComponent<Tilemap>();
-                child.AddComponent<TilemapRenderer>();
-            }
-            else
-            {
-                tilemap = rend.GetComponent<Tilemap>();
-            }
+            tilemap.ClearAllTiles();
         }
+        CurrentMapData = null;
     }
 }
