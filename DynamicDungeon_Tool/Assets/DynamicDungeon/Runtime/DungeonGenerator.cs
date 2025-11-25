@@ -82,4 +82,11 @@ public class DungeonGenerator : MonoBehaviour
             Debug.Log("Large map generated in batches for performance. Total tiles: " + totalTiles);
         }
     }
+
+    public int[,] GenerateMapData(int w, int h, string currentSeed, int fillPercent)
+    {
+        int[,] newMap = new int[w, h];
+
+        return newMap;
+    }
 }
