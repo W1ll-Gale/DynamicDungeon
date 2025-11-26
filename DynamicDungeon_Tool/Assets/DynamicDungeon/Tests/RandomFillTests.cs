@@ -52,7 +52,7 @@ namespace Tests
                 }
             }
 
-            float actualPercent = ((float)wallCount / (width * height)) * 100f;
+            float actualPercent = ((float)wallCount / ((float)width * height)) * 100f;
 
             Assert.IsTrue(Mathf.Abs(actualPercent - fillPercent) < 5.0f,
                 $"Expected ~{fillPercent}% walls, but got {actualPercent}%");
