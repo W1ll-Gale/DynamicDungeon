@@ -1,110 +1,126 @@
 name: Unity Build Pipeline (Optimized)
 
 on:
-  push:
-    branches:
-      - main
-      - development
+push:
+branches:
+- main
+- development
 
 permissions:
-  contents: read
-  checks: write 
-  pull-requests: write 
+contents: read
+checks: write
+pull-requests: write
 
 env:
-  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-  UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
 
 jobs:
 
-  testAllModes:
-    name: Test in ${{ matrix.testMode }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        projectPath: ["DynamicDungeon_Tool"]
-        testMode:
-          - playmode
-          - editmode
-    
-    steps:
-      - name: Free up disk space on runner 🗑️
-        run: |
-          echo "Clearing large SDKs for Docker image pull..."
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
+testAllModes:
+name: Test in ${{ matrix.testMode }}
+runs-on: ubuntu-latest
+strategy:
+fail-fast: false
+matrix:
+projectPath: ["DynamicDungeon_Tool"]
+testMode:
+- playmode
+- editmode
 
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+steps:
+  - name: Free up disk space on runner 🗑️ (Test Job)
+    run: |
+      echo "Clearing large SDKs for Docker image pull..."
+      sudo rm -rf /usr/share/dotnet
+      sudo rm -rf /usr/local/lib/android
+      sudo rm -rf /opt/ghc
+      # Minor Optimization: Clear Docker cache
+      docker system prune -f
 
-      - name: Cache Unity Library (Restore)
-        uses: actions/cache@v4
-        with:
-          path: ${{ matrix.projectPath }}/Library
-          key: Library-${{ matrix.projectPath }}-${{ runner.os }}-${{ hashFiles(format('{0}/Assets/**', matrix.projectPath), format('{0}/Packages/**', matrix.projectPath), format('{0}/ProjectSettings/**', matrix.projectPath)) }}
-          restore-keys: |
-            Library-${{ matrix.projectPath }}-${{ runner.os }}-
-            Library-${{ matrix.projectPath }}-
-            Library-
+  - name: Checkout Repository
+    uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
 
-      - name: Run Tests
-        uses: game-ci/unity-test-runner@v4
-        id: tests
-        with:
-          projectPath: ${{ matrix.projectPath }}
-          testMode: ${{ matrix.testMode }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
-          
-      - name: Upload Test Results Artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ${{ github.ref_name }}-${{ matrix.testMode }}-Test-Results
-          path: ${{ steps.tests.outputs.artifactsPath }}
+  - name: Cache Unity Library (Restore)
+    uses: actions/cache@v4
+    with:
+      path: ${{ matrix.projectPath }}/Library
+      key: Library-${{ matrix.projectPath }}-${{ runner.os }}-${{ hashFiles(format('{0}/Assets/**', matrix.projectPath), format('{0}/Packages/**', matrix.projectPath), format('{0}/ProjectSettings/**', matrix.projectPath)) }}
+      restore-keys: |
+        Library-${{ matrix.projectPath }}-${{ runner.os }}-
+        Library-${{ matrix.projectPath }}-
+        Library-
 
-  buildWebGL:
-    needs: testAllModes
-    name: Build WebGL
-    runs-on: ubuntu-latest
-    if: github.ref_name != 'development'
-    
-    steps:
-      - name: Free up disk space on runner 🗑️
-        run: |
-          echo "Clearing large SDKs for Build image pull..."
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
+  - name: Run Tests
+    uses: game-ci/unity-test-runner@v4
+    id: tests
+    with:
+      projectPath: ${{ matrix.projectPath }}
+      testMode: ${{ matrix.testMode }}
+      githubToken: ${{ secrets.GITHUB_TOKEN }}
+      coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
+      
+  - name: Upload Test Results Artifact
+    uses: actions/upload-artifact@v4
+    if: always()
+    with:
+      name: ${{ github.ref_name }}-${{ matrix.testMode }}-Test-Results
+      path: ${{ steps.tests.outputs.artifactsPath }}
 
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Cache Unity Library (Restore/Save)
-        uses: actions/cache@v4
-        with:
-          path: DynamicDungeon_Tool/Library
-          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
-          restore-keys: |
-            Library-DynamicDungeon_Tool-${{ runner.os }}-
-            Library-DynamicDungeon_Tool-
-            Library-
+buildWebGL:
+needs: testAllModes
+name: Build WebGL
+runs-on: ubuntu-latest
+# Optimization: Skip build on 'development' branch
+if: github.ref_name != 'development'
 
-      - name: Build WebGL Player
-        uses: game-ci/unity-builder@v4
-        with:
-          targetPlatform: WebGL
-          projectPath: "DynamicDungeon_Tool"
-          
-      - name: Upload WebGL Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ github.ref_name }}-WebGL-Build
-          path: build/WebGL
+steps:
+  - name: Free up disk space on runner 🗑️ (Build Job)
+    run: |
+      echo "Clearing large SDKs for Build image pull..."
+      sudo rm -rf /usr/share/dotnet
+      sudo rm -rf /usr/local/lib/android
+      sudo rm -rf /opt/ghc
+      # Minor Optimization: Clear Docker cache
+      docker system prune -f
+
+  - name: Checkout Repository
+    uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+
+  - name: Cache Unity Library (Restore/Save)
+    uses: actions/cache@v4
+    with:
+      path: DynamicDungeon_Tool/Library
+      key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
+      restore-keys: |
+        Library-DynamicDungeon_Tool-${{ runner.os }}-
+        Library-DynamicDungeon_Tool-
+        Library-
+
+  - name: Build WebGL Player
+    uses: game-ci/unity-builder@v4
+    with:
+      targetPlatform: WebGL
+      projectPath: "DynamicDungeon_Tool"
+      
+  - name: Upload WebGL Build Artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: ${{ github.ref_name }}-WebGL-Build
+      path: build/WebGL
+
+  - name: Deploy to Itch.io (using Butler) 🚀
+    uses: manleydev/butler-publish-itchio-action@master
+    with:
+      butlerApiKey: ${{ secrets.BUTLER_CREDENTIALS }}
+
+      itchUsername: 'mrbytesized' 
+      itchGameId: 'honoursprojectdemos' 
+      buildChannel: 'webgl' 
+      package: build/WebGL
