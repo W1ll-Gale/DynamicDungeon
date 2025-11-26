@@ -35,7 +35,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: PlayMode_Project/DynamicDungeon_Tool/Library
-          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
+          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**', 'DynamicDungeon_Tool/Library/BuildSettings.asset') }}
           restore-keys: |
             Library-DynamicDungeon_Tool-${{ runner.os }}-
             Library-DynamicDungeon_Tool-
@@ -53,6 +53,8 @@ jobs:
           dockerWorkspaceDir: /playmode_workspace
           # FIX: Force clean project to avoid concurrent access to cached action files
           cleanProject: true
+          # FIX: Use host user permissions to resolve file ownership/locking conflicts
+          runAsHostUser: true
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
@@ -78,7 +80,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: EditMode_Project/DynamicDungeon_Tool/Library
-          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
+          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**', 'DynamicDungeon_Tool/Library/BuildSettings.asset') }}
           restore-keys: |
             Library-DynamicDungeon_Tool-${{ runner.os }}-
             Library-DynamicDungeon_Tool-
@@ -96,6 +98,8 @@ jobs:
           dockerWorkspaceDir: /editmode_workspace
           # FIX: Force clean project to avoid concurrent access to cached action files
           cleanProject: true
+          # FIX: Use host user permissions to resolve file ownership/locking conflicts
+          runAsHostUser: true
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
