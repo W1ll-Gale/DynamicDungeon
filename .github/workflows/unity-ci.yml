@@ -8,8 +8,8 @@ on:
 
 permissions:
   contents: read
-  checks: write 
-  pull-requests: write 
+  checks: write
+  pull-requests: write
 
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -102,6 +102,7 @@ jobs:
         with:
           targetPlatform: WebGL
           projectPath: "DynamicDungeon_Tool"
+          webgl-template: 'Assets/WebGLTemplates/HonoursProjectTemplate'
           
       - name: Upload WebGL Build Artifact
         uses: actions/upload-artifact@v4
