@@ -53,8 +53,6 @@ jobs:
           testMode: ${{ matrix.testMode }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
-          # Tells the container to run as 'will' instead of 'root'
-          # This prevents file permission locks on your self-hosted runner
           runAsHostUser: true
           
       - name: Upload Test Results Artifact
@@ -92,7 +90,6 @@ jobs:
           targetPlatform: WebGL
           projectPath: "DynamicDungeon_Tool"
           customParameters: -webglTemplate Assets/WebGLTemplates/HonoursProjectTemplate
-          # Also ensure the builder respects permissions
           chownFilesTo: ${{ github.actor }}
           
       - name: Upload WebGL Build Artifact
