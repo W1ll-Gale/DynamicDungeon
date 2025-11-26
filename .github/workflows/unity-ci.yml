@@ -30,12 +30,6 @@ jobs:
           - editmode
     
     steps:
-      - name: Free up disk space on runner 🗑️
-        run: |
-          echo "Clearing large SDKs for Docker image pull..."
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
 
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -75,12 +69,6 @@ jobs:
     if: github.ref_name != 'development'
     
     steps:
-      - name: Free up disk space on runner 🗑️
-        run: |
-          echo "Clearing large SDKs for Build image pull..."
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
 
       - name: Checkout Repository
         uses: actions/checkout@v4
