@@ -23,21 +23,17 @@ jobs:
     name: Test in Playmode
     runs-on: [self-hosted, ubuntu-mini-pc]
     
-    # REMOVED: Invalid 'defaults: run: working-directory' block to fix YAML error
-    
     steps:
 
       - name: Checkout Repository to Unique Path
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # Clone repository into a unique subdirectory for isolation
           path: PlayMode_Project 
 
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          # Path now includes the unique subdirectory
           path: PlayMode_Project/DynamicDungeon_Tool/Library
           key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
@@ -49,11 +45,12 @@ jobs:
         uses: game-ci/unity-test-runner@v4
         id: tests
         with:
-          # Project path is relative to the current workspace root
           projectPath: PlayMode_Project/DynamicDungeon_Tool
           testMode: playmode 
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
+          # FIX: Use a unique Docker workspace directory to prevent file lock conflicts
+          dockerWorkspaceDir: /playmode_workspace
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
@@ -67,21 +64,17 @@ jobs:
     name: Test in Editmode
     runs-on: [self-hosted, ubuntu-mini-pc]
     
-    # REMOVED: Invalid 'defaults: run: working-directory' block to fix YAML error
-    
     steps:
 
       - name: Checkout Repository to Unique Path
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # Clone repository into a unique subdirectory for isolation
           path: EditMode_Project
 
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          # Path now includes the unique subdirectory
           path: EditMode_Project/DynamicDungeon_Tool/Library
           key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
@@ -93,11 +86,12 @@ jobs:
         uses: game-ci/unity-test-runner@v4
         id: tests
         with:
-          # Project path is relative to the current workspace root
           projectPath: EditMode_Project/DynamicDungeon_Tool
           testMode: editmode 
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
+          # FIX: Use a unique Docker workspace directory to prevent file lock conflicts
+          dockerWorkspaceDir: /editmode_workspace
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
