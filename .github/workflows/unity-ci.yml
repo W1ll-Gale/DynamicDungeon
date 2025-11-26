@@ -23,18 +23,24 @@ jobs:
     name: Test in Playmode
     runs-on: [self-hosted, ubuntu-mini-pc]
     
+    # 🎯 FIX: Force unique working directory for parallel jobs to prevent file lock conflicts
+    defaults:
+      run:
+        working-directory: ${{ runner.temp }}/ci-temp/${{ github.sha }}/playmode-test
+    
     steps:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # We check out the code directly into the unique job working directory
 
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          path: DynamicDungeon_Tool/Library
-          # Used literal project path since we removed the matrix
+          # Path must now be relative to the new working directory
+          path: playmode-test/DynamicDungeon_Tool/Library
           key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
             Library-DynamicDungeon_Tool-${{ runner.os }}-
@@ -46,7 +52,7 @@ jobs:
         id: tests
         with:
           projectPath: "DynamicDungeon_Tool"
-          testMode: playmode # Explicitly set to playmode
+          testMode: playmode 
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
           
@@ -62,18 +68,24 @@ jobs:
     name: Test in Editmode
     runs-on: [self-hosted, ubuntu-mini-pc]
     
+    # 🎯 FIX: Force unique working directory for parallel jobs to prevent file lock conflicts
+    defaults:
+      run:
+        working-directory: ${{ runner.temp }}/ci-temp/${{ github.sha }}/editmode-test
+    
     steps:
 
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # We check out the code directly into the unique job working directory
 
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          path: DynamicDungeon_Tool/Library
-          # Used literal project path since we removed the matrix
+          # Path must now be relative to the new working directory
+          path: editmode-test/DynamicDungeon_Tool/Library
           key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
             Library-DynamicDungeon_Tool-${{ runner.os }}-
