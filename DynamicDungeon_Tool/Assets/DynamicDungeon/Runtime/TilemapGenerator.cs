@@ -98,6 +98,16 @@ public class TilemapGenerator : MonoBehaviour
         return newMap;
     }
 
+    public int[,] SmoothMap(int[,] mapData)
+    {
+        return mapData; 
+    }
+
+    public int GetSurroundingWallCount(int gridX, int gridY, int[,] mapData)
+    {
+        return 0;
+    }
+
     public void RenderMap(int[,] mapData, Tilemap mapComponent)
     {
         if (mapComponent == null) return;
