@@ -18,18 +18,13 @@ env:
 
 jobs:
 
-  testAllModes:
-    name: Test in ${{ matrix.testMode }}
+  # 1. New job for PlayMode tests
+  testPlayMode:
+    name: Test in Playmode
     runs-on: [self-hosted, ubuntu-mini-pc]
-    strategy:
-      fail-fast: false
-      matrix:
-        projectPath: ["DynamicDungeon_Tool"]
-        testMode:
-          - playmode
-          - editmode
     
     steps:
+
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -38,19 +33,20 @@ jobs:
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          path: ${{ matrix.projectPath }}/Library
-          key: Library-${{ matrix.projectPath }}-${{ runner.os }}-${{ hashFiles(format('{0}/Assets/**', matrix.projectPath), format('{0}/Packages/**', matrix.projectPath), format('{0}/ProjectSettings/**', matrix.projectPath)) }}
+          path: DynamicDungeon_Tool/Library
+          # Used literal project path since we removed the matrix
+          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
-            Library-${{ matrix.projectPath }}-${{ runner.os }}-
-            Library-${{ matrix.projectPath }}-
+            Library-DynamicDungeon_Tool-${{ runner.os }}-
+            Library-DynamicDungeon_Tool-
             Library-
 
-      - name: Run Tests
+      - name: Run Tests (Playmode)
         uses: game-ci/unity-test-runner@v4
         id: tests
         with:
-          projectPath: ${{ matrix.projectPath }}
-          testMode: ${{ matrix.testMode }}
+          projectPath: "DynamicDungeon_Tool"
+          testMode: playmode # Explicitly set to playmode
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
           
@@ -58,16 +54,57 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ github.ref_name }}-${{ matrix.testMode }}-Test-Results
+          name: ${{ github.ref_name }}-playmode-Test-Results
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+  # 2. New job for EditMode tests
+  testEditMode:
+    name: Test in Editmode
+    runs-on: [self-hosted, ubuntu-mini-pc]
+    
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Unity Library (Restore)
+        uses: actions/cache@v4
+        with:
+          path: DynamicDungeon_Tool/Library
+          # Used literal project path since we removed the matrix
+          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
+          restore-keys: |
+            Library-DynamicDungeon_Tool-${{ runner.os }}-
+            Library-DynamicDungeon_Tool-
+            Library-
+
+      - name: Run Tests (Editmode)
+        uses: game-ci/unity-test-runner@v4
+        id: tests
+        with:
+          projectPath: "DynamicDungeon_Tool"
+          testMode: editmode 
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
+          
+      - name: Upload Test Results Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ github.ref_name }}-editmode-Test-Results
           path: ${{ steps.tests.outputs.artifactsPath }}
 
   buildWebGL:
-    needs: testAllModes
+    needs: [testPlayMode, testEditMode]
     name: Build WebGL
+
     runs-on: [self-hosted, ubuntu-mini-pc]
     if: github.ref_name != 'development'
     
-    steps:      
+    steps:
+      
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -88,7 +125,7 @@ jobs:
         with:
           targetPlatform: WebGL
           projectPath: "DynamicDungeon_Tool"
-          customParameters: -webglTemplate Assets/WebGLTemplates/HonoursProjectTemplate
+          webgl-template: 'Assets/WebGLTemplates/HonoursProjectTemplate'
           
       - name: Upload WebGL Build Artifact
         uses: actions/upload-artifact@v4
@@ -100,9 +137,8 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
         run: |
-          # Securely download and use the official butler CLI
           curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-          unzip -o butler.zip
+          unzip butler.zip
           chmod +x butler
           
           ./butler push build/WebGL mrbytesized/honoursprojectdemos:webgl --userversion ${{ github.ref_name }}-${{ github.run_number }}
