@@ -18,13 +18,13 @@ env:
 
 jobs:
 
-  # 1. Parallel Testing (Runs on Methalox-1 and Methalox-2 simultaneously)
   testAllModes:
     name: Test in ${{ matrix.testMode }}
     runs-on: [self-hosted, ubuntu-mini-pc]
     strategy:
       fail-fast: false
       matrix:
+        projectPath: ["DynamicDungeon_Tool"]
         testMode:
           - playmode
           - editmode
@@ -38,19 +38,17 @@ jobs:
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          path: DynamicDungeon_Tool/Library
-          # Unique cache key per runner/matrix ensures they don't overwrite each other
-          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ matrix.testMode }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**', 'DynamicDungeon_Tool/Library/BuildSettings.asset') }}
+          path: ${{ matrix.projectPath }}/Library
+          key: Library-${{ matrix.projectPath }}-${{ runner.os }}-${{ hashFiles(format('{0}/Assets/**', matrix.projectPath), format('{0}/Packages/**', matrix.projectPath), format('{0}/ProjectSettings/**', matrix.projectPath)) }}
           restore-keys: |
-            Library-DynamicDungeon_Tool-${{ runner.os }}-${{ matrix.testMode }}-
-            Library-DynamicDungeon_Tool-${{ runner.os }}-
+            Library-${{ matrix.projectPath }}-${{ runner.os }}-
+            Library-${{ matrix.projectPath }}-
             Library-
-
       - name: Run Tests
         uses: game-ci/unity-test-runner@v4
         id: tests
         with:
-          projectPath: "DynamicDungeon_Tool"
+          projectPath: ${{ matrix.projectPath }}
           testMode: ${{ matrix.testMode }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
@@ -62,14 +60,13 @@ jobs:
           name: ${{ github.ref_name }}-${{ matrix.testMode }}-Test-Results
           path: ${{ steps.tests.outputs.artifactsPath }}
 
-  # 2. Build (Runs after BOTH tests finish)
   buildWebGL:
     needs: testAllModes
     name: Build WebGL
     runs-on: [self-hosted, ubuntu-mini-pc]
     if: github.ref_name != 'development'
     
-    steps:
+    steps:      
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -79,18 +76,17 @@ jobs:
         uses: actions/cache@v4
         with:
           path: DynamicDungeon_Tool/Library
-          key: Library-DynamicDungeon_Tool-${{ runner.os }}-build-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
+          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
-            Library-DynamicDungeon_Tool-${{ runner.os }}-build-
             Library-DynamicDungeon_Tool-${{ runner.os }}-
+            Library-DynamicDungeon_Tool-
             Library-
-
       - name: Build WebGL Player
         uses: game-ci/unity-builder@v4
         with:
           targetPlatform: WebGL
           projectPath: "DynamicDungeon_Tool"
-          webgl-template: 'Assets/WebGLTemplates/HonoursProjectTemplate'
+          customParameters: -webglTemplate Assets/WebGLTemplates/HonoursProjectTemplate
           
       - name: Upload WebGL Build Artifact
         uses: actions/upload-artifact@v4
@@ -102,8 +98,9 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
         run: |
+          # Securely download and use the official butler CLI
           curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-          unzip butler.zip
+          unzip -o butler.zip
           chmod +x butler
           
           ./butler push build/WebGL mrbytesized/honoursprojectdemos:webgl --userversion ${{ github.ref_name }}-${{ github.run_number }}
