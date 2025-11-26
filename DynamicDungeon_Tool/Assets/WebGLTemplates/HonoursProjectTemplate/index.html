@@ -39,7 +39,7 @@
     <canvas id="unity-canvas" tabindex="-1"></canvas>
     <div id="error-message-box"></div>
     
-    <script src="Build/Builds.loader.js"></script>
+    <script src="Build/WebGL.loader.js"></script>
     
     <script>
       const errorMessageBox = document.getElementById("error-message-box");
@@ -55,9 +55,9 @@
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
         arguments: [],
-        dataUrl: "Build/Builds.data.br",
-        frameworkUrl: "Build/Builds.framework.js.br",
-        codeUrl: "Build/Builds.wasm.br",
+        dataUrl: "Build/WebGL.data.br",
+        frameworkUrl: "Build/WebGL.framework.js.br",
+        codeUrl: "Build/WebGL.wasm.br",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "MrBytesized",
         productName: "HonoursProject",
