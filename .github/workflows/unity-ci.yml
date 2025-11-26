@@ -44,6 +44,7 @@ jobs:
             Library-${{ matrix.projectPath }}-${{ runner.os }}-
             Library-${{ matrix.projectPath }}-
             Library-
+
       - name: Run Tests
         uses: game-ci/unity-test-runner@v4
         id: tests
@@ -52,6 +53,9 @@ jobs:
           testMode: ${{ matrix.testMode }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
+          # Tells the container to run as 'will' instead of 'root'
+          # This prevents file permission locks on your self-hosted runner
+          runAsHostUser: true
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
@@ -81,12 +85,15 @@ jobs:
             Library-DynamicDungeon_Tool-${{ runner.os }}-
             Library-DynamicDungeon_Tool-
             Library-
+
       - name: Build WebGL Player
         uses: game-ci/unity-builder@v4
         with:
           targetPlatform: WebGL
           projectPath: "DynamicDungeon_Tool"
           customParameters: -webglTemplate Assets/WebGLTemplates/HonoursProjectTemplate
+          # Also ensure the builder respects permissions
+          chownFilesTo: ${{ github.actor }}
           
       - name: Upload WebGL Build Artifact
         uses: actions/upload-artifact@v4
