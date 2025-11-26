@@ -11,7 +11,7 @@ namespace DynamicDungeon.Editor
             GameObject gameObject = new GameObject("DungeonGenerator");
 
             if (gameObject.GetComponent<Grid>() == null) gameObject.AddComponent<Grid>();
-            gameObject.AddComponent<DungeonGenerator>();
+            gameObject.AddComponent<TilemapGenerator>();
 
             GameObjectUtility.SetParentAndAlign(gameObject, menuCommand.context as GameObject);
 

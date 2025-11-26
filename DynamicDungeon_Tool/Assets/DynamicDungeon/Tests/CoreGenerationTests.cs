@@ -1,4 +1,3 @@
-using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -8,113 +7,95 @@ namespace Tests
 {
     public class CoreGenerationTests
     {
-        [Test]
-        public void Generator_Creates_100x100_Map()
+        private TilemapGenerator CreateGeneratorWithMockTiles()
         {
-            GameObject gameObject = new GameObject("Generator");
-            DungeonGenerator generator = gameObject.AddComponent<DungeonGenerator>();
-
+            GameObject go = new GameObject("Generator");
+            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
             generator.InitializeGrid();
 
-            Texture2D texture = new Texture2D(16, 16);
-            Sprite dummySprite = Sprite.Create(texture, new Rect(0, 0, 16, 16), Vector2.zero);
-
-            Tile mockTile = ScriptableObject.CreateInstance<Tile>();
-            mockTile.sprite = dummySprite; 
-
-            TileData mockTileData = ScriptableObject.CreateInstance<TileData>();
-            mockTileData.tileVisual = mockTile;
-
-            generator.defaultTile = mockTileData;
-
-            int width = 100;
-            int height = 100;
-            generator.GenerateEmptyMap(width, height);
-
-            Tilemap map = gameObject.GetComponentInChildren<Tilemap>();
-
-            map.RefreshAllTiles();
-            map.CompressBounds();
-
-            Assert.AreEqual(width, map.size.x, $"Expected width {width} (Got {map.size.x})");
-            Assert.AreEqual(height, map.size.y, $"Expected height {height} (Got {map.size.y})");
-
-            Object.DestroyImmediate(gameObject);
-            Object.DestroyImmediate(texture);
-            Object.DestroyImmediate(mockTile);
-            Object.DestroyImmediate(mockTileData);
-        }
-
-        [Test]
-        public void GenerateEmptyMap_WithPositiveDimensions_Succeeds()
-        {
-            GameObject gameObject = new GameObject("Generator");
-            DungeonGenerator generator = gameObject.AddComponent<DungeonGenerator>();
-
-            generator.InitializeGrid();
-
-            Texture2D texture = new Texture2D(16, 16);
-            Sprite dummySprite = Sprite.Create(texture, new Rect(0, 0, 16, 16), Vector2.zero);
+            Texture2D texture = new Texture2D(1, 1);
+            Sprite dummySprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), Vector2.zero);
 
             Tile mockTile = ScriptableObject.CreateInstance<Tile>();
             mockTile.sprite = dummySprite;
 
-            TileData mockTileData = ScriptableObject.CreateInstance<TileData>();
-            mockTileData.tileVisual = mockTile;
+            TileData floorData = ScriptableObject.CreateInstance<TileData>();
+            floorData.tileVisual = mockTile;
+            TileData wallData = ScriptableObject.CreateInstance<TileData>();
+            wallData.tileVisual = mockTile;
 
-            generator.defaultTile = mockTileData;
+            generator.floorTile = floorData;
+            generator.wallTile = wallData;
 
-            int width = 10;
-            int height = 10;
-            generator.GenerateEmptyMap(width, height);
-
-            Tilemap map = gameObject.GetComponentInChildren<Tilemap>();
-            map.RefreshAllTiles();
-            map.CompressBounds();
-
-            Assert.AreEqual(width, map.size.x, $"Expected width {width} (Got {map.size.x})");
-            Assert.AreEqual(height, map.size.y, $"Expected height {height} (Got {map.size.y})");
-
-            Object.DestroyImmediate(gameObject);
-            Object.DestroyImmediate(texture);
-            Object.DestroyImmediate(mockTile);
-            Object.DestroyImmediate(mockTileData);
+            return generator;
         }
 
         [Test]
-        public void GenerateEmptyMap_WithNonPositiveDimensions_FailsGracefully()
+        public void Generator_Creates_100x100_Map_Success()
         {
-            GameObject gameObject = new GameObject("Generator");
-            DungeonGenerator generator = gameObject.AddComponent<DungeonGenerator>();
+            TilemapGenerator generator = CreateGeneratorWithMockTiles();
+            generator.width = 100;
+            generator.height = 100;
+            generator.randomFillPercent = 50;
 
+            generator.GenerateTilemap();
+
+            Tilemap map = generator.GetComponentInChildren<Tilemap>();
+            map.RefreshAllTiles();
+            map.CompressBounds();
+
+            Assert.AreEqual(100, map.size.x, "Map width should be 100");
+            Assert.AreEqual(100, map.size.y, "Map height should be 100");
+
+            Object.DestroyImmediate(generator.gameObject);
+        }
+
+        [Test]
+        public void Generation_Fails_Gracefully_With_Invalid_Dimensions()
+        {
+            TilemapGenerator generator = CreateGeneratorWithMockTiles();
+
+            generator.width = 0;
+            generator.height = 100;
+
+            LogAssert.Expect(LogType.Error, "Cannot generate map: Width and Height must be positive.");
+            generator.GenerateTilemap();
+
+            Tilemap map = generator.GetComponentInChildren<Tilemap>();
+            map.CompressBounds();
+            Assert.AreEqual(0, map.size.x, "Map should not generate with width 0");
+
+            generator.width = 100;
+            generator.height = -50;
+
+            LogAssert.Expect(LogType.Error, "Cannot generate map: Width and Height must be positive.");
+            generator.GenerateTilemap();
+
+            Assert.AreEqual(0, map.size.y, "Map should not generate with negative height");
+
+            Object.DestroyImmediate(generator.gameObject);
+        }
+
+        [Test]
+        public void Generation_Does_Not_Crash_When_TileData_Is_Missing()
+        {
+            GameObject go = new GameObject("Generator");
+            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
             generator.InitializeGrid();
 
-            Texture2D texture = new Texture2D(16, 16);
-            Sprite dummySprite = Sprite.Create(texture, new Rect(0, 0, 16, 16), Vector2.zero);
+            generator.floorTile = null;
+            generator.wallTile = null;
+            generator.width = 10;
+            generator.height = 10;
 
-            Tile mockTile = ScriptableObject.CreateInstance<Tile>();
-            mockTile.sprite = dummySprite;
+            generator.GenerateTilemap();
 
-            TileData mockTileData = ScriptableObject.CreateInstance<TileData>();
-            mockTileData.tileVisual = mockTile;
-
-            generator.defaultTile = mockTileData;
-
-            generator.GenerateEmptyMap(0, 10);
-            Tilemap map = gameObject.GetComponentInChildren<Tilemap>();
-            map.RefreshAllTiles();
+            Tilemap map = generator.GetComponentInChildren<Tilemap>();
             map.CompressBounds();
-            Assert.AreEqual(0, map.size.x, "Expected width 0 for zero width input");
 
-            generator.GenerateEmptyMap(10, -5);
-            map.RefreshAllTiles();
-            map.CompressBounds();
-            Assert.AreEqual(0, map.size.y, "Expected height 0 for negative height input");
+            Assert.Pass("Generator handled missing TileData without crashing.");
 
-            Object.DestroyImmediate(gameObject);
-            Object.DestroyImmediate(texture);
-            Object.DestroyImmediate(mockTile);
-            Object.DestroyImmediate(mockTileData);
+            Object.DestroyImmediate(go);
         }
     }
 }
