@@ -20,7 +20,7 @@ jobs:
 
   testAllModes:
     name: Test in ${{ matrix.testMode }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ubuntu-mini-pc]
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +30,6 @@ jobs:
           - editmode
     
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -65,11 +64,10 @@ jobs:
   buildWebGL:
     needs: testAllModes
     name: Build WebGL
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ubuntu-mini-pc]
     if: github.ref_name != 'development'
     
-    steps:
-
+    steps:      
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -90,7 +88,7 @@ jobs:
         with:
           targetPlatform: WebGL
           projectPath: "DynamicDungeon_Tool"
-          customParameters: '-webglTemplate "Assets/WebGLTemplates/HonoursProjectTemplate"'
+          customParameters: -webglTemplate Assets/WebGLTemplates/HonoursProjectTemplate
           
       - name: Upload WebGL Build Artifact
         uses: actions/upload-artifact@v4
@@ -102,8 +100,9 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
         run: |
+          # Securely download and use the official butler CLI
           curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-          unzip butler.zip
+          unzip -o butler.zip
           chmod +x butler
           
           ./butler push build/WebGL mrbytesized/honoursprojectdemos:webgl --userversion ${{ github.ref_name }}-${{ github.run_number }}
