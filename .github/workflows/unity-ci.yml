@@ -18,102 +18,62 @@ env:
 
 jobs:
 
-  # 1. First: PlayMode tests
-  testPlayMode:
-    name: Test in Playmode
+  # 1. Parallel Testing (Runs on Methalox-1 and Methalox-2 simultaneously)
+  testAllModes:
+    name: Test in ${{ matrix.testMode }}
     runs-on: [self-hosted, ubuntu-mini-pc]
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode:
+          - playmode
+          - editmode
     
     steps:
-
-      - name: Checkout Repository to Unique Path
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          path: PlayMode_Project 
 
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          path: PlayMode_Project/DynamicDungeon_Tool/Library
-          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**', 'DynamicDungeon_Tool/Library/BuildSettings.asset') }}
+          path: DynamicDungeon_Tool/Library
+          # Unique cache key per runner/matrix ensures they don't overwrite each other
+          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ matrix.testMode }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**', 'DynamicDungeon_Tool/Library/BuildSettings.asset') }}
           restore-keys: |
+            Library-DynamicDungeon_Tool-${{ runner.os }}-${{ matrix.testMode }}-
             Library-DynamicDungeon_Tool-${{ runner.os }}-
-            Library-DynamicDungeon_Tool-
             Library-
 
-      - name: Run Tests (Playmode)
+      - name: Run Tests
         uses: game-ci/unity-test-runner@v4
         id: tests
         with:
-          projectPath: PlayMode_Project/DynamicDungeon_Tool
-          testMode: playmode 
+          projectPath: "DynamicDungeon_Tool"
+          testMode: ${{ matrix.testMode }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
-          # Optimizations kept for robustness
-          dockerWorkspaceDir: /playmode_workspace
+          # Use the matrix value to ensure unique workspace naming in Docker
+          dockerWorkspaceDir: /${{ matrix.testMode }}_workspace
+          # Keeps action robust against edge cases
           cleanProject: true
-          # Reverted to running as root to bypass permission locks from previous runs
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ github.ref_name }}-playmode-Test-Results
+          name: ${{ github.ref_name }}-${{ matrix.testMode }}-Test-Results
           path: ${{ steps.tests.outputs.artifactsPath }}
 
-  # 2. Second: EditMode tests (Runs AFTER PlayMode to prevent file locks)
-  testEditMode:
-    needs: [testPlayMode] # <--- FIX: Forces sequential execution to avoid 'BlankProject' file locks
-    name: Test in Editmode
-    runs-on: [self-hosted, ubuntu-mini-pc]
-    
-    steps:
-
-      - name: Checkout Repository to Unique Path
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          path: EditMode_Project
-
-      - name: Cache Unity Library (Restore)
-        uses: actions/cache@v4
-        with:
-          path: EditMode_Project/DynamicDungeon_Tool/Library
-          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**', 'DynamicDungeon_Tool/Library/BuildSettings.asset') }}
-          restore-keys: |
-            Library-DynamicDungeon_Tool-${{ runner.os }}-
-            Library-DynamicDungeon_Tool-
-            Library-
-
-      - name: Run Tests (Editmode)
-        uses: game-ci/unity-test-runner@v4
-        id: tests
-        with:
-          projectPath: EditMode_Project/DynamicDungeon_Tool
-          testMode: editmode 
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
-          # Optimizations kept for robustness
-          dockerWorkspaceDir: /editmode_workspace
-          cleanProject: true
-          # Reverted to running as root to bypass permission locks from previous runs
-          
-      - name: Upload Test Results Artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ${{ github.ref_name }}-editmode-Test-Results
-          path: ${{ steps.tests.outputs.artifactsPath }}
-
+  # 2. Build (Runs after BOTH tests finish)
   buildWebGL:
-    needs: [testEditMode] # Update to wait for the last test job
+    needs: testAllModes
     name: Build WebGL
-
     runs-on: [self-hosted, ubuntu-mini-pc]
     if: github.ref_name != 'development'
     
     steps:
-      
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -123,10 +83,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: DynamicDungeon_Tool/Library
-          key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
+          key: Library-DynamicDungeon_Tool-${{ runner.os }}-build-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
+            Library-DynamicDungeon_Tool-${{ runner.os }}-build-
             Library-DynamicDungeon_Tool-${{ runner.os }}-
-            Library-DynamicDungeon_Tool-
             Library-
 
       - name: Build WebGL Player
