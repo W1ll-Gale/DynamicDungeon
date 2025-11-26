@@ -102,7 +102,7 @@ jobs:
         with:
           targetPlatform: WebGL
           projectPath: "DynamicDungeon_Tool"
-          webgl-template: 'Assets/WebGLTemplates/HonoursProjectTemplate'
+          customParameters: '-webglTemplate "Assets/WebGLTemplates/HonoursProjectTemplate"'
           
       - name: Upload WebGL Build Artifact
         uses: actions/upload-artifact@v4
