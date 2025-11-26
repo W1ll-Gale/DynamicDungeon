@@ -882,8 +882,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 7.2, y: 13.4}
-  m_SizeDelta: {x: 121.56, y: 16.01}
+  m_AnchoredPosition: {x: 19.36, y: 13.4}
+  m_SizeDelta: {x: 145.88, y: 16.01}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &498090420
 MonoBehaviour:
@@ -3899,7 +3899,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 120.2, y: 0}
+  m_AnchoredPosition: {x: 120.20001, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1029897128
@@ -4910,6 +4910,8 @@ MonoBehaviour:
   clearButton: {fileID: 257285775}
   randomFillPercentageSlider: {fileID: 1104039959}
   randomFillPercentageValueText: {fileID: 1274217545}
+  smoothingIterationsSlider: {fileID: 573812747}
+  smoothingIterationsValueText: {fileID: 498090420}
   useBorderWallsToggle: {fileID: 133494937}
   seedInputField: {fileID: 1648247523}
   useRandomSeedToggle: {fileID: 1718449131}
