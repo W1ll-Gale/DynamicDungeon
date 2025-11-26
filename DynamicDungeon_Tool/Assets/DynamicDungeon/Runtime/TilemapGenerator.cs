@@ -1,6 +1,7 @@
+using Codice.Client.BaseCommands;
+using System;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using System;
 
 [ExecuteAlways]
 public class TilemapGenerator : MonoBehaviour
@@ -16,6 +17,10 @@ public class TilemapGenerator : MonoBehaviour
 
     [Range(0, 100)]
     public int randomFillPercent = 45;
+
+    [Header("Cellular Automata")]
+    [Range(0, 10)]
+    public int smoothIterations = 5; 
 
     public bool useBorderWalls = true;
 
@@ -42,6 +47,11 @@ public class TilemapGenerator : MonoBehaviour
         }
 
         CurrentMapData = GenerateMapData(width, height, seed, randomFillPercent, useBorderWalls);
+
+        for (int i = 0; i < smoothIterations; i++)
+        {
+            CurrentMapData = SmoothMap(CurrentMapData);
+        }
 
         RenderMap(CurrentMapData, tilemap);
     }
@@ -100,12 +110,64 @@ public class TilemapGenerator : MonoBehaviour
 
     public int[,] SmoothMap(int[,] mapData)
     {
-        return mapData; 
+        int w = mapData.GetLength(0);
+        int h = mapData.GetLength(1);
+
+        int[,] newMap = new int[w, h];
+
+        for (int x = 0; x < w; x++)
+        {
+            for (int y = 0; y < h; y++)
+            {
+                if (x == 0 || x == w - 1 || y == 0 || y == h - 1)
+                {
+                    newMap[x, y] = useBorderWalls ? 1 : mapData[x, y];
+                    continue;
+                }
+
+                int neighborWallCount = GetSurroundingWallCount(x, y, mapData);
+
+                if (neighborWallCount > 4)
+                {
+                    newMap[x, y] = 1;
+                }
+                else if (neighborWallCount < 4)
+                {
+                    newMap[x, y] = 0;
+                }
+                else
+                {
+                    newMap[x, y] = mapData[x, y];
+                }
+            }
+        }
+
+        return newMap;
     }
 
     public int GetSurroundingWallCount(int gridX, int gridY, int[,] mapData)
     {
-        return 0;
+        int wallCount = 0;
+        int w = mapData.GetLength(0);
+        int h = mapData.GetLength(1);
+
+        for (int neighborX = gridX - 1; neighborX <= gridX + 1; neighborX++)
+        {
+            for (int neighborY = gridY - 1; neighborY <= gridY + 1; neighborY++)
+            {
+                if (neighborX == gridX && neighborY == gridY) continue;
+
+                if (neighborX >= 0 && neighborX < w && neighborY >= 0 && neighborY < h)
+                {
+                    wallCount += mapData[neighborX, neighborY];
+                }
+                else
+                {
+                    wallCount++;
+                }
+            }
+        }
+        return wallCount;
     }
 
     public void RenderMap(int[,] mapData, Tilemap mapComponent)
