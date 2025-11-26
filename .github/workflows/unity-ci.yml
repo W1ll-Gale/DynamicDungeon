@@ -109,11 +109,11 @@ jobs:
           name: ${{ github.ref_name }}-WebGL-Build
           path: build/WebGL
           
-      - name: Deploy to Itch.io (using Butler) 🚀
-        uses: manleydev/butler-publish-itchio-action@master
-        with:
-          butlerApiKey: ${{ secrets.BUTLER_CREDENTIALS }}
-          itchUsername: 'mrbytesized' 
-          itchGameId: 'honoursprojectdemos' 
-          buildChannel: 'webgl' 
-          package: build/WebGL
+      - name: Deploy to Itch.io
+        uses: manleydev/butler-publish-itchio-action@master
+        with:
+          butlerApiKey: ${{ secrets.BUTLER_CREDENTIALS }}
+          itchUsername: 'mrbytesized'
+          itchGameId: 'honoursprojectdemos'
+          buildChannel: 'webgl'
+          package: build/WebGL
