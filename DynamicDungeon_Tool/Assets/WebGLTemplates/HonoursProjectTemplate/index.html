@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="%UNITY_WEB_LANGUAGE%">
+  <head>
+    <meta charset="utf-d">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>%UNITY_WEB_NAME% | %UNITY_COMPANY_NAME%</title>
+    
+    <style>
+      /* Full viewport size for the game */
+      html, body {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden; /* Prevents scroll bars */
+        font-family: sans-serif;
+      }
+      /* Canvas takes up the available space */
+      #unity-canvas {
+        width: 100%;
+        height: 100%;
+        background: #231F20; /* The dark background color you used */
+      }
+      /* Simple error message container (replaces alert()) */
+      #error-message-box {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #ff4444;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 1000;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="error-message-box"></div>
+    
+    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
+    
+    <script>
+      const errorMessageBox = document.getElementById("error-message-box");
+
+      function displayError(message) {
+        console.error("Unity Initialization Error:", message);
+        errorMessageBox.textContent = "Error: " + message;
+        errorMessageBox.style.display = 'block';
+        setTimeout(() => {
+            errorMessageBox.style.display = 'none';
+        }, 8000); 
+      }
+
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        arguments: [],
+        dataUrl: "%UNITY_WEBGL_DATA_URL%",
+        frameworkUrl: "%UNITY_WEBGL_FRAMEWORK_URL%",
+        codeUrl: "%UNITY_WEBGL_CODE_URL%",
+        streamingAssetsUrl: "%UNITY_WEBGL_STREAMING_ASSETS_URL%",
+        companyName: "%UNITY_COMPANY_NAME%",
+        productName: "%UNITY_WEB_NAME%",
+        productVersion: "%UNITY_PRODUCT_VERSION%",
+      }).then((unityInstance) => {
+        console.log("Unity game instance loaded.");
+      }).catch((message) => {
+        displayError(message);
+      });
+    </script>
+  </body>
+</html>
