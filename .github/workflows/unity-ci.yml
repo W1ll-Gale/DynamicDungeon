@@ -18,7 +18,7 @@ env:
 
 jobs:
 
-  # 1. New job for PlayMode tests
+  # 1. First: PlayMode tests
   testPlayMode:
     name: Test in Playmode
     runs-on: [self-hosted, ubuntu-mini-pc]
@@ -49,11 +49,9 @@ jobs:
           testMode: playmode 
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
-          # FIX: Use a unique Docker workspace directory to prevent file lock conflicts
+          # Optimizations kept for robustness
           dockerWorkspaceDir: /playmode_workspace
-          # FIX: Force clean project to avoid concurrent access to cached action files
           cleanProject: true
-          # FIX: Use host user permissions to resolve file ownership/locking conflicts
           runAsHostUser: true
           
       - name: Upload Test Results Artifact
@@ -63,8 +61,9 @@ jobs:
           name: ${{ github.ref_name }}-playmode-Test-Results
           path: ${{ steps.tests.outputs.artifactsPath }}
 
-  # 2. New job for EditMode tests
+  # 2. Second: EditMode tests (Runs AFTER PlayMode to prevent file locks)
   testEditMode:
+    needs: [testPlayMode] # <--- FIX: Forces sequential execution to avoid 'BlankProject' file locks
     name: Test in Editmode
     runs-on: [self-hosted, ubuntu-mini-pc]
     
@@ -94,11 +93,9 @@ jobs:
           testMode: editmode 
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
-          # FIX: Use a unique Docker workspace directory to prevent file lock conflicts
+          # Optimizations kept for robustness
           dockerWorkspaceDir: /editmode_workspace
-          # FIX: Force clean project to avoid concurrent access to cached action files
           cleanProject: true
-          # FIX: Use host user permissions to resolve file ownership/locking conflicts
           runAsHostUser: true
           
       - name: Upload Test Results Artifact
@@ -109,7 +106,7 @@ jobs:
           path: ${{ steps.tests.outputs.artifactsPath }}
 
   buildWebGL:
-    needs: [testPlayMode, testEditMode]
+    needs: [testEditMode] # Update to wait for the last test job
     name: Build WebGL
 
     runs-on: [self-hosted, ubuntu-mini-pc]
@@ -149,8 +146,4 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
         run: |
-          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-          unzip butler.zip
-          chmod +x butler
-          
-          ./butler push build/WebGL mrbytesized/honoursprojectdemos:webgl --userversion ${{ github.ref_name }}-${{ github.run_number }}
+          curl -L -o
