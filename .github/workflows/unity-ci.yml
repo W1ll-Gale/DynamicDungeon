@@ -23,24 +23,22 @@ jobs:
     name: Test in Playmode
     runs-on: [self-hosted, ubuntu-mini-pc]
     
-    # 🎯 FIX: Force unique working directory for parallel jobs to prevent file lock conflicts
-    defaults:
-      run:
-        working-directory: ${{ runner.temp }}/ci-temp/${{ github.sha }}/playmode-test
+    # REMOVED: Invalid 'defaults: run: working-directory' block to fix YAML error
     
     steps:
 
-      - name: Checkout Repository
+      - name: Checkout Repository to Unique Path
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # We check out the code directly into the unique job working directory
+          # Clone repository into a unique subdirectory for isolation
+          path: PlayMode_Project 
 
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          # Path must now be relative to the new working directory
-          path: playmode-test/DynamicDungeon_Tool/Library
+          # Path now includes the unique subdirectory
+          path: PlayMode_Project/DynamicDungeon_Tool/Library
           key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
             Library-DynamicDungeon_Tool-${{ runner.os }}-
@@ -51,7 +49,8 @@ jobs:
         uses: game-ci/unity-test-runner@v4
         id: tests
         with:
-          projectPath: "DynamicDungeon_Tool"
+          # Project path is relative to the current workspace root
+          projectPath: PlayMode_Project/DynamicDungeon_Tool
           testMode: playmode 
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
@@ -68,24 +67,22 @@ jobs:
     name: Test in Editmode
     runs-on: [self-hosted, ubuntu-mini-pc]
     
-    # 🎯 FIX: Force unique working directory for parallel jobs to prevent file lock conflicts
-    defaults:
-      run:
-        working-directory: ${{ runner.temp }}/ci-temp/${{ github.sha }}/editmode-test
+    # REMOVED: Invalid 'defaults: run: working-directory' block to fix YAML error
     
     steps:
 
-      - name: Checkout Repository
+      - name: Checkout Repository to Unique Path
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # We check out the code directly into the unique job working directory
+          # Clone repository into a unique subdirectory for isolation
+          path: EditMode_Project
 
       - name: Cache Unity Library (Restore)
         uses: actions/cache@v4
         with:
-          # Path must now be relative to the new working directory
-          path: editmode-test/DynamicDungeon_Tool/Library
+          # Path now includes the unique subdirectory
+          path: EditMode_Project/DynamicDungeon_Tool/Library
           key: Library-DynamicDungeon_Tool-${{ runner.os }}-${{ hashFiles('DynamicDungeon_Tool/Assets/**', 'DynamicDungeon_Tool/Packages/**', 'DynamicDungeon_Tool/ProjectSettings/**') }}
           restore-keys: |
             Library-DynamicDungeon_Tool-${{ runner.os }}-
@@ -96,7 +93,8 @@ jobs:
         uses: game-ci/unity-test-runner@v4
         id: tests
         with:
-          projectPath: "DynamicDungeon_Tool"
+          # Project path is relative to the current workspace root
+          projectPath: EditMode_Project/DynamicDungeon_Tool
           testMode: editmode 
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
