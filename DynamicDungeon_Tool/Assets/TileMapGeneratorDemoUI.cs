@@ -93,7 +93,7 @@ public class TileMapGeneratorDemoUI : MonoBehaviour
         resetCameraButton.onClick.AddListener(() =>
         {
             mapCamera.orthographicSize = 5f;
-            mapZoomSlider.value = (20f - 5f) / (50f - 5f);
+            mapZoomSlider.value = (5f - 5f) / (50f - 5f);
         });
 
         seedInputField.onValueChanged.AddListener((value) =>
