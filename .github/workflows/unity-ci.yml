@@ -54,10 +54,6 @@ jobs:
           testMode: ${{ matrix.testMode }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
-          # Use the matrix value to ensure unique workspace naming in Docker
-          dockerWorkspaceDir: /${{ matrix.testMode }}_workspace
-          # Keeps action robust against edge cases
-          cleanProject: true
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
