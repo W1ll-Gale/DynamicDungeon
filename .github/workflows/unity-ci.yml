@@ -51,6 +51,8 @@ jobs:
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
           # FIX: Use a unique Docker workspace directory to prevent file lock conflicts
           dockerWorkspaceDir: /playmode_workspace
+          # FIX: Force clean project to avoid concurrent access to cached action files
+          cleanProject: true
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
@@ -92,6 +94,8 @@ jobs:
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
           # FIX: Use a unique Docker workspace directory to prevent file lock conflicts
           dockerWorkspaceDir: /editmode_workspace
+          # FIX: Force clean project to avoid concurrent access to cached action files
+          cleanProject: true
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
