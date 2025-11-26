@@ -52,7 +52,7 @@ jobs:
           # Optimizations kept for robustness
           dockerWorkspaceDir: /playmode_workspace
           cleanProject: true
-          runAsHostUser: true
+          # Reverted to running as root to bypass permission locks from previous runs
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
@@ -96,7 +96,7 @@ jobs:
           # Optimizations kept for robustness
           dockerWorkspaceDir: /editmode_workspace
           cleanProject: true
-          runAsHostUser: true
+          # Reverted to running as root to bypass permission locks from previous runs
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
@@ -146,4 +146,8 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
         run: |
-          curl -L -o
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          
+          ./butler push build/WebGL mrbytesized/honoursprojectdemos:webgl --userversion ${{ github.ref_name }}-${{ github.run_number }}
