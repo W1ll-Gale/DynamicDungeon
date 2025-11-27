@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="%UNITY_WEB_LANGUAGE%">
   <head>
-    <meta charset="utf-d">
+    <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>%UNITY_WEB_NAME% | %UNITY_COMPANY_NAME%</title>
+    <title>Unity Web Player | MrBytesized</title>
     
     <style>
       /* Full viewport size for the game */
@@ -39,7 +39,7 @@
     <canvas id="unity-canvas" tabindex="-1"></canvas>
     <div id="error-message-box"></div>
     
-    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
+    <script src="Build/WebGL.loader.js"></script>
     
     <script>
       const errorMessageBox = document.getElementById("error-message-box");
@@ -55,13 +55,13 @@
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
         arguments: [],
-        dataUrl: "%UNITY_WEBGL_DATA_URL%",
-        frameworkUrl: "%UNITY_WEBGL_FRAMEWORK_URL%",
-        codeUrl: "%UNITY_WEBGL_CODE_URL%",
-        streamingAssetsUrl: "%UNITY_WEBGL_STREAMING_ASSETS_URL%",
-        companyName: "%UNITY_COMPANY_NAME%",
-        productName: "%UNITY_WEB_NAME%",
-        productVersion: "%UNITY_PRODUCT_VERSION%",
+        dataUrl: "Build/WebGL.data.br",
+        frameworkUrl: "Build/WebGL.framework.js.br",
+        codeUrl: "Build/WebGL.wasm.br",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "MrBytesized",
+        productName: "HonoursProject",
+        productVersion: "0.5",
       }).then((unityInstance) => {
         console.log("Unity game instance loaded.");
       }).catch((message) => {

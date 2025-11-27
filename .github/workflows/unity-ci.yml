@@ -8,8 +8,8 @@ on:
 
 permissions:
   contents: read
-  checks: write 
-  pull-requests: write 
+  checks: write
+  pull-requests: write
 
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -20,7 +20,7 @@ jobs:
 
   testAllModes:
     name: Test in ${{ matrix.testMode }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ubuntu-mini-pc]
     strategy:
       fail-fast: false
       matrix:
@@ -30,13 +30,6 @@ jobs:
           - editmode
     
     steps:
-      - name: Free up disk space on runner 🗑️
-        run: |
-          echo "Clearing large SDKs for Docker image pull..."
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -60,6 +53,7 @@ jobs:
           testMode: ${{ matrix.testMode }}
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           coverageOptions: 'generateAdditionalMetrics;generateHtmlReport;generateBadgeReport;assemblyFilters:+my.assembly.*'
+          runAsHostUser: true
           
       - name: Upload Test Results Artifact
         uses: actions/upload-artifact@v4
@@ -71,17 +65,10 @@ jobs:
   buildWebGL:
     needs: testAllModes
     name: Build WebGL
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ubuntu-mini-pc]
     if: github.ref_name != 'development'
     
-    steps:
-      - name: Free up disk space on runner 🗑️
-        run: |
-          echo "Clearing large SDKs for Build image pull..."
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-
+    steps:      
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -102,9 +89,21 @@ jobs:
         with:
           targetPlatform: WebGL
           projectPath: "DynamicDungeon_Tool"
+          runAsHostUser: true
           
       - name: Upload WebGL Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.ref_name }}-WebGL-Build
           path: build/WebGL
+          
+      - name: Deploy to Itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_CREDENTIALS }}
+        run: |
+          # Securely download and use the official butler CLI
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip -o butler.zip
+          chmod +x butler
+          
+          ./butler push build/WebGL mrbytesized/honoursprojectdemos:webgl --userversion ${{ github.ref_name }}-${{ github.run_number }}
