@@ -9,10 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d1514134bc4fbd41bb739b1b9a49231, type: 3}
-  m_Name: FloorTile
+  m_Script: {fileID: 11500000, guid: 12c2626f2d8b19648afa289cf5e06cdf, type: 3}
+  m_Name: TopDown
   m_EditorClassIdentifier: 
-  m_DefaultSprite: {fileID: 21300000, guid: a7f6156ba0131b449a3d880f8ba57b11, type: 3}
-  m_DefaultGameObject: {fileID: 0}
-  m_DefaultColliderType: 1
-  m_TilingRules: []
+  gravityDirection: {x: 0, y: 0}
+  physicsIterations: 0

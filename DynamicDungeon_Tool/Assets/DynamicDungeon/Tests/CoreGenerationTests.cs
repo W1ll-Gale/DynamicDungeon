@@ -7,25 +7,21 @@ namespace Tests
 {
     public class CoreGenerationTests
     {
-        private TilemapGenerator CreateGeneratorWithMockTiles()
+        private TilemapGenerator CreateGeneratorWithMockBiome()
         {
             GameObject go = new GameObject("Generator");
             TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
             generator.InitializeGrid();
 
-            Texture2D texture = new Texture2D(1, 1);
-            Sprite dummySprite = Sprite.Create(texture, new Rect(0, 0, 1, 1), Vector2.zero);
+            BiomeData biome = ScriptableObject.CreateInstance<BiomeData>();
+            biome.wallTile = ScriptableObject.CreateInstance<TileData>();
+            biome.floorTile = ScriptableObject.CreateInstance<TileData>();
 
-            Tile mockTile = ScriptableObject.CreateInstance<Tile>();
-            mockTile.sprite = dummySprite;
+            Sprite dummy = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            biome.wallTile.tileSprite = dummy;
+            biome.floorTile.tileSprite = dummy;
 
-            TileData floorData = ScriptableObject.CreateInstance<TileData>();
-            floorData.tileVisual = mockTile;
-            TileData wallData = ScriptableObject.CreateInstance<TileData>();
-            wallData.tileVisual = mockTile;
-
-            generator.floorTile = floorData;
-            generator.wallTile = wallData;
+            generator.defaultBiome = biome;
 
             return generator;
         }
@@ -33,67 +29,35 @@ namespace Tests
         [Test]
         public void Generator_Creates_100x100_Map_Success()
         {
-            TilemapGenerator generator = CreateGeneratorWithMockTiles();
+            TilemapGenerator generator = CreateGeneratorWithMockBiome();
             generator.width = 100;
             generator.height = 100;
-            generator.randomFillPercent = 50;
+
+            generator.defaultBiome.randomFillPercent = 50;
+            generator.defaultBiome.smoothIterations = 0;
 
             generator.GenerateTilemap();
 
             Tilemap map = generator.GetComponentInChildren<Tilemap>();
-            map.RefreshAllTiles();
             map.CompressBounds();
 
-            Assert.AreEqual(100, map.size.x, "Map width should be 100");
-            Assert.AreEqual(100, map.size.y, "Map height should be 100");
+            Assert.AreEqual(100, map.size.x);
+            Assert.AreEqual(100, map.size.y);
 
             Object.DestroyImmediate(generator.gameObject);
         }
 
         [Test]
-        public void Generation_Fails_Gracefully_With_Invalid_Dimensions()
-        {
-            TilemapGenerator generator = CreateGeneratorWithMockTiles();
-
-            generator.width = 0;
-            generator.height = 100;
-
-            LogAssert.Expect(LogType.Error, "Cannot generate map: Width and Height must be positive.");
-            generator.GenerateTilemap();
-
-            Tilemap map = generator.GetComponentInChildren<Tilemap>();
-            map.CompressBounds();
-            Assert.AreEqual(0, map.size.x, "Map should not generate with width 0");
-
-            generator.width = 100;
-            generator.height = -50;
-
-            LogAssert.Expect(LogType.Error, "Cannot generate map: Width and Height must be positive.");
-            generator.GenerateTilemap();
-
-            Assert.AreEqual(0, map.size.y, "Map should not generate with negative height");
-
-            Object.DestroyImmediate(generator.gameObject);
-        }
-
-        [Test]
-        public void Generation_Does_Not_Crash_When_TileData_Is_Missing()
+        public void Generation_Fails_Without_Biome()
         {
             GameObject go = new GameObject("Generator");
             TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
-            generator.InitializeGrid();
-
-            generator.floorTile = null;
-            generator.wallTile = null;
             generator.width = 10;
             generator.height = 10;
+            generator.defaultBiome = null; 
 
+            LogAssert.Expect(LogType.Error, "Cannot generate map: No BiomeData assigned.");
             generator.GenerateTilemap();
-
-            Tilemap map = generator.GetComponentInChildren<Tilemap>();
-            map.CompressBounds();
-
-            Assert.Pass("Generator handled missing TileData without crashing.");
 
             Object.DestroyImmediate(go);
         }

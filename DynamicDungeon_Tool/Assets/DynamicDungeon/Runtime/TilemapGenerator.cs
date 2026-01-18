@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -8,38 +9,21 @@ public class TilemapGenerator : MonoBehaviour
     [Header("References")]
     public Tilemap tilemap;
 
-    [Header("Data Architecture (Phase 1)")]
-    /// <summary>
-    /// The default biome configuration to use if no specific region map is generated.
-    /// </summary>
+    [Header("Configuration")]
     public BiomeData defaultBiome;
-
-    /// <summary>
-    /// Global settings for physics and simulation steps.
-    /// </summary>
     public GenerationProfile generationProfile;
 
-    [Header("Legacy Settings (Deprecated)")]
-    public TileData floorTile;
-    public TileData wallTile;
-
-    [Header("Settings")]
+    [Header("Map Settings")]
     public int width = 100;
     public int height = 100;
-
-    [Range(0, 100)]
-    public int randomFillPercent = 45;
-
-    [Header("Cellular Automata")]
-    [Range(0, 10)]
-    public int smoothIterations = 5;
-
     public bool useBorderWalls = true;
 
+    [Header("Seed Settings")]
     public string seed;
     public bool useRandomSeed = true;
 
     public int[,] CurrentMapData { get; private set; }
+    public Dictionary<Vector2Int, TileData> CurrentResourceData { get; private set; }
 
     private static long _autoSeedCounter = 0;
 
@@ -53,29 +37,38 @@ public class TilemapGenerator : MonoBehaviour
             return;
         }
 
-        if (useRandomSeed)
+        if (defaultBiome == null)
         {
-            seed = GenerateRandomSeed();
+            Debug.LogError("Cannot generate map: No BiomeData assigned.");
+            return;
         }
 
-        // TODO (Phase 2): Inject BiomeData logic here. 
-        // Currently using Legacy fields to maintain Test compatibility.
-        CurrentMapData = GenerateMapData(width, height, seed, randomFillPercent, useBorderWalls);
+        if (useRandomSeed) seed = GenerateRandomSeed();
 
-        for (int i = 0; i < smoothIterations; i++)
+        CurrentMapData = GenerateMapData(width, height, seed, defaultBiome.randomFillPercent, useBorderWalls);
+
+        for (int i = 0; i < defaultBiome.smoothIterations; i++)
         {
             CurrentMapData = SmoothMap(CurrentMapData);
         }
 
-        RenderMap(CurrentMapData, tilemap);
+        if (defaultBiome.resources != null)
+        {
+            CurrentResourceData = GenerateResources(CurrentMapData, defaultBiome, seed);
+        }
+        else
+        {
+            CurrentResourceData = new Dictionary<Vector2Int, TileData>();
+        }
+
+        RenderMap(CurrentMapData, CurrentResourceData, tilemap);
     }
 
     public void InitializeGrid()
     {
         if (tilemap == null)
         {
-            if (GetComponent<Grid>() == null)
-                gameObject.AddComponent<Grid>();
+            if (GetComponent<Grid>() == null) gameObject.AddComponent<Grid>();
 
             TilemapRenderer rend = GetComponentInChildren<TilemapRenderer>();
             if (rend == null)
@@ -101,7 +94,6 @@ public class TilemapGenerator : MonoBehaviour
     public int[,] GenerateMapData(int w, int h, string currentSeed, int fillPercent, bool edgesAreWalls)
     {
         if (w <= 0 || h <= 0) return new int[0, 0];
-
         int[,] newMap = new int[w, h];
         System.Random pseudoRandom = new System.Random(currentSeed.GetHashCode());
 
@@ -126,7 +118,6 @@ public class TilemapGenerator : MonoBehaviour
     {
         int w = mapData.GetLength(0);
         int h = mapData.GetLength(1);
-
         int[,] newMap = new int[w, h];
 
         for (int x = 0; x < w; x++)
@@ -141,21 +132,11 @@ public class TilemapGenerator : MonoBehaviour
 
                 int neighborWallCount = GetSurroundingWallCount(x, y, mapData);
 
-                if (neighborWallCount > 4)
-                {
-                    newMap[x, y] = 1;
-                }
-                else if (neighborWallCount < 4)
-                {
-                    newMap[x, y] = 0;
-                }
-                else
-                {
-                    newMap[x, y] = mapData[x, y];
-                }
+                if (neighborWallCount > 4) newMap[x, y] = 1;
+                else if (neighborWallCount < 4) newMap[x, y] = 0;
+                else newMap[x, y] = mapData[x, y];
             }
         }
-
         return newMap;
     }
 
@@ -170,33 +151,61 @@ public class TilemapGenerator : MonoBehaviour
             for (int neighborY = gridY - 1; neighborY <= gridY + 1; neighborY++)
             {
                 if (neighborX == gridX && neighborY == gridY) continue;
-
                 if (neighborX >= 0 && neighborX < w && neighborY >= 0 && neighborY < h)
-                {
                     wallCount += mapData[neighborX, neighborY];
-                }
                 else
-                {
                     wallCount++;
-                }
             }
         }
         return wallCount;
     }
 
-    public void RenderMap(int[,] mapData, Tilemap mapComponent)
+    public Dictionary<Vector2Int, TileData> GenerateResources(int[,] mapData, BiomeData biome, string seed)
     {
-        if (mapComponent == null) return;
+        Dictionary<Vector2Int, TileData> resources = new Dictionary<Vector2Int, TileData>();
+        System.Random prng = new System.Random(seed.GetHashCode() + 1);
+
+        int w = mapData.GetLength(0);
+        int h = mapData.GetLength(1);
+
+        for (int x = 0; x < w; x++)
+        {
+            for (int y = 0; y < h; y++)
+            {
+                bool isWall = (mapData[x, y] == 1);
+
+                foreach (BiomeData.BiomeResource resource in biome.resources)
+                {
+                    if (resource.resourceTile == null) continue;
+
+                    if (isWall == resource.spawnsInWalls)
+                    {
+                        if (prng.NextDouble() < resource.spawnChance)
+                        {
+                            resources[new Vector2Int(x, y)] = resource.resourceTile;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return resources;
+    }
+
+    public void RenderMap(int[,] mapData, Dictionary<Vector2Int, TileData> resourceData, Tilemap mapComponent)
+    {
+        if (mapComponent == null || defaultBiome == null) return;
 
         mapComponent.ClearAllTiles();
+
+        TileData activeWall = defaultBiome.wallTile;
+        TileData activeFloor = defaultBiome.floorTile;
 
         int w = mapData.GetLength(0);
         int h = mapData.GetLength(1);
         int totalTiles = w * h;
-
         const int batchSize = 10000;
         int index = 0;
-
         int xOffset = -(w / 2);
         int yOffset = -(h / 2);
 
@@ -214,15 +223,19 @@ public class TilemapGenerator : MonoBehaviour
 
                 if (x < w && y < h)
                 {
+                    Vector2Int gridPos = new Vector2Int(x, y);
                     positions[i] = new Vector3Int(x + xOffset, y + yOffset, 0);
 
-                    if (mapData[x, y] == 1)
+                    if (resourceData != null && resourceData.TryGetValue(gridPos, out TileData resTile))
                     {
-                        tileArray[i] = (wallTile != null) ? wallTile.tileVisual : null;
+                        tileArray[i] = resTile.GetTileBase();
                     }
                     else
                     {
-                        tileArray[i] = (floorTile != null) ? floorTile.tileVisual : null;
+                        if (mapData[x, y] == 1)
+                            tileArray[i] = (activeWall != null) ? activeWall.GetTileBase() : null;
+                        else
+                            tileArray[i] = (activeFloor != null) ? activeFloor.GetTileBase() : null;
                     }
                 }
             }
@@ -234,10 +247,8 @@ public class TilemapGenerator : MonoBehaviour
 
     public void ClearGeneratedMap()
     {
-        if (tilemap != null)
-        {
-            tilemap.ClearAllTiles();
-        }
+        if (tilemap != null) tilemap.ClearAllTiles();
         CurrentMapData = null;
+        CurrentResourceData = null;
     }
 }

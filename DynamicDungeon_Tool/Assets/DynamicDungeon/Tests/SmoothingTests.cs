@@ -40,7 +40,6 @@ namespace Tests
             rawMap[2, 2] = 1; 
             int[,] smoothedMap = generator.SmoothMap(rawMap);
 
-            // Assert
             Assert.AreEqual(0, smoothedMap[2, 2], "Isolated wall should be removed (neighbors < 4).");
 
             Object.DestroyImmediate(generator.gameObject);
@@ -53,8 +52,13 @@ namespace Tests
 
             int[,] rawMap = new int[5, 5];
             for (int x = 0; x < 5; x++)
+            {
                 for (int y = 0; y < 5; y++)
-                    rawMap[x, y] = 1; 
+                {
+                    rawMap[x, y] = 1;
+
+                }
+            }
 
             rawMap[2, 2] = 0; 
 

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: de78dec033f57b046b6928ebf7049b43
+guid: 90cb5ba03a984404fab84cd508b53cb4
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9079460636883757067
-    second: defaultFloor_0
+      213: 4334826270520439836
+    second: CobbleStoneSprite_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 512
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: defaultFloor_0
+      name: CobbleStoneSprite_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 512
-        height: 512
+        width: 16
+        height: 16
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b08299d1859b00e70800000000000000
-      internalID: 9079460636883757067
+      spriteID: c14f661b685682c30800000000000000
+      internalID: 4334826270520439836
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      defaultFloor_0: 9079460636883757067
+      CobbleStoneSprite_0: 4334826270520439836
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

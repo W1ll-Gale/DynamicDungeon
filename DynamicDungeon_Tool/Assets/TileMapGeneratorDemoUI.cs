@@ -23,10 +23,10 @@ public class TileMapGeneratorDemoUI : MonoBehaviour
 
     void Start()
     {
-        randomFillPercentageSlider.value = (float)tileMapGenerator.randomFillPercent / 100f;
-        randomFillPercentageValueText.text = $"Random Fill {tileMapGenerator.randomFillPercent}%";
-        smoothingIterationsSlider.value = (float)tileMapGenerator.smoothIterations / 10f;
-        smoothingIterationsValueText.text = $"Smoothing Iterations {tileMapGenerator.smoothIterations}";
+        //randomFillPercentageSlider.value = (float)tileMapGenerator.randomFillPercent / 100f;
+        //randomFillPercentageValueText.text = $"Random Fill {tileMapGenerator.randomFillPercent}%";
+        //smoothingIterationsSlider.value = (float)tileMapGenerator.smoothIterations / 10f;
+        //smoothingIterationsValueText.text = $"Smoothing Iterations {tileMapGenerator.smoothIterations}";
         fillToScreenSize.isOn = false;
         useBorderWallsToggle.isOn = tileMapGenerator.useBorderWalls;
         seedInputField.text = tileMapGenerator.seed;
@@ -107,22 +107,22 @@ public class TileMapGeneratorDemoUI : MonoBehaviour
             seedInputField.interactable = !isOn;
         });
 
-        randomFillPercentageSlider.onValueChanged.AddListener((value) =>
-        {
-            tileMapGenerator.randomFillPercent = (int)(value*100);
-            randomFillPercentageValueText.text = $"Random Fill {tileMapGenerator.randomFillPercent}%";
-        });
+        //randomFillPercentageSlider.onValueChanged.AddListener((value) =>
+        //{
+        //    tileMapGenerator.randomFillPercent = (int)(value*100);
+        //    randomFillPercentageValueText.text = $"Random Fill {tileMapGenerator.randomFillPercent}%";
+        //});
 
-        smoothingIterationsSlider.onValueChanged.AddListener((value) =>
-        {
-            tileMapGenerator.smoothIterations = (int)(value * 10);
-            smoothingIterationsValueText.text = $"Smoothing Iterations {tileMapGenerator.smoothIterations}";
-        });
+        //smoothingIterationsSlider.onValueChanged.AddListener((value) =>
+        //{
+        //    tileMapGenerator.smoothIterations = (int)(value * 10);
+        //    smoothingIterationsValueText.text = $"Smoothing Iterations {tileMapGenerator.smoothIterations}";
+        //});
 
         generateButton.onClick.AddListener(() =>
         {
-            tileMapGenerator.randomFillPercent = (int)(randomFillPercentageSlider.value*100);
-            tileMapGenerator.smoothIterations = (int)(smoothingIterationsSlider.value * 10);
+            //tileMapGenerator.randomFillPercent = (int)(randomFillPercentageSlider.value*100);
+            //tileMapGenerator.smoothIterations = (int)(smoothingIterationsSlider.value * 10);
             tileMapGenerator.useBorderWalls = useBorderWallsToggle.isOn;
             tileMapGenerator.useRandomSeed = useRandomSeedToggle.isOn;
             tileMapGenerator.seed = seedInputField.text;
