@@ -7,6 +7,19 @@ public class TilemapGenerator : MonoBehaviour
 {
     [Header("References")]
     public Tilemap tilemap;
+
+    [Header("Data Architecture (Phase 1)")]
+    /// <summary>
+    /// The default biome configuration to use if no specific region map is generated.
+    /// </summary>
+    public BiomeData defaultBiome;
+
+    /// <summary>
+    /// Global settings for physics and simulation steps.
+    /// </summary>
+    public GenerationProfile generationProfile;
+
+    [Header("Legacy Settings (Deprecated)")]
     public TileData floorTile;
     public TileData wallTile;
 
@@ -19,7 +32,7 @@ public class TilemapGenerator : MonoBehaviour
 
     [Header("Cellular Automata")]
     [Range(0, 10)]
-    public int smoothIterations = 5; 
+    public int smoothIterations = 5;
 
     public bool useBorderWalls = true;
 
@@ -45,6 +58,8 @@ public class TilemapGenerator : MonoBehaviour
             seed = GenerateRandomSeed();
         }
 
+        // TODO (Phase 2): Inject BiomeData logic here. 
+        // Currently using Legacy fields to maintain Test compatibility.
         CurrentMapData = GenerateMapData(width, height, seed, randomFillPercent, useBorderWalls);
 
         for (int i = 0; i < smoothIterations; i++)
