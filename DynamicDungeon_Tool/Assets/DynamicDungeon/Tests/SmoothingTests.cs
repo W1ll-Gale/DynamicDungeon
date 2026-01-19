@@ -26,7 +26,10 @@ namespace Tests
             biome.smoothIterations = 5;
 
             RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
-            regions.biomes = new List<BiomeData> { biome };
+            regions.biomes = new List<WeightedBiome>
+            {
+                new WeightedBiome { biome = biome, weight = 50 }
+            };
             generator.regionSettings = regions;
 
             return generator;

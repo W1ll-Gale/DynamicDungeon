@@ -9,10 +9,14 @@ namespace Tests
         private RegionSettings CreateMockSettings(int biomeCount)
         {
             RegionSettings settings = ScriptableObject.CreateInstance<RegionSettings>();
-            settings.biomes = new List<BiomeData>();
+            settings.biomes = new List<WeightedBiome>();
             for (int i = 0; i < biomeCount; i++)
             {
-                settings.biomes.Add(ScriptableObject.CreateInstance<BiomeData>());
+                settings.biomes.Add(new WeightedBiome
+                {
+                    biome = ScriptableObject.CreateInstance<BiomeData>(),
+                    weight = 10
+                });
             }
             return settings;
         }
@@ -78,6 +82,47 @@ namespace Tests
                     Assert.Less(regions[x, y], 5);
                 }
             }
+        }
+
+        [Test]
+        public void Weighted_Biomes_Respect_Rarity()
+        {
+            RegionSettings settings = ScriptableObject.CreateInstance<RegionSettings>();
+            settings.biomes = new List<WeightedBiome>();
+
+            settings.biomes.Add(new WeightedBiome
+            {
+                biome = ScriptableObject.CreateInstance<BiomeData>(),
+                weight = 100
+            });
+
+            settings.biomes.Add(new WeightedBiome
+            {
+                biome = ScriptableObject.CreateInstance<BiomeData>(),
+                weight = 1
+            });
+
+            settings.algorithm = RegionAlgorithm.Voronoi;
+            settings.voronoiNumSites = 1000; 
+
+            int w = 100;
+            int h = 100;
+
+            int[,] map = RegionGenerator.GenerateRegionMap(w, h, settings, "SeedForWeights");
+
+            int commonCount = 0;
+            int rareCount = 0;
+
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    if (map[x, y] == 0) commonCount++;
+                    else rareCount++;
+                }
+            }
+
+            Assert.Greater(commonCount, rareCount, "Common biome should appear more often than rare biome.");
         }
     }
 }

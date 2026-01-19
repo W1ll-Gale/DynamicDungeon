@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   biomeName: ice_biome
   debugColor: {r: 1, g: 1, b: 1, a: 1}
-  randomFillPercent: 45
+  randomFillPercent: 46
   smoothIterations: 5
   wallTile: {fileID: 11400000, guid: b15933ceced899f4bb92c236f1c1d8df, type: 2}
   floorTile: {fileID: 11400000, guid: 81862606231db4e47a78436f389579cb, type: 2}

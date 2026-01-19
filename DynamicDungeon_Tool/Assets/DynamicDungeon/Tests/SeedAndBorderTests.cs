@@ -19,7 +19,10 @@ namespace Tests
             biome.floorTile = ScriptableObject.CreateInstance<TileData>();
 
             RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
-            regions.biomes = new List<BiomeData> { biome };
+            regions.biomes = new List<WeightedBiome>
+            {
+                new WeightedBiome { biome = biome, weight = 50 }
+            };
             regions.algorithm = RegionAlgorithm.Voronoi;
             regions.voronoiNumSites = 1; 
 
@@ -73,7 +76,7 @@ namespace Tests
             generator.height = 20;
             generator.useBorderWalls = true;
 
-            generator.regionSettings.biomes[0].randomFillPercent = 0;
+            generator.regionSettings.biomes[0].biome.randomFillPercent = 0;
 
             generator.GenerateTilemap();
             int[,] map = generator.CurrentMapData;
@@ -91,7 +94,7 @@ namespace Tests
             generator.height = 30;
             generator.useBorderWalls = false;
 
-            generator.regionSettings.biomes[0].randomFillPercent = 0;
+            generator.regionSettings.biomes[0].biome.randomFillPercent = 0;
 
             generator.GenerateTilemap();
             int[,] map = generator.CurrentMapData;

@@ -1,9 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
-/// <summary>
-/// Static helper to generate biome region maps (integers representing indices in a biome list).
-/// </summary>
 public static class RegionGenerator
 {
     public static int[,] GenerateRegionMap(int width, int height, RegionSettings settings, string seed)
@@ -11,7 +9,7 @@ public static class RegionGenerator
         if (settings == null || settings.biomes == null || settings.biomes.Count == 0)
         {
             Debug.LogError("RegionGenerator: No settings or biomes provided.");
-            return new int[width, height]; 
+            return new int[width, height];
         }
 
         System.Random prng = new System.Random(seed.GetHashCode());
@@ -27,10 +25,25 @@ public static class RegionGenerator
         }
     }
 
+    private static int GetWeightedRandomIndex(List<WeightedBiome> biomes, System.Random prng)
+    {
+        int totalWeight = 0;
+        foreach (var b in biomes) totalWeight += b.weight;
+
+        int randomValue = prng.Next(0, totalWeight);
+        int currentSum = 0;
+
+        for (int i = 0; i < biomes.Count; i++)
+        {
+            currentSum += biomes[i].weight;
+            if (randomValue < currentSum) return i;
+        }
+        return biomes.Count - 1; 
+    }
+
     private static int[,] GenerateVoronoi(int w, int h, RegionSettings settings, System.Random prng)
     {
         int[,] map = new int[w, h];
-        int biomeCount = settings.biomes.Count;
         int sitesCount = settings.voronoiNumSites;
 
         Vector2Int[] sites = new Vector2Int[sitesCount];
@@ -39,7 +52,8 @@ public static class RegionGenerator
         for (int i = 0; i < sitesCount; i++)
         {
             sites[i] = new Vector2Int(prng.Next(0, w), prng.Next(0, h));
-            siteBiomeIndices[i] = prng.Next(0, biomeCount);
+
+            siteBiomeIndices[i] = GetWeightedRandomIndex(settings.biomes, prng);
         }
 
         for (int x = 0; x < w; x++)
@@ -58,11 +72,9 @@ public static class RegionGenerator
                         closestSiteIndex = i;
                     }
                 }
-
                 map[x, y] = siteBiomeIndices[closestSiteIndex];
             }
         }
-
         return map;
     }
 
@@ -70,6 +82,17 @@ public static class RegionGenerator
     {
         int[,] map = new int[w, h];
         int biomeCount = settings.biomes.Count;
+
+        float totalWeight = 0;
+        foreach (var b in settings.biomes) totalWeight += b.weight;
+
+        float[] thresholds = new float[biomeCount];
+        float currentSum = 0;
+        for (int i = 0; i < biomeCount; i++)
+        {
+            currentSum += settings.biomes[i].weight;
+            thresholds[i] = currentSum / totalWeight;
+        }
 
         System.Random prng = new System.Random(seed.GetHashCode());
         float offsetX = prng.Next(-10000, 10000);
@@ -81,16 +104,20 @@ public static class RegionGenerator
             {
                 float xCoord = (float)x * settings.perlinScale + offsetX;
                 float yCoord = (float)y * settings.perlinScale + offsetY;
-
                 float sample = Mathf.Clamp01(Mathf.PerlinNoise(xCoord, yCoord));
 
-                int biomeIndex = Mathf.FloorToInt(sample * biomeCount);
-                if (biomeIndex >= biomeCount) biomeIndex = biomeCount - 1;
-
-                map[x, y] = biomeIndex;
+                int selectedIndex = 0;
+                for (int i = 0; i < biomeCount; i++)
+                {
+                    if (sample <= thresholds[i])
+                    {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+                map[x, y] = selectedIndex;
             }
         }
-
         return map;
     }
 }

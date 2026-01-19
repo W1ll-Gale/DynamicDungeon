@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: StoneBiome
   m_EditorClassIdentifier: 
   biomeName: stone_biome
-  debugColor: {r: 1, g: 1, b: 1, a: 1}
+  debugColor: {r: 1, g: 0, b: 0, a: 1}
   randomFillPercent: 45
   smoothIterations: 5
   wallTile: {fileID: 11400000, guid: d015b654e7d3aea478d8fdc30ddb6e6e, type: 2}

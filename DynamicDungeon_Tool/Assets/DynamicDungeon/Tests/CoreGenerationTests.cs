@@ -25,7 +25,10 @@ namespace Tests
             biome.floorTile.tileSprite = dummy;
 
             RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
-            regions.biomes = new List<BiomeData> { biome };
+            regions.biomes = new List<WeightedBiome>
+            {
+                new WeightedBiome { biome = biome, weight = 50 }
+            };
             regions.algorithm = RegionAlgorithm.Voronoi;
             regions.voronoiNumSites = 1; 
 

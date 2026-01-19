@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,23 +8,28 @@ public enum RegionAlgorithm
     PerlinNoise
 }
 
-/// <summary>
-/// Defines how biomes are distributed across the map.
-/// </summary>
+[Serializable]
+public struct WeightedBiome
+{
+    public BiomeData biome;
+
+    [Range(1, 100)]
+    public int weight; 
+}
+
 [CreateAssetMenu(fileName = "NewRegionSettings", menuName = "DynamicDungeon/Region Settings")]
 public class RegionSettings : ScriptableObject
 {
     [Header("Biome Palette")]
-    public List<BiomeData> biomes;
+
+    public List<WeightedBiome> biomes = new List<WeightedBiome>();
 
     [Header("Algorithm Settings")]
     public RegionAlgorithm algorithm = RegionAlgorithm.Voronoi;
 
     [Header("Voronoi Settings")]
-    [Tooltip("Number of biome 'sites' or centers scattered on the map.")]
     public int voronoiNumSites = 5;
 
     [Header("Perlin Settings")]
     public float perlinScale = 0.1f;
-    public float perlinThreshold = 0.5f; 
 }

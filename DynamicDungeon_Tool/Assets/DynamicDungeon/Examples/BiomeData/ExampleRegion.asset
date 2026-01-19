@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 183380197550e3942976c005aa458bbc, type: 3}
   m_Name: ExampleRegion
   m_EditorClassIdentifier: 
-  biomes: []
-  algorithm: 0
+  biomes:
+  - biome: {fileID: 11400000, guid: 049807d370719e44c9cf0737bb26289f, type: 2}
+    weight: 1
+  - biome: {fileID: 11400000, guid: 4740fe5c41d0f9c40a92147ff1fc6c67, type: 2}
+    weight: 1
+  algorithm: 1
   voronoiNumSites: 5
   perlinScale: 0.1
-  perlinThreshold: 0.5

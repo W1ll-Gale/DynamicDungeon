@@ -38,7 +38,10 @@ namespace Tests
             };
 
             RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
-            regions.biomes = new List<BiomeData> { biome };
+            regions.biomes = new List<WeightedBiome>
+            {
+                new WeightedBiome { biome = biome, weight = 50 }
+            };
             generator.regionSettings = regions;
 
             int width = 10;
@@ -86,7 +89,10 @@ namespace Tests
             };
 
             RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
-            regions.biomes = new List<BiomeData> { biome };
+            regions.biomes = new List<WeightedBiome>
+            {
+                new WeightedBiome { biome = biome, weight = 50 }
+            };
             generator.regionSettings = regions;
 
             int[,] allWallsMap = new int[10, 10];

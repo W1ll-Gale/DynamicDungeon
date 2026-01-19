@@ -45,9 +45,9 @@ public class TilemapGenerator : MonoBehaviour
         CurrentMapData = GenerateBiomeAwareMapData(width, height, seed, useBorderWalls);
 
         int maxIterations = 0;
-        foreach (var b in regionSettings.biomes)
+        foreach (WeightedBiome weightedBiome in regionSettings.biomes)
         {
-            if (b.smoothIterations > maxIterations) maxIterations = b.smoothIterations;
+            if (weightedBiome.biome.smoothIterations > maxIterations) maxIterations = weightedBiome.biome.smoothIterations;
         }
 
         for (int i = 0; i < maxIterations; i++)
@@ -103,7 +103,7 @@ public class TilemapGenerator : MonoBehaviour
                 else
                 {
                     int biomeIdx = CurrentRegionMap[x, y];
-                    BiomeData biome = regionSettings.biomes[biomeIdx];
+                    BiomeData biome = regionSettings.biomes[biomeIdx].biome;
 
                     newMap[x, y] = (pseudoRandom.Next(0, 100) < biome.randomFillPercent) ? 1 : 0;
                 }
@@ -129,7 +129,7 @@ public class TilemapGenerator : MonoBehaviour
                 }
 
                 int biomeIdx = CurrentRegionMap[x, y];
-                BiomeData biome = regionSettings.biomes[biomeIdx];
+                BiomeData biome = regionSettings.biomes[biomeIdx].biome;
 
                 if (currentIterationIndex >= biome.smoothIterations)
                 {
@@ -180,7 +180,7 @@ public class TilemapGenerator : MonoBehaviour
             for (int y = 0; y < h; y++)
             {
                 int biomeIdx = CurrentRegionMap[x, y];
-                BiomeData biome = regionSettings.biomes[biomeIdx];
+                BiomeData biome = regionSettings.biomes[biomeIdx].biome;
 
                 if (biome.resources == null) continue;
 
@@ -236,7 +236,7 @@ public class TilemapGenerator : MonoBehaviour
                     positions[i] = new Vector3Int(x + xOffset, y + yOffset, 0);
 
                     int biomeIdx = regionData[x, y];
-                    BiomeData biome = regionSettings.biomes[biomeIdx];
+                    BiomeData biome = regionSettings.biomes[biomeIdx].biome;
 
                     if (resourceData != null && resourceData.TryGetValue(gridPos, out TileData resTile))
                     {
@@ -283,7 +283,7 @@ public class TilemapGenerator : MonoBehaviour
                 int biomeIdx = CurrentRegionMap[x, y];
                 if (biomeIdx < regionSettings.biomes.Count)
                 {
-                    Gizmos.color = regionSettings.biomes[biomeIdx].debugColor;
+                    Gizmos.color = regionSettings.biomes[biomeIdx].biome.debugColor;
                     Vector3 pos = new Vector3(x + xOffset + 0.5f, y + yOffset + 0.5f, 0);
                     Gizmos.DrawCube(pos, new Vector3(2, 2, 0.1f));
                 }
