@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Tests
 {
@@ -11,9 +12,18 @@ namespace Tests
             TilemapGenerator generator = gameObject.AddComponent<TilemapGenerator>();
             generator.InitializeGrid();
 
-            generator.defaultBiome = ScriptableObject.CreateInstance<BiomeData>();
-            generator.defaultBiome.randomFillPercent = 50;
-            generator.defaultBiome.smoothIterations = 0;
+            BiomeData biome = ScriptableObject.CreateInstance<BiomeData>();
+            biome.randomFillPercent = 50;
+            biome.smoothIterations = 0;
+            biome.wallTile = ScriptableObject.CreateInstance<TileData>(); 
+            biome.floorTile = ScriptableObject.CreateInstance<TileData>();
+
+            RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
+            regions.biomes = new List<BiomeData> { biome };
+            regions.algorithm = RegionAlgorithm.Voronoi;
+            regions.voronoiNumSites = 1; 
+
+            generator.regionSettings = regions;
 
             return generator;
         }
@@ -62,7 +72,8 @@ namespace Tests
             generator.width = 20;
             generator.height = 20;
             generator.useBorderWalls = true;
-            generator.defaultBiome.randomFillPercent = 0; 
+
+            generator.regionSettings.biomes[0].randomFillPercent = 0;
 
             generator.GenerateTilemap();
             int[,] map = generator.CurrentMapData;
@@ -80,7 +91,7 @@ namespace Tests
             generator.height = 30;
             generator.useBorderWalls = false;
 
-            generator.defaultBiome.randomFillPercent = 0;
+            generator.regionSettings.biomes[0].randomFillPercent = 0;
 
             generator.GenerateTilemap();
             int[,] map = generator.CurrentMapData;

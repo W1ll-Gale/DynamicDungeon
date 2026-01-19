@@ -1,11 +1,21 @@
 ﻿using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Reflection; 
 
 namespace Tests
 {
     public class ResourceGenerationTests
     {
+        private void InjectRegionMap(TilemapGenerator generator, int[,] regionMap)
+        {
+            PropertyInfo prop = typeof(TilemapGenerator).GetProperty("CurrentRegionMap");
+            if (prop != null)
+            {
+                prop.SetValue(generator, regionMap);
+            }
+        }
+
         [Test]
         public void Resources_Spawn_According_To_Rules()
         {
@@ -14,8 +24,6 @@ namespace Tests
             generator.InitializeGrid();
 
             BiomeData biome = ScriptableObject.CreateInstance<BiomeData>();
-            generator.defaultBiome = biome;
-
             TileData oreTile = ScriptableObject.CreateInstance<TileData>();
             oreTile.tileID = "GoldOre";
 
@@ -29,18 +37,23 @@ namespace Tests
                 }
             };
 
+            RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
+            regions.biomes = new List<BiomeData> { biome };
+            generator.regionSettings = regions;
+
             int width = 10;
             int height = 10;
+
             int[,] allWallsMap = new int[width, height];
             for (int x = 0; x < width; x++)
-            {
                 for (int y = 0; y < height; y++)
-                {
                     allWallsMap[x, y] = 1;
-                }
-            }
- 
-            Dictionary<Vector2Int, TileData> resources = generator.GenerateResources(allWallsMap, biome, "seed");
+
+            int[,] regionMap = new int[width, height]; 
+
+            InjectRegionMap(generator, regionMap);
+
+            Dictionary<Vector2Int, TileData> resources = generator.GenerateBiomeAwareResources(allWallsMap, "seed");
 
             Assert.Greater(resources.Count, 0, "Resources should spawn given 100% chance.");
 
@@ -60,8 +73,8 @@ namespace Tests
             generator.InitializeGrid();
 
             BiomeData biome = ScriptableObject.CreateInstance<BiomeData>();
-
             TileData grassTile = ScriptableObject.CreateInstance<TileData>();
+
             biome.resources = new List<BiomeData.BiomeResource>
             {
                 new BiomeData.BiomeResource
@@ -72,16 +85,20 @@ namespace Tests
                 }
             };
 
+            RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
+            regions.biomes = new List<BiomeData> { biome };
+            generator.regionSettings = regions;
+
             int[,] allWallsMap = new int[10, 10];
             for (int x = 0; x < 10; x++)
-            {
                 for (int y = 0; y < 10; y++)
-                {
                     allWallsMap[x, y] = 1;
-                }
-            }
 
-            Dictionary<Vector2Int, TileData> resources = generator.GenerateResources(allWallsMap, biome, "seed");
+            int[,] regionMap = new int[10, 10];
+
+            InjectRegionMap(generator, regionMap);
+
+            Dictionary<Vector2Int, TileData> resources = generator.GenerateBiomeAwareResources(allWallsMap, "seed");
 
             Assert.AreEqual(0, resources.Count, "Floor decorations should not spawn inside Walls.");
 

@@ -1,14 +1,33 @@
 using NUnit.Framework;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Tests
 {
     public class SmoothingTests
     {
-        private TilemapGenerator CreateGenerator()
+        private void InjectRegionMap(TilemapGenerator generator, int[,] regionMap)
+        {
+            PropertyInfo prop = typeof(TilemapGenerator).GetProperty("CurrentRegionMap");
+            if (prop != null)
+            {
+                prop.SetValue(generator, regionMap);
+            }
+        }
+
+        private TilemapGenerator CreateGenerator(out BiomeData biome)
         {
             GameObject go = new GameObject("Generator");
             TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
+
+            biome = ScriptableObject.CreateInstance<BiomeData>();
+
+            biome.smoothIterations = 5;
+
+            RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
+            regions.biomes = new List<BiomeData> { biome };
+            generator.regionSettings = regions;
 
             return generator;
         }
@@ -16,7 +35,8 @@ namespace Tests
         [Test]
         public void Helper_CountsNeighborsCorrectly()
         {
-            TilemapGenerator generator = CreateGenerator();
+            GameObject go = new GameObject("Generator");
+            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
 
             int[,] testMap = new int[3, 3] {
                 { 1, 1, 1 },
@@ -34,11 +54,17 @@ namespace Tests
         [Test]
         public void SmoothMap_RemovesIsolatedWalls()
         {
-            TilemapGenerator generator = CreateGenerator();
+            BiomeData biome;
+            TilemapGenerator generator = CreateGenerator(out biome);
 
-            int[,] rawMap = new int[5, 5]; 
-            rawMap[2, 2] = 1; 
-            int[,] smoothedMap = generator.SmoothMap(rawMap);
+            int w = 5;
+            int h = 5;
+            int[,] rawMap = new int[w, h];
+            rawMap[2, 2] = 1;
+
+            InjectRegionMap(generator, new int[w, h]);
+
+            int[,] smoothedMap = generator.SmoothMapBiomeAware(rawMap, 0);
 
             Assert.AreEqual(0, smoothedMap[2, 2], "Isolated wall should be removed (neighbors < 4).");
 
@@ -48,21 +74,24 @@ namespace Tests
         [Test]
         public void SmoothMap_FillsGaps()
         {
-            TilemapGenerator generator = CreateGenerator();
+            BiomeData biome;
+            TilemapGenerator generator = CreateGenerator(out biome);
 
-            int[,] rawMap = new int[5, 5];
-            for (int x = 0; x < 5; x++)
+            int w = 5;
+            int h = 5;
+            int[,] rawMap = new int[w, h];
+            for (int x = 0; x < w; x++)
             {
-                for (int y = 0; y < 5; y++)
+                for (int y = 0; y < h; y++)
                 {
                     rawMap[x, y] = 1;
-
                 }
             }
+            rawMap[2, 2] = 0;
 
-            rawMap[2, 2] = 0; 
+            InjectRegionMap(generator, new int[w, h]);
 
-            int[,] smoothedMap = generator.SmoothMap(rawMap);
+            int[,] smoothedMap = generator.SmoothMapBiomeAware(rawMap, 0);
 
             Assert.AreEqual(1, smoothedMap[2, 2], "Hole surrounded by walls should be filled (neighbors > 4).");
 

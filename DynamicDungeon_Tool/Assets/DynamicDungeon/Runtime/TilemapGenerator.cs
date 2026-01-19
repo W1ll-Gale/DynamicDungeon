@@ -22,7 +22,6 @@ public class TilemapGenerator : MonoBehaviour
     public string seed;
     public bool useRandomSeed = true;
 
-    // Data Storage
     public int[,] CurrentMapData { get; private set; }
     public int[,] CurrentRegionMap { get; private set; } 
     public Dictionary<Vector2Int, TileData> CurrentResourceData { get; private set; }

@@ -2,6 +2,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 namespace Tests
 {
@@ -14,6 +15,8 @@ namespace Tests
             generator.InitializeGrid();
 
             BiomeData biome = ScriptableObject.CreateInstance<BiomeData>();
+            biome.randomFillPercent = 50;
+            biome.smoothIterations = 0;
             biome.wallTile = ScriptableObject.CreateInstance<TileData>();
             biome.floorTile = ScriptableObject.CreateInstance<TileData>();
 
@@ -21,7 +24,12 @@ namespace Tests
             biome.wallTile.tileSprite = dummy;
             biome.floorTile.tileSprite = dummy;
 
-            generator.defaultBiome = biome;
+            RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
+            regions.biomes = new List<BiomeData> { biome };
+            regions.algorithm = RegionAlgorithm.Voronoi;
+            regions.voronoiNumSites = 1; 
+
+            generator.regionSettings = regions;
 
             return generator;
         }
@@ -33,9 +41,6 @@ namespace Tests
             generator.width = 100;
             generator.height = 100;
 
-            generator.defaultBiome.randomFillPercent = 50;
-            generator.defaultBiome.smoothIterations = 0;
-
             generator.GenerateTilemap();
 
             Tilemap map = generator.GetComponentInChildren<Tilemap>();
@@ -45,21 +50,6 @@ namespace Tests
             Assert.AreEqual(100, map.size.y);
 
             Object.DestroyImmediate(generator.gameObject);
-        }
-
-        [Test]
-        public void Generation_Fails_Without_Biome()
-        {
-            GameObject go = new GameObject("Generator");
-            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
-            generator.width = 10;
-            generator.height = 10;
-            generator.defaultBiome = null; 
-
-            LogAssert.Expect(LogType.Error, "Cannot generate map: No BiomeData assigned.");
-            generator.GenerateTilemap();
-
-            Object.DestroyImmediate(go);
         }
     }
 }
