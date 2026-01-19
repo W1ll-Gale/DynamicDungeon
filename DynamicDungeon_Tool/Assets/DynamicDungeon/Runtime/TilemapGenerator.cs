@@ -10,7 +10,7 @@ public class TilemapGenerator : MonoBehaviour
     public Tilemap tilemap;
 
     [Header("Configuration")]
-    public BiomeData defaultBiome;
+    public RegionSettings regionSettings; 
     public GenerationProfile generationProfile;
 
     [Header("Map Settings")]
@@ -22,7 +22,9 @@ public class TilemapGenerator : MonoBehaviour
     public string seed;
     public bool useRandomSeed = true;
 
+    // Data Storage
     public int[,] CurrentMapData { get; private set; }
+    public int[,] CurrentRegionMap { get; private set; } 
     public Dictionary<Vector2Int, TileData> CurrentResourceData { get; private set; }
 
     private static long _autoSeedCounter = 0;
@@ -31,37 +33,32 @@ public class TilemapGenerator : MonoBehaviour
     {
         InitializeGrid();
 
-        if (width <= 0 || height <= 0)
+        if (width <= 0 || height <= 0 || regionSettings == null || regionSettings.biomes.Count == 0)
         {
-            Debug.LogError("Cannot generate map: Width and Height must be positive.");
-            return;
-        }
-
-        if (defaultBiome == null)
-        {
-            Debug.LogError("Cannot generate map: No BiomeData assigned.");
+            Debug.LogError("Cannot generate map: Check Width, Height, and RegionSettings.");
             return;
         }
 
         if (useRandomSeed) seed = GenerateRandomSeed();
 
-        CurrentMapData = GenerateMapData(width, height, seed, defaultBiome.randomFillPercent, useBorderWalls);
+        CurrentRegionMap = RegionGenerator.GenerateRegionMap(width, height, regionSettings, seed);
 
-        for (int i = 0; i < defaultBiome.smoothIterations; i++)
+        CurrentMapData = GenerateBiomeAwareMapData(width, height, seed, useBorderWalls);
+
+        int maxIterations = 0;
+        foreach (var b in regionSettings.biomes)
         {
-            CurrentMapData = SmoothMap(CurrentMapData);
+            if (b.smoothIterations > maxIterations) maxIterations = b.smoothIterations;
         }
 
-        if (defaultBiome.resources != null)
+        for (int i = 0; i < maxIterations; i++)
         {
-            CurrentResourceData = GenerateResources(CurrentMapData, defaultBiome, seed);
-        }
-        else
-        {
-            CurrentResourceData = new Dictionary<Vector2Int, TileData>();
+            CurrentMapData = SmoothMapBiomeAware(CurrentMapData, i);
         }
 
-        RenderMap(CurrentMapData, CurrentResourceData, tilemap);
+        CurrentResourceData = GenerateBiomeAwareResources(CurrentMapData, seed);
+
+        RenderMap(CurrentMapData, CurrentRegionMap, CurrentResourceData, tilemap);
     }
 
     public void InitializeGrid()
@@ -91,9 +88,8 @@ public class TilemapGenerator : MonoBehaviour
         return $"{DateTime.UtcNow.Ticks:x}_{counter}_{Guid.NewGuid():N}";
     }
 
-    public int[,] GenerateMapData(int w, int h, string currentSeed, int fillPercent, bool edgesAreWalls)
+    public int[,] GenerateBiomeAwareMapData(int w, int h, string currentSeed, bool edgesAreWalls)
     {
-        if (w <= 0 || h <= 0) return new int[0, 0];
         int[,] newMap = new int[w, h];
         System.Random pseudoRandom = new System.Random(currentSeed.GetHashCode());
 
@@ -107,14 +103,17 @@ public class TilemapGenerator : MonoBehaviour
                 }
                 else
                 {
-                    newMap[x, y] = (pseudoRandom.Next(0, 100) < fillPercent) ? 1 : 0;
+                    int biomeIdx = CurrentRegionMap[x, y];
+                    BiomeData biome = regionSettings.biomes[biomeIdx];
+
+                    newMap[x, y] = (pseudoRandom.Next(0, 100) < biome.randomFillPercent) ? 1 : 0;
                 }
             }
         }
         return newMap;
     }
 
-    public int[,] SmoothMap(int[,] mapData)
+    public int[,] SmoothMapBiomeAware(int[,] mapData, int currentIterationIndex)
     {
         int w = mapData.GetLength(0);
         int h = mapData.GetLength(1);
@@ -127,6 +126,15 @@ public class TilemapGenerator : MonoBehaviour
                 if (x == 0 || x == w - 1 || y == 0 || y == h - 1)
                 {
                     newMap[x, y] = useBorderWalls ? 1 : mapData[x, y];
+                    continue;
+                }
+
+                int biomeIdx = CurrentRegionMap[x, y];
+                BiomeData biome = regionSettings.biomes[biomeIdx];
+
+                if (currentIterationIndex >= biome.smoothIterations)
+                {
+                    newMap[x, y] = mapData[x, y];
                     continue;
                 }
 
@@ -160,7 +168,7 @@ public class TilemapGenerator : MonoBehaviour
         return wallCount;
     }
 
-    public Dictionary<Vector2Int, TileData> GenerateResources(int[,] mapData, BiomeData biome, string seed)
+    public Dictionary<Vector2Int, TileData> GenerateBiomeAwareResources(int[,] mapData, string seed)
     {
         Dictionary<Vector2Int, TileData> resources = new Dictionary<Vector2Int, TileData>();
         System.Random prng = new System.Random(seed.GetHashCode() + 1);
@@ -172,6 +180,11 @@ public class TilemapGenerator : MonoBehaviour
         {
             for (int y = 0; y < h; y++)
             {
+                int biomeIdx = CurrentRegionMap[x, y];
+                BiomeData biome = regionSettings.biomes[biomeIdx];
+
+                if (biome.resources == null) continue;
+
                 bool isWall = (mapData[x, y] == 1);
 
                 foreach (BiomeData.BiomeResource resource in biome.resources)
@@ -183,7 +196,7 @@ public class TilemapGenerator : MonoBehaviour
                         if (prng.NextDouble() < resource.spawnChance)
                         {
                             resources[new Vector2Int(x, y)] = resource.resourceTile;
-                            break;
+                            break; 
                         }
                     }
                 }
@@ -192,14 +205,11 @@ public class TilemapGenerator : MonoBehaviour
         return resources;
     }
 
-    public void RenderMap(int[,] mapData, Dictionary<Vector2Int, TileData> resourceData, Tilemap mapComponent)
+    public void RenderMap(int[,] mapData, int[,] regionData, Dictionary<Vector2Int, TileData> resourceData, Tilemap mapComponent)
     {
-        if (mapComponent == null || defaultBiome == null) return;
+        if (mapComponent == null || regionSettings == null) return;
 
         mapComponent.ClearAllTiles();
-
-        TileData activeWall = defaultBiome.wallTile;
-        TileData activeFloor = defaultBiome.floorTile;
 
         int w = mapData.GetLength(0);
         int h = mapData.GetLength(1);
@@ -226,6 +236,9 @@ public class TilemapGenerator : MonoBehaviour
                     Vector2Int gridPos = new Vector2Int(x, y);
                     positions[i] = new Vector3Int(x + xOffset, y + yOffset, 0);
 
+                    int biomeIdx = regionData[x, y];
+                    BiomeData biome = regionSettings.biomes[biomeIdx];
+
                     if (resourceData != null && resourceData.TryGetValue(gridPos, out TileData resTile))
                     {
                         tileArray[i] = resTile.GetTileBase();
@@ -233,9 +246,9 @@ public class TilemapGenerator : MonoBehaviour
                     else
                     {
                         if (mapData[x, y] == 1)
-                            tileArray[i] = (activeWall != null) ? activeWall.GetTileBase() : null;
+                            tileArray[i] = (biome.wallTile != null) ? biome.wallTile.GetTileBase() : null;
                         else
-                            tileArray[i] = (activeFloor != null) ? activeFloor.GetTileBase() : null;
+                            tileArray[i] = (biome.floorTile != null) ? biome.floorTile.GetTileBase() : null;
                     }
                 }
             }
@@ -249,6 +262,33 @@ public class TilemapGenerator : MonoBehaviour
     {
         if (tilemap != null) tilemap.ClearAllTiles();
         CurrentMapData = null;
+        CurrentRegionMap = null;
         CurrentResourceData = null;
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (CurrentRegionMap == null || regionSettings == null) return;
+
+        if (Application.isPlaying || !Application.isEditor) return;
+
+        int w = CurrentRegionMap.GetLength(0);
+        int h = CurrentRegionMap.GetLength(1);
+        int xOffset = -(w / 2);
+        int yOffset = -(h / 2);
+
+        for (int x = 0; x < w; x += 2)
+        {
+            for (int y = 0; y < h; y += 2)
+            {
+                int biomeIdx = CurrentRegionMap[x, y];
+                if (biomeIdx < regionSettings.biomes.Count)
+                {
+                    Gizmos.color = regionSettings.biomes[biomeIdx].debugColor;
+                    Vector3 pos = new Vector3(x + xOffset + 0.5f, y + yOffset + 0.5f, 0);
+                    Gizmos.DrawCube(pos, new Vector3(2, 2, 0.1f));
+                }
+            }
+        }
     }
 }
