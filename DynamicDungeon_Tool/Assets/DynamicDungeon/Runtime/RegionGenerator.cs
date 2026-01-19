@@ -82,7 +82,7 @@ public static class RegionGenerator
                 float xCoord = (float)x * settings.perlinScale + offsetX;
                 float yCoord = (float)y * settings.perlinScale + offsetY;
 
-                float sample = Mathf.PerlinNoise(xCoord, yCoord); 
+                float sample = Mathf.Clamp01(Mathf.PerlinNoise(xCoord, yCoord));
 
                 int biomeIndex = Mathf.FloorToInt(sample * biomeCount);
                 if (biomeIndex >= biomeCount) biomeIndex = biomeCount - 1;
