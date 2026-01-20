@@ -51,7 +51,7 @@ public class TilemapGenerator : MonoBehaviour
         }
         else
         {
-            foreach (var pass in generationPipeline)
+            foreach (GenerationPass pass in generationPipeline)
             {
                 if (pass != null && pass.enabled)
                 {

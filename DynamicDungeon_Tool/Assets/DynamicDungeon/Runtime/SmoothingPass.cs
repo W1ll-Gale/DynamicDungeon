@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewSmoothingPass", menuName = "DynamicDungeon/Passes/Smoothing Pass")]
 public class SmoothingPass : GenerationPass
@@ -25,7 +26,7 @@ public class SmoothingPass : GenerationPass
         int h = context.Height;
         int[,] oldMap = context.MapData;
         int[,] newMap = new int[w, h];
-        var biomes = context.GlobalRegionSettings.biomes;
+        List<WeightedBiome> biomes = context.GlobalRegionSettings.biomes;
 
         for (int x = 0; x < w; x++)
         {

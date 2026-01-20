@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewTerrainPass", menuName = "DynamicDungeon/Passes/Terrain Pass")]
 public class TerrainPass : GenerationPass
@@ -23,7 +24,7 @@ public class TerrainPass : GenerationPass
         System.Random pseudoRandom = new System.Random(context.Seed.GetHashCode());
         int w = context.Width;
         int h = context.Height;
-        var biomes = context.GlobalRegionSettings.biomes;
+        List<WeightedBiome> biomes = context.GlobalRegionSettings.biomes;
 
         for (int x = 0; x < w; x++)
         {
