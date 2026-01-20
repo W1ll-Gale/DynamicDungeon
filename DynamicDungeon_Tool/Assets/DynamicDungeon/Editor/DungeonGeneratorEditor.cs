@@ -7,6 +7,8 @@ public class DungeonGeneratorEditor : Editor
     private Texture2D _previewTexture;
     private bool _showRegionPreview = true;
 
+    private bool _liveUpdate = true;
+
     private Editor _regionSettingsEditor;
     private Editor _generationProfileEditor;
     private bool _showRegionSettings = true;
@@ -27,6 +29,14 @@ public class DungeonGeneratorEditor : Editor
     public override void OnInspectorGUI()
     {
         TilemapGenerator generator = (TilemapGenerator)target;
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Editor Settings", EditorStyles.boldLabel);
+        _liveUpdate = EditorGUILayout.Toggle("Live Update", _liveUpdate);
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.Space(5);
+
+        EditorGUI.BeginChangeCheck();
 
         serializedObject.Update();
 
@@ -53,13 +63,13 @@ public class DungeonGeneratorEditor : Editor
             if (_showRegionSettings)
             {
                 EditorGUI.indentLevel++;
-
                 if (_regionSettingsEditor == null) UpdateEditors(generator);
 
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                _regionSettingsEditor.OnInspectorGUI();
-                EditorGUILayout.EndVertical();
 
+                _regionSettingsEditor.OnInspectorGUI();
+
+                EditorGUILayout.EndVertical();
                 EditorGUI.indentLevel--;
             }
         }
@@ -91,6 +101,17 @@ public class DungeonGeneratorEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
 
+        if (EditorGUI.EndChangeCheck())
+        {
+            if (_liveUpdate && generator.CurrentMapData != null)
+            {
+                if (generator.tilemap != null) Undo.RecordObject(generator.tilemap, "Live Update Map");
+
+                generator.GenerateTilemap(preserveSeed: true);
+                UpdatePreview(generator);
+            }
+        }
+
         GUILayout.Space(15);
         GUILayout.Label("Development Tools", EditorStyles.boldLabel);
 
@@ -107,7 +128,7 @@ public class DungeonGeneratorEditor : Editor
 
             if (GUILayout.Button("Refresh Preview Only"))
             {
-                generator.GenerateTilemap();
+                generator.GenerateTilemap(true);
                 UpdatePreview(generator);
             }
         }
@@ -115,12 +136,14 @@ public class DungeonGeneratorEditor : Editor
         GUILayout.Space(10);
 
         bool hasGenerated = generator.CurrentMapData != null;
-        string generateLabel = hasGenerated ? "Regenerate Map" : "Generate Map";
+        string generateLabel = hasGenerated ? "Regenerate Map (New Seed)" : "Generate Map";
 
         if (GUILayout.Button(generateLabel, GUILayout.Height(40)))
         {
             if (generator.tilemap != null) Undo.RecordObject(generator.tilemap, generateLabel);
-            generator.GenerateTilemap();
+
+            generator.GenerateTilemap(preserveSeed: false);
+
             UpdatePreview(generator);
             Repaint();
         }
@@ -150,11 +173,7 @@ public class DungeonGeneratorEditor : Editor
                 DestroyImmediate(_regionSettingsEditor);
                 _regionSettingsEditor = null;
             }
-
-            if (_regionSettingsEditor == null)
-            {
-                _regionSettingsEditor = CreateEditor(generator.regionSettings);
-            }
+            if (_regionSettingsEditor == null) _regionSettingsEditor = CreateEditor(generator.regionSettings);
         }
 
         if (generator.generationProfile != null)
@@ -164,17 +183,14 @@ public class DungeonGeneratorEditor : Editor
                 DestroyImmediate(_generationProfileEditor);
                 _generationProfileEditor = null;
             }
-
-            if (_generationProfileEditor == null)
-            {
-                _generationProfileEditor = CreateEditor(generator.generationProfile);
-            }
+            if (_generationProfileEditor == null) _generationProfileEditor = CreateEditor(generator.generationProfile);
         }
     }
 
     private void UpdatePreview(TilemapGenerator generator)
     {
         if (generator.CurrentRegionMap == null) return;
+        if (generator.regionSettings == null || generator.regionSettings.biomes == null) return;
 
         int w = generator.width;
         int h = generator.height;
@@ -193,9 +209,10 @@ public class DungeonGeneratorEditor : Editor
             for (int y = 0; y < h; y++)
             {
                 int biomeIdx = generator.CurrentRegionMap[x, y];
-                if (generator.regionSettings != null && biomeIdx < generator.regionSettings.biomes.Count)
+                if (biomeIdx < generator.regionSettings.biomes.Count)
                 {
-                    pixels[y * w + x] = generator.regionSettings.biomes[biomeIdx].biome.debugColor;
+                    BiomeData biome = generator.regionSettings.biomes[biomeIdx].biome;
+                    pixels[y * w + x] = (biome != null) ? biome.debugColor : Color.magenta;
                 }
                 else
                 {

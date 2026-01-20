@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: StoneBiome
   m_EditorClassIdentifier: 
   biomeName: stone_biome
-  debugColor: {r: 1, g: 0, b: 0, a: 1}
+  debugColor: {r: 0.4716981, g: 0.4716981, b: 0.4716981, a: 1}
   randomFillPercent: 45
   smoothIterations: 5
   wallTile: {fileID: 11400000, guid: d015b654e7d3aea478d8fdc30ddb6e6e, type: 2}
   floorTile: {fileID: 11400000, guid: be2f181c2eaf393409ac345daaa82289, type: 2}
-  liquidTile: {fileID: 0}
+  liquidTile: {fileID: 11400000, guid: 81862606231db4e47a78436f389579cb, type: 2}
   resources:
   - resourceTile: {fileID: 11400000, guid: 8a89fd9db7a2ffb4e984947d8e603d85, type: 2}
     spawnChance: 0.063

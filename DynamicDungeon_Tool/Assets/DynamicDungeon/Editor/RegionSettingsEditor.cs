@@ -91,7 +91,7 @@ public class RegionSettingsEditor : Editor
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Weight:", GUILayout.Width(50));
+            EditorGUILayout.LabelField("Weight:", GUILayout.Width(75));
             int w = EditorGUILayout.IntField(weight.intValue, GUILayout.Width(50));
             if (w < 1) w = 1;
             weight.intValue = w;
