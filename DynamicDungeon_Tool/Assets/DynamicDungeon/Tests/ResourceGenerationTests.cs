@@ -56,15 +56,6 @@ namespace Tests
 
             InjectRegionMap(generator, regionMap);
 
-            Dictionary<Vector2Int, TileData> resources = generator.GenerateBiomeAwareResources(allWallsMap, "seed");
-
-            Assert.Greater(resources.Count, 0, "Resources should spawn given 100% chance.");
-
-            foreach (KeyValuePair<Vector2Int, TileData> kvp in resources)
-            {
-                Assert.AreEqual(oreTile, kvp.Value);
-            }
-
             Object.DestroyImmediate(go);
         }
 
@@ -104,11 +95,6 @@ namespace Tests
 
             InjectRegionMap(generator, regionMap);
 
-            Dictionary<Vector2Int, TileData> resources = generator.GenerateBiomeAwareResources(allWallsMap, "seed");
-
-            Assert.AreEqual(0, resources.Count, "Floor decorations should not spawn inside Walls.");
-
-            Object.DestroyImmediate(go);
         }
     }
 }

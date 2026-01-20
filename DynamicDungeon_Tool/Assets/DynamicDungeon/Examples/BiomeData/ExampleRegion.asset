@@ -15,9 +15,11 @@ MonoBehaviour:
   biomes:
   - biome: {fileID: 11400000, guid: 4740fe5c41d0f9c40a92147ff1fc6c67, type: 2}
     weight: 1
+  - biome: {fileID: 11400000, guid: 049807d370719e44c9cf0737bb26289f, type: 2}
+    weight: 1
   algorithm: 1
-  voronoiNumSites: 50
+  voronoiNumSites: 367
   perlinScale: 0.1
-  octaves: 3
-  persistence: 0.5
-  lacunarity: 2
+  octaves: 2
+  persistence: 0.223
+  lacunarity: 4.65
