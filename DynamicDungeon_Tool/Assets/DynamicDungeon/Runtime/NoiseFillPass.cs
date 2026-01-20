@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NewTerrainPass", menuName = "DynamicDungeon/Passes/Terrain Pass")]
-public class TerrainPass : GenerationPass
+[CreateAssetMenu(fileName = "NewNoiseFillPass", menuName = "DynamicDungeon/Passes/Noise Fill Pass")]
+public class NoiseFillPass : GenerationPass
 {
     [Header("Settings")]
     public bool useBorderWalls = true;

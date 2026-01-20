@@ -9,7 +9,6 @@ namespace Tests
         private DungeonContext CreateMockContext(int width, int height, int fillPercent)
         {
             DungeonContext ctx = new DungeonContext(width, height, "seed");
-
             ctx.RegionMap = new int[width, height];
 
             BiomeData biome = ScriptableObject.CreateInstance<BiomeData>();
@@ -22,7 +21,6 @@ namespace Tests
             };
 
             ctx.GlobalRegionSettings = settings;
-
             return ctx;
         }
 
@@ -31,10 +29,9 @@ namespace Tests
         {
             int width = 50;
             int height = 50;
-
             DungeonContext ctx = CreateMockContext(width, height, 50);
 
-            TerrainPass pass = ScriptableObject.CreateInstance<TerrainPass>();
+            NoiseFillPass pass = ScriptableObject.CreateInstance<NoiseFillPass>();
             pass.useBorderWalls = true;
 
             pass.Execute(ctx);
@@ -42,14 +39,14 @@ namespace Tests
             int[,] map = ctx.MapData;
             for (int x = 0; x < width; x++)
             {
-                Assert.AreEqual(1, map[x, 0], $"Bottom border at {x} must be Wall");
-                Assert.AreEqual(1, map[x, height - 1], $"Top border at {x} must be Wall");
+                Assert.AreEqual(1, map[x, 0], $"Bottom border at {x}");
+                Assert.AreEqual(1, map[x, height - 1], $"Top border at {x}");
             }
 
             for (int y = 0; y < height; y++)
             {
-                Assert.AreEqual(1, map[0, y], $"Left border at {y} must be Wall");
-                Assert.AreEqual(1, map[width - 1, y], $"Right border at {y} must be Wall");
+                Assert.AreEqual(1, map[0, y], $"Left border at {y}");
+                Assert.AreEqual(1, map[width - 1, y], $"Right border at {y}");
             }
         }
 
@@ -62,7 +59,7 @@ namespace Tests
 
             DungeonContext ctx = CreateMockContext(width, height, fillPercent);
 
-            TerrainPass pass = ScriptableObject.CreateInstance<TerrainPass>();
+            NoiseFillPass pass = ScriptableObject.CreateInstance<NoiseFillPass>();
             pass.useBorderWalls = false; 
 
             pass.Execute(ctx);

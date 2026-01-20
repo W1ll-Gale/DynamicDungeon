@@ -25,7 +25,7 @@ namespace Tests
             RegionPass pass1 = ScriptableObject.CreateInstance<RegionPass>();
             pass1.regionSettings = regions;
 
-            TerrainPass pass2 = ScriptableObject.CreateInstance<TerrainPass>();
+            NoiseFillPass pass2 = ScriptableObject.CreateInstance<NoiseFillPass>();
             pass2.useBorderWalls = borders;
 
             generator.generationPipeline = new List<GenerationPass> { pass1, pass2 };

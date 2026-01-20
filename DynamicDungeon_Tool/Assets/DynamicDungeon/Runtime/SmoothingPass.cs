@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewSmoothingPass", menuName = "DynamicDungeon/Passes/Smoothing Pass")]
 public class SmoothingPass : GenerationPass
@@ -11,22 +10,26 @@ public class SmoothingPass : GenerationPass
 
     public override void Execute(DungeonContext context)
     {
-        if (context.MapData == null || context.GlobalRegionSettings == null) return;
+        if (context.MapData == null || context.GlobalRegionSettings == null)
+        {
+            Debug.LogError("[SmoothingPass] Missing MapData or RegionSettings.");
+            return;
+        }
 
         for (int i = 0; i < maxGlobalIterations; i++)
         {
             context.MapData = SmoothStep(context, i);
         }
-        Debug.Log($"[SmoothingPass] Completed {maxGlobalIterations} smoothing iterations.");
     }
 
     private int[,] SmoothStep(DungeonContext context, int currentIteration)
     {
-        int w = context.Width;
-        int h = context.Height;
         int[,] oldMap = context.MapData;
+        int w = oldMap.GetLength(0);
+        int h = oldMap.GetLength(1);
+
         int[,] newMap = new int[w, h];
-        List<WeightedBiome> biomes = context.GlobalRegionSettings.biomes;
+        var biomes = context.GlobalRegionSettings.biomes;
 
         for (int x = 0; x < w; x++)
         {
@@ -39,15 +42,22 @@ public class SmoothingPass : GenerationPass
                 }
 
                 int biomeIdx = context.RegionMap[x, y];
-                if (biomeIdx >= biomes.Count)
+                bool skipProcessing = false;
+
+                if (biomeIdx < 0 || biomeIdx >= biomes.Count)
                 {
-                    newMap[x, y] = oldMap[x, y];
-                    continue;
+                    skipProcessing = true;
+                }
+                else
+                {
+                    BiomeData biome = biomes[biomeIdx].biome;
+                    if (biome == null || currentIteration >= biome.smoothIterations)
+                    {
+                        skipProcessing = true;
+                    }
                 }
 
-                BiomeData biome = biomes[biomeIdx].biome;
-
-                if (biome == null || currentIteration >= biome.smoothIterations)
+                if (skipProcessing)
                 {
                     newMap[x, y] = oldMap[x, y];
                     continue;
@@ -55,11 +65,15 @@ public class SmoothingPass : GenerationPass
 
                 int walls = GetSurroundingWallCount(x, y, oldMap, w, h);
 
-                if (walls > 4) newMap[x, y] = 1;
-                else if (walls < 4) newMap[x, y] = 0;
-                else newMap[x, y] = oldMap[x, y];
+                if (walls > 4)
+                    newMap[x, y] = 1;
+                else if (walls < 4)
+                    newMap[x, y] = 0;
+                else
+                    newMap[x, y] = oldMap[x, y];
             }
         }
+
         return newMap;
     }
 
@@ -71,10 +85,15 @@ public class SmoothingPass : GenerationPass
             for (int ny = gridY - 1; ny <= gridY + 1; ny++)
             {
                 if (nx == gridX && ny == gridY) continue;
+
                 if (nx >= 0 && nx < w && ny >= 0 && ny < h)
+                {
                     count += map[nx, ny];
+                }
                 else
-                    count++; 
+                {
+                    count++;
+                }
             }
         }
         return count;

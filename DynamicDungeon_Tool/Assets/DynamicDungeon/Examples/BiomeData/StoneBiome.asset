@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   biomeName: stone_biome
   debugColor: {r: 0.4716981, g: 0.4716981, b: 0.4716981, a: 1}
-  randomFillPercent: 50
+  randomFillPercent: 45
   smoothIterations: 5
   wallTile: {fileID: 11400000, guid: d015b654e7d3aea478d8fdc30ddb6e6e, type: 2}
   floorTile: {fileID: 11400000, guid: be2f181c2eaf393409ac345daaa82289, type: 2}
@@ -24,5 +24,5 @@ MonoBehaviour:
     spawnChance: 0.133
     spawnsInWalls: 1
   - resourceTile: {fileID: 11400000, guid: 0c6f7b8d4ff70e646a5879af899a421e, type: 2}
-    spawnChance: 0.042
+    spawnChance: 0.053
     spawnsInWalls: 1
