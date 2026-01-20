@@ -1,97 +1,64 @@
 using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Tests
 {
     public class SmoothingTests
     {
-        private void InjectRegionMap(TilemapGenerator generator, int[,] regionMap)
+        private DungeonContext CreateMockContext(int[,] map, int smoothIterations)
         {
-            PropertyInfo prop = typeof(TilemapGenerator).GetProperty("CurrentRegionMap");
-            if (prop != null)
-            {
-                prop.SetValue(generator, regionMap);
-            }
-        }
+            int w = map.GetLength(0);
+            int h = map.GetLength(1);
 
-        private TilemapGenerator CreateGenerator(out BiomeData biome)
-        {
-            GameObject go = new GameObject("Generator");
-            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
+            DungeonContext ctx = new DungeonContext(w, h, "seed");
+            ctx.MapData = map;
 
-            biome = ScriptableObject.CreateInstance<BiomeData>();
+            ctx.RegionMap = new int[w, h];
 
-            biome.smoothIterations = 5;
+            BiomeData biome = ScriptableObject.CreateInstance<BiomeData>();
+            biome.smoothIterations = smoothIterations;
 
-            RegionSettings regions = ScriptableObject.CreateInstance<RegionSettings>();
-            regions.biomes = new List<WeightedBiome>
-            {
-                new WeightedBiome { biome = biome, weight = 50 }
-            };
-            generator.regionSettings = regions;
+            RegionSettings settings = ScriptableObject.CreateInstance<RegionSettings>();
+            settings.biomes = new List<WeightedBiome> { new WeightedBiome { biome = biome, weight = 1 } };
 
-            return generator;
-        }
-
-        [Test]
-        public void Helper_CountsNeighborsCorrectly()
-        {
-            GameObject go = new GameObject("Generator");
-            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
-
-            int[,] testMap = new int[3, 3] {
-                { 1, 1, 1 },
-                { 0, 0, 1 },
-                { 1, 0, 1 }
-            };
-
-            int count = generator.GetSurroundingWallCount(1, 1, testMap);
-
-            Assert.AreEqual(6, count, "Should count 6 walls around the center tile.");
-
-            Object.DestroyImmediate(generator.gameObject);
+            ctx.GlobalRegionSettings = settings;
+            return ctx;
         }
 
         [Test]
         public void SmoothMap_RemovesIsolatedWalls()
         {
-            BiomeData biome;
-            TilemapGenerator generator = CreateGenerator(out biome);
-
             int w = 5;
             int h = 5;
             int[,] rawMap = new int[w, h];
             rawMap[2, 2] = 1;
 
-            InjectRegionMap(generator, new int[w, h]);
+            DungeonContext ctx = CreateMockContext(rawMap, 5);
 
+            SmoothingPass pass = ScriptableObject.CreateInstance<SmoothingPass>();
+            pass.Execute(ctx);
 
-            Object.DestroyImmediate(generator.gameObject);
+            Assert.AreEqual(0, ctx.MapData[2, 2], "Isolated wall should be removed.");
         }
 
         [Test]
         public void SmoothMap_FillsGaps()
         {
-            BiomeData biome;
-            TilemapGenerator generator = CreateGenerator(out biome);
-
             int w = 5;
             int h = 5;
             int[,] rawMap = new int[w, h];
             for (int x = 0; x < w; x++)
-            {
                 for (int y = 0; y < h; y++)
-                {
                     rawMap[x, y] = 1;
-                }
-            }
-            rawMap[2, 2] = 0;
+            rawMap[2, 2] = 0; 
 
-            InjectRegionMap(generator, new int[w, h]);
+            DungeonContext ctx = CreateMockContext(rawMap, 5);
 
-            Object.DestroyImmediate(generator.gameObject);
+            SmoothingPass pass = ScriptableObject.CreateInstance<SmoothingPass>();
+            pass.Execute(ctx);
+
+            Assert.AreEqual(1, ctx.MapData[2, 2], "Hole should be filled.");
         }
     }
 }

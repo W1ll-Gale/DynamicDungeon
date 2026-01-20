@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 
@@ -8,10 +7,10 @@ namespace Tests
 {
     public class CoreGenerationTests
     {
-        private TilemapGenerator CreateGeneratorWithMockBiome()
+        private TilemapGenerator CreateGeneratorWithMockPipeline()
         {
-            GameObject go = new GameObject("Generator");
-            TilemapGenerator generator = go.AddComponent<TilemapGenerator>();
+            GameObject gameObject = new GameObject("Generator");
+            TilemapGenerator generator = gameObject.AddComponent<TilemapGenerator>();
             generator.InitializeGrid();
 
             BiomeData biome = ScriptableObject.CreateInstance<BiomeData>();
@@ -30,9 +29,15 @@ namespace Tests
                 new WeightedBiome { biome = biome, weight = 50 }
             };
             regions.algorithm = RegionAlgorithm.Voronoi;
-            regions.voronoiNumSites = 1; 
+            regions.voronoiNumSites = 1;
 
-            generator.regionSettings = regions;
+            RegionPass regionPass = ScriptableObject.CreateInstance<RegionPass>();
+            regionPass.regionSettings = regions;
+
+            TerrainPass terrainPass = ScriptableObject.CreateInstance<TerrainPass>();
+            terrainPass.useBorderWalls = true;
+
+            generator.generationPipeline = new List<GenerationPass> { regionPass, terrainPass };
 
             return generator;
         }
@@ -40,7 +45,7 @@ namespace Tests
         [Test]
         public void Generator_Creates_100x100_Map_Success()
         {
-            TilemapGenerator generator = CreateGeneratorWithMockBiome();
+            TilemapGenerator generator = CreateGeneratorWithMockPipeline();
             generator.width = 100;
             generator.height = 100;
 
