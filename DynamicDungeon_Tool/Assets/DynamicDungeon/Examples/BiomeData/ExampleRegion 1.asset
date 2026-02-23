@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 183380197550e3942976c005aa458bbc, type: 3}
+  m_Name: ExampleRegion 1
+  m_EditorClassIdentifier: 
+  biomes:
+  - biome: {fileID: 11400000, guid: 390c3c303c89e3e43a6eb05acf7e8da5, type: 2}
+    weight: 100
+  - biome: {fileID: 11400000, guid: b6c625d6ae49bc74886cedd87f52a117, type: 2}
+    weight: 20
+  - biome: {fileID: 11400000, guid: 4722295f62f8e8043b63bec3d207cfc8, type: 2}
+    weight: 15
+  - biome: {fileID: 11400000, guid: 4740fe5c41d0f9c40a92147ff1fc6c67, type: 2}
+    weight: 10
+  - biome: {fileID: 11400000, guid: 049807d370719e44c9cf0737bb26289f, type: 2}
+    weight: 50
+  algorithm: 1
+  voronoiNumSites: 100
+  perlinScale: 0.04
+  octaves: 8
+  persistence: 0.25
+  lacunarity: 5

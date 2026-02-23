@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: IceBiome
   m_EditorClassIdentifier: 
   biomeName: ice_biome
-  debugColor: {r: 0.36320752, g: 1, b: 0.9737202, a: 1}
+  debugColor: {r: 0.5229619, g: 0.9811321, b: 0.96753436, a: 1}
   randomFillPercent: 45
   smoothIterations: 5
   wallTile: {fileID: 11400000, guid: b15933ceced899f4bb92c236f1c1d8df, type: 2}

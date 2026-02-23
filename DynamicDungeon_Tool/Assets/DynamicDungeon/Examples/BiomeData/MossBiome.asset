@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 480348a264c9d744fb9eee2a3edf62ee, type: 3}
+  m_Name: MossBiome
+  m_EditorClassIdentifier: 
+  biomeName: moss_biome
+  debugColor: {r: 0.25938946, g: 0.6320754, b: 0.27699667, a: 1}
+  randomFillPercent: 48
+  smoothIterations: 5
+  wallTile: {fileID: 11400000, guid: a43d1b84e25dea14f9f99e493b0086a2, type: 2}
+  floorTile: {fileID: 11400000, guid: d015b654e7d3aea478d8fdc30ddb6e6e, type: 2}
+  liquidTile: {fileID: 0}
+  resources:
+  - resourceTile: {fileID: 11400000, guid: bcc9dd3d5518fab4b81c952e5f6c15ed, type: 2}
+    spawnChance: 0.2
+    spawnsInWalls: 0
+  - resourceTile: {fileID: 11400000, guid: 33a45bb78647b874488e0cac50be8b28, type: 2}
+    spawnChance: 0.2
+    spawnsInWalls: 1
