@@ -1,0 +1,303 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8070452349632194069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9fff55e9681ee54c8f563ac9dce22f7, type: 3}
+  m_Name: EmptyGridNode
+  m_EditorClassIdentifier: 
+  _nodeId: e2a408e4-c54c-4153-91c7-6448110e1050
+  _editorPosition: {x: -837, y: 58}
+  _inputPorts: []
+  _outputPorts:
+  - _portId: Output:World:World Out
+    _portName: World Out
+    _tooltip: Generated world.
+    _direction: 1
+    _capacity: 1
+    _dataKind: 0
+    _required: 0
+  _useGraphDefaults: 1
+  _width: 64
+  _height: 64
+  _seed: 0
+  _randomSeed: 0
+--- !u!114 &-4515609165044711676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e21e6cdce71f1054d92e942e1293c54d, type: 3}
+  m_Name: ThresholdNode
+  m_EditorClassIdentifier: 
+  _nodeId: 8fdb6e09-311f-4107-be8a-b4558c1ed87d
+  _editorPosition: {x: 1342, y: 58}
+  _inputPorts:
+  - _portId: Input:World:World In
+    _portName: World In
+    _tooltip: World containing the source float layer.
+    _direction: 0
+    _capacity: 0
+    _dataKind: 0
+    _required: 1
+  _outputPorts:
+  - _portId: Output:World:World Out
+    _portName: World Out
+    _tooltip: World with the generated tile layer.
+    _direction: 1
+    _capacity: 1
+    _dataKind: 0
+    _required: 0
+  _outputLayer:
+    _layerId: f4211a41269c48d6955cefd361bd9d8d
+  _bands:
+  - MaxValue: 0.4
+    TileId: 0
+  - MaxValue: 1
+    TileId: 1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d73cc6ebff0e07a4486e16dca331f814, type: 3}
+  m_Name: test
+  m_EditorClassIdentifier: 
+  _defaultWidth: 128
+  _defaultHeight: 128
+  _defaultSeed: 0
+  _randomizeSeedByDefault: 1
+  _layers:
+  - _layerId: f40a9802ae224f3a9d2162471145cc53
+    _displayName: Height
+    _kind: 1
+  - _layerId: f4211a41269c48d6955cefd361bd9d8d
+    _displayName: Tiles
+    _kind: 2
+  _tileRuleset: {fileID: 11400000, guid: bf3fdaf9b8fc6454a965b581d7fd4d47, type: 2}
+  _nodes:
+  - {fileID: -8070452349632194069}
+  - {fileID: 853653603604987390}
+  - {fileID: -4515609165044711676}
+  - {fileID: 6512452912481668993}
+  - {fileID: 4517877114541184805}
+  - {fileID: 4729395704849590264}
+  - {fileID: 4834807629705842341}
+  _connections:
+  - _connectionId: 793f535a-9619-4f16-ba57-426df7ad8b78
+    _outputNodeId: e2a408e4-c54c-4153-91c7-6448110e1050
+    _outputPortId: Output:World:World Out
+    _inputNodeId: 0fb7ed24-fb10-4b54-9195-4308a22465d0
+    _inputPortId: Input:World:World In
+  - _connectionId: 767d1a4c-be8a-4be0-9ea2-ad480934449d
+    _outputNodeId: 8fdb6e09-311f-4107-be8a-b4558c1ed87d
+    _outputPortId: Output:World:World Out
+    _inputNodeId: 56f2e768-752d-4cdf-abdd-c6a43cb0e913
+    _inputPortId: Input:World:World In
+  - _connectionId: ae4acdbc-8b4c-4cf2-91f8-686b832c2606
+    _outputNodeId: 9b67d03e-89d1-44ea-a0b9-391a0a2faa60
+    _outputPortId: Output:World:World Out
+    _inputNodeId: 6bb44cb8-6929-4e3b-ac3e-c26f83bdd5a2
+    _inputPortId: Input:World:World B
+  - _connectionId: 9efe75d4-2986-4434-a422-8167e77732b6
+    _outputNodeId: 0fb7ed24-fb10-4b54-9195-4308a22465d0
+    _outputPortId: Output:World:World Out
+    _inputNodeId: 6bb44cb8-6929-4e3b-ac3e-c26f83bdd5a2
+    _inputPortId: Input:World:World A
+  - _connectionId: 8a7dfbd2-5f82-42ee-b96c-03a6b4841395
+    _outputNodeId: e2a408e4-c54c-4153-91c7-6448110e1050
+    _outputPortId: Output:World:World Out
+    _inputNodeId: 9b67d03e-89d1-44ea-a0b9-391a0a2faa60
+    _inputPortId: Input:World:World In
+  - _connectionId: fa64fd1a-fa7c-4279-b4f8-286ce3085548
+    _outputNodeId: 6bb44cb8-6929-4e3b-ac3e-c26f83bdd5a2
+    _outputPortId: Output:World:World Out
+    _inputNodeId: acbf78b7-5941-41c9-8240-e6cbcc77d499
+    _inputPortId: Input:World:World In
+  - _connectionId: 4e3e5e82-845b-4f93-9bd1-262dda660d98
+    _outputNodeId: acbf78b7-5941-41c9-8240-e6cbcc77d499
+    _outputPortId: Output:World:World Out
+    _inputNodeId: 8fdb6e09-311f-4107-be8a-b4558c1ed87d
+    _inputPortId: Input:World:World In
+--- !u!114 &853653603604987390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 932e17afaa1a487fb00c27dbf1b0d620, type: 3}
+  m_Name: GraphOutputNode
+  m_EditorClassIdentifier: 
+  _nodeId: 56f2e768-752d-4cdf-abdd-c6a43cb0e913
+  _editorPosition: {x: 1909, y: 65}
+  _inputPorts:
+  - _portId: Input:World:World In
+    _portName: World In
+    _tooltip: World to expose as a graph output.
+    _direction: 0
+    _capacity: 0
+    _dataKind: 0
+    _required: 1
+  _outputPorts: []
+--- !u!114 &4517877114541184805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cf649b943706074b968453dfe15697b, type: 3}
+  m_Name: PerlinNoiseNode
+  m_EditorClassIdentifier: 
+  _nodeId: 9b67d03e-89d1-44ea-a0b9-391a0a2faa60
+  _editorPosition: {x: -384, y: 368}
+  _inputPorts:
+  - _portId: Input:World:World In
+    _portName: World In
+    _tooltip: World providing dimensions and seed.
+    _direction: 0
+    _capacity: 0
+    _dataKind: 0
+    _required: 1
+  _outputPorts:
+  - _portId: Output:World:World Out
+    _portName: World Out
+    _tooltip: World with a new noise layer.
+    _direction: 1
+    _capacity: 1
+    _dataKind: 0
+    _required: 0
+  _outputLayer:
+    _layerId: f40a9802ae224f3a9d2162471145cc53
+  _scale: 20
+  _octaves: 5
+  _persistence: 0.5
+  _lacunarity: 2
+  _offset: {x: 0, y: 0}
+--- !u!114 &4729395704849590264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7e4300c5600ff74b87d7d08959c9e1e, type: 3}
+  m_Name: BlendNode
+  m_EditorClassIdentifier: 
+  _nodeId: 6bb44cb8-6929-4e3b-ac3e-c26f83bdd5a2
+  _editorPosition: {x: 270, y: 203}
+  _inputPorts:
+  - _portId: Input:World:World A
+    _portName: World A
+    _tooltip: Primary world.
+    _direction: 0
+    _capacity: 0
+    _dataKind: 0
+    _required: 1
+  - _portId: Input:World:World B
+    _portName: World B
+    _tooltip: Secondary world.
+    _direction: 0
+    _capacity: 0
+    _dataKind: 0
+    _required: 1
+  _outputPorts:
+  - _portId: Output:World:World Out
+    _portName: World Out
+    _tooltip: Blended output world.
+    _direction: 1
+    _capacity: 1
+    _dataKind: 0
+    _required: 0
+  _outputLayer:
+    _layerId: f40a9802ae224f3a9d2162471145cc53
+  _blendMode: 0
+  _blendWeight: 0.5
+--- !u!114 &4834807629705842341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50e74677cccdb8349a64758f8c1d0771, type: 3}
+  m_Name: InvertNode
+  m_EditorClassIdentifier: 
+  _nodeId: acbf78b7-5941-41c9-8240-e6cbcc77d499
+  _editorPosition: {x: 891, y: 305}
+  _inputPorts:
+  - _portId: Input:World:World In
+    _portName: World In
+    _tooltip: World containing the target float layer.
+    _direction: 0
+    _capacity: 0
+    _dataKind: 0
+    _required: 1
+  _outputPorts:
+  - _portId: Output:World:World Out
+    _portName: World Out
+    _tooltip: World with the inverted layer.
+    _direction: 1
+    _capacity: 1
+    _dataKind: 0
+    _required: 0
+--- !u!114 &6512452912481668993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad39662f9e16ebc4981acd578e3741f6, type: 3}
+  m_Name: CellularAutomataNode
+  m_EditorClassIdentifier: 
+  _nodeId: 0fb7ed24-fb10-4b54-9195-4308a22465d0
+  _editorPosition: {x: -355, y: -216}
+  _inputPorts:
+  - _portId: Input:World:World In
+    _portName: World In
+    _tooltip: World providing dimensions and seed.
+    _direction: 0
+    _capacity: 0
+    _dataKind: 0
+    _required: 1
+  _outputPorts:
+  - _portId: Output:World:World Out
+    _portName: World Out
+    _tooltip: World with a cave layer.
+    _direction: 1
+    _capacity: 1
+    _dataKind: 0
+    _required: 0
+  _outputLayer:
+    _layerId: f40a9802ae224f3a9d2162471145cc53
+  _fillProbability: 0.687
+  _iterations: 7
+  _birthThreshold: 4
+  _surviveThreshold: 3
+  _solidBorder: 1
