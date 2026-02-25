@@ -1,7 +1,9 @@
 {
-    "name": "DynamicDungeon.Core",
+    "name": "DynamicDungeon.Editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:273a297a8489b5245b71d56711a982d2"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
