@@ -1,0 +1,4 @@
+﻿<Solution>
+  <Project Path="DynamicDungeon.Runtime.csproj" />
+  <Project Path="DynamicDungeon.Tests.csproj" />
+</Solution>
