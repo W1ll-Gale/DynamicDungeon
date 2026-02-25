@@ -100,3 +100,6 @@ InitTestScene*.unity*
 Unity-Project-Cleaner.ps1
 ExportProject.txt
 ExportProject.ps1
+/.local
+/.claude
+
