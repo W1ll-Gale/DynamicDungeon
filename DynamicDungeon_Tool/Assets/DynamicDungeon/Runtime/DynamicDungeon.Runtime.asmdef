@@ -1,7 +1,9 @@
 {
     "name": "DynamicDungeon.Runtime",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:735d2d821bdac5f48bc24f27a1ce72b6"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

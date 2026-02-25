@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-[CreateAssetMenu(menuName = "PCG/Theme Profile")]
+[CreateAssetMenu(menuName = "DynamicDungeon/Theme Profile")]
 public class ThemeProfile : ScriptableObject
 {
     [Serializable]
