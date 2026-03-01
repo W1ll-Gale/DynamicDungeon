@@ -3,6 +3,8 @@
     "rootNamespace": "DynamicDungeon.Tests",
     "references": [
         "DynamicDungeon.Runtime",
+        "Unity.Collections",
+        "Unity.Jobs",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
