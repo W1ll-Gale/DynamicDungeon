@@ -173,6 +173,20 @@ namespace DynamicDungeon.Runtime.Core
             _isDisposed = true;
         }
 
+        internal void SetJobDirtyState(int jobIndex, bool isDirty)
+        {
+            ThrowIfDisposed();
+
+            if (jobIndex < 0 || jobIndex >= _jobs.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(jobIndex), "Job index is outside the execution plan bounds.");
+            }
+
+            NodeJobDescriptor job = _jobs[jobIndex];
+            job.IsDirty = isDirty;
+            _jobs[jobIndex] = job;
+        }
+
         private static void AllocateOwnedChannels(IGenNode node, IReadOnlyList<ChannelDeclaration> channels, WorldData allocatedWorld)
         {
             int index;
