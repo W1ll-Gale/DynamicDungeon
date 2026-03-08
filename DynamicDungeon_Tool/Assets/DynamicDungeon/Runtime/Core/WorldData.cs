@@ -269,7 +269,7 @@ namespace DynamicDungeon.Runtime.Core
                 return;
             }
 
-            NativeKeyValueArrays<FixedString128Bytes, NativeArray<T>> channelPairs = channelMap.GetKeyValueArrays(Allocator.Temp);
+            NativeKeyValueArrays<FixedString128Bytes, NativeArray<T>> channelPairs = channelMap.GetKeyValueArrays(Allocator.TempJob);
             try
             {
                 int index;

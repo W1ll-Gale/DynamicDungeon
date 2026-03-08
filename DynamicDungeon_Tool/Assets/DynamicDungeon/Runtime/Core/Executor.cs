@@ -38,7 +38,7 @@ namespace DynamicDungeon.Runtime.Core
         private static NodeChannelBindings BuildChannelBindings(IReadOnlyList<ChannelDeclaration> channels, WorldData worldData)
         {
             int capacity = channels.Count > 0 ? channels.Count : MinimumNativeMapCapacity;
-            NodeChannelBindings bindings = new NodeChannelBindings(capacity, Allocator.Temp);
+            NodeChannelBindings bindings = new NodeChannelBindings(capacity, Allocator.TempJob);
 
             int index;
             for (index = 0; index < channels.Count; index++)

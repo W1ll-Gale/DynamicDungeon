@@ -71,7 +71,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private static FloatChannelSnapshot[] BuildFloatChannels(WorldData data)
         {
-            NativeKeyValueArrays<FixedString128Bytes, NativeArray<float>> channelPairs = data.GetFloatChannelPairs(Allocator.Temp);
+            NativeKeyValueArrays<FixedString128Bytes, NativeArray<float>> channelPairs = data.GetFloatChannelPairs(Allocator.TempJob);
             try
             {
                 FloatChannelSnapshot[] snapshots = new FloatChannelSnapshot[channelPairs.Length];
@@ -99,7 +99,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private static IntChannelSnapshot[] BuildIntChannels(WorldData data)
         {
-            NativeKeyValueArrays<FixedString128Bytes, NativeArray<int>> channelPairs = data.GetIntChannelPairs(Allocator.Temp);
+            NativeKeyValueArrays<FixedString128Bytes, NativeArray<int>> channelPairs = data.GetIntChannelPairs(Allocator.TempJob);
             try
             {
                 IntChannelSnapshot[] snapshots = new IntChannelSnapshot[channelPairs.Length];
@@ -127,7 +127,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private static BoolMaskChannelSnapshot[] BuildBoolMaskChannels(WorldData data)
         {
-            NativeKeyValueArrays<FixedString128Bytes, NativeArray<byte>> channelPairs = data.GetBoolMaskChannelPairs(Allocator.Temp);
+            NativeKeyValueArrays<FixedString128Bytes, NativeArray<byte>> channelPairs = data.GetBoolMaskChannelPairs(Allocator.TempJob);
             try
             {
                 BoolMaskChannelSnapshot[] snapshots = new BoolMaskChannelSnapshot[channelPairs.Length];
