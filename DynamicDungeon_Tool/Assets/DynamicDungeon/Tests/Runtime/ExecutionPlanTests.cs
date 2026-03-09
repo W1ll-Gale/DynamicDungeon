@@ -40,13 +40,15 @@ namespace DynamicDungeon.Tests.Runtime
             FlatFillNode node = new FlatFillNode("node-flat", -3.75f);
             ExecutionPlan plan = null;
             NodeChannelBindings channelBindings = default;
-            NativeHashMap<FixedString64Bytes, float> numericBlackboard = default;
+            NumericBlackboard numericBlackboard = null;
+            ManagedBlackboard managedBlackboard = null;
 
             try
             {
                 plan = ExecutionPlan.Build(new IGenNode[] { node }, 6, 3, 5678L);
                 channelBindings = new NodeChannelBindings(1, Allocator.TempJob);
-                numericBlackboard = new NativeHashMap<FixedString64Bytes, float>(1, Allocator.TempJob);
+                numericBlackboard = new NumericBlackboard(1, Allocator.TempJob);
+                managedBlackboard = new ManagedBlackboard();
 
                 NativeArray<float> outputChannel = plan.AllocatedWorld.GetFloatChannel(FlatOutputChannelName);
                 channelBindings.BindFloatChannel(FlatOutputChannelName, outputChannel);
@@ -54,6 +56,7 @@ namespace DynamicDungeon.Tests.Runtime
                 NodeExecutionContext context = new NodeExecutionContext(
                     channelBindings,
                     numericBlackboard,
+                    managedBlackboard,
                     plan.GetLocalSeed(node.NodeId),
                     plan.AllocatedWorld.Width,
                     plan.AllocatedWorld.Height,
@@ -70,7 +73,7 @@ namespace DynamicDungeon.Tests.Runtime
             }
             finally
             {
-                if (numericBlackboard.IsCreated)
+                if (numericBlackboard != null)
                 {
                     numericBlackboard.Dispose();
                 }

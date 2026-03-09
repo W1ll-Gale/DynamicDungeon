@@ -71,7 +71,16 @@ namespace DynamicDungeon.Runtime.Core
             int index;
             for (index = 0; index < plan.Jobs.Count; index++)
             {
-                blackboardDeclarationCount += plan.Jobs[index].Node.BlackboardDeclarations.Count;
+                IReadOnlyList<BlackboardKey> declarations = plan.Jobs[index].Node.BlackboardDeclarations;
+
+                int declarationIndex;
+                for (declarationIndex = 0; declarationIndex < declarations.Count; declarationIndex++)
+                {
+                    if (declarations[declarationIndex].IsWrite)
+                    {
+                        blackboardDeclarationCount++;
+                    }
+                }
             }
 
             return blackboardDeclarationCount;
@@ -110,7 +119,8 @@ namespace DynamicDungeon.Runtime.Core
 
         private static ExecutionResult ExecuteInternal(ExecutionPlan plan, CancellationToken cancellationToken, IProgress<float> progress)
         {
-            NativeHashMap<FixedString64Bytes, float> numericBlackboard = default;
+            NumericBlackboard numericBlackboard = null;
+            ManagedBlackboard managedBlackboard = null;
             JobHandle combinedHandle = default;
             bool hasScheduledHandle = false;
 
@@ -127,7 +137,8 @@ namespace DynamicDungeon.Runtime.Core
                     blackboardCapacity = MinimumNativeMapCapacity;
                 }
 
-                numericBlackboard = new NativeHashMap<FixedString64Bytes, float>(blackboardCapacity, Allocator.Persistent);
+                numericBlackboard = new NumericBlackboard(blackboardCapacity, Allocator.Persistent);
+                managedBlackboard = new ManagedBlackboard();
 
                 int dirtyJobCount = CountDirtyJobs(plan);
                 int completedDirtyJobs = 0;
@@ -168,6 +179,7 @@ namespace DynamicDungeon.Runtime.Core
                         NodeExecutionContext context = new NodeExecutionContext(
                             channelBindings,
                             numericBlackboard,
+                            managedBlackboard,
                             plan.GetLocalSeed(job.Node.NodeId),
                             plan.AllocatedWorld.Width,
                             plan.AllocatedWorld.Height,
@@ -209,7 +221,12 @@ namespace DynamicDungeon.Runtime.Core
             }
             finally
             {
-                if (numericBlackboard.IsCreated)
+                if (managedBlackboard != null)
+                {
+                    managedBlackboard.Clear();
+                }
+
+                if (numericBlackboard != null)
                 {
                     numericBlackboard.Dispose();
                 }

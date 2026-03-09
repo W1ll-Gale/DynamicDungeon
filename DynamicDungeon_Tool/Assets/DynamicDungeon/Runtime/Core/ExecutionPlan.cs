@@ -59,6 +59,7 @@ namespace DynamicDungeon.Runtime.Core
             List<NodeJobDescriptor> jobs = new List<NodeJobDescriptor>(orderedNodes.Count);
             Dictionary<string, int> jobIndexByNodeId = new Dictionary<string, int>(orderedNodes.Count, StringComparer.Ordinal);
             Dictionary<string, long> localSeedsByNodeId = new Dictionary<string, long>(orderedNodes.Count, StringComparer.Ordinal);
+            HashSet<FixedString64Bytes> writtenBlackboardKeys = new HashSet<FixedString64Bytes>();
 
             try
             {
@@ -85,6 +86,7 @@ namespace DynamicDungeon.Runtime.Core
 
                     ChannelDeclaration[] copiedChannels = CopyChannelDeclarations(node.ChannelDeclarations);
                     ValidateReadDeclarations(node, copiedChannels, allocatedWorld);
+                    ValidateBlackboardDeclarations(node, writtenBlackboardKeys);
                     AllocateOwnedChannels(node, copiedChannels, allocatedWorld);
 
                     long localSeed = DeriveLocalSeed(globalSeed, node.NodeId);
@@ -217,6 +219,30 @@ namespace DynamicDungeon.Runtime.Core
                 if (!added)
                 {
                     throw new InvalidOperationException("Channel '" + declaration.ChannelName + "' is declared as owned output by more than one node, or conflicts with an existing channel type. Offending node: '" + node.NodeName + "'.");
+                }
+            }
+        }
+
+        private static void ValidateBlackboardDeclarations(IGenNode node, HashSet<FixedString64Bytes> writtenBlackboardKeys)
+        {
+            IReadOnlyList<BlackboardKey> declarations = node.BlackboardDeclarations;
+
+            int index;
+            for (index = 0; index < declarations.Count; index++)
+            {
+                BlackboardKey declaration = declarations[index];
+                if (!declaration.IsWrite && !writtenBlackboardKeys.Contains(declaration.Key))
+                {
+                    throw new InvalidOperationException("Node '" + node.NodeName + "' reads blackboard key '" + declaration.Key + "' before any upstream node has declared a write for it.");
+                }
+            }
+
+            for (index = 0; index < declarations.Count; index++)
+            {
+                BlackboardKey declaration = declarations[index];
+                if (declaration.IsWrite)
+                {
+                    writtenBlackboardKeys.Add(declaration.Key);
                 }
             }
         }
