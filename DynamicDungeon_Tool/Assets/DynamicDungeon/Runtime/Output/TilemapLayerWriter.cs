@@ -133,13 +133,13 @@ namespace DynamicDungeon.Runtime.Output
                     continue;
                 }
 
-                if (!typeof(Component).IsAssignableFrom(componentType))
+                if (!typeof(UnityEngine.Component).IsAssignableFrom(componentType))
                 {
                     Debug.LogWarning("Tilemap layer '" + definition.LayerName + "' component type '" + componentTypeName + "' is not a Unity Component.");
                     continue;
                 }
 
-                Component component = tilemap.GetComponent(componentType);
+                UnityEngine.Component component = tilemap.GetComponent(componentType);
                 if (component == null)
                 {
                     component = tilemap.gameObject.AddComponent(componentType);
@@ -171,7 +171,7 @@ namespace DynamicDungeon.Runtime.Output
             return null;
         }
 
-        private static void ApplyComponentDefaults(Component component)
+        private static void ApplyComponentDefaults(UnityEngine.Component component)
         {
             Rigidbody2D rigidbody2D = component as Rigidbody2D;
             if (rigidbody2D != null)
