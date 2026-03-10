@@ -1,0 +1,145 @@
+using System;
+using System.Collections.Generic;
+using DynamicDungeon.Runtime.Biome;
+using DynamicDungeon.Runtime.Core;
+using DynamicDungeon.Runtime.Semantic;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+
+namespace DynamicDungeon.Runtime.Output
+{
+    public sealed class TilemapOutputPass
+    {
+        public void Execute(
+            WorldSnapshot snapshot,
+            string intChannelName,
+            BiomeAsset biome,
+            TileSemanticRegistry registry,
+            TilemapLayerWriter writer,
+            IReadOnlyList<TilemapLayerDefinition> layerDefinitions,
+            Vector3Int tilemapOffset)
+        {
+            if (snapshot == null)
+            {
+                throw new ArgumentNullException(nameof(snapshot));
+            }
+
+            if (string.IsNullOrWhiteSpace(intChannelName))
+            {
+                throw new ArgumentException("An int channel name is required.", nameof(intChannelName));
+            }
+
+            if (biome == null)
+            {
+                throw new ArgumentNullException(nameof(biome));
+            }
+
+            if (writer == null)
+            {
+                throw new ArgumentNullException(nameof(writer));
+            }
+
+            if (layerDefinitions == null)
+            {
+                throw new ArgumentNullException(nameof(layerDefinitions));
+            }
+
+            WorldSnapshot.IntChannelSnapshot channelSnapshot = GetIntChannel(snapshot, intChannelName);
+            TilemapLayerDefinition catchAllLayer = FindCatchAllLayer(layerDefinitions);
+            int[] emptyTagIds = Array.Empty<int>();
+
+            int index;
+            for (index = 0; index < channelSnapshot.Data.Length; index++)
+            {
+                int logicalIdValue = channelSnapshot.Data[index];
+                if (logicalIdValue == LogicalTileId.Void)
+                {
+                    continue;
+                }
+
+                ushort logicalId = unchecked((ushort)logicalIdValue);
+                TileBase tile;
+                if (!biome.TryGetTile(logicalId, out tile))
+                {
+                    continue;
+                }
+
+                int[] tagIds = registry != null ? registry.GetTagIds(logicalId) : emptyTagIds;
+                TilemapLayerDefinition layer = ResolveLayer(layerDefinitions, catchAllLayer, tagIds, registry);
+                if (layer == null)
+                {
+                    continue;
+                }
+
+                int x = index % snapshot.Width;
+                int y = index / snapshot.Width;
+                Vector3Int position = new Vector3Int(x + tilemapOffset.x, y + tilemapOffset.y, tilemapOffset.z);
+                writer.WriteTile(position, tile, layer);
+            }
+        }
+
+        private static WorldSnapshot.IntChannelSnapshot GetIntChannel(WorldSnapshot snapshot, string intChannelName)
+        {
+            int index;
+            for (index = 0; index < snapshot.IntChannels.Length; index++)
+            {
+                WorldSnapshot.IntChannelSnapshot channelSnapshot = snapshot.IntChannels[index];
+                if (channelSnapshot != null && string.Equals(channelSnapshot.Name, intChannelName, StringComparison.Ordinal))
+                {
+                    return channelSnapshot;
+                }
+            }
+
+            throw new InvalidOperationException("WorldSnapshot does not contain int channel '" + intChannelName + "'.");
+        }
+
+        private static TilemapLayerDefinition FindCatchAllLayer(IReadOnlyList<TilemapLayerDefinition> layerDefinitions)
+        {
+            int index;
+            for (index = 0; index < layerDefinitions.Count; index++)
+            {
+                TilemapLayerDefinition layerDefinition = layerDefinitions[index];
+                if (layerDefinition != null && layerDefinition.IsCatchAll)
+                {
+                    return layerDefinition;
+                }
+            }
+
+            return null;
+        }
+
+        private static TilemapLayerDefinition ResolveLayer(
+            IReadOnlyList<TilemapLayerDefinition> layerDefinitions,
+            TilemapLayerDefinition catchAllLayer,
+            int[] tagIds,
+            TileSemanticRegistry registry)
+        {
+            if (registry == null)
+            {
+                if (catchAllLayer == null)
+                {
+                    throw new InvalidOperationException("A catch-all TilemapLayerDefinition is required when no TileSemanticRegistry is available.");
+                }
+
+                return catchAllLayer;
+            }
+
+            int index;
+            for (index = 0; index < layerDefinitions.Count; index++)
+            {
+                TilemapLayerDefinition layerDefinition = layerDefinitions[index];
+                if (layerDefinition == null || layerDefinition.IsCatchAll)
+                {
+                    continue;
+                }
+
+                if (layerDefinition.MatchesTags(tagIds, registry.AllTags))
+                {
+                    return layerDefinition;
+                }
+            }
+
+            return catchAllLayer;
+        }
+    }
+}
