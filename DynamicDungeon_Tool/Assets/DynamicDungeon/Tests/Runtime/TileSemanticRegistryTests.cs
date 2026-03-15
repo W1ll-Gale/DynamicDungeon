@@ -1,6 +1,9 @@
 using System.Reflection;
 using DynamicDungeon.Runtime.Semantic;
 using NUnit.Framework;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -89,14 +92,40 @@ namespace DynamicDungeon.Tests.Runtime
         [Test]
         public void GetOrLoadReturnsNullGracefullyWhenAssetIsMissing()
         {
-            ResetRegistryCache();
+            const string registryAssetPath = "Assets/DynamicDungeon/TileSemanticRegistry.asset";
+            const string temporaryAssetPath = "Assets/DynamicDungeon/TileSemanticRegistry.asset.testbackup";
 
-            LogAssert.Expect(LogType.Warning, "TileSemanticRegistry could not be loaded from 'Assets/DynamicDungeon/TileSemanticRegistry.asset'.");
+            TileSemanticRegistry existingRegistry = AssetDatabase.LoadAssetAtPath<TileSemanticRegistry>(registryAssetPath);
+            string moveToTemporaryError = string.Empty;
 
-            TileSemanticRegistry registry = null;
+            if (existingRegistry != null)
+            {
+                moveToTemporaryError = AssetDatabase.MoveAsset(registryAssetPath, temporaryAssetPath);
+                Assert.That(moveToTemporaryError, Is.Empty);
+                AssetDatabase.Refresh();
+            }
 
-            Assert.DoesNotThrow(() => registry = TileSemanticRegistry.GetOrLoad());
-            Assert.That(registry, Is.Null);
+            try
+            {
+                ResetRegistryCache();
+
+                LogAssert.Expect(LogType.Warning, "TileSemanticRegistry could not be loaded from 'Assets/DynamicDungeon/TileSemanticRegistry.asset'.");
+
+                TileSemanticRegistry registry = null;
+
+                Assert.DoesNotThrow(() => registry = TileSemanticRegistry.GetOrLoad());
+                Assert.That(registry, Is.Null);
+            }
+            finally
+            {
+                if (existingRegistry != null)
+                {
+                    string restoreError = AssetDatabase.MoveAsset(temporaryAssetPath, registryAssetPath);
+                    Assert.That(restoreError, Is.Empty);
+                    AssetDatabase.Refresh();
+                    ResetRegistryCache();
+                }
+            }
         }
 
         private static void ResetRegistryCache()
