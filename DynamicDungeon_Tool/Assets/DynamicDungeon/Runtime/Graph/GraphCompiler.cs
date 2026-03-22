@@ -105,6 +105,7 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             ConnectionValidationResult connectionValidation = ValidateConnections(connectionDataList, diagnostics, nodesById);
+            ApplyInputConnectionBindings(compiledNodes, connectionValidation.Connections);
             ValidateRequiredInputs(compiledNodes, connectionValidation.IncomingCountsByPortKey, diagnostics);
             ValidateChannelOwnership(compiledNodes, diagnostics);
 
@@ -312,7 +313,7 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
-                if (fromPort.Type != toPort.Type && !CastRegistry.HasImplicitCast(fromPort.Type, toPort.Type))
+                if (fromPort.Type != toPort.Type && !CastRegistry.CanCast(fromPort.Type, toPort.Type))
                 {
                     diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Connection from '" + fromNode.Node.NodeName + "." + fromPort.Name + "' to '" + toNode.Node.NodeName + "." + toPort.Name + "' is type-incompatible.", toNode.Node.NodeId, toPort.Name));
                     continue;
@@ -333,6 +334,47 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             return new ConnectionValidationResult(validatedConnections, incomingCountsByPortKey);
+        }
+
+        private static void ApplyInputConnectionBindings(IReadOnlyList<CompiledNodeInfo> compiledNodes, IReadOnlyList<ValidatedConnection> validatedConnections)
+        {
+            Dictionary<string, Dictionary<string, string>> inputConnectionsByNodeId = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < validatedConnections.Count; connectionIndex++)
+            {
+                ValidatedConnection connection = validatedConnections[connectionIndex];
+                Dictionary<string, string> nodeConnections;
+                if (!inputConnectionsByNodeId.TryGetValue(connection.ToNode.Node.NodeId, out nodeConnections))
+                {
+                    nodeConnections = new Dictionary<string, string>(StringComparer.Ordinal);
+                    inputConnectionsByNodeId.Add(connection.ToNode.Node.NodeId, nodeConnections);
+                }
+
+                if (!nodeConnections.ContainsKey(connection.ToPort.Name))
+                {
+                    nodeConnections.Add(connection.ToPort.Name, connection.FromPort.Name);
+                }
+            }
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < compiledNodes.Count; nodeIndex++)
+            {
+                CompiledNodeInfo compiledNode = compiledNodes[nodeIndex];
+                IInputConnectionReceiver inputConnectionReceiver = compiledNode.Node as IInputConnectionReceiver;
+                if (inputConnectionReceiver == null)
+                {
+                    continue;
+                }
+
+                Dictionary<string, string> nodeConnections;
+                if (!inputConnectionsByNodeId.TryGetValue(compiledNode.Node.NodeId, out nodeConnections))
+                {
+                    nodeConnections = new Dictionary<string, string>(StringComparer.Ordinal);
+                }
+
+                inputConnectionReceiver.ReceiveInputConnections(nodeConnections);
+            }
         }
 
         private static void ValidateRequiredInputs(IReadOnlyList<CompiledNodeInfo> compiledNodes, IReadOnlyDictionary<string, int> incomingCountsByPortKey, List<GraphDiagnostic> diagnostics)
@@ -599,24 +641,23 @@ namespace DynamicDungeon.Runtime.Graph
 
         private static bool TryGetPortDerivedArgumentValue(IReadOnlyList<GenPortData> ports, ParameterInfo parameter, out object argumentValue)
         {
-            if (parameter.ParameterType != typeof(string))
+            GenPortData resolvedPort;
+            if (!TryResolvePortForParameter(ports, parameter.Name ?? string.Empty, out resolvedPort))
             {
                 argumentValue = null;
                 return false;
             }
 
-            string parameterName = parameter.Name ?? string.Empty;
-            IReadOnlyList<GenPortData> safePorts = ports ?? Array.Empty<GenPortData>();
-
-            if (parameterName.EndsWith("ChannelName", StringComparison.OrdinalIgnoreCase) || parameterName.EndsWith("PortName", StringComparison.OrdinalIgnoreCase))
+            if (parameter.ParameterType == typeof(string))
             {
-                PortDirection? preferredDirection = GetPreferredDirection(parameterName);
-                string portName;
-                if (TryGetUniquePortName(safePorts, preferredDirection, out portName))
-                {
-                    argumentValue = portName;
-                    return true;
-                }
+                argumentValue = resolvedPort.PortName ?? string.Empty;
+                return true;
+            }
+
+            if (parameter.ParameterType == typeof(ChannelType))
+            {
+                argumentValue = resolvedPort.Type;
+                return true;
             }
 
             argumentValue = null;
@@ -638,9 +679,109 @@ namespace DynamicDungeon.Runtime.Graph
             return null;
         }
 
-        private static bool TryGetUniquePortName(IReadOnlyList<GenPortData> ports, PortDirection? preferredDirection, out string portName)
+        private static bool TryResolvePortForParameter(IReadOnlyList<GenPortData> ports, string parameterName, out GenPortData resolvedPort)
         {
-            string matchedPortName = null;
+            IReadOnlyList<GenPortData> safePorts = ports ?? Array.Empty<GenPortData>();
+            PortDirection? preferredDirection = GetPreferredDirection(parameterName);
+            string desiredPortName = GetDesiredPortName(parameterName);
+
+            int portIndex;
+            for (portIndex = 0; portIndex < safePorts.Count; portIndex++)
+            {
+                GenPortData port = safePorts[portIndex];
+                if (port == null || string.IsNullOrWhiteSpace(port.PortName))
+                {
+                    continue;
+                }
+
+                if (preferredDirection.HasValue && port.Direction != preferredDirection.Value)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(desiredPortName) &&
+                    string.Equals(port.PortName, desiredPortName, StringComparison.OrdinalIgnoreCase))
+                {
+                    resolvedPort = port;
+                    return true;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(desiredPortName))
+            {
+                resolvedPort = null;
+                return false;
+            }
+
+            return TryGetUniquePortByDirection(safePorts, preferredDirection, out resolvedPort);
+        }
+
+        private static string GetDesiredPortName(string parameterName)
+        {
+            string trimmedName = StripParameterSuffix(parameterName);
+            string strippedPrefixName = StripDirectionPrefix(trimmedName);
+
+            if (!string.IsNullOrEmpty(strippedPrefixName))
+            {
+                return strippedPrefixName;
+            }
+
+            if (!string.Equals(trimmedName, parameterName, StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmedName;
+            }
+
+            return string.Empty;
+        }
+
+        private static string StripParameterSuffix(string parameterName)
+        {
+            if (parameterName.EndsWith("ChannelName", StringComparison.OrdinalIgnoreCase))
+            {
+                return parameterName.Substring(0, parameterName.Length - "ChannelName".Length);
+            }
+
+            if (parameterName.EndsWith("PortName", StringComparison.OrdinalIgnoreCase))
+            {
+                return parameterName.Substring(0, parameterName.Length - "PortName".Length);
+            }
+
+            if (parameterName.EndsWith("Type", StringComparison.OrdinalIgnoreCase))
+            {
+                return parameterName.Substring(0, parameterName.Length - "Type".Length);
+            }
+
+            return parameterName;
+        }
+
+        private static string StripDirectionPrefix(string value)
+        {
+            if (value.StartsWith("input", StringComparison.OrdinalIgnoreCase))
+            {
+                return value.Length == "input".Length ? string.Empty : value.Substring("input".Length);
+            }
+
+            if (value.StartsWith("output", StringComparison.OrdinalIgnoreCase))
+            {
+                return value.Length == "output".Length ? string.Empty : value.Substring("output".Length);
+            }
+
+            if (value.StartsWith("from", StringComparison.OrdinalIgnoreCase))
+            {
+                return value.Length == "from".Length ? string.Empty : value.Substring("from".Length);
+            }
+
+            if (value.StartsWith("to", StringComparison.OrdinalIgnoreCase))
+            {
+                return value.Length == "to".Length ? string.Empty : value.Substring("to".Length);
+            }
+
+            return value;
+        }
+
+        private static bool TryGetUniquePortByDirection(IReadOnlyList<GenPortData> ports, PortDirection? preferredDirection, out GenPortData resolvedPort)
+        {
+            GenPortData matchedPort = null;
             int matchCount = 0;
 
             int portIndex;
@@ -657,17 +798,17 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
-                matchedPortName = port.PortName;
+                matchedPort = port;
                 matchCount++;
             }
 
             if (matchCount == 1)
             {
-                portName = matchedPortName;
+                resolvedPort = matchedPort;
                 return true;
             }
 
-            portName = null;
+            resolvedPort = null;
             return false;
         }
 
