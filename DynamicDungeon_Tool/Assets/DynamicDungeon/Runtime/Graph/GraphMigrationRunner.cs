@@ -5,9 +5,11 @@ namespace DynamicDungeon.Runtime.Graph
 {
     public static class GraphMigrationRunner
     {
+        private static int _currentSchemaVersion = GraphSchemaVersion.Current;
+
         public static bool RequiresMigration(GenGraph graph)
         {
-            return graph != null && graph.SchemaVersion < GraphSchemaVersion.Current;
+            return graph != null && graph.SchemaVersion < _currentSchemaVersion;
         }
 
         public static MigrationResult RunMigrations(GenGraph graph, IReadOnlyList<IGraphMigration> migrations)
@@ -35,7 +37,7 @@ namespace DynamicDungeon.Runtime.Graph
                 return new MigrationResult(false, initialVersion, graph.SchemaVersion, errorMessage);
             }
 
-            while (graph.SchemaVersion < GraphSchemaVersion.Current)
+            while (graph.SchemaVersion < _currentSchemaVersion)
             {
                 IGraphMigration migration = FindMigrationForVersion(orderedMigrations, graph.SchemaVersion);
                 if (migration == null)
@@ -67,7 +69,7 @@ namespace DynamicDungeon.Runtime.Graph
 
         public static bool IsNewerThanTool(GenGraph graph)
         {
-            return graph != null && graph.SchemaVersion > GraphSchemaVersion.Current;
+            return graph != null && graph.SchemaVersion > _currentSchemaVersion;
         }
 
         private static List<IGraphMigration> BuildOrderedMigrations(IReadOnlyList<IGraphMigration> migrations, out string errorMessage)
