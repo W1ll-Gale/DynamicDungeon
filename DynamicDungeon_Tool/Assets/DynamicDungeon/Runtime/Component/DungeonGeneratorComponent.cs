@@ -1,13 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Core;
-using DynamicDungeon.Runtime.Nodes;
+using DynamicDungeon.Runtime.Graph;
 using DynamicDungeon.Runtime.Output;
 using DynamicDungeon.Runtime.Semantic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
 
 namespace DynamicDungeon.Runtime.Component
 {
@@ -15,18 +21,15 @@ namespace DynamicDungeon.Runtime.Component
     public sealed class DungeonGeneratorComponent : MonoBehaviour
     {
         private const string IdleStatusLabel = "Idle";
-        private const string GeneratingStatusLabel = "Generating…";
+        private const string GeneratingStatusLabel = "Generating...";
         private const string DoneStatusLabel = "Done";
         private const string FailedStatusLabel = "Failed";
         private const string DefaultIntChannelName = "LogicalIds";
-        private const string PhaseOneNoiseChannelName = "Phase1Noise";
-        private const string PhaseOnePerlinNodeId = "phase1-perlin-node";
-        private const string PhaseOneFlatFillNodeId = "phase1-flat-fill-node";
-        private const float PhaseOneFlatFillValue = 1.0f;
-        private const float PhaseOneNoiseFrequency = 0.045f;
-        private const float PhaseOneNoiseAmplitude = 1.0f;
-        private const int PhaseOneNoiseOctaves = 4;
-        private const float PhaseOneWallThreshold = 0.58f;
+        private const string BakeEditorOnlyMessage = "Bake is only available in the Unity Editor.";
+        private const string BakeInProgressMessage = "Cannot bake while generation is already running.";
+        private const string BakedSnapshotMissingDataMessage = "Assigned baked world snapshot is missing snapshot data.";
+        private const string BakedSnapshotPathFormat = "Assets/{0}_BakedSnapshot.asset";
+        private const string BakedSnapshotDimensionMismatchMessageFormat = "Baked world snapshot dimension mismatch: snapshot is {0}x{1}, current world is {2}x{3}.";
 
         [SerializeField]
         private bool _generateOnStart;
@@ -44,6 +47,9 @@ namespace DynamicDungeon.Runtime.Component
         private int _worldHeight = 128;
 
         [SerializeField]
+        private GenGraph _graph;
+
+        [SerializeField]
         private Grid _grid;
 
         [SerializeField]
@@ -59,8 +65,7 @@ namespace DynamicDungeon.Runtime.Component
         private Vector3Int _tilemapOffset;
 
         [SerializeField]
-        [HideInInspector]
-        private WorldSnapshot _bakedWorldSnapshot;
+        private BakedWorldSnapshot _bakedWorldSnapshot;
 
         private readonly Executor _executor = new Executor();
         private readonly TilemapOutputPass _tilemapOutputPass = new TilemapOutputPass();
@@ -91,12 +96,60 @@ namespace DynamicDungeon.Runtime.Component
             }
         }
 
+        public bool IsBaked
+        {
+            get
+            {
+                return HasValidBakedSnapshot();
+            }
+        }
+
         public void CancelGeneration()
         {
             if (_generationCancellationSource != null)
             {
                 _generationCancellationSource.Cancel();
             }
+        }
+
+        public void Bake()
+        {
+#if UNITY_EDITOR
+            if (IsGenerating)
+            {
+                Debug.LogError(BakeInProgressMessage, this);
+                return;
+            }
+
+            try
+            {
+                ValidateConfiguration();
+
+                long seed = GetSeedForRun();
+                WorldSnapshot snapshot = ExecuteGenerationSynchronously(seed);
+                WriteSnapshotToTilemaps(snapshot);
+                SaveBakedSnapshotAsset(snapshot, seed);
+
+                _statusLabel = DoneStatusLabel;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("Bake failed: " + exception.Message, this);
+                _statusLabel = FailedStatusLabel;
+            }
+#else
+            Debug.LogError(BakeEditorOnlyMessage, this);
+#endif
+        }
+
+        public void ClearBake()
+        {
+            _bakedWorldSnapshot = null;
+
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(this);
+            EditorSceneManager.MarkSceneDirty(gameObject.scene);
+#endif
         }
 
         public void Generate()
@@ -140,25 +193,10 @@ namespace DynamicDungeon.Runtime.Component
 
         private void Start()
         {
-            if (_generateOnStart)
+            if (_generateOnStart && !IsBaked)
             {
                 Generate();
             }
-        }
-
-        private static WorldSnapshot.FloatChannelSnapshot FindFloatChannel(WorldSnapshot snapshot, string channelName)
-        {
-            int index;
-            for (index = 0; index < snapshot.FloatChannels.Length; index++)
-            {
-                WorldSnapshot.FloatChannelSnapshot channel = snapshot.FloatChannels[index];
-                if (channel != null && string.Equals(channel.Name, channelName, StringComparison.Ordinal))
-                {
-                    return channel;
-                }
-            }
-
-            throw new InvalidOperationException("WorldSnapshot does not contain float channel '" + channelName + "'.");
         }
 
         private async Task ObserveFireAndForget(Task generationTask)
@@ -200,19 +238,12 @@ namespace DynamicDungeon.Runtime.Component
             args.WasBakedFallback = false;
             args.ErrorMessage = errorMessage;
 
-            if (_bakedWorldSnapshot != null)
+            WorldSnapshot bakedSnapshot;
+            if (TryUseBakedFallback(out bakedSnapshot))
             {
-                try
-                {
-                    WriteSnapshotToTilemaps(_bakedWorldSnapshot);
-                    args.Snapshot = _bakedWorldSnapshot;
-                    args.WasBakedFallback = true;
-                    return args;
-                }
-                catch (Exception fallbackException)
-                {
-                    Debug.LogError("Dungeon generation fallback failed: " + fallbackException, this);
-                }
+                args.Snapshot = bakedSnapshot;
+                args.WasBakedFallback = true;
+                return args;
             }
 
             try
@@ -295,7 +326,7 @@ namespace DynamicDungeon.Runtime.Component
                 ValidateConfiguration();
 
                 long seed = GetSeedForRun();
-                ExecutionPlan plan = BuildPhaseOneExecutionPlan(seed);
+                ExecutionPlan plan = CompileGraphToExecutionPlan(seed);
                 ExecutionResult executionResult = await _executor.ExecuteAsync(plan, cancellationToken);
 
                 if (executionResult.WasCancelled)
@@ -320,11 +351,10 @@ namespace DynamicDungeon.Runtime.Component
                     return;
                 }
 
-                WorldSnapshot outputSnapshot = CreatePhaseOneOutputSnapshot(executionResult.Snapshot);
-                WriteSnapshotToTilemaps(outputSnapshot);
+                WriteSnapshotToTilemaps(executionResult.Snapshot);
 
                 GenerationCompletedArgs completedArgs = new GenerationCompletedArgs();
-                completedArgs.Snapshot = outputSnapshot;
+                completedArgs.Snapshot = executionResult.Snapshot;
                 completedArgs.IsSuccess = true;
                 completedArgs.WasBakedFallback = false;
                 completedArgs.ErrorMessage = null;
@@ -352,6 +382,11 @@ namespace DynamicDungeon.Runtime.Component
                 throw new InvalidOperationException("WorldHeight must be greater than zero.");
             }
 
+            if (_graph == null)
+            {
+                throw new InvalidOperationException("DungeonGeneratorComponent requires a GenGraph assignment.");
+            }
+
             if (string.IsNullOrWhiteSpace(_intChannelName))
             {
                 throw new InvalidOperationException("IntChannelName must be non-empty.");
@@ -370,70 +405,171 @@ namespace DynamicDungeon.Runtime.Component
             ResolveGrid(true);
         }
 
-        private ExecutionPlan BuildPhaseOneExecutionPlan(long seed)
+        private ExecutionPlan CompileGraphToExecutionPlan(long seed)
         {
-            PerlinNoiseNode perlinNoiseNode = new PerlinNoiseNode(
-                PhaseOnePerlinNodeId,
-                PhaseOneNoiseChannelName,
-                PhaseOneNoiseFrequency,
-                PhaseOneNoiseAmplitude,
-                Vector2.zero,
-                PhaseOneNoiseOctaves);
+            int originalWorldWidth = _graph.WorldWidth;
+            int originalWorldHeight = _graph.WorldHeight;
+            long originalSeed = _graph.DefaultSeed;
 
-            FlatFillNode flatFillNode = new FlatFillNode(PhaseOneFlatFillNodeId, PhaseOneFlatFillValue);
-
-            IGenNode[] orderedNodes =
+            try
             {
-                perlinNoiseNode,
-                flatFillNode
-            };
+                _graph.WorldWidth = _worldWidth;
+                _graph.WorldHeight = _worldHeight;
+                _graph.DefaultSeed = seed;
 
-            return ExecutionPlan.Build(orderedNodes, _worldWidth, _worldHeight, seed);
+                GraphCompileResult compileResult = GraphCompiler.Compile(_graph);
+                if (!compileResult.IsSuccess || compileResult.Plan == null)
+                {
+                    throw new InvalidOperationException(BuildCompileFailureMessage(compileResult));
+                }
+
+                return compileResult.Plan;
+            }
+            finally
+            {
+                _graph.WorldWidth = originalWorldWidth;
+                _graph.WorldHeight = originalWorldHeight;
+                _graph.DefaultSeed = originalSeed;
+            }
         }
 
-        private WorldSnapshot CreatePhaseOneOutputSnapshot(WorldSnapshot sourceSnapshot)
+        private string BuildCompileFailureMessage(GraphCompileResult compileResult)
         {
-            WorldSnapshot.FloatChannelSnapshot flatFillChannel = FindFloatChannel(sourceSnapshot, "FlatOutput");
-            WorldSnapshot.FloatChannelSnapshot noiseChannel = FindFloatChannel(sourceSnapshot, PhaseOneNoiseChannelName);
-
-            if (flatFillChannel.Data.Length != sourceSnapshot.Width * sourceSnapshot.Height)
+            if (compileResult == null)
             {
-                throw new InvalidOperationException("Flat fill channel length does not match the world dimensions.");
+                return "Graph compilation failed.";
             }
 
-            if (noiseChannel.Data.Length != sourceSnapshot.Width * sourceSnapshot.Height)
+            StringBuilder builder = new StringBuilder("Graph compilation failed");
+            IReadOnlyList<GraphDiagnostic> diagnostics = compileResult.Diagnostics;
+
+            if (diagnostics == null || diagnostics.Count == 0)
             {
-                throw new InvalidOperationException("Perlin noise channel length does not match the world dimensions.");
+                builder.Append('.');
+                return builder.ToString();
             }
 
-            int[] logicalIds = new int[sourceSnapshot.Width * sourceSnapshot.Height];
+            builder.Append(": ");
 
-            int index;
-            for (index = 0; index < logicalIds.Length; index++)
+            bool appendedAnyDiagnostic = false;
+            int diagnosticIndex;
+            for (diagnosticIndex = 0; diagnosticIndex < diagnostics.Count; diagnosticIndex++)
             {
-                if (flatFillChannel.Data[index] <= 0.0f)
+                GraphDiagnostic diagnostic = diagnostics[diagnosticIndex];
+                if (diagnostic.Severity != DiagnosticSeverity.Error)
                 {
-                    logicalIds[index] = LogicalTileId.Void;
                     continue;
                 }
 
-                logicalIds[index] = noiseChannel.Data[index] >= PhaseOneWallThreshold
-                    ? LogicalTileId.Wall
-                    : LogicalTileId.Floor;
+                if (appendedAnyDiagnostic)
+                {
+                    builder.Append(" | ");
+                }
+
+                if (!string.IsNullOrWhiteSpace(diagnostic.NodeId))
+                {
+                    builder.Append('[');
+                    builder.Append(diagnostic.NodeId);
+                    builder.Append("] ");
+                }
+
+                builder.Append(diagnostic.Message);
+                appendedAnyDiagnostic = true;
             }
 
-            WorldSnapshot.IntChannelSnapshot logicalChannel = new WorldSnapshot.IntChannelSnapshot();
-            logicalChannel.Name = _intChannelName;
-            logicalChannel.Data = logicalIds;
+            if (!appendedAnyDiagnostic)
+            {
+                builder.Append("Unknown compilation error.");
+            }
 
-            WorldSnapshot outputSnapshot = new WorldSnapshot();
-            outputSnapshot.Width = sourceSnapshot.Width;
-            outputSnapshot.Height = sourceSnapshot.Height;
-            outputSnapshot.Seed = sourceSnapshot.Seed;
-            outputSnapshot.FloatChannels = sourceSnapshot.FloatChannels;
-            outputSnapshot.BoolMaskChannels = sourceSnapshot.BoolMaskChannels;
-            outputSnapshot.IntChannels = new[] { logicalChannel };
-            return outputSnapshot;
+            return builder.ToString();
+        }
+
+        private WorldSnapshot ExecuteGenerationSynchronously(long seed)
+        {
+            ExecutionPlan plan = CompileGraphToExecutionPlan(seed);
+            ExecutionResult executionResult = _executor.ExecuteAsync(plan, CancellationToken.None).GetAwaiter().GetResult();
+
+            if (executionResult.WasCancelled)
+            {
+                throw new InvalidOperationException("Generation cancelled.");
+            }
+
+            if (!executionResult.IsSuccess || executionResult.Snapshot == null)
+            {
+                string executionError = string.IsNullOrWhiteSpace(executionResult.ErrorMessage) ? "Generation failed." : executionResult.ErrorMessage;
+                throw new InvalidOperationException(executionError);
+            }
+
+            return executionResult.Snapshot;
+        }
+
+        private bool HasValidBakedSnapshot()
+        {
+            return _bakedWorldSnapshot != null && _bakedWorldSnapshot.Snapshot != null;
+        }
+
+        private bool TryUseBakedFallback(out WorldSnapshot snapshot)
+        {
+            snapshot = null;
+
+            BakedWorldSnapshot bakedSnapshot;
+            string errorMessage;
+            if (!TryGetValidBakedSnapshot(out bakedSnapshot, out errorMessage))
+            {
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    Debug.LogError(errorMessage, this);
+                }
+
+                return false;
+            }
+
+            try
+            {
+                WriteSnapshotToTilemaps(bakedSnapshot.Snapshot);
+                snapshot = bakedSnapshot.Snapshot;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("Dungeon generation fallback failed: " + exception, this);
+                return false;
+            }
+        }
+
+        private bool TryGetValidBakedSnapshot(out BakedWorldSnapshot bakedSnapshot, out string errorMessage)
+        {
+            bakedSnapshot = _bakedWorldSnapshot;
+            errorMessage = null;
+
+            if (bakedSnapshot == null)
+            {
+                return false;
+            }
+
+            if (bakedSnapshot.Snapshot == null)
+            {
+                errorMessage = BakedSnapshotMissingDataMessage;
+                return false;
+            }
+
+            int bakedWidth = bakedSnapshot.Width > 0 ? bakedSnapshot.Width : bakedSnapshot.Snapshot.Width;
+            int bakedHeight = bakedSnapshot.Height > 0 ? bakedSnapshot.Height : bakedSnapshot.Snapshot.Height;
+
+            if (bakedWidth != _worldWidth || bakedHeight != _worldHeight)
+            {
+                errorMessage = string.Format(
+                    CultureInfo.InvariantCulture,
+                    BakedSnapshotDimensionMismatchMessageFormat,
+                    bakedWidth,
+                    bakedHeight,
+                    _worldWidth,
+                    _worldHeight);
+                return false;
+            }
+
+            return true;
         }
 
         private void WriteSnapshotToTilemaps(WorldSnapshot snapshot)
@@ -445,5 +581,40 @@ namespace DynamicDungeon.Runtime.Component
             _tilemapLayerWriter.ClearAll();
             _tilemapOutputPass.Execute(snapshot, _intChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
         }
+
+#if UNITY_EDITOR
+        private void SaveBakedSnapshotAsset(WorldSnapshot snapshot, long seed)
+        {
+            UnityEngine.SceneManagement.Scene activeScene = gameObject.scene;
+            string sceneName = string.IsNullOrWhiteSpace(activeScene.name) ? "Untitled" : activeScene.name;
+            string bakedSnapshotPath = string.Format(CultureInfo.InvariantCulture, BakedSnapshotPathFormat, sceneName);
+
+            UnityEngine.Object existingAsset = AssetDatabase.LoadMainAssetAtPath(bakedSnapshotPath);
+            if (existingAsset != null && !(existingAsset is BakedWorldSnapshot))
+            {
+                throw new InvalidOperationException("Cannot save baked snapshot because '" + bakedSnapshotPath + "' is already used by a different asset.");
+            }
+
+            BakedWorldSnapshot bakedSnapshot = AssetDatabase.LoadAssetAtPath<BakedWorldSnapshot>(bakedSnapshotPath);
+            if (bakedSnapshot == null)
+            {
+                bakedSnapshot = ScriptableObject.CreateInstance<BakedWorldSnapshot>();
+                AssetDatabase.CreateAsset(bakedSnapshot, bakedSnapshotPath);
+            }
+
+            bakedSnapshot.Snapshot = snapshot;
+            bakedSnapshot.Seed = seed;
+            bakedSnapshot.Timestamp = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+            bakedSnapshot.Width = snapshot.Width;
+            bakedSnapshot.Height = snapshot.Height;
+
+            _bakedWorldSnapshot = bakedSnapshot;
+
+            EditorUtility.SetDirty(bakedSnapshot);
+            EditorUtility.SetDirty(this);
+            EditorSceneManager.MarkSceneDirty(activeScene);
+            AssetDatabase.SaveAssets();
+        }
+#endif
     }
 }

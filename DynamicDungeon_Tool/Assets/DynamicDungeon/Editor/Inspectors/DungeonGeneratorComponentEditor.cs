@@ -12,11 +12,13 @@ namespace DynamicDungeon.Editor.Inspectors
         private SerializedProperty _stableSeedProperty;
         private SerializedProperty _worldWidthProperty;
         private SerializedProperty _worldHeightProperty;
+        private SerializedProperty _graphProperty;
         private SerializedProperty _gridProperty;
         private SerializedProperty _layerDefinitionsProperty;
         private SerializedProperty _biomeProperty;
         private SerializedProperty _intChannelNameProperty;
         private SerializedProperty _tilemapOffsetProperty;
+        private SerializedProperty _bakedWorldSnapshotProperty;
 
         private void OnEnable()
         {
@@ -25,11 +27,13 @@ namespace DynamicDungeon.Editor.Inspectors
             _stableSeedProperty = serializedObject.FindProperty("_stableSeed");
             _worldWidthProperty = serializedObject.FindProperty("_worldWidth");
             _worldHeightProperty = serializedObject.FindProperty("_worldHeight");
+            _graphProperty = serializedObject.FindProperty("_graph");
             _gridProperty = serializedObject.FindProperty("_grid");
             _layerDefinitionsProperty = serializedObject.FindProperty("_layerDefinitions");
             _biomeProperty = serializedObject.FindProperty("_biome");
             _intChannelNameProperty = serializedObject.FindProperty("_intChannelName");
             _tilemapOffsetProperty = serializedObject.FindProperty("_tilemapOffset");
+            _bakedWorldSnapshotProperty = serializedObject.FindProperty("_bakedWorldSnapshot");
 
             EditorApplication.update += OnEditorUpdate;
         }
@@ -59,6 +63,7 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.LabelField("World", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_worldWidthProperty);
             EditorGUILayout.PropertyField(_worldHeightProperty);
+            EditorGUILayout.PropertyField(_graphProperty);
             EditorGUILayout.PropertyField(_intChannelNameProperty);
             EditorGUILayout.PropertyField(_tilemapOffsetProperty);
 
@@ -67,6 +72,18 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.PropertyField(_gridProperty);
             EditorGUILayout.PropertyField(_biomeProperty);
             EditorGUILayout.PropertyField(_layerDefinitionsProperty, true);
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Baking", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_bakedWorldSnapshotProperty);
+            EditorGUILayout.LabelField("Is Baked", component.IsBaked ? "Yes" : "No");
+
+            BakedWorldSnapshot bakedSnapshot = _bakedWorldSnapshotProperty.objectReferenceValue as BakedWorldSnapshot;
+            if (bakedSnapshot != null)
+            {
+                EditorGUILayout.LabelField("Bake Seed", bakedSnapshot.Seed.ToString());
+                EditorGUILayout.LabelField("Bake Timestamp", string.IsNullOrWhiteSpace(bakedSnapshot.Timestamp) ? "-" : bakedSnapshot.Timestamp);
+            }
 
             serializedObject.ApplyModifiedProperties();
 
@@ -86,6 +103,21 @@ namespace DynamicDungeon.Editor.Inspectors
                 component.CancelGeneration();
             }
 
+            if (GUILayout.Button("Bake"))
+            {
+                component.Bake();
+                serializedObject.Update();
+            }
+
+            EditorGUI.BeginDisabledGroup(bakedSnapshot == null);
+
+            if (GUILayout.Button("Clear Bake"))
+            {
+                component.ClearBake();
+                serializedObject.Update();
+            }
+
+            EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
         }
 
