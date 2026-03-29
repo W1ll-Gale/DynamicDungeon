@@ -699,22 +699,16 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
-                if (!string.IsNullOrEmpty(desiredPortName) &&
-                    string.Equals(port.PortName, desiredPortName, StringComparison.OrdinalIgnoreCase))
-                {
-                    resolvedPort = port;
-                    return true;
-                }
-            }
-
-            if (!string.IsNullOrEmpty(desiredPortName))
+            if (!string.IsNullOrEmpty(desiredPortName) &&
+                string.Equals(port.PortName, desiredPortName, StringComparison.OrdinalIgnoreCase))
             {
-                resolvedPort = null;
-                return false;
+                resolvedPort = port;
+                return true;
             }
-
-            return TryGetUniquePortByDirection(safePorts, preferredDirection, out resolvedPort);
         }
+
+        return TryGetUniquePortByDirection(safePorts, preferredDirection, out resolvedPort);
+    }
 
         private static string GetDesiredPortName(string parameterName)
         {

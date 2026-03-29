@@ -154,7 +154,7 @@ namespace DynamicDungeon.Runtime.Graph
             int index;
             for (index = 0; index < sourceArray.Length; index++)
             {
-                result[index] = sourceArray[index] >= 0.5f ? (byte)1 : (byte)0;
+                result[index] = sourceArray[index] > 0.5f ? (byte)1 : (byte)0;
             }
 
             return result;
