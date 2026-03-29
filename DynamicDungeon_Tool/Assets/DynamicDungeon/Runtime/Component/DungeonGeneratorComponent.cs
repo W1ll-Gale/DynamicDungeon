@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DynamicDungeon.Runtime.Biome;
@@ -30,6 +29,9 @@ namespace DynamicDungeon.Runtime.Component
         private const string BakedSnapshotMissingDataMessage = "Assigned baked world snapshot is missing snapshot data.";
         private const string BakedSnapshotPathFormat = "Assets/{0}_BakedSnapshot.asset";
         private const string BakedSnapshotDimensionMismatchMessageFormat = "Baked world snapshot dimension mismatch: snapshot is {0}x{1}, current world is {2}x{3}.";
+        private const string MissingGraphMessage = "Dungeon generation failed: no GenGraph is assigned.";
+        private const string GraphMigrationWarningMessageFormat = "GenGraph '{0}' is at schema version {1}, but tool schema version is {2}. The graph may need migration.";
+        private const string GraphCompilationFailedMessage = "Graph compilation failed.";
 
         [SerializeField]
         private bool _generateOnStart;
@@ -101,6 +103,18 @@ namespace DynamicDungeon.Runtime.Component
             get
             {
                 return HasValidBakedSnapshot();
+            }
+        }
+
+        public GenGraph Graph
+        {
+            get
+            {
+                return _graph;
+            }
+            set
+            {
+                _graph = value;
             }
         }
 
@@ -326,7 +340,15 @@ namespace DynamicDungeon.Runtime.Component
                 ValidateConfiguration();
 
                 long seed = GetSeedForRun();
-                ExecutionPlan plan = CompileGraphToExecutionPlan(seed);
+                ExecutionPlan plan;
+                string compileErrorMessage;
+                if (!TryCompileGraphToExecutionPlan(seed, out plan, out compileErrorMessage))
+                {
+                    _statusLabel = FailedStatusLabel;
+                    RaiseGenerationCompleted(CreateFailureArgs(compileErrorMessage));
+                    return;
+                }
+
                 ExecutionResult executionResult = await _executor.ExecuteAsync(plan, cancellationToken);
 
                 if (executionResult.WasCancelled)
@@ -382,11 +404,6 @@ namespace DynamicDungeon.Runtime.Component
                 throw new InvalidOperationException("WorldHeight must be greater than zero.");
             }
 
-            if (_graph == null)
-            {
-                throw new InvalidOperationException("DungeonGeneratorComponent requires a GenGraph assignment.");
-            }
-
             if (string.IsNullOrWhiteSpace(_intChannelName))
             {
                 throw new InvalidOperationException("IntChannelName must be non-empty.");
@@ -405,8 +422,30 @@ namespace DynamicDungeon.Runtime.Component
             ResolveGrid(true);
         }
 
-        private ExecutionPlan CompileGraphToExecutionPlan(long seed)
+        private bool TryCompileGraphToExecutionPlan(long seed, out ExecutionPlan plan, out string errorMessage)
         {
+            plan = null;
+            errorMessage = null;
+
+            if (_graph == null)
+            {
+                Debug.LogError(MissingGraphMessage, this);
+                errorMessage = MissingGraphMessage;
+                return false;
+            }
+
+            if (GraphSchemaVersion.Current > _graph.SchemaVersion)
+            {
+                Debug.LogWarning(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        GraphMigrationWarningMessageFormat,
+                        _graph.name,
+                        _graph.SchemaVersion,
+                        GraphSchemaVersion.Current),
+                    this);
+            }
+
             int originalWorldWidth = _graph.WorldWidth;
             int originalWorldHeight = _graph.WorldHeight;
             long originalSeed = _graph.DefaultSeed;
@@ -420,10 +459,13 @@ namespace DynamicDungeon.Runtime.Component
                 GraphCompileResult compileResult = GraphCompiler.Compile(_graph);
                 if (!compileResult.IsSuccess || compileResult.Plan == null)
                 {
-                    throw new InvalidOperationException(BuildCompileFailureMessage(compileResult));
+                    LogCompileDiagnostics(compileResult.Diagnostics);
+                    errorMessage = GraphCompilationFailedMessage;
+                    return false;
                 }
 
-                return compileResult.Plan;
+                plan = compileResult.Plan;
+                return true;
             }
             finally
             {
@@ -433,61 +475,51 @@ namespace DynamicDungeon.Runtime.Component
             }
         }
 
-        private string BuildCompileFailureMessage(GraphCompileResult compileResult)
+        private static string BuildDiagnosticMessage(GraphDiagnostic diagnostic)
         {
-            if (compileResult == null)
+            if (string.IsNullOrWhiteSpace(diagnostic.NodeId) && string.IsNullOrWhiteSpace(diagnostic.PortName))
             {
-                return "Graph compilation failed.";
+                return diagnostic.Message;
             }
 
-            StringBuilder builder = new StringBuilder("Graph compilation failed");
-            IReadOnlyList<GraphDiagnostic> diagnostics = compileResult.Diagnostics;
+            string nodePrefix = string.IsNullOrWhiteSpace(diagnostic.NodeId) ? string.Empty : "[" + diagnostic.NodeId + "] ";
+            string portSuffix = string.IsNullOrWhiteSpace(diagnostic.PortName) ? string.Empty : " (Port: " + diagnostic.PortName + ")";
+            return nodePrefix + diagnostic.Message + portSuffix;
+        }
 
+        private void LogCompileDiagnostics(IReadOnlyList<GraphDiagnostic> diagnostics)
+        {
             if (diagnostics == null || diagnostics.Count == 0)
             {
-                builder.Append('.');
-                return builder.ToString();
+                Debug.LogError(GraphCompilationFailedMessage, this);
+                return;
             }
 
-            builder.Append(": ");
-
-            bool appendedAnyDiagnostic = false;
             int diagnosticIndex;
             for (diagnosticIndex = 0; diagnosticIndex < diagnostics.Count; diagnosticIndex++)
             {
                 GraphDiagnostic diagnostic = diagnostics[diagnosticIndex];
-                if (diagnostic.Severity != DiagnosticSeverity.Error)
-                {
-                    continue;
-                }
 
-                if (appendedAnyDiagnostic)
+                if (diagnostic.Severity == DiagnosticSeverity.Error)
                 {
-                    builder.Append(" | ");
+                    Debug.LogError(BuildDiagnosticMessage(diagnostic), this);
                 }
-
-                if (!string.IsNullOrWhiteSpace(diagnostic.NodeId))
+                else if (diagnostic.Severity == DiagnosticSeverity.Warning)
                 {
-                    builder.Append('[');
-                    builder.Append(diagnostic.NodeId);
-                    builder.Append("] ");
+                    Debug.LogWarning(BuildDiagnosticMessage(diagnostic), this);
                 }
-
-                builder.Append(diagnostic.Message);
-                appendedAnyDiagnostic = true;
             }
-
-            if (!appendedAnyDiagnostic)
-            {
-                builder.Append("Unknown compilation error.");
-            }
-
-            return builder.ToString();
         }
 
         private WorldSnapshot ExecuteGenerationSynchronously(long seed)
         {
-            ExecutionPlan plan = CompileGraphToExecutionPlan(seed);
+            ExecutionPlan plan;
+            string errorMessage;
+            if (!TryCompileGraphToExecutionPlan(seed, out plan, out errorMessage))
+            {
+                throw new InvalidOperationException(errorMessage ?? GraphCompilationFailedMessage);
+            }
+
             ExecutionResult executionResult = _executor.ExecuteAsync(plan, CancellationToken.None).GetAwaiter().GetResult();
 
             if (executionResult.WasCancelled)
