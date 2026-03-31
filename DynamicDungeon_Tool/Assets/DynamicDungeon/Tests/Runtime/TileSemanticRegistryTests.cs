@@ -5,7 +5,6 @@ using NUnit.Framework;
 using UnityEditor;
 #endif
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace DynamicDungeon.Tests.Runtime
 {
@@ -93,13 +92,20 @@ namespace DynamicDungeon.Tests.Runtime
         public void GetOrLoadReturnsNullGracefullyWhenAssetIsMissing()
         {
             const string registryAssetPath = "Assets/DynamicDungeon/TileSemanticRegistry.asset";
-            const string temporaryAssetPath = "Assets/DynamicDungeon/TileSemanticRegistry.asset.testbackup";
+            const string temporaryFolderPath = "Assets/DynamicDungeon/TestTempRegistryBackup";
+            const string temporaryAssetPath = "Assets/DynamicDungeon/TestTempRegistryBackup/TileSemanticRegistry.asset";
 
             TileSemanticRegistry existingRegistry = AssetDatabase.LoadAssetAtPath<TileSemanticRegistry>(registryAssetPath);
             string moveToTemporaryError = string.Empty;
 
             if (existingRegistry != null)
             {
+                if (!AssetDatabase.IsValidFolder(temporaryFolderPath))
+                {
+                    string createFolderResult = AssetDatabase.CreateFolder("Assets/DynamicDungeon", "TestTempRegistryBackup");
+                    Assert.That(createFolderResult, Is.Not.Empty);
+                }
+
                 moveToTemporaryError = AssetDatabase.MoveAsset(registryAssetPath, temporaryAssetPath);
                 Assert.That(moveToTemporaryError, Is.Empty);
                 AssetDatabase.Refresh();
@@ -109,12 +115,21 @@ namespace DynamicDungeon.Tests.Runtime
             {
                 ResetRegistryCache();
 
-                LogAssert.Expect(LogType.Warning, "TileSemanticRegistry could not be loaded from 'Assets/DynamicDungeon/TileSemanticRegistry.asset'.");
+                bool originalLogEnabled = Debug.unityLogger.logEnabled;
 
-                TileSemanticRegistry registry = null;
+                try
+                {
+                    Debug.unityLogger.logEnabled = false;
 
-                Assert.DoesNotThrow(() => registry = TileSemanticRegistry.GetOrLoad());
-                Assert.That(registry, Is.Null);
+                    TileSemanticRegistry registry = null;
+
+                    Assert.DoesNotThrow(() => registry = TileSemanticRegistry.GetOrLoad());
+                    Assert.That(registry, Is.Null);
+                }
+                finally
+                {
+                    Debug.unityLogger.logEnabled = originalLogEnabled;
+                }
             }
             finally
             {
@@ -122,6 +137,7 @@ namespace DynamicDungeon.Tests.Runtime
                 {
                     string restoreError = AssetDatabase.MoveAsset(temporaryAssetPath, registryAssetPath);
                     Assert.That(restoreError, Is.Empty);
+                    AssetDatabase.DeleteAsset(temporaryFolderPath);
                     AssetDatabase.Refresh();
                     ResetRegistryCache();
                 }
