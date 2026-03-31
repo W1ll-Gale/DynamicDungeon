@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: Verification_CompileErrorGraph
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 1
+  WorldWidth: 128
+  WorldHeight: 128
+  DefaultSeed: 12345
+  Nodes:
+  - NodeId: threshold-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Threshold
+    Position: {x: 0, y: 0}
+    Ports:
+    - PortName: Input
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.5
+  Connections: []

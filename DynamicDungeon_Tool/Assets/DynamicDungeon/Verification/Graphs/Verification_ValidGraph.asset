@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: Verification_ValidGraph
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 1
+  WorldWidth: 128
+  WorldHeight: 128
+  DefaultSeed: 12345
+  Nodes:
+  - NodeId: perlin-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
+    NodeName: Perlin
+    Position: {x: 0, y: 0}
+    Ports:
+    - PortName: Noise
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: frequency
+      Value: 0.08
+    - Name: amplitude
+      Value: 1.0
+    - Name: offset
+      Value: 0,0
+    - Name: octaves
+      Value: 3
+  - NodeId: threshold-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Threshold
+    Position: {x: 250, y: 0}
+    Ports:
+    - PortName: Input
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.5
+  - NodeId: cellular-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Cellular
+    Position: {x: 500, y: 0}
+    Ports:
+    - PortName: Input
+      Direction: 0
+      Type: 2
+    - PortName: SmoothedMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 3
+    - Name: survivalRule
+      Value: 23456
+    - Name: iterations
+      Value: 5
+    - Name: initialFillProbability
+      Value: 0.45
+  - NodeId: logical-id-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Mask To Logical IDs
+    Position: {x: 750, y: 0}
+    Ports:
+    - PortName: Input
+      Direction: 0
+      Type: 2
+    - PortName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: trueLogicalId
+      Value: 2
+    - Name: falseLogicalId
+      Value: 1
+  Connections:
+  - FromNodeId: perlin-node
+    FromPortName: Noise
+    ToNodeId: threshold-node
+    ToPortName: Input
+  - FromNodeId: threshold-node
+    FromPortName: Mask
+    ToNodeId: cellular-node
+    ToPortName: Input
+  - FromNodeId: cellular-node
+    FromPortName: SmoothedMask
+    ToNodeId: logical-id-node
+    ToPortName: Input
