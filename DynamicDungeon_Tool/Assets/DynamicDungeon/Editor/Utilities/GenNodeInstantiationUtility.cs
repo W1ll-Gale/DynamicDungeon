@@ -69,6 +69,25 @@ namespace DynamicDungeon.Editor.Utilities
             return true;
         }
 
+        public static bool TryCreatePrototypeNodeInstance(Type nodeType, string nodeId, string nodeName, out IGenNode nodeInstance, out string errorMessage)
+        {
+            if (nodeType == null)
+            {
+                nodeInstance = null;
+                errorMessage = "Node type cannot be null.";
+                return false;
+            }
+
+            if (!typeof(IGenNode).IsAssignableFrom(nodeType) || nodeType.IsAbstract)
+            {
+                nodeInstance = null;
+                errorMessage = "Node type '" + nodeType.FullName + "' does not implement IGenNode.";
+                return false;
+            }
+
+            return TryInstantiatePrototypeNode(nodeType, nodeId, nodeName, out nodeInstance, out errorMessage);
+        }
+
         private static bool ApplyParameters(IGenNode nodeInstance, GenNodeData nodeData, out string errorMessage)
         {
             IParameterReceiver parameterReceiver = nodeInstance as IParameterReceiver;
@@ -150,6 +169,52 @@ namespace DynamicDungeon.Editor.Utilities
             }
         }
 
+        private static bool TryInstantiatePrototypeNode(Type nodeType, string nodeId, string nodeName, out IGenNode nodeInstance, out string errorMessage)
+        {
+            ConstructorInfo[] constructors = nodeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+            ConstructorMatch bestMatch = null;
+
+            int constructorIndex;
+            for (constructorIndex = 0; constructorIndex < constructors.Length; constructorIndex++)
+            {
+                ConstructorMatch constructorMatch;
+                if (TryBindPrototypeConstructor(constructors[constructorIndex], nodeId, nodeName, out constructorMatch))
+                {
+                    if (bestMatch == null || constructorMatch.Score > bestMatch.Score)
+                    {
+                        bestMatch = constructorMatch;
+                    }
+                }
+            }
+
+            if (bestMatch == null)
+            {
+                nodeInstance = null;
+                errorMessage = "Node type '" + nodeType.FullName + "' could not be instantiated with prototype arguments.";
+                return false;
+            }
+
+            try
+            {
+                nodeInstance = (IGenNode)bestMatch.Constructor.Invoke(bestMatch.Arguments);
+                errorMessage = null;
+                return true;
+            }
+            catch (TargetInvocationException exception)
+            {
+                Exception innerException = exception.InnerException ?? exception;
+                nodeInstance = null;
+                errorMessage = "Node type '" + nodeType.FullName + "' failed during prototype construction: " + innerException.Message;
+                return false;
+            }
+            catch (Exception exception)
+            {
+                nodeInstance = null;
+                errorMessage = "Node type '" + nodeType.FullName + "' failed during prototype construction: " + exception.Message;
+                return false;
+            }
+        }
+
         private static bool TryBindConstructor(ConstructorInfo constructor, GenNodeData nodeData, out ConstructorMatch constructorMatch)
         {
             ParameterInfo[] parameters = constructor.GetParameters();
@@ -186,6 +251,56 @@ namespace DynamicDungeon.Editor.Utilities
                 if (parameter.HasDefaultValue)
                 {
                     arguments[parameterIndex] = parameter.DefaultValue;
+                    continue;
+                }
+
+                constructorMatch = null;
+                return false;
+            }
+
+            constructorMatch = new ConstructorMatch(constructor, arguments, score + parameters.Length);
+            return true;
+        }
+
+        private static bool TryBindPrototypeConstructor(ConstructorInfo constructor, string nodeId, string nodeName, out ConstructorMatch constructorMatch)
+        {
+            ParameterInfo[] parameters = constructor.GetParameters();
+            object[] arguments = new object[parameters.Length];
+            int score = 0;
+
+            int parameterIndex;
+            for (parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
+            {
+                ParameterInfo parameter = parameters[parameterIndex];
+                string parameterName = parameter.Name ?? string.Empty;
+
+                if (parameter.ParameterType == typeof(string) && string.Equals(parameterName, "nodeId", StringComparison.OrdinalIgnoreCase))
+                {
+                    arguments[parameterIndex] = nodeId;
+                    score += 2;
+                    continue;
+                }
+
+                if (parameter.ParameterType == typeof(string) &&
+                    (string.Equals(parameterName, "nodeName", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(parameterName, "displayName", StringComparison.OrdinalIgnoreCase)))
+                {
+                    arguments[parameterIndex] = nodeName;
+                    score += 2;
+                    continue;
+                }
+
+                if (parameter.HasDefaultValue)
+                {
+                    arguments[parameterIndex] = parameter.DefaultValue;
+                    score += 1;
+                    continue;
+                }
+
+                object prototypeArgument;
+                if (TryGetPrototypeArgumentValue(parameter, out prototypeArgument))
+                {
+                    arguments[parameterIndex] = prototypeArgument;
                     continue;
                 }
 
@@ -521,6 +636,131 @@ namespace DynamicDungeon.Editor.Utilities
 
             argumentValue = null;
             return false;
+        }
+
+        private static bool TryGetPrototypeArgumentValue(ParameterInfo parameter, out object argumentValue)
+        {
+            string parameterName = parameter.Name ?? string.Empty;
+            Type parameterType = parameter.ParameterType;
+
+            if (parameterType == typeof(string))
+            {
+                argumentValue = CreatePrototypeStringValue(parameterName);
+                return true;
+            }
+
+            if (parameterType == typeof(ChannelType))
+            {
+                argumentValue = ChannelType.Float;
+                return true;
+            }
+
+            if (parameterType == typeof(int))
+            {
+                argumentValue = CreatePrototypeIntValue(parameterName);
+                return true;
+            }
+
+            if (parameterType == typeof(long))
+            {
+                argumentValue = 0L;
+                return true;
+            }
+
+            if (parameterType == typeof(float))
+            {
+                argumentValue = CreatePrototypeFloatValue(parameterName);
+                return true;
+            }
+
+            if (parameterType == typeof(double))
+            {
+                argumentValue = (double)CreatePrototypeFloatValue(parameterName);
+                return true;
+            }
+
+            if (parameterType == typeof(bool))
+            {
+                argumentValue = false;
+                return true;
+            }
+
+            if (parameterType == typeof(Vector2))
+            {
+                argumentValue = Vector2.zero;
+                return true;
+            }
+
+            if (parameterType.IsEnum)
+            {
+                Array enumValues = Enum.GetValues(parameterType);
+                if (enumValues.Length > 0)
+                {
+                    argumentValue = enumValues.GetValue(0);
+                    return true;
+                }
+            }
+
+            argumentValue = null;
+            return false;
+        }
+
+        private static float CreatePrototypeFloatValue(string parameterName)
+        {
+            if (parameterName.IndexOf("frequency", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return 0.05f;
+            }
+
+            if (parameterName.IndexOf("amplitude", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return 1.0f;
+            }
+
+            if (parameterName.IndexOf("threshold", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                parameterName.IndexOf("probability", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return 0.5f;
+            }
+
+            return 0.0f;
+        }
+
+        private static int CreatePrototypeIntValue(string parameterName)
+        {
+            if (parameterName.IndexOf("octave", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                parameterName.IndexOf("iteration", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return 1;
+            }
+
+            if (parameterName.IndexOf("logicalId", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return 1;
+            }
+
+            return 0;
+        }
+
+        private static string CreatePrototypeStringValue(string parameterName)
+        {
+            string desiredName = GetDesiredPortName(parameterName);
+            if (string.IsNullOrEmpty(desiredName))
+            {
+                desiredName = parameterName;
+            }
+
+            if (string.IsNullOrEmpty(desiredName))
+            {
+                return "Channel";
+            }
+
+            if (desiredName.Length == 1)
+            {
+                return desiredName.ToUpperInvariant();
+            }
+
+            return char.ToUpperInvariant(desiredName[0]) + desiredName.Substring(1);
         }
 
         private static bool TryParseVector2(string rawValue, out object argumentValue)
