@@ -1,4 +1,3 @@
-using System;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using UnityEditor;
@@ -12,9 +11,6 @@ namespace DynamicDungeon.Editor.Windows
     public sealed class DynamicDungeonEditorWindow : EditorWindow
     {
         private const string IdleStatusText = "Idle";
-        private const string GeneratingStatusText = "Generating…";
-        private const string DoneStatusText = "Done";
-        private const string FailedStatusText = "Failed";
         private const string NoGraphTitle = "No Graph";
         private const string DiagnosticsPlaceholderText = "Diagnostics panel placeholder";
         private const float DiagnosticsPanelHeight = 120.0f;
@@ -22,6 +18,7 @@ namespace DynamicDungeon.Editor.Windows
         private ObjectField _graphField;
         private Label _statusLabel;
         private DynamicDungeonGraphView _graphView;
+        private GenerationOrchestrator _generationOrchestrator;
 
         [SerializeField]
         private GenGraph _loadedGraph;
@@ -67,6 +64,9 @@ namespace DynamicDungeon.Editor.Windows
             _graphView = new DynamicDungeonGraphView();
             rootVisualElement.Add(_graphView);
 
+            _generationOrchestrator = new GenerationOrchestrator(_graphView, SetStatus, OnGenerationCompleted);
+            _graphView.SetGenerationOrchestrator(_generationOrchestrator);
+
             VisualElement diagnosticsPlaceholder = BuildDiagnosticsPlaceholder();
             rootVisualElement.Add(diagnosticsPlaceholder);
 
@@ -74,7 +74,12 @@ namespace DynamicDungeon.Editor.Windows
 
             if (_loadedGraph != null)
             {
+                _generationOrchestrator.SetGraph(_loadedGraph);
                 _graphView.LoadGraph(_loadedGraph);
+            }
+            else
+            {
+                _generationOrchestrator.SetGraph(null);
             }
 
             SetStatus(IdleStatusText);
@@ -84,6 +89,15 @@ namespace DynamicDungeon.Editor.Windows
         private void OnEnable()
         {
             RefreshWindowTitle();
+        }
+
+        private void OnDisable()
+        {
+            if (_generationOrchestrator != null)
+            {
+                _generationOrchestrator.Dispose();
+                _generationOrchestrator = null;
+            }
         }
 
         private Toolbar BuildToolbar()
@@ -139,35 +153,18 @@ namespace DynamicDungeon.Editor.Windows
 
         private void CancelGeneration()
         {
-            SetStatus(IdleStatusText);
+            if (_generationOrchestrator != null)
+            {
+                _generationOrchestrator.CancelGeneration();
+            }
         }
 
         private void GenerateGraph()
         {
-            if (_loadedGraph == null)
+            if (_generationOrchestrator != null)
             {
-                SetStatus(FailedStatusText);
-                return;
+                _generationOrchestrator.GenerateAll();
             }
-
-            SetStatus(GeneratingStatusText);
-
-            try
-            {
-                GraphCompileResult compileResult = GraphCompiler.Compile(_loadedGraph);
-                if (compileResult.IsSuccess && compileResult.Plan != null)
-                {
-                    compileResult.Plan.Dispose();
-                    SetStatus(DoneStatusText);
-                    return;
-                }
-            }
-            catch (Exception exception)
-            {
-                Debug.LogError("Graph preflight failed: " + exception.Message);
-            }
-
-            SetStatus(FailedStatusText);
         }
 
         private void LoadGraph(GenGraph graph)
@@ -177,6 +174,11 @@ namespace DynamicDungeon.Editor.Windows
             if (_graphField != null)
             {
                 _graphField.SetValueWithoutNotify(graph);
+            }
+
+            if (_generationOrchestrator != null)
+            {
+                _generationOrchestrator.SetGraph(graph);
             }
 
             if (_graphView != null)
@@ -195,7 +197,15 @@ namespace DynamicDungeon.Editor.Windows
             RefreshWindowTitle();
         }
 
-        private void OnGraphFieldValueChanged(ChangeEvent<UnityEngine.Object> changeEvent)
+        private void OnGenerationCompleted(WorldSnapshot snapshot)
+        {
+            if (_graphView != null)
+            {
+                _graphView.UpdateNodePreviews(snapshot);
+            }
+        }
+
+        private void OnGraphFieldValueChanged(ChangeEvent<Object> changeEvent)
         {
             LoadGraph(changeEvent.newValue as GenGraph);
         }

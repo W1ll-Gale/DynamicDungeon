@@ -164,6 +164,47 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
+        public void MarkAllClean()
+        {
+            ThrowIfDisposed();
+
+            int index;
+            for (index = 0; index < _jobs.Count; index++)
+            {
+                NodeJobDescriptor job = _jobs[index];
+                job.IsDirty = false;
+                _jobs[index] = job;
+            }
+        }
+
+        public void RestoreWorldSnapshot(WorldSnapshot snapshot)
+        {
+            ThrowIfDisposed();
+
+            if (snapshot == null)
+            {
+                throw new ArgumentNullException(nameof(snapshot));
+            }
+
+            if (snapshot.Width != _allocatedWorld.Width || snapshot.Height != _allocatedWorld.Height)
+            {
+                throw new InvalidOperationException(
+                    "Snapshot dimensions do not match the allocated world. Snapshot is " +
+                    snapshot.Width +
+                    "x" +
+                    snapshot.Height +
+                    " while the plan world is " +
+                    _allocatedWorld.Width +
+                    "x" +
+                    _allocatedWorld.Height +
+                    ".");
+            }
+
+            RestoreFloatChannels(snapshot.FloatChannels);
+            RestoreIntChannels(snapshot.IntChannels);
+            RestoreBoolMaskChannels(snapshot.BoolMaskChannels);
+        }
+
         public void Dispose()
         {
             if (_isDisposed)
@@ -360,6 +401,78 @@ namespace DynamicDungeon.Runtime.Core
             if (_isDisposed)
             {
                 throw new ObjectDisposedException(nameof(ExecutionPlan));
+            }
+        }
+
+        private void RestoreFloatChannels(IReadOnlyList<WorldSnapshot.FloatChannelSnapshot> channelSnapshots)
+        {
+            IReadOnlyList<WorldSnapshot.FloatChannelSnapshot> safeChannelSnapshots = channelSnapshots ?? Array.Empty<WorldSnapshot.FloatChannelSnapshot>();
+
+            int index;
+            for (index = 0; index < safeChannelSnapshots.Count; index++)
+            {
+                WorldSnapshot.FloatChannelSnapshot channelSnapshot = safeChannelSnapshots[index];
+                if (channelSnapshot == null || !_allocatedWorld.HasFloatChannel(channelSnapshot.Name))
+                {
+                    continue;
+                }
+
+                ValidateSnapshotChannelLength(channelSnapshot.Name, channelSnapshot.Data.Length, _allocatedWorld.TileCount);
+                NativeArray<float> targetChannel = _allocatedWorld.GetFloatChannel(channelSnapshot.Name);
+                NativeArray<float>.Copy(channelSnapshot.Data, targetChannel, channelSnapshot.Data.Length);
+            }
+        }
+
+        private void RestoreIntChannels(IReadOnlyList<WorldSnapshot.IntChannelSnapshot> channelSnapshots)
+        {
+            IReadOnlyList<WorldSnapshot.IntChannelSnapshot> safeChannelSnapshots = channelSnapshots ?? Array.Empty<WorldSnapshot.IntChannelSnapshot>();
+
+            int index;
+            for (index = 0; index < safeChannelSnapshots.Count; index++)
+            {
+                WorldSnapshot.IntChannelSnapshot channelSnapshot = safeChannelSnapshots[index];
+                if (channelSnapshot == null || !_allocatedWorld.HasIntChannel(channelSnapshot.Name))
+                {
+                    continue;
+                }
+
+                ValidateSnapshotChannelLength(channelSnapshot.Name, channelSnapshot.Data.Length, _allocatedWorld.TileCount);
+                NativeArray<int> targetChannel = _allocatedWorld.GetIntChannel(channelSnapshot.Name);
+                NativeArray<int>.Copy(channelSnapshot.Data, targetChannel, channelSnapshot.Data.Length);
+            }
+        }
+
+        private void RestoreBoolMaskChannels(IReadOnlyList<WorldSnapshot.BoolMaskChannelSnapshot> channelSnapshots)
+        {
+            IReadOnlyList<WorldSnapshot.BoolMaskChannelSnapshot> safeChannelSnapshots = channelSnapshots ?? Array.Empty<WorldSnapshot.BoolMaskChannelSnapshot>();
+
+            int index;
+            for (index = 0; index < safeChannelSnapshots.Count; index++)
+            {
+                WorldSnapshot.BoolMaskChannelSnapshot channelSnapshot = safeChannelSnapshots[index];
+                if (channelSnapshot == null || !_allocatedWorld.HasBoolMaskChannel(channelSnapshot.Name))
+                {
+                    continue;
+                }
+
+                ValidateSnapshotChannelLength(channelSnapshot.Name, channelSnapshot.Data.Length, _allocatedWorld.TileCount);
+                NativeArray<byte> targetChannel = _allocatedWorld.GetBoolMaskChannel(channelSnapshot.Name);
+                NativeArray<byte>.Copy(channelSnapshot.Data, targetChannel, channelSnapshot.Data.Length);
+            }
+        }
+
+        private static void ValidateSnapshotChannelLength(string channelName, int actualLength, int expectedLength)
+        {
+            if (actualLength != expectedLength)
+            {
+                throw new InvalidOperationException(
+                    "Snapshot channel '" +
+                    channelName +
+                    "' has length " +
+                    actualLength +
+                    " but expected " +
+                    expectedLength +
+                    ".");
             }
         }
     }

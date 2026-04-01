@@ -88,6 +88,59 @@ namespace DynamicDungeon.Editor.Utilities
             return TryInstantiatePrototypeNode(nodeType, nodeId, nodeName, out nodeInstance, out errorMessage);
         }
 
+        public static void PopulateDefaultParameters(GenNodeData nodeData, Type nodeType)
+        {
+            if (nodeData == null || nodeType == null)
+            {
+                return;
+            }
+
+            if (nodeData.Parameters == null)
+            {
+                nodeData.Parameters = new List<SerializedParameter>();
+            }
+
+            ConstructorInfo[] constructors = nodeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+            ConstructorMatch bestMatch = null;
+
+            int constructorIndex;
+            for (constructorIndex = 0; constructorIndex < constructors.Length; constructorIndex++)
+            {
+                ConstructorMatch constructorMatch;
+                if (TryBindPrototypeConstructor(constructors[constructorIndex], nodeData.NodeId ?? string.Empty, nodeData.NodeName ?? string.Empty, out constructorMatch))
+                {
+                    if (bestMatch == null || constructorMatch.Score > bestMatch.Score)
+                    {
+                        bestMatch = constructorMatch;
+                    }
+                }
+            }
+
+            if (bestMatch == null)
+            {
+                return;
+            }
+
+            ParameterInfo[] parameters = bestMatch.Constructor.GetParameters();
+            int parameterIndex;
+            for (parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
+            {
+                ParameterInfo parameter = parameters[parameterIndex];
+                if (!IsEditableSerialisedParameter(parameter))
+                {
+                    continue;
+                }
+
+                if (HasSerialisedParameter(nodeData.Parameters, parameter.Name))
+                {
+                    continue;
+                }
+
+                string serialisedValue = SerialiseParameterValue(bestMatch.Arguments[parameterIndex]);
+                nodeData.Parameters.Add(new SerializedParameter(parameter.Name, serialisedValue));
+            }
+        }
+
         private static bool ApplyParameters(IGenNode nodeInstance, GenNodeData nodeData, out string errorMessage)
         {
             IParameterReceiver parameterReceiver = nodeInstance as IParameterReceiver;
@@ -703,6 +756,88 @@ namespace DynamicDungeon.Editor.Utilities
 
             argumentValue = null;
             return false;
+        }
+
+        private static bool IsEditableSerialisedParameter(ParameterInfo parameter)
+        {
+            if (parameter == null)
+            {
+                return false;
+            }
+
+            object specialArgumentValue;
+            if (TryGetSpecialArgumentValue(parameter, new GenNodeData(), out specialArgumentValue))
+            {
+                return false;
+            }
+
+            string parameterName = parameter.Name ?? string.Empty;
+            if (parameterName.EndsWith("ChannelName", StringComparison.OrdinalIgnoreCase) ||
+                parameterName.EndsWith("PortName", StringComparison.OrdinalIgnoreCase) ||
+                parameterName.EndsWith("Type", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return parameter.ParameterType != typeof(Vector2);
+        }
+
+        private static bool HasSerialisedParameter(IReadOnlyList<SerializedParameter> parameters, string parameterName)
+        {
+            string safeParameterName = parameterName ?? string.Empty;
+
+            int parameterIndex;
+            for (parameterIndex = 0; parameterIndex < parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = parameters[parameterIndex];
+                if (parameter != null && string.Equals(parameter.Name, safeParameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string SerialiseParameterValue(object value)
+        {
+            if (value == null)
+            {
+                return string.Empty;
+            }
+
+            Type valueType = value.GetType();
+            if (valueType == typeof(float))
+            {
+                return ((float)value).ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (valueType == typeof(double))
+            {
+                return ((double)value).ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (valueType == typeof(int))
+            {
+                return ((int)value).ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (valueType == typeof(long))
+            {
+                return ((long)value).ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (valueType == typeof(bool))
+            {
+                return ((bool)value) ? bool.TrueString.ToLowerInvariant() : bool.FalseString.ToLowerInvariant();
+            }
+
+            if (valueType.IsEnum)
+            {
+                return Enum.GetName(valueType, value) ?? value.ToString();
+            }
+
+            return value.ToString() ?? string.Empty;
         }
 
         private static float CreatePrototypeFloatValue(string parameterName)

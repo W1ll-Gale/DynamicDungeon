@@ -13,7 +13,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private int _isRunning;
 
-        public async Task<ExecutionResult> ExecuteAsync(ExecutionPlan plan, CancellationToken cancellationToken, IProgress<float> progress = null)
+        public async Task<ExecutionResult> ExecuteAsync(ExecutionPlan plan, CancellationToken cancellationToken, IProgress<float> progress = null, bool disposePlanOnCompletion = true)
         {
             if (plan == null)
             {
@@ -27,7 +27,7 @@ namespace DynamicDungeon.Runtime.Core
 
             try
             {
-                return await Task.Run(() => ExecuteInternal(plan, cancellationToken, progress)).ConfigureAwait(false);
+                return await Task.Run(() => ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion)).ConfigureAwait(false);
             }
             finally
             {
@@ -117,7 +117,7 @@ namespace DynamicDungeon.Runtime.Core
             return new ExecutionResult(true, null, snapshot, false);
         }
 
-        private static ExecutionResult ExecuteInternal(ExecutionPlan plan, CancellationToken cancellationToken, IProgress<float> progress)
+        private static ExecutionResult ExecuteInternal(ExecutionPlan plan, CancellationToken cancellationToken, IProgress<float> progress, bool disposePlanOnCompletion)
         {
             NumericBlackboard numericBlackboard = null;
             ManagedBlackboard managedBlackboard = null;
@@ -231,7 +231,10 @@ namespace DynamicDungeon.Runtime.Core
                     numericBlackboard.Dispose();
                 }
 
-                plan.Dispose();
+                if (disposePlanOnCompletion)
+                {
+                    plan.Dispose();
+                }
             }
         }
     }

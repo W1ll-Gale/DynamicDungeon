@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Editor.Utilities;
@@ -14,10 +15,11 @@ namespace DynamicDungeon.Editor.Windows
     {
         private readonly GridBackground _gridBackground;
         private readonly Dictionary<string, GenNodeView> _nodeViewsById = new Dictionary<string, GenNodeView>();
+        private readonly VisualElement _generationOverlay;
 
         private NodeSearchWindow _nodeSearchWindow;
-
         private GenGraph _graph;
+        private GenerationOrchestrator _generationOrchestrator;
         private bool _suppressGraphMutationCallbacks;
         private bool _refreshScheduled;
         private Vector2 _lastGraphLocalMousePosition;
@@ -50,6 +52,9 @@ namespace DynamicDungeon.Editor.Windows
             _gridBackground.style.top = 0.0f;
             _gridBackground.style.right = 0.0f;
             _gridBackground.style.bottom = 0.0f;
+
+            _generationOverlay = BuildGenerationOverlay();
+            Add(_generationOverlay);
 
             _nodeSearchWindow = ScriptableObject.CreateInstance<NodeSearchWindow>();
             _nodeSearchWindow.Initialise(this);
@@ -85,6 +90,29 @@ namespace DynamicDungeon.Editor.Windows
             return compatiblePorts;
         }
 
+        public void SetGenerationOrchestrator(GenerationOrchestrator generationOrchestrator)
+        {
+            _generationOrchestrator = generationOrchestrator;
+        }
+
+        public void SetGenerationOverlayVisible(bool isVisible)
+        {
+            if (_generationOverlay == null)
+            {
+                return;
+            }
+
+            _generationOverlay.style.display = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        public void UpdateNodePreviews(WorldSnapshot snapshot)
+        {
+            foreach (KeyValuePair<string, GenNodeView> nodePair in _nodeViewsById)
+            {
+                nodePair.Value.UpdatePreview(snapshot);
+            }
+        }
+
         public void LoadGraph(GenGraph graph)
         {
             _suppressGraphMutationCallbacks = true;
@@ -99,6 +127,7 @@ namespace DynamicDungeon.Editor.Windows
 
             BuildNodeViews();
             BuildEdgeViews();
+            UpdateNodePreviews(null);
             _suppressGraphMutationCallbacks = false;
         }
 
@@ -116,7 +145,7 @@ namespace DynamicDungeon.Editor.Windows
             _graph = null;
         }
 
-        public void CreateNodeFromSearch(System.Type nodeType, Vector2 graphLocalPosition)
+        public void CreateNodeFromSearch(Type nodeType, Vector2 graphLocalPosition)
         {
             if (_graph == null || nodeType == null)
             {
@@ -140,6 +169,7 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             PopulatePortData(nodeData, prototypeNodeInstance);
+            GenNodeInstantiationUtility.PopulateDefaultParameters(nodeData, nodeType);
 
             IGenNode nodeInstance;
             string nodeInstanceErrorMessage;
@@ -153,7 +183,7 @@ namespace DynamicDungeon.Editor.Windows
 
             EditorUtility.SetDirty(_graph);
 
-            GenNodeView nodeView = new GenNodeView(_graph, nodeData, nodeInstance);
+            GenNodeView nodeView = new GenNodeView(_graph, nodeData, nodeInstance, _generationOrchestrator);
             _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
             AddElement(nodeView);
         }
@@ -232,7 +262,7 @@ namespace DynamicDungeon.Editor.Windows
                     continue;
                 }
 
-                GenNodeView nodeView = new GenNodeView(_graph, nodeData, nodeInstance);
+                GenNodeView nodeView = new GenNodeView(_graph, nodeData, nodeInstance, _generationOrchestrator);
                 _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
                 AddElement(nodeView);
             }
@@ -260,6 +290,32 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             return null;
+        }
+
+        private VisualElement BuildGenerationOverlay()
+        {
+            VisualElement overlay = new VisualElement();
+            overlay.style.position = Position.Absolute;
+            overlay.style.left = 0.0f;
+            overlay.style.top = 0.0f;
+            overlay.style.right = 0.0f;
+            overlay.style.bottom = 0.0f;
+            overlay.style.display = DisplayStyle.None;
+            overlay.style.justifyContent = Justify.Center;
+            overlay.style.alignItems = Align.Center;
+            overlay.style.backgroundColor = new Color(0.0f, 0.0f, 0.0f, 0.18f);
+            overlay.pickingMode = PickingMode.Ignore;
+
+            Label overlayLabel = new Label("Generating...");
+            overlayLabel.style.paddingLeft = 10.0f;
+            overlayLabel.style.paddingRight = 10.0f;
+            overlayLabel.style.paddingTop = 6.0f;
+            overlayLabel.style.paddingBottom = 6.0f;
+            overlayLabel.style.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.92f);
+            overlayLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            overlay.Add(overlayLabel);
+
+            return overlay;
         }
 
         private void ConfigureEdgeCallbacks(Edge edge)
@@ -505,14 +561,15 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             _refreshScheduled = true;
-            schedule.Execute(() =>
-            {
-                _refreshScheduled = false;
-                if (_graph != null)
+            schedule.Execute(
+                () =>
                 {
-                    LoadGraph(_graph);
-                }
-            });
+                    _refreshScheduled = false;
+                    if (_graph != null)
+                    {
+                        LoadGraph(_graph);
+                    }
+                });
         }
 
         private static bool ContainsConnection(IReadOnlyList<GenConnectionData> connections, GenConnectionData candidate)
