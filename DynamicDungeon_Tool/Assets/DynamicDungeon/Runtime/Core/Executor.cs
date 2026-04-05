@@ -13,7 +13,12 @@ namespace DynamicDungeon.Runtime.Core
 
         private int _isRunning;
 
-        public async Task<ExecutionResult> ExecuteAsync(ExecutionPlan plan, CancellationToken cancellationToken, IProgress<float> progress = null, bool disposePlanOnCompletion = true)
+        public async Task<ExecutionResult> ExecuteAsync(
+            ExecutionPlan plan,
+            CancellationToken cancellationToken,
+            IProgress<float> progress = null,
+            bool disposePlanOnCompletion = true,
+            Action<int> jobCompleted = null)
         {
             if (plan == null)
             {
@@ -27,7 +32,7 @@ namespace DynamicDungeon.Runtime.Core
 
             try
             {
-                return await Task.Run(() => ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion)).ConfigureAwait(false);
+                return await Task.Run(() => ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion, jobCompleted)).ConfigureAwait(false);
             }
             finally
             {
@@ -117,7 +122,12 @@ namespace DynamicDungeon.Runtime.Core
             return new ExecutionResult(true, null, snapshot, false);
         }
 
-        private static ExecutionResult ExecuteInternal(ExecutionPlan plan, CancellationToken cancellationToken, IProgress<float> progress, bool disposePlanOnCompletion)
+        private static ExecutionResult ExecuteInternal(
+            ExecutionPlan plan,
+            CancellationToken cancellationToken,
+            IProgress<float> progress,
+            bool disposePlanOnCompletion,
+            Action<int> jobCompleted)
         {
             NumericBlackboard numericBlackboard = null;
             ManagedBlackboard managedBlackboard = null;
@@ -204,6 +214,7 @@ namespace DynamicDungeon.Runtime.Core
                     hasScheduledHandle = false;
 
                     plan.SetJobDirtyState(index, false);
+                    jobCompleted?.Invoke(index);
                     completedDirtyJobs++;
                     progress?.Report((float)completedDirtyJobs / dirtyJobCount);
                 }

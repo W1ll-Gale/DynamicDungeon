@@ -27,7 +27,7 @@ MonoBehaviour:
       Type: 0
     Parameters:
     - Name: frequency
-      Value: 0.22
+      Value: 0.04
     - Name: amplitude
       Value: 1.0
     - Name: offset

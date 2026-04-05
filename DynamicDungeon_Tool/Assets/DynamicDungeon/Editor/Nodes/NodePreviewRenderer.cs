@@ -6,6 +6,27 @@ namespace DynamicDungeon.Editor.Nodes
 {
     public static class NodePreviewRenderer
     {
+        public static Texture2D RenderFloatChannel(float[] channel, int width, int height)
+        {
+            if (channel == null)
+            {
+                return null;
+            }
+
+            ValidateChannel(channel.Length, width, height);
+
+            Color32[] pixels = new Color32[channel.Length];
+
+            int index;
+            for (index = 0; index < channel.Length; index++)
+            {
+                byte intensity = (byte)Mathf.RoundToInt(Mathf.Clamp01(channel[index]) * 255.0f);
+                pixels[index] = new Color32(intensity, intensity, intensity, byte.MaxValue);
+            }
+
+            return CreateTexture(width, height, pixels);
+        }
+
         public static Texture2D RenderFloatChannel(NativeArray<float> channel, int width, int height)
         {
             ValidateChannel(channel.Length, width, height);
@@ -16,6 +37,27 @@ namespace DynamicDungeon.Editor.Nodes
             for (index = 0; index < channel.Length; index++)
             {
                 byte intensity = (byte)Mathf.RoundToInt(Mathf.Clamp01(channel[index]) * 255.0f);
+                pixels[index] = new Color32(intensity, intensity, intensity, byte.MaxValue);
+            }
+
+            return CreateTexture(width, height, pixels);
+        }
+
+        public static Texture2D RenderBoolMaskChannel(byte[] channel, int width, int height)
+        {
+            if (channel == null)
+            {
+                return null;
+            }
+
+            ValidateChannel(channel.Length, width, height);
+
+            Color32[] pixels = new Color32[channel.Length];
+
+            int index;
+            for (index = 0; index < channel.Length; index++)
+            {
+                byte intensity = channel[index] == 0 ? byte.MinValue : byte.MaxValue;
                 pixels[index] = new Color32(intensity, intensity, intensity, byte.MaxValue);
             }
 
@@ -33,6 +75,26 @@ namespace DynamicDungeon.Editor.Nodes
             {
                 byte intensity = channel[index] == 0 ? byte.MinValue : byte.MaxValue;
                 pixels[index] = new Color32(intensity, intensity, intensity, byte.MaxValue);
+            }
+
+            return CreateTexture(width, height, pixels);
+        }
+
+        public static Texture2D RenderIntChannel(int[] channel, int width, int height)
+        {
+            if (channel == null)
+            {
+                return null;
+            }
+
+            ValidateChannel(channel.Length, width, height);
+
+            Color32[] pixels = new Color32[channel.Length];
+
+            int index;
+            for (index = 0; index < channel.Length; index++)
+            {
+                pixels[index] = CreateStableIntColour(channel[index]);
             }
 
             return CreateTexture(width, height, pixels);

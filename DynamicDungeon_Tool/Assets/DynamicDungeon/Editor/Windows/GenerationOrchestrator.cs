@@ -12,7 +12,8 @@ namespace DynamicDungeon.Editor.Windows
 {
     public sealed class GenerationOrchestrator : IDisposable
     {
-        private const double DebounceDelaySeconds = 0.4d;
+        private const double DebounceDelaySeconds = 0.05d;
+        private const double LoadingIndicatorDelaySeconds = 0.2d;
         private const string IdleStatusText = "Idle";
         private const string GeneratingStatusText = "Generating...";
         private const string DoneStatusText = "Done";
@@ -23,16 +24,42 @@ namespace DynamicDungeon.Editor.Windows
         private readonly Action<IReadOnlyList<GraphDiagnostic>> _diagnosticsUpdated;
         private readonly Executor _executor;
         private readonly HashSet<string> _pendingDirtyNodeIds;
+        private readonly object _pendingPreviewUpdatesLock;
+        private readonly Queue<PreviewUpdateData> _pendingPreviewUpdates;
 
         private GenGraph _graph;
         private ExecutionPlan _cachedPlan;
         private WorldSnapshot _lastSnapshot;
         private CancellationTokenSource _generationCancellationTokenSource;
         private bool _debounceScheduled;
+        private bool _editorUpdateSubscribed;
         private bool _generateAllRequested;
         private bool _isGenerating;
         private bool _isDisposed;
+        private bool _loadingIndicatorsVisible;
+        private int _activeGenerationVersion;
+        private double _loadingIndicatorTime;
         private double _nextGenerationTime;
+
+        private enum PreviewChannelType
+        {
+            None,
+            Float,
+            Int,
+            BoolMask
+        }
+
+        private sealed class PreviewUpdateData
+        {
+            public int GenerationVersion;
+            public string NodeId;
+            public PreviewChannelType ChannelType;
+            public int Width;
+            public int Height;
+            public float[] FloatChannel;
+            public int[] IntChannel;
+            public byte[] BoolMaskChannel;
+        }
 
         public GenerationOrchestrator(DynamicDungeonGraphView graphView, Action<string> statusChanged, Action<IReadOnlyList<GraphDiagnostic>> diagnosticsUpdated)
         {
@@ -41,12 +68,15 @@ namespace DynamicDungeon.Editor.Windows
             _diagnosticsUpdated = diagnosticsUpdated;
             _executor = new Executor();
             _pendingDirtyNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            _pendingPreviewUpdatesLock = new object();
+            _pendingPreviewUpdates = new Queue<PreviewUpdateData>();
         }
 
         public void SetGraph(GenGraph graph)
         {
             CancelGeneration();
             ClearScheduledRefresh();
+            ClearPendingPreviewUpdates();
             ReplaceCachedPlan(null);
             _lastSnapshot = null;
             _graph = graph;
@@ -57,6 +87,7 @@ namespace DynamicDungeon.Editor.Windows
                 _graphView.ClearNodePreviews();
             }
 
+            _loadingIndicatorsVisible = false;
             ReportDiagnostics(Array.Empty<GraphDiagnostic>());
             _statusChanged?.Invoke(IdleStatusText);
         }
@@ -75,28 +106,22 @@ namespace DynamicDungeon.Editor.Windows
                 try
                 {
                     _cachedPlan.MarkDirty(nodeId);
-                    RefreshStaleNodePreviews();
                 }
                 catch (ObjectDisposedException)
                 {
                     _cachedPlan = null;
-                    if (_graphView != null)
-                    {
-                        _graphView.MarkNodePreviewStale(nodeId);
-                    }
                 }
             }
-            else if (_graphView != null)
-            {
-                _graphView.MarkNodePreviewStale(nodeId);
-            }
-
-            ScheduleDebouncedRefresh();
 
             if (_isGenerating)
             {
+                ScheduleDebouncedRefresh();
                 CancelInFlightExecution();
+                return;
             }
+
+            ClearScheduledRefresh();
+            BeginGeneration(false);
         }
 
         public void GenerateAll()
@@ -113,7 +138,6 @@ namespace DynamicDungeon.Editor.Windows
             if (!_isGenerating && _cachedPlan != null)
             {
                 _cachedPlan.MarkAllDirty();
-                RefreshStaleNodePreviews();
             }
 
             if (_isGenerating)
@@ -137,15 +161,17 @@ namespace DynamicDungeon.Editor.Windows
             if (!_isGenerating && _cachedPlan != null)
             {
                 _cachedPlan.MarkAllDirty();
-                RefreshStaleNodePreviews();
             }
-
-            ScheduleDebouncedRefresh();
 
             if (_isGenerating)
             {
+                ScheduleDebouncedRefresh();
                 CancelInFlightExecution();
+                return;
             }
+
+            ClearScheduledRefresh();
+            BeginGeneration(true);
         }
 
         public void CancelGeneration()
@@ -155,12 +181,7 @@ namespace DynamicDungeon.Editor.Windows
 
             if (!_isGenerating)
             {
-                if (_graphView != null)
-                {
-                    _graphView.SetGenerationOverlayVisible(false);
-                }
-
-                _statusChanged?.Invoke(IdleStatusText);
+                HideLoadingIndicators(IdleStatusText, true);
             }
         }
 
@@ -179,6 +200,12 @@ namespace DynamicDungeon.Editor.Windows
             {
                 _generationCancellationTokenSource.Dispose();
                 _generationCancellationTokenSource = null;
+            }
+
+            if (_editorUpdateSubscribed)
+            {
+                EditorApplication.update -= OnEditorUpdate;
+                _editorUpdateSubscribed = false;
             }
         }
 
@@ -205,12 +232,12 @@ namespace DynamicDungeon.Editor.Windows
         private async void RunGenerationAsync(bool forceFullGeneration)
         {
             _isGenerating = true;
-            _statusChanged?.Invoke(GeneratingStatusText);
-
-            if (_graphView != null)
-            {
-                _graphView.SetGenerationOverlayVisible(true);
-            }
+            _activeGenerationVersion++;
+            int generationVersion = _activeGenerationVersion;
+            ClearPendingPreviewUpdates();
+            _loadingIndicatorsVisible = false;
+            _loadingIndicatorTime = EditorApplication.timeSinceStartup + LoadingIndicatorDelaySeconds;
+            EnsureEditorUpdateSubscription();
 
             DisposeCancellationSource();
             _generationCancellationTokenSource = new CancellationTokenSource();
@@ -266,39 +293,41 @@ namespace DynamicDungeon.Editor.Windows
 
                 ReplaceCachedPlan(plan);
 
-                ExecutionResult executionResult = await _executor.ExecuteAsync(plan, cancellationToken, null, false);
+                ExecutionResult executionResult = await _executor.ExecuteAsync(
+                    plan,
+                    cancellationToken,
+                    null,
+                    false,
+                    completedJobIndex => QueueCompletedJobPreview(plan, completedJobIndex, generationVersion));
                 if (executionResult.WasCancelled || cancellationToken.IsCancellationRequested)
                 {
-                    _statusChanged?.Invoke(IdleStatusText);
+                    ProcessPendingPreviewUpdates();
+                    HideLoadingIndicators(IdleStatusText, true);
                     return;
                 }
 
                 if (!executionResult.IsSuccess || executionResult.Snapshot == null)
                 {
+                    HideLoadingIndicators(FailedStatusText, true);
                     ReportDiagnostics(CreateExecutionFailureDiagnostics(compileResult.Diagnostics, executionResult.ErrorMessage));
-                    _statusChanged?.Invoke(FailedStatusText);
                     return;
                 }
 
                 _lastSnapshot = executionResult.Snapshot;
+                ProcessPendingPreviewUpdates();
                 UpdateNodePreviewsFromPlan(plan);
+                HideLoadingIndicators(DoneStatusText, false);
                 ReportDiagnostics(compileResult.Diagnostics);
-                _statusChanged?.Invoke(DoneStatusText);
             }
             catch (Exception exception)
             {
+                HideLoadingIndicators(FailedStatusText, true);
                 Debug.LogErrorFormat("Editor generation failed: {0}", exception.Message);
                 ReportDiagnostics(CreateExecutionFailureDiagnostics(Array.Empty<GraphDiagnostic>(), exception.Message));
-                _statusChanged?.Invoke(FailedStatusText);
             }
             finally
             {
                 _isGenerating = false;
-
-                if (_graphView != null)
-                {
-                    _graphView.SetGenerationOverlayVisible(false);
-                }
 
                 if (_generateAllRequested)
                 {
@@ -307,9 +336,10 @@ namespace DynamicDungeon.Editor.Windows
                 else if (_pendingDirtyNodeIds.Count > 0)
                 {
                     PropagatePendingDirtyNodesToCachedPlan();
-                    RefreshStaleNodePreviews();
                     ScheduleDebouncedRefresh();
                 }
+
+                ReleaseEditorUpdateSubscriptionIfIdle();
             }
         }
 
@@ -321,22 +351,23 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             _nextGenerationTime = EditorApplication.timeSinceStartup + DebounceDelaySeconds;
-            if (_debounceScheduled)
-            {
-                return;
-            }
-
             _debounceScheduled = true;
-            EditorApplication.update += OnEditorUpdate;
+            EnsureEditorUpdateSubscription();
         }
 
         private void OnEditorUpdate()
         {
+            ProcessPendingPreviewUpdates();
+
             if (_isDisposed)
             {
                 ClearScheduledRefresh();
+                ClearPendingPreviewUpdates();
+                ReleaseEditorUpdateSubscriptionIfIdle();
                 return;
             }
+
+            TryShowLoadingIndicators();
 
             if (_isGenerating || EditorApplication.timeSinceStartup < _nextGenerationTime)
             {
@@ -355,7 +386,41 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             _debounceScheduled = false;
-            EditorApplication.update -= OnEditorUpdate;
+            ReleaseEditorUpdateSubscriptionIfIdle();
+        }
+
+        private void TryShowLoadingIndicators()
+        {
+            if (!_isGenerating || _loadingIndicatorsVisible || EditorApplication.timeSinceStartup < _loadingIndicatorTime)
+            {
+                return;
+            }
+
+            _loadingIndicatorsVisible = true;
+
+            if (_graphView != null)
+            {
+                _graphView.SetGenerationOverlayVisible(true);
+            }
+
+            RefreshStaleNodePreviews();
+            _statusChanged?.Invoke(GeneratingStatusText);
+        }
+
+        private void HideLoadingIndicators(string statusText, bool updateStatusWhenHidden)
+        {
+            bool wasVisible = _loadingIndicatorsVisible;
+            _loadingIndicatorsVisible = false;
+
+            if (_graphView != null)
+            {
+                _graphView.SetGenerationOverlayVisible(false);
+            }
+
+            if (wasVisible || updateStatusWhenHidden)
+            {
+                _statusChanged?.Invoke(statusText);
+            }
         }
 
         private void ReplaceCachedPlan(ExecutionPlan plan)
@@ -400,6 +465,73 @@ namespace DynamicDungeon.Editor.Windows
             }
         }
 
+        private void QueueCompletedJobPreview(ExecutionPlan plan, int jobIndex, int generationVersion)
+        {
+            if (_isDisposed || plan == null || jobIndex < 0 || jobIndex >= plan.Jobs.Count)
+            {
+                return;
+            }
+
+            PreviewUpdateData previewUpdate = CapturePreviewUpdate(plan, jobIndex, generationVersion);
+            if (previewUpdate == null || string.IsNullOrWhiteSpace(previewUpdate.NodeId))
+            {
+                return;
+            }
+
+            lock (_pendingPreviewUpdatesLock)
+            {
+                _pendingPreviewUpdates.Enqueue(previewUpdate);
+            }
+        }
+
+        private void ProcessPendingPreviewUpdates()
+        {
+            if (_graphView == null)
+            {
+                ClearPendingPreviewUpdates();
+                ReleaseEditorUpdateSubscriptionIfIdle();
+                return;
+            }
+
+            while (true)
+            {
+                PreviewUpdateData previewUpdate;
+                lock (_pendingPreviewUpdatesLock)
+                {
+                    if (_pendingPreviewUpdates.Count == 0)
+                    {
+                        break;
+                    }
+
+                    previewUpdate = _pendingPreviewUpdates.Dequeue();
+                }
+
+                if (previewUpdate == null || string.IsNullOrWhiteSpace(previewUpdate.NodeId))
+                {
+                    continue;
+                }
+
+                if (previewUpdate.GenerationVersion != _activeGenerationVersion)
+                {
+                    continue;
+                }
+
+                Texture2D texture = null;
+                try
+                {
+                    texture = CreatePreviewTexture(previewUpdate);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarningFormat("Preview rendering failed for node '{0}': {1}", previewUpdate.NodeId, exception.Message);
+                }
+
+                _graphView.SetNodePreview(previewUpdate.NodeId, texture);
+            }
+
+            ReleaseEditorUpdateSubscriptionIfIdle();
+        }
+
         private void RefreshStaleNodePreviews()
         {
             if (_cachedPlan == null || _graphView == null)
@@ -415,6 +547,44 @@ namespace DynamicDungeon.Editor.Windows
                 {
                     _graphView.MarkNodePreviewStale(job.Node.NodeId);
                 }
+            }
+        }
+
+        private void EnsureEditorUpdateSubscription()
+        {
+            if (_editorUpdateSubscribed)
+            {
+                return;
+            }
+
+            EditorApplication.update += OnEditorUpdate;
+            _editorUpdateSubscribed = true;
+        }
+
+        private void ReleaseEditorUpdateSubscriptionIfIdle()
+        {
+            if (!_editorUpdateSubscribed || _debounceScheduled || _isGenerating || HasPendingPreviewUpdates())
+            {
+                return;
+            }
+
+            EditorApplication.update -= OnEditorUpdate;
+            _editorUpdateSubscribed = false;
+        }
+
+        private bool HasPendingPreviewUpdates()
+        {
+            lock (_pendingPreviewUpdatesLock)
+            {
+                return _pendingPreviewUpdates.Count > 0;
+            }
+        }
+
+        private void ClearPendingPreviewUpdates()
+        {
+            lock (_pendingPreviewUpdatesLock)
+            {
+                _pendingPreviewUpdates.Clear();
             }
         }
 
@@ -459,6 +629,73 @@ namespace DynamicDungeon.Editor.Windows
             _diagnosticsUpdated?.Invoke(safeDiagnostics);
         }
 
+        private static PreviewUpdateData CapturePreviewUpdate(ExecutionPlan plan, int jobIndex, int generationVersion)
+        {
+            if (plan == null || jobIndex < 0 || jobIndex >= plan.Jobs.Count)
+            {
+                return null;
+            }
+
+            NodeJobDescriptor job = plan.Jobs[jobIndex];
+            PreviewUpdateData previewUpdate = new PreviewUpdateData();
+            previewUpdate.GenerationVersion = generationVersion;
+            previewUpdate.NodeId = job.Node.NodeId;
+            previewUpdate.Width = plan.AllocatedWorld.Width;
+            previewUpdate.Height = plan.AllocatedWorld.Height;
+
+            ChannelDeclaration primaryOutput;
+            if (!TryGetPrimaryOutputDeclaration(job, out primaryOutput))
+            {
+                previewUpdate.ChannelType = PreviewChannelType.None;
+                return previewUpdate;
+            }
+
+            WorldData worldData = plan.AllocatedWorld;
+
+            switch (primaryOutput.Type)
+            {
+                case ChannelType.Float:
+                    NativeArray<float> floatChannel = worldData.GetFloatChannel(primaryOutput.ChannelName);
+                    if (!floatChannel.IsCreated)
+                    {
+                        previewUpdate.ChannelType = PreviewChannelType.None;
+                        return previewUpdate;
+                    }
+
+                    previewUpdate.ChannelType = PreviewChannelType.Float;
+                    previewUpdate.FloatChannel = new float[floatChannel.Length];
+                    CopyNativeArray(floatChannel, previewUpdate.FloatChannel);
+                    return previewUpdate;
+                case ChannelType.Int:
+                    NativeArray<int> intChannel = worldData.GetIntChannel(primaryOutput.ChannelName);
+                    if (!intChannel.IsCreated)
+                    {
+                        previewUpdate.ChannelType = PreviewChannelType.None;
+                        return previewUpdate;
+                    }
+
+                    previewUpdate.ChannelType = PreviewChannelType.Int;
+                    previewUpdate.IntChannel = new int[intChannel.Length];
+                    CopyNativeArray(intChannel, previewUpdate.IntChannel);
+                    return previewUpdate;
+                case ChannelType.BoolMask:
+                    NativeArray<byte> boolMaskChannel = worldData.GetBoolMaskChannel(primaryOutput.ChannelName);
+                    if (!boolMaskChannel.IsCreated)
+                    {
+                        previewUpdate.ChannelType = PreviewChannelType.None;
+                        return previewUpdate;
+                    }
+
+                    previewUpdate.ChannelType = PreviewChannelType.BoolMask;
+                    previewUpdate.BoolMaskChannel = new byte[boolMaskChannel.Length];
+                    CopyNativeArray(boolMaskChannel, previewUpdate.BoolMaskChannel);
+                    return previewUpdate;
+                default:
+                    previewUpdate.ChannelType = PreviewChannelType.None;
+                    return previewUpdate;
+            }
+        }
+
         private static IReadOnlyList<GraphDiagnostic> CreateExecutionFailureDiagnostics(IReadOnlyList<GraphDiagnostic> compileDiagnostics, string errorMessage)
         {
             List<GraphDiagnostic> diagnostics = new List<GraphDiagnostic>();
@@ -473,6 +710,26 @@ namespace DynamicDungeon.Editor.Windows
             string safeMessage = string.IsNullOrWhiteSpace(errorMessage) ? "Generation failed." : errorMessage;
             diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, safeMessage, null, null));
             return diagnostics;
+        }
+
+        private static Texture2D CreatePreviewTexture(PreviewUpdateData previewUpdate)
+        {
+            if (previewUpdate == null)
+            {
+                return null;
+            }
+
+            switch (previewUpdate.ChannelType)
+            {
+                case PreviewChannelType.Float:
+                    return NodePreviewRenderer.RenderFloatChannel(previewUpdate.FloatChannel, previewUpdate.Width, previewUpdate.Height);
+                case PreviewChannelType.Int:
+                    return NodePreviewRenderer.RenderIntChannel(previewUpdate.IntChannel, previewUpdate.Width, previewUpdate.Height);
+                case PreviewChannelType.BoolMask:
+                    return NodePreviewRenderer.RenderBoolMaskChannel(previewUpdate.BoolMaskChannel, previewUpdate.Width, previewUpdate.Height);
+                default:
+                    return null;
+            }
         }
 
         private static Texture2D CreatePreviewTexture(ChannelDeclaration outputDeclaration, WorldData worldData)
@@ -514,6 +771,33 @@ namespace DynamicDungeon.Editor.Windows
 
             outputDeclaration = default;
             return false;
+        }
+
+        private static void CopyNativeArray(NativeArray<float> source, float[] destination)
+        {
+            int index;
+            for (index = 0; index < source.Length; index++)
+            {
+                destination[index] = source[index];
+            }
+        }
+
+        private static void CopyNativeArray(NativeArray<int> source, int[] destination)
+        {
+            int index;
+            for (index = 0; index < source.Length; index++)
+            {
+                destination[index] = source[index];
+            }
+        }
+
+        private static void CopyNativeArray(NativeArray<byte> source, byte[] destination)
+        {
+            int index;
+            for (index = 0; index < source.Length; index++)
+            {
+                destination[index] = source[index];
+            }
         }
     }
 }
