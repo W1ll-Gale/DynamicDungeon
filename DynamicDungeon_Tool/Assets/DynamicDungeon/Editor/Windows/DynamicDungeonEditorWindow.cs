@@ -1,4 +1,4 @@
-using DynamicDungeon.Runtime.Core;
+using System.Collections.Generic;
 using DynamicDungeon.Runtime.Graph;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -12,16 +12,22 @@ namespace DynamicDungeon.Editor.Windows
     {
         private const string IdleStatusText = "Idle";
         private const string NoGraphTitle = "No Graph";
-        private const string DiagnosticsPlaceholderText = "Diagnostics panel placeholder";
         private const float DiagnosticsPanelHeight = 120.0f;
 
         private ObjectField _graphField;
         private Label _statusLabel;
         private DynamicDungeonGraphView _graphView;
         private GenerationOrchestrator _generationOrchestrator;
+        private DiagnosticsPanel _diagnosticsPanel;
 
         [SerializeField]
         private GenGraph _loadedGraph;
+
+        [SerializeField]
+        private bool _isDiagnosticsPanelCollapsed;
+
+        [SerializeField]
+        private float _diagnosticsPanelExpandedHeight = DiagnosticsPanelHeight;
 
         [MenuItem("DynamicDungeon/Graph Editor")]
         public static void OpenWindow()
@@ -64,11 +70,11 @@ namespace DynamicDungeon.Editor.Windows
             _graphView = new DynamicDungeonGraphView();
             rootVisualElement.Add(_graphView);
 
-            _generationOrchestrator = new GenerationOrchestrator(_graphView, SetStatus, OnGenerationCompleted);
-            _graphView.SetGenerationOrchestrator(_generationOrchestrator);
+            _diagnosticsPanel = BuildDiagnosticsPanel();
+            rootVisualElement.Add(_diagnosticsPanel);
 
-            VisualElement diagnosticsPlaceholder = BuildDiagnosticsPlaceholder();
-            rootVisualElement.Add(diagnosticsPlaceholder);
+            _generationOrchestrator = new GenerationOrchestrator(_graphView, SetStatus, OnDiagnosticsUpdated);
+            _graphView.SetGenerationOrchestrator(_generationOrchestrator);
 
             _graphField.SetValueWithoutNotify(_loadedGraph);
 
@@ -76,10 +82,13 @@ namespace DynamicDungeon.Editor.Windows
             {
                 _generationOrchestrator.SetGraph(_loadedGraph);
                 _graphView.LoadGraph(_loadedGraph);
+                _diagnosticsPanel.SetGraphContext(_graphView, _loadedGraph);
+                _generationOrchestrator.RequestPreviewRefresh();
             }
             else
             {
                 _generationOrchestrator.SetGraph(null);
+                _diagnosticsPanel.SetGraphContext(_graphView, null);
             }
 
             SetStatus(IdleStatusText);
@@ -93,6 +102,12 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnDisable()
         {
+            if (_diagnosticsPanel != null)
+            {
+                _diagnosticsPanelExpandedHeight = _diagnosticsPanel.GetExpandedHeight();
+                _isDiagnosticsPanelCollapsed = _diagnosticsPanel.IsCollapsed();
+            }
+
             if (_generationOrchestrator != null)
             {
                 _generationOrchestrator.Dispose();
@@ -127,28 +142,20 @@ namespace DynamicDungeon.Editor.Windows
             return toolbar;
         }
 
-        private VisualElement BuildDiagnosticsPlaceholder()
+        private DiagnosticsPanel BuildDiagnosticsPanel()
         {
-            VisualElement placeholder = new VisualElement();
-            placeholder.style.height = DiagnosticsPanelHeight;
-            placeholder.style.flexShrink = 0.0f;
-            placeholder.style.borderTopWidth = 1.0f;
-            placeholder.style.borderTopColor = new Color(0.18f, 0.18f, 0.18f, 1.0f);
-            placeholder.style.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 1.0f);
-            placeholder.style.paddingLeft = 8.0f;
-            placeholder.style.paddingRight = 8.0f;
-            placeholder.style.paddingTop = 6.0f;
-            placeholder.style.paddingBottom = 6.0f;
-
-            Label diagnosticsHeader = new Label("Diagnostics");
-            diagnosticsHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
-            placeholder.Add(diagnosticsHeader);
-
-            Label diagnosticsPlaceholder = new Label(DiagnosticsPlaceholderText);
-            diagnosticsPlaceholder.style.marginTop = 4.0f;
-            placeholder.Add(diagnosticsPlaceholder);
-
-            return placeholder;
+            DiagnosticsPanel diagnosticsPanel = new DiagnosticsPanel();
+            diagnosticsPanel.style.flexShrink = 0.0f;
+            diagnosticsPanel.style.borderTopWidth = 1.0f;
+            diagnosticsPanel.style.borderTopColor = new Color(0.18f, 0.18f, 0.18f, 1.0f);
+            diagnosticsPanel.style.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 1.0f);
+            diagnosticsPanel.style.paddingLeft = 8.0f;
+            diagnosticsPanel.style.paddingRight = 8.0f;
+            diagnosticsPanel.style.paddingTop = 0.0f;
+            diagnosticsPanel.style.paddingBottom = 6.0f;
+            diagnosticsPanel.SetExpandedHeight(_diagnosticsPanelExpandedHeight);
+            diagnosticsPanel.SetCollapsed(_isDiagnosticsPanelCollapsed);
+            return diagnosticsPanel;
         }
 
         private void CancelGeneration()
@@ -190,18 +197,27 @@ namespace DynamicDungeon.Editor.Windows
                 else
                 {
                     _graphView.LoadGraph(graph);
+                    _generationOrchestrator.RequestPreviewRefresh();
                 }
+            }
+
+            if (_diagnosticsPanel != null)
+            {
+                _diagnosticsPanel.SetGraphContext(_graphView, graph);
+                _diagnosticsPanel.Populate(System.Array.Empty<GraphDiagnostic>());
             }
 
             SetStatus(IdleStatusText);
             RefreshWindowTitle();
         }
 
-        private void OnGenerationCompleted(WorldSnapshot snapshot)
+        private void OnDiagnosticsUpdated(IReadOnlyList<GraphDiagnostic> diagnostics)
         {
-            if (_graphView != null)
+            if (_diagnosticsPanel != null)
             {
-                _graphView.UpdateNodePreviews(snapshot);
+                _diagnosticsPanel.Populate(diagnostics);
+                _diagnosticsPanelExpandedHeight = _diagnosticsPanel.GetExpandedHeight();
+                _isDiagnosticsPanelCollapsed = _diagnosticsPanel.IsCollapsed();
             }
         }
 

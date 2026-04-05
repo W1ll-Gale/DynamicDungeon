@@ -3,6 +3,7 @@ using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DynamicDungeon.Editor.Nodes
 {
@@ -18,18 +19,21 @@ namespace DynamicDungeon.Editor.Nodes
             }
         }
 
-        public GenPortView(NodePortDefinition portDefinition) : base(
+        public GenPortView(NodePortDefinition portDefinition, IEdgeConnectorListener edgeConnectorListener) : base(
             Orientation.Horizontal,
             ToGraphViewDirection(portDefinition.Direction),
             ToGraphViewCapacity(portDefinition.Capacity),
             typeof(float))
         {
+            GenPortView currentPort = this;
+
             _portDefinition = portDefinition;
 
             portName = portDefinition.Name;
             portColor = PortColourRegistry.GetColour(portDefinition.Type);
             style.marginTop = 2.0f;
             style.marginBottom = 2.0f;
+            currentPort.AddManipulator(new EdgeConnector<Edge>(edgeConnectorListener));
         }
 
         public bool CanConnectTo(Port otherPort)

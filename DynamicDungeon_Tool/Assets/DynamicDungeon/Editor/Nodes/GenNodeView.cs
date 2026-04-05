@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Editor.Windows;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
@@ -13,14 +14,20 @@ namespace DynamicDungeon.Editor.Nodes
     public sealed class GenNodeView : Node
     {
         private static readonly Vector2 DefaultNodeSize = new Vector2(240.0f, 180.0f);
+        private static readonly Vector2 ThumbnailSize = new Vector2(120.0f, 80.0f);
 
         private readonly GenGraph _graph;
         private readonly GenNodeData _nodeData;
         private readonly IGenNode _nodeInstance;
         private readonly GenerationOrchestrator _generationOrchestrator;
-        private readonly Dictionary<string, GenPortView> _portsByName = new Dictionary<string, GenPortView>();
+        private readonly IEdgeConnectorListener _edgeConnectorListener;
+        private readonly Dictionary<string, Port> _portsByName = new Dictionary<string, Port>();
 
-        private Label _previewLabel;
+        private Image _previewImage;
+        private Label _previewEmptyLabel;
+        private VisualElement _previewOverlay;
+        private Label _staleLabel;
+        private Texture2D _previewTexture;
         private VisualElement _controlsContainer;
         private bool _suppressPositionSync;
 
@@ -40,12 +47,18 @@ namespace DynamicDungeon.Editor.Nodes
             }
         }
 
-        public GenNodeView(GenGraph graph, GenNodeData nodeData, IGenNode nodeInstance, GenerationOrchestrator generationOrchestrator)
+        public GenNodeView(
+            GenGraph graph,
+            GenNodeData nodeData,
+            IGenNode nodeInstance,
+            GenerationOrchestrator generationOrchestrator,
+            IEdgeConnectorListener edgeConnectorListener)
         {
             _graph = graph;
             _nodeData = nodeData;
             _nodeInstance = nodeInstance;
             _generationOrchestrator = generationOrchestrator;
+            _edgeConnectorListener = edgeConnectorListener;
 
             title = string.IsNullOrWhiteSpace(nodeData.NodeName) ? nodeInstance.NodeName : nodeData.NodeName;
             viewDataKey = nodeData.NodeId ?? string.Empty;
@@ -82,58 +95,125 @@ namespace DynamicDungeon.Editor.Nodes
             EditorUtility.SetDirty(_graph);
         }
 
-        public bool TryGetPort(string portName, out GenPortView portView)
+        public bool TryGetPort(string portName, out Port portView)
         {
             return _portsByName.TryGetValue(portName ?? string.Empty, out portView);
         }
 
-        public void UpdatePreview(WorldSnapshot snapshot)
+        public void SetPreview(Texture2D texture)
         {
-            if (_previewLabel == null)
+            if (_previewImage == null)
+            {
+                DestroyTextureImmediate(texture);
+                return;
+            }
+
+            if (texture == null)
+            {
+                ClearPreview();
+                return;
+            }
+
+            ReplacePreviewTexture(texture);
+            _previewImage.image = _previewTexture;
+            _previewImage.style.display = DisplayStyle.Flex;
+            _previewEmptyLabel.style.display = DisplayStyle.None;
+            _previewOverlay.style.display = DisplayStyle.None;
+        }
+
+        public void MarkStale()
+        {
+            if (_previewOverlay == null)
             {
                 return;
             }
 
-            if (snapshot == null)
+            if (_previewTexture == null)
             {
-                _previewLabel.text = "Thumbnail";
+                _previewEmptyLabel.text = "No Preview";
                 return;
             }
 
-            _previewLabel.text = "Preview Ready";
+            _previewOverlay.style.display = DisplayStyle.Flex;
+        }
+
+        public void ClearPreview()
+        {
+            if (_previewImage == null || _previewEmptyLabel == null || _previewOverlay == null)
+            {
+                return;
+            }
+
+            DestroyPreviewTexture();
+            _previewImage.image = null;
+            _previewImage.style.display = DisplayStyle.None;
+            _previewOverlay.style.display = DisplayStyle.None;
+            _previewEmptyLabel.text = "No Preview";
+            _previewEmptyLabel.style.display = DisplayStyle.Flex;
         }
 
         private void BuildContent()
         {
-            VisualElement previewPlaceholder = CreatePreviewPlaceholder();
+            VisualElement previewContainer = CreatePreviewContainer();
             _controlsContainer = CreateControlsContainer();
             PopulateControls();
 
-            extensionContainer.Add(previewPlaceholder);
+            extensionContainer.Add(previewContainer);
             extensionContainer.Add(_controlsContainer);
         }
 
-        private VisualElement CreatePreviewPlaceholder()
+        private VisualElement CreatePreviewContainer()
         {
-            VisualElement previewPlaceholder = new VisualElement();
-            previewPlaceholder.style.height = 56.0f;
-            previewPlaceholder.style.marginTop = 6.0f;
-            previewPlaceholder.style.marginBottom = 6.0f;
-            previewPlaceholder.style.borderTopWidth = 1.0f;
-            previewPlaceholder.style.borderBottomWidth = 1.0f;
-            previewPlaceholder.style.borderLeftWidth = 1.0f;
-            previewPlaceholder.style.borderRightWidth = 1.0f;
-            previewPlaceholder.style.borderTopColor = new Color(0.25f, 0.25f, 0.25f, 1.0f);
-            previewPlaceholder.style.borderBottomColor = new Color(0.25f, 0.25f, 0.25f, 1.0f);
-            previewPlaceholder.style.borderLeftColor = new Color(0.25f, 0.25f, 0.25f, 1.0f);
-            previewPlaceholder.style.borderRightColor = new Color(0.25f, 0.25f, 0.25f, 1.0f);
-            previewPlaceholder.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 1.0f);
-            previewPlaceholder.style.justifyContent = Justify.Center;
-            previewPlaceholder.style.alignItems = Align.Center;
+            VisualElement previewContainer = new VisualElement();
+            previewContainer.style.height = ThumbnailSize.y;
+            previewContainer.style.minHeight = ThumbnailSize.y;
+            previewContainer.style.marginTop = 6.0f;
+            previewContainer.style.marginBottom = 6.0f;
+            previewContainer.style.borderTopWidth = 1.0f;
+            previewContainer.style.borderBottomWidth = 1.0f;
+            previewContainer.style.borderLeftWidth = 1.0f;
+            previewContainer.style.borderRightWidth = 1.0f;
+            previewContainer.style.borderTopColor = new Color(0.25f, 0.25f, 0.25f, 1.0f);
+            previewContainer.style.borderBottomColor = new Color(0.25f, 0.25f, 0.25f, 1.0f);
+            previewContainer.style.borderLeftColor = new Color(0.25f, 0.25f, 0.25f, 1.0f);
+            previewContainer.style.borderRightColor = new Color(0.25f, 0.25f, 0.25f, 1.0f);
+            previewContainer.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 1.0f);
+            previewContainer.style.justifyContent = Justify.Center;
+            previewContainer.style.alignItems = Align.Center;
+            previewContainer.style.position = Position.Relative;
 
-            _previewLabel = new Label("Thumbnail");
-            previewPlaceholder.Add(_previewLabel);
-            return previewPlaceholder;
+            _previewImage = new Image();
+            _previewImage.scaleMode = ScaleMode.StretchToFill;
+            _previewImage.style.width = ThumbnailSize.x;
+            _previewImage.style.height = ThumbnailSize.y;
+            _previewImage.style.display = DisplayStyle.None;
+            previewContainer.Add(_previewImage);
+
+            _previewEmptyLabel = new Label("No Preview");
+            _previewEmptyLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+            previewContainer.Add(_previewEmptyLabel);
+
+            _previewOverlay = new VisualElement();
+            _previewOverlay.style.position = Position.Absolute;
+            _previewOverlay.style.left = 0.0f;
+            _previewOverlay.style.top = 0.0f;
+            _previewOverlay.style.right = 0.0f;
+            _previewOverlay.style.bottom = 0.0f;
+            _previewOverlay.style.display = DisplayStyle.None;
+            _previewOverlay.style.backgroundColor = new Color(0.4f, 0.4f, 0.4f, 0.45f);
+            _previewOverlay.style.justifyContent = Justify.FlexEnd;
+            _previewOverlay.style.alignItems = Align.FlexEnd;
+            _previewOverlay.pickingMode = PickingMode.Ignore;
+
+            _staleLabel = new Label("⟳");
+            _staleLabel.style.marginRight = 6.0f;
+            _staleLabel.style.marginBottom = 4.0f;
+            _staleLabel.style.color = new Color(0.95f, 0.95f, 0.95f, 1.0f);
+            _staleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            _previewOverlay.Add(_staleLabel);
+            previewContainer.Add(_previewOverlay);
+
+            return previewContainer;
         }
 
         private VisualElement CreateControlsContainer()
@@ -253,7 +333,21 @@ namespace DynamicDungeon.Editor.Nodes
             for (portIndex = 0; portIndex < ports.Count; portIndex++)
             {
                 NodePortDefinition portDefinition = ports[portIndex];
-                GenPortView portView = new GenPortView(portDefinition);
+                Port portView = InstantiatePort(
+                    Orientation.Horizontal,
+                    ToGraphViewDirection(portDefinition.Direction),
+                    ToGraphViewCapacity(portDefinition.Capacity),
+                    typeof(float));
+                portView.userData = portDefinition;
+                portView.portName = portDefinition.Name;
+                portView.portColor = PortColourRegistry.GetColour(portDefinition.Type);
+                portView.style.marginTop = 2.0f;
+                portView.style.marginBottom = 2.0f;
+                if (_edgeConnectorListener != null)
+                {
+                    portView.AddManipulator(new EdgeConnector<Edge>(_edgeConnectorListener));
+                }
+
                 _portsByName[portDefinition.Name] = portView;
 
                 if (portDefinition.Direction == PortDirection.Input)
@@ -265,6 +359,48 @@ namespace DynamicDungeon.Editor.Nodes
                     outputContainer.Add(portView);
                 }
             }
+        }
+
+        private static Direction ToGraphViewDirection(PortDirection direction)
+        {
+            return direction == PortDirection.Input ? Direction.Input : Direction.Output;
+        }
+
+        private static Port.Capacity ToGraphViewCapacity(PortCapacity capacity)
+        {
+            return capacity == PortCapacity.Multi ? Port.Capacity.Multi : Port.Capacity.Single;
+        }
+
+        private void ReplacePreviewTexture(Texture2D texture)
+        {
+            if (ReferenceEquals(_previewTexture, texture))
+            {
+                return;
+            }
+
+            DestroyPreviewTexture();
+            _previewTexture = texture;
+        }
+
+        private void DestroyPreviewTexture()
+        {
+            if (_previewTexture == null)
+            {
+                return;
+            }
+
+            DestroyTextureImmediate(_previewTexture);
+            _previewTexture = null;
+        }
+
+        private static void DestroyTextureImmediate(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return;
+            }
+
+            UnityEngine.Object.DestroyImmediate(texture);
         }
     }
 }

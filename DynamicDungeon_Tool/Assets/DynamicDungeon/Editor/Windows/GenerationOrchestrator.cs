@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
+using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,7 +20,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private readonly DynamicDungeonGraphView _graphView;
         private readonly Action<string> _statusChanged;
-        private readonly Action<WorldSnapshot> _generationCompleted;
+        private readonly Action<IReadOnlyList<GraphDiagnostic>> _diagnosticsUpdated;
         private readonly Executor _executor;
         private readonly HashSet<string> _pendingDirtyNodeIds;
 
@@ -32,11 +34,11 @@ namespace DynamicDungeon.Editor.Windows
         private bool _isDisposed;
         private double _nextGenerationTime;
 
-        public GenerationOrchestrator(DynamicDungeonGraphView graphView, Action<string> statusChanged, Action<WorldSnapshot> generationCompleted)
+        public GenerationOrchestrator(DynamicDungeonGraphView graphView, Action<string> statusChanged, Action<IReadOnlyList<GraphDiagnostic>> diagnosticsUpdated)
         {
             _graphView = graphView;
             _statusChanged = statusChanged;
-            _generationCompleted = generationCompleted;
+            _diagnosticsUpdated = diagnosticsUpdated;
             _executor = new Executor();
             _pendingDirtyNodeIds = new HashSet<string>(StringComparer.Ordinal);
         }
@@ -52,9 +54,10 @@ namespace DynamicDungeon.Editor.Windows
             if (_graphView != null)
             {
                 _graphView.SetGenerationOverlayVisible(false);
-                _graphView.UpdateNodePreviews(null);
+                _graphView.ClearNodePreviews();
             }
 
+            ReportDiagnostics(Array.Empty<GraphDiagnostic>());
             _statusChanged?.Invoke(IdleStatusText);
         }
 
@@ -67,16 +70,25 @@ namespace DynamicDungeon.Editor.Windows
 
             _pendingDirtyNodeIds.Add(nodeId);
 
-            if (_cachedPlan != null)
+            if (!_isGenerating && _cachedPlan != null)
             {
                 try
                 {
                     _cachedPlan.MarkDirty(nodeId);
+                    RefreshStaleNodePreviews();
                 }
                 catch (ObjectDisposedException)
                 {
                     _cachedPlan = null;
+                    if (_graphView != null)
+                    {
+                        _graphView.MarkNodePreviewStale(nodeId);
+                    }
                 }
+            }
+            else if (_graphView != null)
+            {
+                _graphView.MarkNodePreviewStale(nodeId);
             }
 
             ScheduleDebouncedRefresh();
@@ -98,6 +110,12 @@ namespace DynamicDungeon.Editor.Windows
             _generateAllRequested = true;
             ClearScheduledRefresh();
 
+            if (!_isGenerating && _cachedPlan != null)
+            {
+                _cachedPlan.MarkAllDirty();
+                RefreshStaleNodePreviews();
+            }
+
             if (_isGenerating)
             {
                 CancelInFlightExecution();
@@ -105,6 +123,29 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             BeginGeneration(true);
+        }
+
+        public void RequestPreviewRefresh()
+        {
+            if (_isDisposed || _graph == null)
+            {
+                return;
+            }
+
+            _generateAllRequested = true;
+
+            if (!_isGenerating && _cachedPlan != null)
+            {
+                _cachedPlan.MarkAllDirty();
+                RefreshStaleNodePreviews();
+            }
+
+            ScheduleDebouncedRefresh();
+
+            if (_isGenerating)
+            {
+                CancelInFlightExecution();
+            }
         }
 
         public void CancelGeneration()
@@ -192,6 +233,7 @@ namespace DynamicDungeon.Editor.Windows
                     }
 
                     ReplaceCachedPlan(null);
+                    ReportDiagnostics(compileResult.Diagnostics);
                     _statusChanged?.Invoke(FailedStatusText);
                     return;
                 }
@@ -233,17 +275,20 @@ namespace DynamicDungeon.Editor.Windows
 
                 if (!executionResult.IsSuccess || executionResult.Snapshot == null)
                 {
+                    ReportDiagnostics(CreateExecutionFailureDiagnostics(compileResult.Diagnostics, executionResult.ErrorMessage));
                     _statusChanged?.Invoke(FailedStatusText);
                     return;
                 }
 
                 _lastSnapshot = executionResult.Snapshot;
+                UpdateNodePreviewsFromPlan(plan);
+                ReportDiagnostics(compileResult.Diagnostics);
                 _statusChanged?.Invoke(DoneStatusText);
-                _generationCompleted?.Invoke(executionResult.Snapshot);
             }
             catch (Exception exception)
             {
                 Debug.LogErrorFormat("Editor generation failed: {0}", exception.Message);
+                ReportDiagnostics(CreateExecutionFailureDiagnostics(Array.Empty<GraphDiagnostic>(), exception.Message));
                 _statusChanged?.Invoke(FailedStatusText);
             }
             finally
@@ -261,6 +306,8 @@ namespace DynamicDungeon.Editor.Windows
                 }
                 else if (_pendingDirtyNodeIds.Count > 0)
                 {
+                    PropagatePendingDirtyNodesToCachedPlan();
+                    RefreshStaleNodePreviews();
                     ScheduleDebouncedRefresh();
                 }
             }
@@ -338,6 +385,135 @@ namespace DynamicDungeon.Editor.Windows
 
             _generationCancellationTokenSource.Dispose();
             _generationCancellationTokenSource = null;
+        }
+
+        private void PropagatePendingDirtyNodesToCachedPlan()
+        {
+            if (_cachedPlan == null)
+            {
+                return;
+            }
+
+            foreach (string nodeId in _pendingDirtyNodeIds)
+            {
+                _cachedPlan.MarkDirty(nodeId);
+            }
+        }
+
+        private void RefreshStaleNodePreviews()
+        {
+            if (_cachedPlan == null || _graphView == null)
+            {
+                return;
+            }
+
+            int jobIndex;
+            for (jobIndex = 0; jobIndex < _cachedPlan.Jobs.Count; jobIndex++)
+            {
+                NodeJobDescriptor job = _cachedPlan.Jobs[jobIndex];
+                if (job.IsDirty)
+                {
+                    _graphView.MarkNodePreviewStale(job.Node.NodeId);
+                }
+            }
+        }
+
+        private void UpdateNodePreviewsFromPlan(ExecutionPlan plan)
+        {
+            if (plan == null || _graphView == null)
+            {
+                return;
+            }
+
+            WorldData worldData = plan.AllocatedWorld;
+
+            int jobIndex;
+            for (jobIndex = 0; jobIndex < plan.Jobs.Count; jobIndex++)
+            {
+                NodeJobDescriptor job = plan.Jobs[jobIndex];
+
+                ChannelDeclaration primaryOutput;
+                if (!TryGetPrimaryOutputDeclaration(job, out primaryOutput))
+                {
+                    _graphView.SetNodePreview(job.Node.NodeId, null);
+                    continue;
+                }
+
+                Texture2D texture = null;
+                try
+                {
+                    texture = CreatePreviewTexture(primaryOutput, worldData);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarningFormat("Preview rendering failed for node '{0}': {1}", job.Node.NodeName, exception.Message);
+                }
+
+                _graphView.SetNodePreview(job.Node.NodeId, texture);
+            }
+        }
+
+        private void ReportDiagnostics(IReadOnlyList<GraphDiagnostic> diagnostics)
+        {
+            IReadOnlyList<GraphDiagnostic> safeDiagnostics = diagnostics ?? Array.Empty<GraphDiagnostic>();
+            _diagnosticsUpdated?.Invoke(safeDiagnostics);
+        }
+
+        private static IReadOnlyList<GraphDiagnostic> CreateExecutionFailureDiagnostics(IReadOnlyList<GraphDiagnostic> compileDiagnostics, string errorMessage)
+        {
+            List<GraphDiagnostic> diagnostics = new List<GraphDiagnostic>();
+            IReadOnlyList<GraphDiagnostic> safeCompileDiagnostics = compileDiagnostics ?? Array.Empty<GraphDiagnostic>();
+
+            int diagnosticIndex;
+            for (diagnosticIndex = 0; diagnosticIndex < safeCompileDiagnostics.Count; diagnosticIndex++)
+            {
+                diagnostics.Add(safeCompileDiagnostics[diagnosticIndex]);
+            }
+
+            string safeMessage = string.IsNullOrWhiteSpace(errorMessage) ? "Generation failed." : errorMessage;
+            diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, safeMessage, null, null));
+            return diagnostics;
+        }
+
+        private static Texture2D CreatePreviewTexture(ChannelDeclaration outputDeclaration, WorldData worldData)
+        {
+            switch (outputDeclaration.Type)
+            {
+                case ChannelType.Float:
+                    NativeArray<float> floatChannel = worldData.GetFloatChannel(outputDeclaration.ChannelName);
+                    return floatChannel.IsCreated
+                        ? NodePreviewRenderer.RenderFloatChannel(floatChannel, worldData.Width, worldData.Height)
+                        : null;
+                case ChannelType.Int:
+                    NativeArray<int> intChannel = worldData.GetIntChannel(outputDeclaration.ChannelName);
+                    return intChannel.IsCreated
+                        ? NodePreviewRenderer.RenderIntChannel(intChannel, worldData.Width, worldData.Height)
+                        : null;
+                case ChannelType.BoolMask:
+                    NativeArray<byte> boolMaskChannel = worldData.GetBoolMaskChannel(outputDeclaration.ChannelName);
+                    return boolMaskChannel.IsCreated
+                        ? NodePreviewRenderer.RenderBoolMaskChannel(boolMaskChannel, worldData.Width, worldData.Height)
+                        : null;
+                default:
+                    return null;
+            }
+        }
+
+        private static bool TryGetPrimaryOutputDeclaration(NodeJobDescriptor job, out ChannelDeclaration outputDeclaration)
+        {
+            int channelIndex;
+            for (channelIndex = 0; channelIndex < job.Channels.Count; channelIndex++)
+            {
+                ChannelDeclaration channelDeclaration = job.Channels[channelIndex];
+                if (channelDeclaration.IsWrite)
+                {
+                    outputDeclaration = channelDeclaration;
+                    return true;
+                }
+            }
+
+            outputDeclaration = default;
+            return false;
         }
     }
 }

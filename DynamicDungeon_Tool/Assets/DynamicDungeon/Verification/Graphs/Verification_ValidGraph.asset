@@ -20,14 +20,14 @@ MonoBehaviour:
   - NodeId: perlin-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
     NodeName: Perlin
-    Position: {x: 0, y: 0}
+    Position: {x: -270, y: -96}
     Ports:
     - PortName: Noise
       Direction: 1
       Type: 0
     Parameters:
     - Name: frequency
-      Value: 0.08
+      Value: 0.22
     - Name: amplitude
       Value: 1.0
     - Name: offset
@@ -37,7 +37,7 @@ MonoBehaviour:
   - NodeId: threshold-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Threshold
-    Position: {x: 250, y: 0}
+    Position: {x: 124, y: -126}
     Ports:
     - PortName: Input
       Direction: 0
@@ -51,7 +51,7 @@ MonoBehaviour:
   - NodeId: cellular-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Cellular
-    Position: {x: 500, y: 0}
+    Position: {x: 510, y: -205}
     Ports:
     - PortName: Input
       Direction: 0
@@ -71,7 +71,7 @@ MonoBehaviour:
   - NodeId: logical-id-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
     NodeName: Mask To Logical IDs
-    Position: {x: 750, y: 0}
+    Position: {x: 896, y: -235}
     Ports:
     - PortName: Input
       Direction: 0
