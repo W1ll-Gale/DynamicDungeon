@@ -11,6 +11,9 @@ namespace DynamicDungeon.Editor.Windows
         private const float MinimumExpandedHeight = 90.0f;
         private const float MaximumExpandedHeight = 360.0f;
         private const float ResizeHandleHeight = 4.0f;
+        private static readonly Color ResizeHandleDefaultColour = new Color(0.22f, 0.22f, 0.22f, 1.0f);
+        private static readonly Color ResizeHandleHoverColour = new Color(0.32f, 0.32f, 0.32f, 1.0f);
+        private static readonly Color ResizeHandleActiveColour = new Color(0.42f, 0.42f, 0.42f, 1.0f);
 
         private readonly Label _collapseGlyphLabel;
         private readonly Label _emptyLabel;
@@ -35,10 +38,12 @@ namespace DynamicDungeon.Editor.Windows
 
             _resizeHandle = new VisualElement();
             _resizeHandle.style.height = ResizeHandleHeight;
-            _resizeHandle.style.backgroundColor = new Color(0.22f, 0.22f, 0.22f, 1.0f);
+            _resizeHandle.style.backgroundColor = ResizeHandleDefaultColour;
             _resizeHandle.RegisterCallback<MouseDownEvent>(OnResizeHandleMouseDown);
             _resizeHandle.RegisterCallback<MouseMoveEvent>(OnResizeHandleMouseMove);
             _resizeHandle.RegisterCallback<MouseUpEvent>(OnResizeHandleMouseUp);
+            _resizeHandle.RegisterCallback<MouseEnterEvent>(OnResizeHandleMouseEnter);
+            _resizeHandle.RegisterCallback<MouseLeaveEvent>(OnResizeHandleMouseLeave);
             Add(_resizeHandle);
 
             VisualElement headerRow = new VisualElement();
@@ -184,6 +189,8 @@ namespace DynamicDungeon.Editor.Windows
         private void ApplyPanelHeight()
         {
             style.height = _isCollapsed ? CollapsedHeight : _expandedHeight;
+            _resizeHandle.style.display = _isCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
+            _resizeHandle.style.backgroundColor = ResizeHandleDefaultColour;
             _contentContainer.style.display = _isCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
             _collapseGlyphLabel.text = _isCollapsed ? "▸" : "▾";
         }
@@ -199,6 +206,7 @@ namespace DynamicDungeon.Editor.Windows
             _resizeStartHeight = _expandedHeight;
             _resizeStartMousePosition = mouseDownEvent.mousePosition;
             _resizeHandle.CaptureMouse();
+            _resizeHandle.style.backgroundColor = ResizeHandleActiveColour;
             mouseDownEvent.StopPropagation();
         }
 
@@ -228,7 +236,28 @@ namespace DynamicDungeon.Editor.Windows
                 _resizeHandle.ReleaseMouse();
             }
 
+            _resizeHandle.style.backgroundColor = ResizeHandleHoverColour;
             mouseUpEvent.StopPropagation();
+        }
+
+        private void OnResizeHandleMouseEnter(MouseEnterEvent mouseEnterEvent)
+        {
+            if (_isCollapsed || _isResizing)
+            {
+                return;
+            }
+
+            _resizeHandle.style.backgroundColor = ResizeHandleHoverColour;
+        }
+
+        private void OnResizeHandleMouseLeave(MouseLeaveEvent mouseLeaveEvent)
+        {
+            if (_isCollapsed || _isResizing)
+            {
+                return;
+            }
+
+            _resizeHandle.style.backgroundColor = ResizeHandleDefaultColour;
         }
 
         private string ResolveNodeName(string nodeId)

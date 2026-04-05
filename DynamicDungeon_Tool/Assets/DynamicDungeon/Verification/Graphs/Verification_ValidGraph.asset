@@ -20,7 +20,7 @@ MonoBehaviour:
   - NodeId: perlin-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
     NodeName: Perlin
-    Position: {x: -270, y: -96}
+    Position: {x: -273, y: -95}
     Ports:
     - PortName: Noise
       Direction: 1
@@ -37,7 +37,7 @@ MonoBehaviour:
   - NodeId: threshold-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Threshold
-    Position: {x: 124, y: -126}
+    Position: {x: 98, y: -125}
     Ports:
     - PortName: Input
       Direction: 0
@@ -47,11 +47,11 @@ MonoBehaviour:
       Type: 2
     Parameters:
     - Name: threshold
-      Value: 0.5
+      Value: 0.44
   - NodeId: cellular-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Cellular
-    Position: {x: 510, y: -205}
+    Position: {x: 431, y: -205}
     Ports:
     - PortName: Input
       Direction: 0
@@ -71,7 +71,7 @@ MonoBehaviour:
   - NodeId: logical-id-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
     NodeName: Mask To Logical IDs
-    Position: {x: 896, y: -235}
+    Position: {x: 796.45764, y: -205.00002}
     Ports:
     - PortName: Input
       Direction: 0
@@ -85,10 +85,6 @@ MonoBehaviour:
     - Name: falseLogicalId
       Value: 1
   Connections:
-  - FromNodeId: perlin-node
-    FromPortName: Noise
-    ToNodeId: threshold-node
-    ToPortName: Input
   - FromNodeId: threshold-node
     FromPortName: Mask
     ToNodeId: cellular-node
@@ -96,4 +92,8 @@ MonoBehaviour:
   - FromNodeId: cellular-node
     FromPortName: SmoothedMask
     ToNodeId: logical-id-node
+    ToPortName: Input
+  - FromNodeId: perlin-node
+    FromPortName: Noise
+    ToNodeId: threshold-node
     ToPortName: Input

@@ -13,14 +13,29 @@ namespace DynamicDungeon.Editor.Windows
 {
     public sealed class DynamicDungeonGraphView : GraphView
     {
+        private const float MinExpandedPreviewZoom = 0.1f;
+        private const float MaxExpandedPreviewZoom = 16.0f;
+        private const float ExpandedPreviewZoomStep = 1.15f;
+
         private readonly GridBackground _gridBackground;
         private readonly Dictionary<string, GenNodeView> _nodeViewsById = new Dictionary<string, GenNodeView>();
+        private readonly VisualElement _expandedPreviewOverlay;
+        private readonly VisualElement _expandedPreviewViewport;
+        private readonly Image _expandedPreviewImage;
+        private readonly Label _expandedPreviewTitle;
         private readonly VisualElement _generationOverlay;
         private readonly IEdgeConnectorListener _edgeConnectorListener;
 
         private NodeSearchWindow _nodeSearchWindow;
         private GenGraph _graph;
         private GenerationOrchestrator _generationOrchestrator;
+        private string _expandedPreviewNodeId;
+        private Vector2 _expandedPreviewPanOffset;
+        private Vector2 _expandedPreviewPanOffsetAtDragStart;
+        private Vector2 _expandedPreviewPanMousePositionAtDragStart;
+        private float _expandedPreviewZoom = 1.0f;
+        private bool _expandedPreviewNeedsFit;
+        private bool _isPanningExpandedPreview;
         private bool _suppressGraphMutationCallbacks;
         private Vector2 _lastGraphLocalMousePosition;
 
@@ -56,6 +71,16 @@ namespace DynamicDungeon.Editor.Windows
 
             _generationOverlay = BuildGenerationOverlay();
             Add(_generationOverlay);
+
+            _expandedPreviewOverlay = BuildExpandedPreviewOverlay(out _expandedPreviewViewport, out _expandedPreviewImage, out _expandedPreviewTitle);
+            _expandedPreviewOverlay.RegisterCallback<MouseDownEvent>(OnExpandedPreviewOverlayMouseDown);
+            _expandedPreviewOverlay.RegisterCallback<MouseMoveEvent>(OnExpandedPreviewOverlayMouseMove);
+            _expandedPreviewOverlay.RegisterCallback<MouseUpEvent>(OnExpandedPreviewOverlayMouseUp);
+            _expandedPreviewViewport.RegisterCallback<MouseDownEvent>(OnExpandedPreviewViewportMouseDown);
+            _expandedPreviewViewport.RegisterCallback<MouseMoveEvent>(OnExpandedPreviewViewportMouseMove);
+            _expandedPreviewViewport.RegisterCallback<MouseUpEvent>(OnExpandedPreviewViewportMouseUp);
+            _expandedPreviewViewport.RegisterCallback<WheelEvent>(OnExpandedPreviewViewportWheel);
+            _expandedPreviewViewport.RegisterCallback<GeometryChangedEvent>(OnExpandedPreviewViewportGeometryChanged);
 
             _nodeSearchWindow = ScriptableObject.CreateInstance<NodeSearchWindow>();
             _nodeSearchWindow.Initialise(this);
@@ -108,6 +133,8 @@ namespace DynamicDungeon.Editor.Windows
 
         public void ClearNodePreviews()
         {
+            HideExpandedPreview();
+
             foreach (KeyValuePair<string, GenNodeView> nodePair in _nodeViewsById)
             {
                 nodePair.Value.ClearPreview();
@@ -144,6 +171,19 @@ namespace DynamicDungeon.Editor.Windows
             if (_nodeViewsById.TryGetValue(nodeId, out nodeView))
             {
                 nodeView.SetPreview(texture);
+
+                if (_expandedPreviewNodeId == nodeId)
+                {
+                    if (texture == null)
+                    {
+                        HideExpandedPreview();
+                    }
+                    else
+                    {
+                        ShowExpandedPreview(nodeId, texture, nodeView.title);
+                    }
+                }
+
                 return;
             }
 
@@ -243,7 +283,13 @@ namespace DynamicDungeon.Editor.Windows
 
             EditorUtility.SetDirty(_graph);
 
-            GenNodeView nodeView = new GenNodeView(_graph, nodeData, nodeInstance, _generationOrchestrator, _edgeConnectorListener);
+            GenNodeView nodeView = new GenNodeView(
+                _graph,
+                nodeData,
+                nodeInstance,
+                _generationOrchestrator,
+                _edgeConnectorListener,
+                ShowExpandedPreview);
             _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
             AddElement(nodeView);
 
@@ -326,7 +372,13 @@ namespace DynamicDungeon.Editor.Windows
                     continue;
                 }
 
-                GenNodeView nodeView = new GenNodeView(_graph, nodeData, nodeInstance, _generationOrchestrator, _edgeConnectorListener);
+                GenNodeView nodeView = new GenNodeView(
+                    _graph,
+                    nodeData,
+                    nodeInstance,
+                    _generationOrchestrator,
+                    _edgeConnectorListener,
+                    ShowExpandedPreview);
                 _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
                 AddElement(nodeView);
             }
@@ -378,6 +430,52 @@ namespace DynamicDungeon.Editor.Windows
             overlayLabel.style.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.92f);
             overlayLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
             overlay.Add(overlayLabel);
+
+            return overlay;
+        }
+
+        private static VisualElement BuildExpandedPreviewOverlay(out VisualElement viewport, out Image image, out Label titleLabel)
+        {
+            VisualElement overlay = new VisualElement();
+            overlay.style.position = Position.Absolute;
+            overlay.style.left = 0.0f;
+            overlay.style.top = 0.0f;
+            overlay.style.right = 0.0f;
+            overlay.style.bottom = 0.0f;
+            overlay.style.display = DisplayStyle.None;
+            overlay.style.backgroundColor = new Color(0.0f, 0.0f, 0.0f, 0.92f);
+            overlay.style.justifyContent = Justify.Center;
+            overlay.style.alignItems = Align.Center;
+
+            titleLabel = new Label();
+            titleLabel.style.position = Position.Absolute;
+            titleLabel.style.left = 16.0f;
+            titleLabel.style.top = 12.0f;
+            titleLabel.style.paddingLeft = 10.0f;
+            titleLabel.style.paddingRight = 10.0f;
+            titleLabel.style.paddingTop = 6.0f;
+            titleLabel.style.paddingBottom = 6.0f;
+            titleLabel.style.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.9f);
+            titleLabel.style.color = new Color(0.95f, 0.95f, 0.95f, 1.0f);
+            overlay.Add(titleLabel);
+
+            viewport = new VisualElement();
+            viewport.style.position = Position.Absolute;
+            viewport.style.left = 24.0f;
+            viewport.style.top = 56.0f;
+            viewport.style.right = 24.0f;
+            viewport.style.bottom = 24.0f;
+            viewport.style.overflow = Overflow.Hidden;
+            viewport.style.unityBackgroundImageTintColor = Color.white;
+            overlay.Add(viewport);
+
+            image = new Image();
+            image.scaleMode = ScaleMode.StretchToFill;
+            image.pickingMode = PickingMode.Ignore;
+            image.style.position = Position.Absolute;
+            image.style.left = 0.0f;
+            image.style.top = 0.0f;
+            viewport.Add(image);
 
             return overlay;
         }
@@ -445,6 +543,126 @@ namespace DynamicDungeon.Editor.Windows
             Focus();
         }
 
+        private void OnExpandedPreviewOverlayMouseDown(MouseDownEvent mouseDownEvent)
+        {
+            if (mouseDownEvent.button == 0 && mouseDownEvent.clickCount == 2)
+            {
+                HideExpandedPreview();
+                mouseDownEvent.StopImmediatePropagation();
+                return;
+            }
+
+            if (!IsExpandedPreviewPanButton(mouseDownEvent.button))
+            {
+                return;
+            }
+
+            BeginExpandedPreviewPan(ToExpandedPreviewViewportLocal(mouseDownEvent.localMousePosition));
+            mouseDownEvent.StopImmediatePropagation();
+        }
+
+        private void OnExpandedPreviewOverlayMouseMove(MouseMoveEvent mouseMoveEvent)
+        {
+            if (!_isPanningExpandedPreview || !_expandedPreviewOverlay.HasMouseCapture())
+            {
+                return;
+            }
+
+            UpdateExpandedPreviewPan(ToExpandedPreviewViewportLocal(mouseMoveEvent.localMousePosition));
+            mouseMoveEvent.StopImmediatePropagation();
+        }
+
+        private void OnExpandedPreviewOverlayMouseUp(MouseUpEvent mouseUpEvent)
+        {
+            if (!IsExpandedPreviewPanButton(mouseUpEvent.button))
+            {
+                return;
+            }
+
+            EndExpandedPreviewPan();
+            mouseUpEvent.StopImmediatePropagation();
+        }
+
+        private void OnExpandedPreviewViewportMouseDown(MouseDownEvent mouseDownEvent)
+        {
+            if (_expandedPreviewImage.image == null || !IsExpandedPreviewPanButton(mouseDownEvent.button))
+            {
+                return;
+            }
+
+            if (mouseDownEvent.clickCount == 2)
+            {
+                HideExpandedPreview();
+                mouseDownEvent.StopImmediatePropagation();
+                return;
+            }
+
+            BeginExpandedPreviewPan(mouseDownEvent.localMousePosition);
+            mouseDownEvent.StopImmediatePropagation();
+        }
+
+        private void OnExpandedPreviewViewportMouseMove(MouseMoveEvent mouseMoveEvent)
+        {
+            if (!_isPanningExpandedPreview || !_expandedPreviewOverlay.HasMouseCapture())
+            {
+                return;
+            }
+
+            UpdateExpandedPreviewPan(mouseMoveEvent.localMousePosition);
+            mouseMoveEvent.StopImmediatePropagation();
+        }
+
+        private void OnExpandedPreviewViewportMouseUp(MouseUpEvent mouseUpEvent)
+        {
+            if (!IsExpandedPreviewPanButton(mouseUpEvent.button))
+            {
+                return;
+            }
+
+            EndExpandedPreviewPan();
+            mouseUpEvent.StopImmediatePropagation();
+        }
+
+        private void OnExpandedPreviewViewportWheel(WheelEvent wheelEvent)
+        {
+            Texture texture = _expandedPreviewImage.image;
+            if (texture == null)
+            {
+                return;
+            }
+
+            float zoomFactor = wheelEvent.delta.y < 0.0f ? ExpandedPreviewZoomStep : 1.0f / ExpandedPreviewZoomStep;
+            float newZoom = Mathf.Clamp(_expandedPreviewZoom * zoomFactor, MinExpandedPreviewZoom, MaxExpandedPreviewZoom);
+            if (Mathf.Approximately(newZoom, _expandedPreviewZoom))
+            {
+                return;
+            }
+
+            float oldScaledWidth = texture.width * _expandedPreviewZoom;
+            float oldScaledHeight = texture.height * _expandedPreviewZoom;
+            float oldBaseX = (_expandedPreviewViewport.resolvedStyle.width - oldScaledWidth) * 0.5f;
+            float oldBaseY = (_expandedPreviewViewport.resolvedStyle.height - oldScaledHeight) * 0.5f;
+            Vector2 oldTopLeft = new Vector2(oldBaseX, oldBaseY) + _expandedPreviewPanOffset;
+            Vector2 textureSpacePoint = (wheelEvent.localMousePosition - oldTopLeft) / _expandedPreviewZoom;
+
+            _expandedPreviewZoom = newZoom;
+
+            float newScaledWidth = texture.width * _expandedPreviewZoom;
+            float newScaledHeight = texture.height * _expandedPreviewZoom;
+            float newBaseX = (_expandedPreviewViewport.resolvedStyle.width - newScaledWidth) * 0.5f;
+            float newBaseY = (_expandedPreviewViewport.resolvedStyle.height - newScaledHeight) * 0.5f;
+            Vector2 newTopLeft = wheelEvent.localMousePosition - (textureSpacePoint * _expandedPreviewZoom);
+            _expandedPreviewPanOffset = newTopLeft - new Vector2(newBaseX, newBaseY);
+
+            ApplyExpandedPreviewTransform();
+            wheelEvent.StopPropagation();
+        }
+
+        private void OnExpandedPreviewViewportGeometryChanged(GeometryChangedEvent geometryChangedEvent)
+        {
+            UpdateExpandedPreviewTransformIfNeeded();
+        }
+
         private void OnGraphContextualMenuPopulate(ContextualMenuPopulateEvent contextEvent)
         {
             VisualElement targetElement = contextEvent.target as VisualElement;
@@ -459,6 +677,13 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnKeyDown(KeyDownEvent keyDownEvent)
         {
+            if (keyDownEvent.keyCode == KeyCode.Escape && _expandedPreviewOverlay.style.display == DisplayStyle.Flex)
+            {
+                HideExpandedPreview();
+                keyDownEvent.StopImmediatePropagation();
+                return;
+            }
+
             if (keyDownEvent.keyCode == KeyCode.Space)
             {
                 Vector2 localPosition = _lastGraphLocalMousePosition;
@@ -556,6 +781,8 @@ namespace DynamicDungeon.Editor.Windows
                         toNodeView.NodeData.NodeId,
                         inputPortDefinition.Name);
 
+                    outputPort.Connect(edge);
+                    inputPort.Connect(edge);
                     Color edgeColour = ResolveEdgeColour(outputPort, inputPort, GenPortUtility.RequiresCast(outputPort, inputPort));
                     if (edge.edgeControl != null)
                     {
@@ -563,6 +790,10 @@ namespace DynamicDungeon.Editor.Windows
                         edge.edgeControl.outputColor = edgeColour;
                     }
 
+                    outputPort.portColor = GenPortUtility.GetPortColour(outputPort);
+                    inputPort.portColor = GenPortUtility.GetPortColour(inputPort);
+                    fromNodeView.RefreshPorts();
+                    toNodeView.RefreshPorts();
                     ConfigureEdgeCallbacks(edge);
                     validEdges.Add(edge);
                 }
@@ -592,6 +823,7 @@ namespace DynamicDungeon.Editor.Windows
                     string nodeId = nodeView.NodeData.NodeId ?? string.Empty;
                     if (!nodeIdsToRemove.Contains(nodeId))
                     {
+                        HideExpandedPreviewIfShowing(nodeId);
                         nodeView.ClearPreview();
                         nodeIdsToRemove.Add(nodeId);
                     }
@@ -739,6 +971,159 @@ namespace DynamicDungeon.Editor.Windows
                 (fromColour.g + toColour.g) * 0.5f,
                 (fromColour.b + toColour.b) * 0.5f,
                 1.0f);
+        }
+
+        private void ShowExpandedPreview(string nodeId, Texture2D texture, string titleText)
+        {
+            if (texture == null)
+            {
+                HideExpandedPreview();
+                return;
+            }
+
+            EnsureExpandedPreviewOverlayAttached();
+            _expandedPreviewNodeId = nodeId ?? string.Empty;
+            _expandedPreviewImage.image = texture;
+            _expandedPreviewImage.style.width = texture.width;
+            _expandedPreviewImage.style.height = texture.height;
+            _expandedPreviewTitle.text = string.IsNullOrWhiteSpace(titleText) ? "Preview" : titleText;
+            _expandedPreviewOverlay.style.display = DisplayStyle.Flex;
+            _expandedPreviewOverlay.BringToFront();
+            _expandedPreviewNeedsFit = true;
+            _isPanningExpandedPreview = false;
+            Focus();
+            UpdateExpandedPreviewTransformIfNeeded();
+        }
+
+        private void HideExpandedPreview()
+        {
+            _expandedPreviewOverlay.style.display = DisplayStyle.None;
+            _expandedPreviewImage.image = null;
+            _expandedPreviewTitle.text = string.Empty;
+            _expandedPreviewNodeId = null;
+            _expandedPreviewPanOffset = Vector2.zero;
+            _expandedPreviewPanOffsetAtDragStart = Vector2.zero;
+            _expandedPreviewPanMousePositionAtDragStart = Vector2.zero;
+            _expandedPreviewZoom = 1.0f;
+            _expandedPreviewNeedsFit = false;
+            _isPanningExpandedPreview = false;
+
+            if (_expandedPreviewViewport.HasMouseCapture())
+            {
+                _expandedPreviewViewport.ReleaseMouse();
+            }
+
+            if (_expandedPreviewOverlay.HasMouseCapture())
+            {
+                _expandedPreviewOverlay.ReleaseMouse();
+            }
+        }
+
+        private void HideExpandedPreviewIfShowing(string nodeId)
+        {
+            if (!string.IsNullOrWhiteSpace(nodeId) && string.Equals(_expandedPreviewNodeId, nodeId, StringComparison.Ordinal))
+            {
+                HideExpandedPreview();
+            }
+        }
+
+        private void EnsureExpandedPreviewOverlayAttached()
+        {
+            VisualElement desiredParent = parent;
+            if (desiredParent == null)
+            {
+                desiredParent = this;
+            }
+
+            if (_expandedPreviewOverlay.parent == desiredParent)
+            {
+                return;
+            }
+
+            _expandedPreviewOverlay.RemoveFromHierarchy();
+            desiredParent.Add(_expandedPreviewOverlay);
+        }
+
+        private void UpdateExpandedPreviewTransformIfNeeded()
+        {
+            if (_expandedPreviewOverlay.style.display != DisplayStyle.Flex || _expandedPreviewImage.image == null)
+            {
+                return;
+            }
+
+            if (_expandedPreviewViewport.resolvedStyle.width <= 0.0f || _expandedPreviewViewport.resolvedStyle.height <= 0.0f)
+            {
+                return;
+            }
+
+            if (_expandedPreviewNeedsFit)
+            {
+                Texture texture = _expandedPreviewImage.image;
+                float zoomByWidth = _expandedPreviewViewport.resolvedStyle.width / texture.width;
+                float zoomByHeight = _expandedPreviewViewport.resolvedStyle.height / texture.height;
+                _expandedPreviewZoom = Mathf.Clamp(Mathf.Min(zoomByWidth, zoomByHeight), MinExpandedPreviewZoom, MaxExpandedPreviewZoom);
+                _expandedPreviewPanOffset = Vector2.zero;
+                _expandedPreviewNeedsFit = false;
+            }
+
+            ApplyExpandedPreviewTransform();
+        }
+
+        private void ApplyExpandedPreviewTransform()
+        {
+            Texture texture = _expandedPreviewImage.image;
+            if (texture == null)
+            {
+                return;
+            }
+
+            float scaledWidth = texture.width * _expandedPreviewZoom;
+            float scaledHeight = texture.height * _expandedPreviewZoom;
+            float baseX = (_expandedPreviewViewport.resolvedStyle.width - scaledWidth) * 0.5f;
+            float baseY = (_expandedPreviewViewport.resolvedStyle.height - scaledHeight) * 0.5f;
+
+            _expandedPreviewImage.style.width = scaledWidth;
+            _expandedPreviewImage.style.height = scaledHeight;
+            _expandedPreviewImage.style.translate = new Translate(baseX + _expandedPreviewPanOffset.x, baseY + _expandedPreviewPanOffset.y, 0.0f);
+        }
+
+        private void BeginExpandedPreviewPan(Vector2 viewportLocalMousePosition)
+        {
+            _isPanningExpandedPreview = true;
+            _expandedPreviewPanMousePositionAtDragStart = viewportLocalMousePosition;
+            _expandedPreviewPanOffsetAtDragStart = _expandedPreviewPanOffset;
+            _expandedPreviewOverlay.CaptureMouse();
+        }
+
+        private void UpdateExpandedPreviewPan(Vector2 viewportLocalMousePosition)
+        {
+            _expandedPreviewPanOffset = _expandedPreviewPanOffsetAtDragStart + (viewportLocalMousePosition - _expandedPreviewPanMousePositionAtDragStart);
+            ApplyExpandedPreviewTransform();
+        }
+
+        private void EndExpandedPreviewPan()
+        {
+            _isPanningExpandedPreview = false;
+            if (_expandedPreviewOverlay.HasMouseCapture())
+            {
+                _expandedPreviewOverlay.ReleaseMouse();
+            }
+
+            if (_expandedPreviewViewport.HasMouseCapture())
+            {
+                _expandedPreviewViewport.ReleaseMouse();
+            }
+        }
+
+        private Vector2 ToExpandedPreviewViewportLocal(Vector2 overlayLocalMousePosition)
+        {
+            Vector2 worldMousePosition = _expandedPreviewOverlay.LocalToWorld(overlayLocalMousePosition);
+            return _expandedPreviewViewport.WorldToLocal(worldMousePosition);
+        }
+
+        private static bool IsExpandedPreviewPanButton(int mouseButton)
+        {
+            return mouseButton == 0 || mouseButton == 2;
         }
     }
 }

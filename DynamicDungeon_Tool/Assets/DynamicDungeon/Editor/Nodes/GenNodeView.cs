@@ -21,6 +21,7 @@ namespace DynamicDungeon.Editor.Nodes
         private readonly IGenNode _nodeInstance;
         private readonly GenerationOrchestrator _generationOrchestrator;
         private readonly IEdgeConnectorListener _edgeConnectorListener;
+        private readonly Action<string, Texture2D, string> _previewDoubleClicked;
         private readonly Dictionary<string, Port> _portsByName = new Dictionary<string, Port>();
 
         private Image _previewImage;
@@ -28,7 +29,9 @@ namespace DynamicDungeon.Editor.Nodes
         private VisualElement _previewOverlay;
         private Label _staleLabel;
         private Texture2D _previewTexture;
+        private VisualElement _bodyContainer;
         private VisualElement _controlsContainer;
+        private bool _lastExpandedState = true;
         private bool _suppressPositionSync;
 
         public GenNodeData NodeData
@@ -52,13 +55,15 @@ namespace DynamicDungeon.Editor.Nodes
             GenNodeData nodeData,
             IGenNode nodeInstance,
             GenerationOrchestrator generationOrchestrator,
-            IEdgeConnectorListener edgeConnectorListener)
+            IEdgeConnectorListener edgeConnectorListener,
+            Action<string, Texture2D, string> previewDoubleClicked)
         {
             _graph = graph;
             _nodeData = nodeData;
             _nodeInstance = nodeInstance;
             _generationOrchestrator = generationOrchestrator;
             _edgeConnectorListener = edgeConnectorListener;
+            _previewDoubleClicked = previewDoubleClicked;
 
             title = string.IsNullOrWhiteSpace(nodeData.NodeName) ? nodeInstance.NodeName : nodeData.NodeName;
             viewDataKey = nodeData.NodeId ?? string.Empty;
@@ -67,9 +72,12 @@ namespace DynamicDungeon.Editor.Nodes
 
             BuildPorts();
             BuildContent();
+            HookCollapseButton();
 
             RefreshPorts();
             RefreshExpandedState();
+            UpdateExpandedContentVisibility();
+            schedule.Execute(SynchroniseExpandedState).Every(100);
 
             _suppressPositionSync = true;
             SetPosition(new Rect(nodeData.Position, DefaultNodeSize));
@@ -155,11 +163,24 @@ namespace DynamicDungeon.Editor.Nodes
         private void BuildContent()
         {
             VisualElement previewContainer = CreatePreviewContainer();
+            _bodyContainer = new VisualElement();
+            _bodyContainer.style.flexDirection = FlexDirection.Column;
             _controlsContainer = CreateControlsContainer();
             PopulateControls();
 
-            extensionContainer.Add(previewContainer);
-            extensionContainer.Add(_controlsContainer);
+            _bodyContainer.Add(previewContainer);
+            _bodyContainer.Add(_controlsContainer);
+            extensionContainer.Add(_bodyContainer);
+        }
+
+        private void HookCollapseButton()
+        {
+            if (titleButtonContainer == null)
+            {
+                return;
+            }
+
+            titleButtonContainer.RegisterCallback<MouseDownEvent>(OnCollapseButtonMouseDown, TrickleDown.TrickleDown);
         }
 
         private VisualElement CreatePreviewContainer()
@@ -181,6 +202,7 @@ namespace DynamicDungeon.Editor.Nodes
             previewContainer.style.justifyContent = Justify.Center;
             previewContainer.style.alignItems = Align.Center;
             previewContainer.style.position = Position.Relative;
+            previewContainer.RegisterCallback<MouseDownEvent>(OnPreviewMouseDown);
 
             _previewImage = new Image();
             _previewImage.scaleMode = ScaleMode.StretchToFill;
@@ -214,6 +236,21 @@ namespace DynamicDungeon.Editor.Nodes
             previewContainer.Add(_previewOverlay);
 
             return previewContainer;
+        }
+
+        private void OnPreviewMouseDown(MouseDownEvent mouseDownEvent)
+        {
+            if (mouseDownEvent == null ||
+                mouseDownEvent.button != 0 ||
+                mouseDownEvent.clickCount != 2 ||
+                _previewTexture == null ||
+                _previewDoubleClicked == null)
+            {
+                return;
+            }
+
+            _previewDoubleClicked(_nodeData.NodeId, _previewTexture, title);
+            mouseDownEvent.StopPropagation();
         }
 
         private VisualElement CreateControlsContainer()
@@ -401,6 +438,49 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             UnityEngine.Object.DestroyImmediate(texture);
+        }
+
+        private void OnCollapseButtonMouseDown(MouseDownEvent mouseDownEvent)
+        {
+            if (mouseDownEvent == null || mouseDownEvent.button != 0)
+            {
+                return;
+            }
+
+            expanded = !expanded;
+            UpdateExpandedContentVisibility();
+            mouseDownEvent.StopImmediatePropagation();
+        }
+
+        private void SynchroniseExpandedState()
+        {
+            if (_lastExpandedState == expanded)
+            {
+                return;
+            }
+
+            UpdateExpandedContentVisibility();
+        }
+
+        private void UpdateExpandedContentVisibility()
+        {
+            _lastExpandedState = expanded;
+
+            if (_bodyContainer != null)
+            {
+                _bodyContainer.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            float targetWidth = expanded
+                ? DefaultNodeSize.x
+                : Mathf.Clamp(((title != null ? title.Length : 0) * 8.0f) + 56.0f, 96.0f, DefaultNodeSize.x);
+
+            Rect currentPosition = GetPosition();
+            _suppressPositionSync = true;
+            base.SetPosition(new Rect(currentPosition.x, currentPosition.y, targetWidth, currentPosition.height));
+            _suppressPositionSync = false;
+
+            RefreshExpandedState();
         }
     }
 }
