@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using System.Globalization;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
@@ -9,6 +10,7 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [Description("Creates a fresh float grid and fills every cell with the same value.")]
     public sealed class EmptyGridNode : IGenNode, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;
@@ -23,6 +25,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly NodePortDefinition[] _ports;
         private readonly ChannelDeclaration[] _channelDeclarations;
 
+        [Description("Value written into every cell of the generated grid.")]
         private float _fillValue;
 
         public IReadOnlyList<NodePortDefinition> Ports

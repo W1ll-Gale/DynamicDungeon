@@ -23,6 +23,7 @@ namespace DynamicDungeon.Editor.Nodes
         private readonly IEdgeConnectorListener _edgeConnectorListener;
         private readonly Action<string, Texture2D, string> _previewDoubleClicked;
         private readonly Dictionary<string, Port> _portsByName = new Dictionary<string, Port>();
+        private readonly Dictionary<string, string> _defaultParameterValuesByName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         private Image _previewImage;
         private Label _previewEmptyLabel;
@@ -64,15 +65,18 @@ namespace DynamicDungeon.Editor.Nodes
             _generationOrchestrator = generationOrchestrator;
             _edgeConnectorListener = edgeConnectorListener;
             _previewDoubleClicked = previewDoubleClicked;
+            CacheDefaultParameterValues();
 
             title = string.IsNullOrWhiteSpace(nodeData.NodeName) ? nodeInstance.NodeName : nodeData.NodeName;
             viewDataKey = nodeData.NodeId ?? string.Empty;
+            ApplyNodeTitleTooltip();
 
             style.minWidth = DefaultNodeSize.x;
 
             BuildPorts();
             BuildContent();
             HookCollapseButton();
+            HookNodeContextMenu();
 
             RefreshPorts();
             RefreshExpandedState();
@@ -181,6 +185,66 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             titleButtonContainer.RegisterCallback<MouseDownEvent>(OnCollapseButtonMouseDown, TrickleDown.TrickleDown);
+        }
+
+        private void HookNodeContextMenu()
+        {
+            this.AddManipulator(new ContextualMenuManipulator(
+                menuPopulateEvent =>
+                {
+                    if (_defaultParameterValuesByName.Count == 0)
+                    {
+                        menuPopulateEvent.menu.AppendAction(
+                            "Reset Node Parameters",
+                            _ => { },
+                            _ => DropdownMenuAction.Status.Disabled);
+                        return;
+                    }
+
+                    menuPopulateEvent.menu.AppendAction(
+                        "Reset Node Parameters",
+                        _ => ResetNodeParametersToDefaults());
+                }));
+        }
+
+        private void ApplyNodeTitleTooltip()
+        {
+            Type nodeType = _nodeInstance != null ? _nodeInstance.GetType() : null;
+            string category = NodeDiscovery.GetNodeCategory(nodeType);
+            string description = NodeDiscovery.GetNodeDescription(nodeType);
+            int parameterCount = _nodeData != null && _nodeData.Parameters != null ? _nodeData.Parameters.Count : 0;
+            int portCount = _nodeInstance != null && _nodeInstance.Ports != null ? _nodeInstance.Ports.Count : 0;
+
+            List<string> tooltipLines = new List<string>();
+            tooltipLines.Add(title ?? NodeDiscovery.GetNodeDisplayName(nodeType));
+            if (!string.IsNullOrWhiteSpace(description))
+            {
+                tooltipLines.Add(description);
+            }
+
+            List<string> details = new List<string>();
+            if (!string.IsNullOrWhiteSpace(category) &&
+                !string.Equals(category, "Uncategorised", StringComparison.OrdinalIgnoreCase))
+            {
+                details.Add(category);
+            }
+
+            details.Add(parameterCount.ToString() + " params");
+            details.Add(portCount.ToString() + " ports");
+
+            tooltipLines.Add(string.Join("  •  ", details));
+
+            string tooltipText = string.Join("\n", tooltipLines);
+
+            if (titleContainer != null)
+            {
+                titleContainer.tooltip = tooltipText;
+            }
+
+            if (titleButtonContainer != null)
+            {
+                titleButtonContainer.tooltip = tooltipText;
+            }
         }
 
         private VisualElement CreatePreviewContainer()
@@ -305,7 +369,13 @@ namespace DynamicDungeon.Editor.Nodes
                     continue;
                 }
 
-                VisualElement control = InlinedControlFactory.CreateControl(parameter, OnParameterValueChanged);
+                string defaultValue;
+                if (!_defaultParameterValuesByName.TryGetValue(parameter.Name, out defaultValue))
+                {
+                    defaultValue = null;
+                }
+
+                VisualElement control = InlinedControlFactory.CreateControl(parameter, defaultValue, OnParameterValueChanged);
                 control.style.marginBottom = 4.0f;
                 _controlsContainer.Add(control);
             }
@@ -341,6 +411,58 @@ namespace DynamicDungeon.Editor.Nodes
             }
         }
 
+        private void ResetNodeParametersToDefaults()
+        {
+            if (_graph == null || _nodeData == null || _defaultParameterValuesByName.Count == 0)
+            {
+                return;
+            }
+
+            List<SerializedParameter> defaultParameters = GenNodeInstantiationUtility.CreateDefaultParameters(_nodeData, _nodeInstance.GetType());
+            if (defaultParameters.Count == 0)
+            {
+                return;
+            }
+
+            bool hasChanges = false;
+            if (_nodeData.Parameters == null || _nodeData.Parameters.Count != defaultParameters.Count)
+            {
+                hasChanges = true;
+            }
+            else
+            {
+                int parameterIndex;
+                for (parameterIndex = 0; parameterIndex < defaultParameters.Count; parameterIndex++)
+                {
+                    SerializedParameter currentParameter = _nodeData.Parameters[parameterIndex];
+                    SerializedParameter defaultParameter = defaultParameters[parameterIndex];
+                    if (currentParameter == null ||
+                        defaultParameter == null ||
+                        !string.Equals(currentParameter.Name, defaultParameter.Name, StringComparison.OrdinalIgnoreCase) ||
+                        !string.Equals(currentParameter.Value ?? string.Empty, defaultParameter.Value ?? string.Empty, StringComparison.Ordinal))
+                    {
+                        hasChanges = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!hasChanges)
+            {
+                return;
+            }
+
+            Undo.RecordObject(_graph, "Reset node parameters");
+            _nodeData.Parameters = defaultParameters;
+            EditorUtility.SetDirty(_graph);
+            PopulateControls();
+
+            if (_generationOrchestrator != null)
+            {
+                _generationOrchestrator.MarkNodeDirty(_nodeData.NodeId);
+            }
+        }
+
         private SerializedParameter FindParameter(string parameterName)
         {
             if (_nodeData.Parameters == null)
@@ -362,6 +484,25 @@ namespace DynamicDungeon.Editor.Nodes
             return null;
         }
 
+        private void CacheDefaultParameterValues()
+        {
+            _defaultParameterValuesByName.Clear();
+
+            List<SerializedParameter> defaultParameters = GenNodeInstantiationUtility.CreateDefaultParameters(_nodeData, _nodeInstance.GetType());
+
+            int parameterIndex;
+            for (parameterIndex = 0; parameterIndex < defaultParameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = defaultParameters[parameterIndex];
+                if (parameter == null || string.IsNullOrWhiteSpace(parameter.Name))
+                {
+                    continue;
+                }
+
+                _defaultParameterValuesByName[parameter.Name] = parameter.Value ?? string.Empty;
+            }
+        }
+
         private void BuildPorts()
         {
             IReadOnlyList<NodePortDefinition> ports = _nodeInstance.Ports;
@@ -376,10 +517,11 @@ namespace DynamicDungeon.Editor.Nodes
                     ToGraphViewCapacity(portDefinition.Capacity),
                     typeof(float));
                 portView.userData = portDefinition;
-                portView.portName = portDefinition.Name;
+                portView.portName = string.Empty;
                 portView.portColor = PortColourRegistry.GetColour(portDefinition.Type);
                 portView.style.marginTop = 2.0f;
                 portView.style.marginBottom = 2.0f;
+                AttachPortLabel(portView, portDefinition);
                 if (_edgeConnectorListener != null)
                 {
                     portView.AddManipulator(new EdgeConnector<Edge>(_edgeConnectorListener));
@@ -406,6 +548,34 @@ namespace DynamicDungeon.Editor.Nodes
         private static Port.Capacity ToGraphViewCapacity(PortCapacity capacity)
         {
             return capacity == PortCapacity.Multi ? Port.Capacity.Multi : Port.Capacity.Single;
+        }
+
+        private static void AttachPortLabel(Port portView, NodePortDefinition portDefinition)
+        {
+            if (portView == null)
+            {
+                return;
+            }
+
+            string tooltipText = GenPortUtility.BuildPortTooltip(portDefinition);
+            Label portLabel = new Label(portDefinition.Name);
+            portLabel.tooltip = tooltipText;
+            portLabel.style.flexGrow = 1.0f;
+            portLabel.style.flexShrink = 1.0f;
+            portLabel.style.unityTextAlign = portDefinition.Direction == PortDirection.Input
+                ? TextAnchor.MiddleLeft
+                : TextAnchor.MiddleRight;
+
+            if (portDefinition.Direction == PortDirection.Input)
+            {
+                portLabel.style.marginLeft = 4.0f;
+                portView.contentContainer.Add(portLabel);
+            }
+            else
+            {
+                portLabel.style.marginRight = 4.0f;
+                portView.contentContainer.Add(portLabel);
+            }
         }
 
         private void ReplacePreviewTexture(Texture2D texture)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using DynamicDungeon.Runtime.Core;
 using Unity.Burst;
 using Unity.Collections;
@@ -9,6 +10,7 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [Description("Generates layered Perlin noise as a float map for terrain, masks, or other procedural inputs.")]
     public sealed class PerlinNoiseNode : IGenNode
     {
         private const string DefaultNodeName = "Perlin Noise";
@@ -21,9 +23,13 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly string _nodeId;
         private readonly string _nodeName;
         private readonly string _outputChannelName;
+        [Description("Controls how quickly the noise pattern changes across the grid.")]
         private readonly float _frequency;
+        [Description("Scales the strength of the generated noise values.")]
         private readonly float _amplitude;
+        [Description("Offsets the sampled noise position in X and Y.")]
         private readonly Vector2 _offset;
+        [Description("Number of layered noise passes combined into the final result.")]
         private readonly int _octaves;
 
         public IReadOnlyList<NodePortDefinition> Ports

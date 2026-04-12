@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using Unity.Burst;
@@ -8,6 +9,7 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [Description("Inverts an input channel, flipping floats, ints, or bool mask values cell by cell.")]
     public sealed class InvertNode : IGenNode, IInputConnectionReceiver
     {
         private const int DefaultBatchSize = 64;

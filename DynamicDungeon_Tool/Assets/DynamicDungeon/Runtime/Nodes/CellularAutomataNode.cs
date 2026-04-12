@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using System.Globalization;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
@@ -7,9 +8,11 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [Description("Smooths or grows cave-like masks by repeatedly applying cellular automata rules.")]
     public sealed class CellularAutomataNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;
@@ -25,9 +28,17 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly NodePortDefinition[] _ports;
 
         private string _inputChannelName;
+        [InspectorName("Birth On")]
+        [NeighbourCountRule]
+        [Description("Empty cells become filled when they have one of these neighbouring filled-cell counts. Classic cave default: 5, 6, 7, 8.")]
         private string _birthRule;
+        [InspectorName("Survive On")]
+        [NeighbourCountRule]
+        [Description("Filled cells stay filled when they have one of these neighbouring filled-cell counts. Classic cave default: 4, 5, 6, 7, 8.")]
         private string _survivalRule;
+        [Description("Number of cellular automata passes to run.")]
         private int _iterations;
+        [Description("Chance of a cell starting filled when there is no input mask.")]
         private float _initialFillProbability;
         private ChannelDeclaration[] _channelDeclarations;
 
@@ -71,7 +82,7 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public CellularAutomataNode(string nodeId, string nodeName, string inputChannelName, string outputChannelName, string birthRule = "3", string survivalRule = "23456", int iterations = 1, float initialFillProbability = 0.5f)
+        public CellularAutomataNode(string nodeId, string nodeName, string inputChannelName, string outputChannelName, string birthRule = "5678", string survivalRule = "45678", int iterations = 1, float initialFillProbability = 0.5f)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {

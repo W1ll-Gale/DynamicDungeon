@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using System.Globalization;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
@@ -10,6 +11,7 @@ using Unity.Mathematics;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [Description("Turns a float input into a bool mask by comparing each cell against a threshold.")]
     public sealed class ThresholdNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;
@@ -25,6 +27,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly NodePortDefinition[] _ports;
 
         private string _inputChannelName;
+        [Description("Cutoff value used to decide whether a cell becomes true or false.")]
         private float _threshold;
         private ChannelDeclaration[] _channelDeclarations;
 

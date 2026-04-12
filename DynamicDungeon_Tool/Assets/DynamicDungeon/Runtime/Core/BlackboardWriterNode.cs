@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Core
 {
+    [Description("Writes a numeric value into the blackboard so downstream nodes can read it.")]
     public sealed class BlackboardWriterNode : IGenNode
     {
         private const string DefaultNodeName = "Blackboard Writer";
@@ -16,7 +18,9 @@ namespace DynamicDungeon.Runtime.Core
         private readonly BlackboardKey[] _blackboardDeclarations;
         private readonly string _nodeId;
         private readonly string _nodeName;
+        [Description("Blackboard key that will receive the written value.")]
         private readonly FixedString64Bytes _key;
+        [Description("Numeric value written into the chosen blackboard key.")]
         private readonly float _value;
 
         public IReadOnlyList<NodePortDefinition> Ports

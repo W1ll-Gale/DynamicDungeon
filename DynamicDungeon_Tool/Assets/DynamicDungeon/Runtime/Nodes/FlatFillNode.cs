@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using DynamicDungeon.Runtime.Core;
 using Unity.Burst;
 using Unity.Collections;
@@ -7,6 +8,7 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [Description("Outputs a flat float map where every cell uses the same fill value.")]
     public sealed class FlatFillNode : IGenNode
     {
         private const string DefaultNodeName = "Flat Fill";
@@ -27,6 +29,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private readonly string _nodeId;
         private readonly string _nodeName;
+        [Description("Value written into every cell of the output map.")]
         private readonly float _fillValue;
 
         public IReadOnlyList<NodePortDefinition> Ports

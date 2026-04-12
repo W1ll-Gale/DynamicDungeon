@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using System.Reflection;
 using DynamicDungeon.Runtime.Core;
 
@@ -113,6 +114,22 @@ namespace DynamicDungeon.Editor.Utilities
             }
 
             return displayNameAttribute.DisplayName;
+        }
+
+        public static string GetNodeDescription(Type nodeType)
+        {
+            if (nodeType == null)
+            {
+                return string.Empty;
+            }
+
+            DescriptionAttribute descriptionAttribute = Attribute.GetCustomAttribute(nodeType, typeof(DescriptionAttribute)) as DescriptionAttribute;
+            if (descriptionAttribute == null || string.IsNullOrWhiteSpace(descriptionAttribute.Description))
+            {
+                return string.Empty;
+            }
+
+            return descriptionAttribute.Description;
         }
 
         private static int CompareNodeTypes(Type left, Type right)

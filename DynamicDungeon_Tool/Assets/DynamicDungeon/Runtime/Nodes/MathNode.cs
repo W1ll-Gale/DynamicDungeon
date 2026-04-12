@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using System.Globalization;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
@@ -10,6 +11,7 @@ using Unity.Mathematics;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [Description("Applies a math operation to float input A with either float input B or a fallback scalar.")]
     public sealed class MathNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;
@@ -27,7 +29,9 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private string _inputAChannelName;
         private string _inputBChannelName;
+        [Description("Fallback numeric value used when input B is not connected.")]
         private float _scalarB;
+        [Description("Math operation applied to input A and input B or the fallback scalar.")]
         private MathOperation _operation;
         private ChannelDeclaration[] _channelDeclarations;
 

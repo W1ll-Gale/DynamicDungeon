@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using System.Globalization;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
@@ -26,6 +27,7 @@ namespace DynamicDungeon.Runtime.Nodes
         }
     }
 
+    [Description("Converts a bool mask into logical tile IDs for true and false cells.")]
     public sealed class BoolMaskToLogicalIdNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;
@@ -41,7 +43,9 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly NodePortDefinition[] _ports;
 
         private string _inputChannelName;
+        [Description("Logical tile ID written anywhere the input mask is true.")]
         private int _trueLogicalId;
+        [Description("Logical tile ID written anywhere the input mask is false.")]
         private int _falseLogicalId;
         private ChannelDeclaration[] _channelDeclarations;
 

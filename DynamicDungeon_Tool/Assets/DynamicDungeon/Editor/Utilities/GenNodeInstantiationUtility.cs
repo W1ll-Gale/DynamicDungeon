@@ -100,6 +100,29 @@ namespace DynamicDungeon.Editor.Utilities
                 nodeData.Parameters = new List<SerializedParameter>();
             }
 
+            List<SerializedParameter> defaultParameters = CreateDefaultParameters(nodeData, nodeType);
+
+            int parameterIndex;
+            for (parameterIndex = 0; parameterIndex < defaultParameters.Count; parameterIndex++)
+            {
+                SerializedParameter defaultParameter = defaultParameters[parameterIndex];
+                if (defaultParameter == null || HasSerialisedParameter(nodeData.Parameters, defaultParameter.Name))
+                {
+                    continue;
+                }
+
+                nodeData.Parameters.Add(new SerializedParameter(defaultParameter.Name, defaultParameter.Value));
+            }
+        }
+
+        public static List<SerializedParameter> CreateDefaultParameters(GenNodeData nodeData, Type nodeType)
+        {
+            List<SerializedParameter> defaultParameters = new List<SerializedParameter>();
+            if (nodeData == null || nodeType == null)
+            {
+                return defaultParameters;
+            }
+
             ConstructorInfo[] constructors = nodeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
             ConstructorMatch bestMatch = null;
 
@@ -118,7 +141,7 @@ namespace DynamicDungeon.Editor.Utilities
 
             if (bestMatch == null)
             {
-                return;
+                return defaultParameters;
             }
 
             ParameterInfo[] parameters = bestMatch.Constructor.GetParameters();
@@ -131,14 +154,11 @@ namespace DynamicDungeon.Editor.Utilities
                     continue;
                 }
 
-                if (HasSerialisedParameter(nodeData.Parameters, parameter.Name))
-                {
-                    continue;
-                }
-
                 string serialisedValue = SerialiseParameterValue(bestMatch.Arguments[parameterIndex]);
-                nodeData.Parameters.Add(new SerializedParameter(parameter.Name, serialisedValue));
+                defaultParameters.Add(new SerializedParameter(parameter.Name, serialisedValue));
             }
+
+            return defaultParameters;
         }
 
         private static bool ApplyParameters(IGenNode nodeInstance, GenNodeData nodeData, out string errorMessage)

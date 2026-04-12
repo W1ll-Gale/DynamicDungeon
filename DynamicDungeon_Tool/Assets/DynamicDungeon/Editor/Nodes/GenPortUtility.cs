@@ -1,6 +1,8 @@
 using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
+using System;
+using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
@@ -72,6 +74,30 @@ namespace DynamicDungeon.Editor.Nodes
                 : Color.white;
         }
 
+        public static string BuildPortTooltip(NodePortDefinition portDefinition)
+        {
+            List<string> lines = new List<string>();
+            lines.Add(portDefinition.Name);
+
+            if (!string.IsNullOrWhiteSpace(portDefinition.Description))
+            {
+                lines.Add(portDefinition.Description);
+            }
+
+            List<string> details = new List<string>();
+            details.Add(FormatDirection(portDefinition.Direction));
+            details.Add(FormatChannelType(portDefinition.Type));
+            details.Add(portDefinition.Capacity == PortCapacity.Multi ? "Multi connection" : "Single connection");
+
+            if (portDefinition.Direction == PortDirection.Input)
+            {
+                details.Add(portDefinition.Required ? "Required" : "Optional");
+            }
+
+            lines.Add(string.Join("  •  ", details));
+            return string.Join("\n", lines);
+        }
+
         private static void ResolveConnectionTypes(
             NodePortDefinition portDefinition,
             NodePortDefinition otherPortDefinition,
@@ -87,6 +113,26 @@ namespace DynamicDungeon.Editor.Nodes
 
             fromType = otherPortDefinition.Type;
             toType = portDefinition.Type;
+        }
+
+        private static string FormatDirection(PortDirection direction)
+        {
+            return direction == PortDirection.Input ? "Input" : "Output";
+        }
+
+        private static string FormatChannelType(ChannelType channelType)
+        {
+            switch (channelType)
+            {
+                case ChannelType.Float:
+                    return "Float values";
+                case ChannelType.Int:
+                    return "Integer values";
+                case ChannelType.BoolMask:
+                    return "Boolean mask";
+                default:
+                    return Enum.GetName(typeof(ChannelType), channelType) ?? channelType.ToString();
+            }
         }
     }
 }

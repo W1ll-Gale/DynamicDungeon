@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Core
 {
+    [Description("Reads a numeric blackboard value and writes it into every cell of a float output channel.")]
     public sealed class BlackboardReaderNode : IGenNode
     {
         private const string DefaultNodeName = "Blackboard Reader";
@@ -17,6 +19,7 @@ namespace DynamicDungeon.Runtime.Core
         private readonly string _nodeId;
         private readonly string _nodeName;
         private readonly string _outputChannelName;
+        [Description("Blackboard key to read from before writing the value into the output channel.")]
         private readonly FixedString64Bytes _key;
 
         public IReadOnlyList<NodePortDefinition> Ports
