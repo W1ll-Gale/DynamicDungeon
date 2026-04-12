@@ -43,8 +43,10 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly NodePortDefinition[] _ports;
 
         private string _inputChannelName;
+        [MinValue(0.0f)]
         [Description("Logical tile ID written anywhere the input mask is true.")]
         private int _trueLogicalId;
+        [MinValue(0.0f)]
         [Description("Logical tile ID written anywhere the input mask is false.")]
         private int _falseLogicalId;
         private ChannelDeclaration[] _channelDeclarations;

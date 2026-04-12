@@ -364,6 +364,12 @@ namespace DynamicDungeon.Editor.Windows
                     continue;
                 }
 
+                Type nodeType = GenNodeInstantiationUtility.ResolveNodeType(nodeData.NodeTypeName);
+                if (nodeType != null)
+                {
+                    GenNodeInstantiationUtility.PopulateDefaultParameters(nodeData, nodeType);
+                }
+
                 IGenNode nodeInstance;
                 string errorMessage;
                 if (!GenNodeInstantiationUtility.TryCreateNodeInstance(nodeData, out nodeInstance, out errorMessage))

@@ -577,6 +577,12 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
+                if (parameter.ParameterType == typeof(Vector2))
+                {
+                    arguments[parameterIndex] = Vector2.zero;
+                    continue;
+                }
+
                 if (parameter.HasDefaultValue)
                 {
                     arguments[parameterIndex] = parameter.DefaultValue;
@@ -938,6 +944,13 @@ namespace DynamicDungeon.Runtime.Graph
                     argumentValue = new Vector2(xValue, yValue);
                     return true;
                 }
+            }
+
+            float scalarValue;
+            if (float.TryParse(trimmedValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out scalarValue))
+            {
+                argumentValue = new Vector2(scalarValue, scalarValue);
+                return true;
             }
 
             try

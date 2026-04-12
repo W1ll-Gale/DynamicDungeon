@@ -176,6 +176,13 @@ namespace DynamicDungeon.Editor.Windows
             messageLabel.style.flexGrow = 1.0f;
             messageLabel.style.unityTextAlign = TextAnchor.UpperLeft;
             entryButton.Add(messageLabel);
+            entryButton.AddManipulator(new ContextualMenuManipulator(
+                menuPopulateEvent =>
+                {
+                    menuPopulateEvent.menu.AppendAction(
+                        "Copy Error",
+                        _ => GUIUtility.systemCopyBuffer = entryText);
+                }));
 
             return entryButton;
         }

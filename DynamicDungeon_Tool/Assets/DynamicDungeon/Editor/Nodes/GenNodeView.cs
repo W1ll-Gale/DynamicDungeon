@@ -65,6 +65,7 @@ namespace DynamicDungeon.Editor.Nodes
             _generationOrchestrator = generationOrchestrator;
             _edgeConnectorListener = edgeConnectorListener;
             _previewDoubleClicked = previewDoubleClicked;
+            EnsureMissingParametersFromDefaults();
             CacheDefaultParameterValues();
 
             title = string.IsNullOrWhiteSpace(nodeData.NodeName) ? nodeInstance.NodeName : nodeData.NodeName;
@@ -354,9 +355,11 @@ namespace DynamicDungeon.Editor.Nodes
 
             if (_nodeData.Parameters.Count == 0)
             {
-                _controlsContainer.Add(new Label("No parameters"));
+                _controlsContainer.style.display = DisplayStyle.None;
                 return;
             }
+
+            _controlsContainer.style.display = DisplayStyle.Flex;
 
             InlinedControlFactory.SetNodeTypeContext(_nodeInstance.GetType());
 
@@ -396,6 +399,7 @@ namespace DynamicDungeon.Editor.Nodes
 
             string oldValue = targetParameter.Value ?? string.Empty;
             string safeNewValue = newValue ?? string.Empty;
+            InlinedControlFactory.TryNormaliseParameterValue(_nodeInstance.GetType(), parameterName, safeNewValue, out safeNewValue);
             if (string.Equals(oldValue, safeNewValue, StringComparison.Ordinal))
             {
                 return;
@@ -501,6 +505,55 @@ namespace DynamicDungeon.Editor.Nodes
 
                 _defaultParameterValuesByName[parameter.Name] = parameter.Value ?? string.Empty;
             }
+        }
+
+        private void EnsureMissingParametersFromDefaults()
+        {
+            if (_nodeData == null || _nodeInstance == null)
+            {
+                return;
+            }
+
+            int initialParameterCount = _nodeData.Parameters != null ? _nodeData.Parameters.Count : 0;
+            GenNodeInstantiationUtility.PopulateDefaultParameters(_nodeData, _nodeInstance.GetType());
+            bool anyValueNormalised = NormaliseParameterValues();
+            int updatedParameterCount = _nodeData.Parameters != null ? _nodeData.Parameters.Count : 0;
+            if ((updatedParameterCount != initialParameterCount || anyValueNormalised) && _graph != null)
+            {
+                EditorUtility.SetDirty(_graph);
+            }
+        }
+
+        private bool NormaliseParameterValues()
+        {
+            if (_nodeData == null || _nodeData.Parameters == null || _nodeInstance == null)
+            {
+                return false;
+            }
+
+            bool anyValueNormalised = false;
+
+            int parameterIndex;
+            for (parameterIndex = 0; parameterIndex < _nodeData.Parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = _nodeData.Parameters[parameterIndex];
+                if (parameter == null || string.IsNullOrWhiteSpace(parameter.Name))
+                {
+                    continue;
+                }
+
+                string currentValue = parameter.Value ?? string.Empty;
+                string normalisedValue;
+                if (!InlinedControlFactory.TryNormaliseParameterValue(_nodeInstance.GetType(), parameter.Name, currentValue, out normalisedValue))
+                {
+                    continue;
+                }
+
+                parameter.Value = normalisedValue;
+                anyValueNormalised = true;
+            }
+
+            return anyValueNormalised;
         }
 
         private void BuildPorts()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using DynamicDungeon.Runtime.Core;
+using DynamicDungeon.Runtime.Graph;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -11,7 +12,7 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [Description("Generates layered Perlin noise as a float map for terrain, masks, or other procedural inputs.")]
-    public sealed class PerlinNoiseNode : IGenNode
+    public sealed class PerlinNoiseNode : IGenNode, IParameterReceiver
     {
         private const string DefaultNodeName = "Perlin Noise";
         private const int DefaultBatchSize = 64;
@@ -23,14 +24,17 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly string _nodeId;
         private readonly string _nodeName;
         private readonly string _outputChannelName;
+        [MinValue(0.0f)]
         [Description("Controls how quickly the noise pattern changes across the grid.")]
-        private readonly float _frequency;
+        private float _frequency;
+        [MinValue(0.0f)]
         [Description("Scales the strength of the generated noise values.")]
-        private readonly float _amplitude;
+        private float _amplitude;
         [Description("Offsets the sampled noise position in X and Y.")]
-        private readonly Vector2 _offset;
+        private Vector2 _offset;
+        [MinValue(1.0f)]
         [Description("Number of layered noise passes combined into the final result.")]
-        private readonly int _octaves;
+        private int _octaves;
 
         public IReadOnlyList<NodePortDefinition> Ports
         {
@@ -116,6 +120,10 @@ namespace DynamicDungeon.Runtime.Nodes
         {
         }
 
+        public PerlinNoiseNode(string nodeId, string nodeName, string outputChannelName) : this(nodeId, nodeName, outputChannelName, 0.05f, 1.0f, Vector2.zero, 1)
+        {
+        }
+
         public PerlinNoiseNode(string nodeId, string nodeName, string outputChannelName, float frequency, float amplitude, Vector2 offset, int octaves = 1)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
@@ -167,6 +175,56 @@ namespace DynamicDungeon.Runtime.Nodes
             _octaves = octaves;
         }
 
+        public void ReceiveParameter(string name, string value)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
+            if (string.Equals(name, "frequency", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsedFrequency;
+                if (float.TryParse(value, System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands, System.Globalization.CultureInfo.InvariantCulture, out parsedFrequency))
+                {
+                    _frequency = math.max(0.0f, parsedFrequency);
+                }
+
+                return;
+            }
+
+            if (string.Equals(name, "amplitude", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsedAmplitude;
+                if (float.TryParse(value, System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands, System.Globalization.CultureInfo.InvariantCulture, out parsedAmplitude))
+                {
+                    _amplitude = math.max(0.0f, parsedAmplitude);
+                }
+
+                return;
+            }
+
+            if (string.Equals(name, "offset", StringComparison.OrdinalIgnoreCase))
+            {
+                Vector2 parsedOffset;
+                if (TryParseOffset(value, out parsedOffset))
+                {
+                    _offset = parsedOffset;
+                }
+
+                return;
+            }
+
+            if (string.Equals(name, "octaves", StringComparison.OrdinalIgnoreCase))
+            {
+                int parsedOctaves;
+                if (int.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedOctaves))
+                {
+                    _octaves = math.max(1, parsedOctaves);
+                }
+            }
+        }
+
         public JobHandle Schedule(NodeExecutionContext context)
         {
             NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
@@ -195,6 +253,55 @@ namespace DynamicDungeon.Runtime.Nodes
                 float seedY = ((seedHigh & 65535u) / 65535.0f) * 10000.0f;
                 return new float2(seedX, seedY);
             }
+        }
+
+        private static bool TryParseOffset(string rawValue, out Vector2 offset)
+        {
+            string safeValue = rawValue ?? string.Empty;
+            string trimmedValue = safeValue.Trim();
+
+            if (trimmedValue.Length == 0)
+            {
+                offset = Vector2.zero;
+                return true;
+            }
+
+            string normalisedValue = trimmedValue.Replace("(", string.Empty).Replace(")", string.Empty);
+            string[] parts = normalisedValue.Split(',');
+            if (parts.Length == 2)
+            {
+                float xValue;
+                float yValue;
+                if (float.TryParse(parts[0].Trim(), System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands, System.Globalization.CultureInfo.InvariantCulture, out xValue) &&
+                    float.TryParse(parts[1].Trim(), System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands, System.Globalization.CultureInfo.InvariantCulture, out yValue))
+                {
+                    offset = new Vector2(xValue, yValue);
+                    return true;
+                }
+            }
+
+            float scalarValue;
+            if (float.TryParse(trimmedValue, System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands, System.Globalization.CultureInfo.InvariantCulture, out scalarValue))
+            {
+                offset = new Vector2(scalarValue, scalarValue);
+                return true;
+            }
+
+            try
+            {
+                Vector2 jsonVector = JsonUtility.FromJson<Vector2>(trimmedValue);
+                if (!float.IsNaN(jsonVector.x) && !float.IsNaN(jsonVector.y))
+                {
+                    offset = jsonVector;
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            offset = Vector2.zero;
+            return false;
         }
 
         [BurstCompile]

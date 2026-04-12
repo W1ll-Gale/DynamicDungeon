@@ -8,6 +8,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
@@ -27,6 +28,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly NodePortDefinition[] _ports;
 
         private string _inputChannelName;
+        [Range(0.0f, 1.0f)]
         [Description("Cutoff value used to decide whether a cell becomes true or false.")]
         private float _threshold;
         private ChannelDeclaration[] _channelDeclarations;

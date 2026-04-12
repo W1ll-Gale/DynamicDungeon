@@ -20,12 +20,164 @@ namespace DynamicDungeon.Editor.Nodes
             public string TooltipText;
             public string DisplayName;
             public bool UseNeighbourCountRuleEditor;
+            public float? MinValue;
+            public float? MaxValue;
         }
 
         private sealed class LabelledRuleField : VisualElement
         {
             public Label LabelElement;
             public VisualElement InputElement;
+        }
+
+        private sealed class IntegerSliderField : VisualElement
+        {
+            private readonly Label _label;
+            private readonly SliderInt _slider;
+            private readonly IntegerField _valueField;
+            private readonly Action<int> _onValueChanged;
+            private readonly int _minValue;
+            private readonly int _maxValue;
+            private bool _isUpdating;
+
+            public IntegerSliderField(string labelText, int minValue, int maxValue, int initialValue, Action<int> onValueChanged)
+            {
+                _onValueChanged = onValueChanged;
+                _minValue = minValue;
+                _maxValue = maxValue;
+
+                style.flexDirection = FlexDirection.Row;
+                style.alignItems = Align.Center;
+                style.flexGrow = 1.0f;
+                style.flexShrink = 1.0f;
+
+                _label = new Label(labelText);
+                _label.style.minWidth = 92.0f;
+                _label.style.marginRight = 6.0f;
+                _label.style.unityTextAlign = TextAnchor.MiddleLeft;
+                Add(_label);
+
+                _slider = new SliderInt(string.Empty, minValue, maxValue);
+                _slider.style.flexGrow = 1.0f;
+                _slider.style.flexShrink = 1.0f;
+                _slider.style.marginRight = 6.0f;
+                _slider.RegisterValueChangedCallback(changeEvent => ApplyValue(changeEvent.newValue, true));
+                Add(_slider);
+
+                _valueField = new IntegerField();
+                _valueField.style.width = 56.0f;
+                _valueField.style.minWidth = 56.0f;
+                _valueField.RegisterValueChangedCallback(changeEvent => ApplyValue(changeEvent.newValue, true));
+                Add(_valueField);
+
+                SetValueWithoutNotify(initialValue);
+            }
+
+            public Label LabelElement => _label;
+
+            public void SetValueWithoutNotify(int value)
+            {
+                value = Mathf.Clamp(value, _minValue, _maxValue);
+                _isUpdating = true;
+                _slider.SetValueWithoutNotify(value);
+                _valueField.SetValueWithoutNotify(value);
+                _isUpdating = false;
+            }
+
+            private void ApplyValue(int value, bool notify)
+            {
+                if (_isUpdating)
+                {
+                    return;
+                }
+
+                value = Mathf.Clamp(value, _minValue, _maxValue);
+
+                _isUpdating = true;
+                _slider.SetValueWithoutNotify(value);
+                _valueField.SetValueWithoutNotify(value);
+                _isUpdating = false;
+
+                if (notify)
+                {
+                    _onValueChanged?.Invoke(value);
+                }
+            }
+        }
+
+        private sealed class FloatSliderField : VisualElement
+        {
+            private readonly Label _label;
+            private readonly Slider _slider;
+            private readonly FloatField _valueField;
+            private readonly Action<float> _onValueChanged;
+            private readonly float _minValue;
+            private readonly float _maxValue;
+            private bool _isUpdating;
+
+            public FloatSliderField(string labelText, float minValue, float maxValue, float initialValue, Action<float> onValueChanged)
+            {
+                _onValueChanged = onValueChanged;
+                _minValue = minValue;
+                _maxValue = maxValue;
+
+                style.flexDirection = FlexDirection.Row;
+                style.alignItems = Align.Center;
+                style.flexGrow = 1.0f;
+                style.flexShrink = 1.0f;
+
+                _label = new Label(labelText);
+                _label.style.minWidth = 92.0f;
+                _label.style.marginRight = 6.0f;
+                _label.style.unityTextAlign = TextAnchor.MiddleLeft;
+                Add(_label);
+
+                _slider = new Slider(string.Empty, minValue, maxValue);
+                _slider.style.flexGrow = 1.0f;
+                _slider.style.flexShrink = 1.0f;
+                _slider.style.marginRight = 6.0f;
+                _slider.RegisterValueChangedCallback(changeEvent => ApplyValue(changeEvent.newValue, true));
+                Add(_slider);
+
+                _valueField = new FloatField();
+                _valueField.style.width = 64.0f;
+                _valueField.style.minWidth = 64.0f;
+                _valueField.RegisterValueChangedCallback(changeEvent => ApplyValue(changeEvent.newValue, true));
+                Add(_valueField);
+
+                SetValueWithoutNotify(initialValue);
+            }
+
+            public Label LabelElement => _label;
+
+            public void SetValueWithoutNotify(float value)
+            {
+                value = Mathf.Clamp(value, _minValue, _maxValue);
+                _isUpdating = true;
+                _slider.SetValueWithoutNotify(value);
+                _valueField.SetValueWithoutNotify(value);
+                _isUpdating = false;
+            }
+
+            private void ApplyValue(float value, bool notify)
+            {
+                if (_isUpdating)
+                {
+                    return;
+                }
+
+                value = Mathf.Clamp(value, _minValue, _maxValue);
+
+                _isUpdating = true;
+                _slider.SetValueWithoutNotify(value);
+                _valueField.SetValueWithoutNotify(value);
+                _isUpdating = false;
+
+                if (notify)
+                {
+                    _onValueChanged?.Invoke(value);
+                }
+            }
         }
 
         private sealed class NeighbourCountRuleField : VisualElement
@@ -152,6 +304,12 @@ namespace DynamicDungeon.Editor.Nodes
                 return WrapControl(parameterName, field, metadata, defaultValue, onValueChanged);
             }
 
+            if (metadata != null && metadata.ValueType == typeof(Vector2))
+            {
+                field = CreateVector2Control(parameterName, labelText, parameterValue, onValueChanged);
+                return WrapControl(parameterName, field, metadata, defaultValue, onValueChanged);
+            }
+
             bool parsedBoolean;
             if (bool.TryParse(parameterValue, out parsedBoolean))
             {
@@ -175,7 +333,7 @@ namespace DynamicDungeon.Editor.Nodes
 
             if (isIntegerParameter)
             {
-                field = CreateIntegerControl(parameterName, labelText, parsedInt, parameterValue, onValueChanged);
+                field = CreateIntegerControl(parameterName, labelText, parsedInt, parameterValue, metadata, onValueChanged);
                 return WrapControl(parameterName, field, metadata, defaultValue, onValueChanged);
             }
 
@@ -196,7 +354,7 @@ namespace DynamicDungeon.Editor.Nodes
                 parameterName.EndsWith("Min", StringComparison.OrdinalIgnoreCase) ||
                 parameterName.EndsWith("Max", StringComparison.OrdinalIgnoreCase))
             {
-                field = CreateFloatControl(parameterName, labelText, parsedFloat, parameterValue, onValueChanged);
+                field = CreateFloatControl(parameterName, labelText, parsedFloat, parameterValue, metadata, onValueChanged);
                 return WrapControl(parameterName, field, metadata, defaultValue, onValueChanged);
             }
 
@@ -266,37 +424,43 @@ namespace DynamicDungeon.Editor.Nodes
         {
             int minValue = Mathf.RoundToInt(rangeAttribute.min);
             int maxValue = Mathf.RoundToInt(rangeAttribute.max);
-            SliderInt slider = new SliderInt(labelText, minValue, maxValue);
-            slider.SetValueWithoutNotify(Mathf.Clamp(parameterValue, minValue, maxValue));
-            slider.RegisterValueChangedCallback(
-                changeEvent =>
+            IntegerSliderField sliderField = new IntegerSliderField(
+                labelText,
+                minValue,
+                maxValue,
+                Mathf.Clamp(parameterValue, minValue, maxValue),
+                value =>
                 {
-                    string serialisedValue = changeEvent.newValue.ToString(CultureInfo.InvariantCulture);
+                    string serialisedValue = Mathf.Clamp(value, minValue, maxValue).ToString(CultureInfo.InvariantCulture);
                     onValueChanged?.Invoke(parameterName, serialisedValue);
                 });
 
-            return slider;
+            return sliderField;
         }
 
         private static VisualElement CreateSliderControl(string parameterName, string labelText, float parameterValue, RangeAttribute rangeAttribute, Action<string, string> onValueChanged)
         {
-            Slider slider = new Slider(labelText, rangeAttribute.min, rangeAttribute.max);
-            slider.SetValueWithoutNotify(Mathf.Clamp(parameterValue, rangeAttribute.min, rangeAttribute.max));
-            slider.RegisterValueChangedCallback(
-                changeEvent =>
+            FloatSliderField sliderField = new FloatSliderField(
+                labelText,
+                rangeAttribute.min,
+                rangeAttribute.max,
+                Mathf.Clamp(parameterValue, rangeAttribute.min, rangeAttribute.max),
+                value =>
                 {
-                    string serialisedValue = changeEvent.newValue.ToString(CultureInfo.InvariantCulture);
+                    float clampedValue = Mathf.Clamp(value, rangeAttribute.min, rangeAttribute.max);
+                    string serialisedValue = clampedValue.ToString(CultureInfo.InvariantCulture);
                     onValueChanged?.Invoke(parameterName, serialisedValue);
                 });
 
-            return slider;
+            return sliderField;
         }
 
-        private static VisualElement CreateIntegerControl(string parameterName, string labelText, int parsedIntValue, string rawValue, Action<string, string> onValueChanged)
+        private static VisualElement CreateIntegerControl(string parameterName, string labelText, int parsedIntValue, string rawValue, ParameterMetadata metadata, Action<string, string> onValueChanged)
         {
             IntegerField integerField = new IntegerField(labelText);
             int initialValue = parsedIntValue;
-            if (!int.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out initialValue))
+            string normalisedRawValue = NormaliseParameterValue(rawValue, metadata);
+            if (!int.TryParse(normalisedRawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out initialValue))
             {
                 initialValue = 0;
             }
@@ -305,18 +469,26 @@ namespace DynamicDungeon.Editor.Nodes
             integerField.RegisterValueChangedCallback(
                 changeEvent =>
                 {
-                    string serialisedValue = changeEvent.newValue.ToString(CultureInfo.InvariantCulture);
+                    string serialisedValue = NormaliseParameterValue(changeEvent.newValue.ToString(CultureInfo.InvariantCulture), metadata);
+                    int clampedValue;
+                    if (int.TryParse(serialisedValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out clampedValue) &&
+                        clampedValue != changeEvent.newValue)
+                    {
+                        integerField.SetValueWithoutNotify(clampedValue);
+                    }
+
                     onValueChanged?.Invoke(parameterName, serialisedValue);
                 });
 
             return integerField;
         }
 
-        private static VisualElement CreateFloatControl(string parameterName, string labelText, float parsedFloatValue, string rawValue, Action<string, string> onValueChanged)
+        private static VisualElement CreateFloatControl(string parameterName, string labelText, float parsedFloatValue, string rawValue, ParameterMetadata metadata, Action<string, string> onValueChanged)
         {
             FloatField floatField = new FloatField(labelText);
             float initialValue = parsedFloatValue;
-            if (!float.TryParse(rawValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out initialValue))
+            string normalisedRawValue = NormaliseParameterValue(rawValue, metadata);
+            if (!float.TryParse(normalisedRawValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out initialValue))
             {
                 initialValue = 0.0f;
             }
@@ -325,11 +497,50 @@ namespace DynamicDungeon.Editor.Nodes
             floatField.RegisterValueChangedCallback(
                 changeEvent =>
                 {
-                    string serialisedValue = changeEvent.newValue.ToString(CultureInfo.InvariantCulture);
+                    string serialisedValue = NormaliseParameterValue(changeEvent.newValue.ToString(CultureInfo.InvariantCulture), metadata);
+                    float clampedValue;
+                    if (float.TryParse(serialisedValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out clampedValue) &&
+                        !Mathf.Approximately(clampedValue, changeEvent.newValue))
+                    {
+                        floatField.SetValueWithoutNotify(clampedValue);
+                    }
+
                     onValueChanged?.Invoke(parameterName, serialisedValue);
                 });
 
             return floatField;
+        }
+
+        private static VisualElement CreateVector2Control(string parameterName, string labelText, string parameterValue, Action<string, string> onValueChanged)
+        {
+            Vector2 initialValue;
+            if (!TryParseVector2Value(parameterValue, out initialValue))
+            {
+                initialValue = Vector2.zero;
+            }
+
+            Vector2Field vectorField = new Vector2Field(labelText);
+            vectorField.SetValueWithoutNotify(initialValue);
+            vectorField.RegisterValueChangedCallback(
+                changeEvent =>
+                {
+                    string serialisedValue = SerialiseVector2Value(changeEvent.newValue);
+                    onValueChanged?.Invoke(parameterName, serialisedValue);
+                });
+
+            List<FloatField> axisFields = vectorField.Query<FloatField>().ToList();
+            int axisIndex;
+            for (axisIndex = 0; axisIndex < axisFields.Count; axisIndex++)
+            {
+                FloatField axisField = axisFields[axisIndex];
+                axisField.style.width = 96.0f;
+                axisField.style.minWidth = 96.0f;
+                axisField.style.maxWidth = 96.0f;
+                axisField.style.flexGrow = 0.0f;
+                axisField.style.flexShrink = 0.0f;
+            }
+
+            return vectorField;
         }
 
         private static VisualElement CreateTextControl(string parameterName, string labelText, string parameterValue, Action<string, string> onValueChanged)
@@ -375,6 +586,13 @@ namespace DynamicDungeon.Editor.Nodes
                 }));
 
             return row;
+        }
+
+        public static bool TryNormaliseParameterValue(Type nodeType, string parameterName, string parameterValue, out string normalisedValue)
+        {
+            ParameterMetadata metadata = ResolveMetadata(nodeType, parameterName);
+            normalisedValue = NormaliseParameterValue(parameterValue, metadata);
+            return metadata != null && !string.Equals(parameterValue ?? string.Empty, normalisedValue ?? string.Empty, StringComparison.Ordinal);
         }
 
         private static void ApplyResetValue(VisualElement field, string parameterName, string defaultValue, ParameterMetadata metadata, Action<string, string> onValueChanged)
@@ -428,6 +646,24 @@ namespace DynamicDungeon.Editor.Nodes
                 return;
             }
 
+            if (field is FloatSliderField floatSliderField)
+            {
+                float parsedFloat;
+                if (!float.TryParse(defaultValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedFloat))
+                {
+                    parsedFloat = 0.0f;
+                }
+
+                if (metadata != null && metadata.RangeAttribute != null)
+                {
+                    parsedFloat = Mathf.Clamp(parsedFloat, metadata.RangeAttribute.min, metadata.RangeAttribute.max);
+                }
+
+                floatSliderField.SetValueWithoutNotify(parsedFloat);
+                onValueChanged?.Invoke(parameterName, parsedFloat.ToString(CultureInfo.InvariantCulture));
+                return;
+            }
+
             if (field is SliderInt sliderInt)
             {
                 int parsedInt;
@@ -441,10 +677,41 @@ namespace DynamicDungeon.Editor.Nodes
                 return;
             }
 
+            if (field is IntegerSliderField integerSliderField)
+            {
+                int parsedInt;
+                if (!int.TryParse(defaultValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedInt))
+                {
+                    parsedInt = 0;
+                }
+
+                if (metadata != null && metadata.RangeAttribute != null)
+                {
+                    parsedInt = Mathf.Clamp(parsedInt, Mathf.RoundToInt(metadata.RangeAttribute.min), Mathf.RoundToInt(metadata.RangeAttribute.max));
+                }
+
+                integerSliderField.SetValueWithoutNotify(parsedInt);
+                onValueChanged?.Invoke(parameterName, parsedInt.ToString(CultureInfo.InvariantCulture));
+                return;
+            }
+
             if (field is NeighbourCountRuleField neighbourCountRuleField)
             {
                 neighbourCountRuleField.SetValueWithoutNotify(defaultValue);
                 onValueChanged?.Invoke(parameterName, NormaliseNeighbourCountRule(defaultValue));
+                return;
+            }
+
+            if (field is Vector2Field vector2Field)
+            {
+                Vector2 parsedVector;
+                if (!TryParseVector2Value(defaultValue, out parsedVector))
+                {
+                    parsedVector = Vector2.zero;
+                }
+
+                vector2Field.SetValueWithoutNotify(parsedVector);
+                onValueChanged?.Invoke(parameterName, SerialiseVector2Value(parsedVector));
                 return;
             }
 
@@ -526,6 +793,7 @@ namespace DynamicDungeon.Editor.Nodes
                 metadata.TooltipText = GetTooltipText(field);
                 metadata.DisplayName = GetDisplayName(field);
                 metadata.UseNeighbourCountRuleEditor = field.GetCustomAttribute<NeighbourCountRuleAttribute>() != null;
+                PopulateNumericBounds(field, metadata);
                 metadataByName.Add(key, metadata);
             }
 
@@ -546,6 +814,7 @@ namespace DynamicDungeon.Editor.Nodes
                 metadata.TooltipText = GetTooltipText(property);
                 metadata.DisplayName = GetDisplayName(property);
                 metadata.UseNeighbourCountRuleEditor = property.GetCustomAttribute<NeighbourCountRuleAttribute>() != null;
+                PopulateNumericBounds(property, metadata);
                 metadataByName.Add(key, metadata);
             }
 
@@ -571,6 +840,18 @@ namespace DynamicDungeon.Editor.Nodes
                     metadata.RangeAttribute.min.ToString(CultureInfo.InvariantCulture) +
                     " to " +
                     metadata.RangeAttribute.max.ToString(CultureInfo.InvariantCulture));
+            }
+            else if (metadata != null)
+            {
+                if (metadata.MinValue.HasValue)
+                {
+                    details.Add("Min " + metadata.MinValue.Value.ToString(CultureInfo.InvariantCulture));
+                }
+
+                if (metadata.MaxValue.HasValue)
+                {
+                    details.Add("Max " + metadata.MaxValue.Value.ToString(CultureInfo.InvariantCulture));
+                }
             }
 
             if (defaultValue != null)
@@ -605,6 +886,18 @@ namespace DynamicDungeon.Editor.Nodes
                     labelledRuleField.LabelElement.tooltip = tooltipText;
                 }
 
+                return;
+            }
+
+            if (field is IntegerSliderField integerSliderField)
+            {
+                integerSliderField.LabelElement.tooltip = tooltipText;
+                return;
+            }
+
+            if (field is FloatSliderField floatSliderField)
+            {
+                floatSliderField.LabelElement.tooltip = tooltipText;
                 return;
             }
 
@@ -653,6 +946,33 @@ namespace DynamicDungeon.Editor.Nodes
             return string.Empty;
         }
 
+        private static void PopulateNumericBounds(MemberInfo memberInfo, ParameterMetadata metadata)
+        {
+            if (memberInfo == null || metadata == null)
+            {
+                return;
+            }
+
+            if (metadata.RangeAttribute != null)
+            {
+                metadata.MinValue = metadata.RangeAttribute.min;
+                metadata.MaxValue = metadata.RangeAttribute.max;
+                return;
+            }
+
+            MinValueAttribute minValueAttribute = memberInfo.GetCustomAttribute<MinValueAttribute>();
+            if (minValueAttribute != null)
+            {
+                metadata.MinValue = minValueAttribute.Value;
+            }
+
+            MaxValueAttribute maxValueAttribute = memberInfo.GetCustomAttribute<MaxValueAttribute>();
+            if (maxValueAttribute != null)
+            {
+                metadata.MaxValue = maxValueAttribute.Value;
+            }
+        }
+
         private static string ResolveDisplayName(string parameterName, ParameterMetadata metadata)
         {
             if (metadata != null && !string.IsNullOrWhiteSpace(metadata.DisplayName))
@@ -671,6 +991,121 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             return value ?? string.Empty;
+        }
+
+        private static string NormaliseParameterValue(string value, ParameterMetadata metadata)
+        {
+            if (metadata == null || metadata.ValueType == null)
+            {
+                return value ?? string.Empty;
+            }
+
+            if (metadata.ValueType == typeof(int))
+            {
+                int parsedInt;
+                if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedInt))
+                {
+                    return value ?? string.Empty;
+                }
+
+                if (metadata.MinValue.HasValue)
+                {
+                    parsedInt = Mathf.Max(parsedInt, Mathf.CeilToInt(metadata.MinValue.Value));
+                }
+
+                if (metadata.MaxValue.HasValue)
+                {
+                    parsedInt = Mathf.Min(parsedInt, Mathf.FloorToInt(metadata.MaxValue.Value));
+                }
+
+                return parsedInt.ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (metadata.ValueType == typeof(float))
+            {
+                float parsedFloat;
+                if (!float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedFloat))
+                {
+                    return value ?? string.Empty;
+                }
+
+                if (metadata.MinValue.HasValue || metadata.MaxValue.HasValue)
+                {
+                    parsedFloat = Mathf.Clamp(
+                        parsedFloat,
+                        metadata.MinValue ?? float.NegativeInfinity,
+                        metadata.MaxValue ?? float.PositiveInfinity);
+                }
+
+                return parsedFloat.ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (metadata.ValueType == typeof(Vector2))
+            {
+                Vector2 parsedVector;
+                if (!TryParseVector2Value(value, out parsedVector))
+                {
+                    return value ?? string.Empty;
+                }
+
+                return SerialiseVector2Value(parsedVector);
+            }
+
+            return value ?? string.Empty;
+        }
+
+        private static bool TryParseVector2Value(string value, out Vector2 parsedVector)
+        {
+            string safeValue = value ?? string.Empty;
+            string trimmedValue = safeValue.Trim();
+
+            if (trimmedValue.Length == 0)
+            {
+                parsedVector = Vector2.zero;
+                return true;
+            }
+
+            string normalisedValue = trimmedValue.Replace("(", string.Empty).Replace(")", string.Empty);
+            string[] parts = normalisedValue.Split(',');
+            if (parts.Length == 2)
+            {
+                float xValue;
+                float yValue;
+                if (float.TryParse(parts[0].Trim(), NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out xValue) &&
+                    float.TryParse(parts[1].Trim(), NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out yValue))
+                {
+                    parsedVector = new Vector2(xValue, yValue);
+                    return true;
+                }
+            }
+
+            float scalarValue;
+            if (float.TryParse(trimmedValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out scalarValue))
+            {
+                parsedVector = new Vector2(scalarValue, scalarValue);
+                return true;
+            }
+
+            try
+            {
+                Vector2 jsonVector = JsonUtility.FromJson<Vector2>(trimmedValue);
+                if (!float.IsNaN(jsonVector.x) && !float.IsNaN(jsonVector.y))
+                {
+                    parsedVector = jsonVector;
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            parsedVector = Vector2.zero;
+            return false;
+        }
+
+        private static string SerialiseVector2Value(Vector2 value)
+        {
+            return value.x.ToString(CultureInfo.InvariantCulture) + "," + value.y.ToString(CultureInfo.InvariantCulture);
         }
 
         private static string FormatNeighbourCountRule(string value)

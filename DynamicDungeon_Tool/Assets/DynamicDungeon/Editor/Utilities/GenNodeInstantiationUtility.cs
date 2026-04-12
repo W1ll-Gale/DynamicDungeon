@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using UnityEngine;
@@ -54,6 +55,8 @@ namespace DynamicDungeon.Editor.Utilities
                 errorMessage = "Node type '" + nodeData.NodeTypeName + "' does not implement IGenNode.";
                 return false;
             }
+
+            NormaliseSerialisedParameters(nodeData, nodeType);
 
             if (!TryInstantiateNode(nodeType, nodeData, out nodeInstance, out errorMessage))
             {
@@ -159,6 +162,30 @@ namespace DynamicDungeon.Editor.Utilities
             }
 
             return defaultParameters;
+        }
+
+        public static void NormaliseSerialisedParameters(GenNodeData nodeData, Type nodeType)
+        {
+            if (nodeData == null || nodeType == null || nodeData.Parameters == null)
+            {
+                return;
+            }
+
+            int parameterIndex;
+            for (parameterIndex = 0; parameterIndex < nodeData.Parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = nodeData.Parameters[parameterIndex];
+                if (parameter == null || string.IsNullOrWhiteSpace(parameter.Name))
+                {
+                    continue;
+                }
+
+                string normalisedValue;
+                if (InlinedControlFactory.TryNormaliseParameterValue(nodeType, parameter.Name, parameter.Value ?? string.Empty, out normalisedValue))
+                {
+                    parameter.Value = normalisedValue;
+                }
+            }
         }
 
         private static bool ApplyParameters(IGenNode nodeInstance, GenNodeData nodeData, out string errorMessage)
@@ -318,6 +345,12 @@ namespace DynamicDungeon.Editor.Utilities
                 {
                     arguments[parameterIndex] = argumentValue;
                     score += 1;
+                    continue;
+                }
+
+                if (parameter.ParameterType == typeof(Vector2))
+                {
+                    arguments[parameterIndex] = Vector2.zero;
                     continue;
                 }
 
@@ -799,7 +832,7 @@ namespace DynamicDungeon.Editor.Utilities
                 return false;
             }
 
-            return parameter.ParameterType != typeof(Vector2);
+            return true;
         }
 
         private static bool HasSerialisedParameter(IReadOnlyList<SerializedParameter> parameters, string parameterName)
@@ -855,6 +888,12 @@ namespace DynamicDungeon.Editor.Utilities
             if (valueType.IsEnum)
             {
                 return Enum.GetName(valueType, value) ?? value.ToString();
+            }
+
+            if (valueType == typeof(Vector2))
+            {
+                Vector2 vectorValue = (Vector2)value;
+                return vectorValue.x.ToString(CultureInfo.InvariantCulture) + "," + vectorValue.y.ToString(CultureInfo.InvariantCulture);
             }
 
             return value.ToString() ?? string.Empty;
@@ -942,6 +981,13 @@ namespace DynamicDungeon.Editor.Utilities
                 }
             }
 
+            float scalarValue;
+            if (float.TryParse(trimmedValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out scalarValue))
+            {
+                argumentValue = new Vector2(scalarValue, scalarValue);
+                return true;
+            }
+
             try
             {
                 Vector2 jsonVector = JsonUtility.FromJson<Vector2>(trimmedValue);
@@ -959,7 +1005,7 @@ namespace DynamicDungeon.Editor.Utilities
             return false;
         }
 
-        private static Type ResolveNodeType(string nodeTypeName)
+        public static Type ResolveNodeType(string nodeTypeName)
         {
             Type resolvedType = Type.GetType(nodeTypeName, false);
             if (resolvedType != null)

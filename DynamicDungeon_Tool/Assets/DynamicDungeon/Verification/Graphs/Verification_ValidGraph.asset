@@ -20,24 +20,24 @@ MonoBehaviour:
   - NodeId: perlin-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
     NodeName: Perlin
-    Position: {x: -273, y: -95}
+    Position: {x: -777, y: -99}
     Ports:
     - PortName: Noise
       Direction: 1
       Type: 0
     Parameters:
     - Name: frequency
-      Value: 0.04
+      Value: 0.05
     - Name: amplitude
-      Value: 1.0
+      Value: 1
     - Name: offset
       Value: 0,0
     - Name: octaves
-      Value: 3
+      Value: 1
   - NodeId: threshold-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Threshold
-    Position: {x: 98, y: -125}
+    Position: {x: 54.687874, y: -166.99998}
     Ports:
     - PortName: Input
       Direction: 0
@@ -47,11 +47,11 @@ MonoBehaviour:
       Type: 2
     Parameters:
     - Name: threshold
-      Value: 0.44
+      Value: 0.5
   - NodeId: cellular-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Cellular
-    Position: {x: 431, y: -205}
+    Position: {x: 376.6475, y: -207.00003}
     Ports:
     - PortName: Input
       Direction: 0
@@ -61,17 +61,19 @@ MonoBehaviour:
       Type: 2
     Parameters:
     - Name: birthRule
-      Value: 3
+      Value: 5678
     - Name: survivalRule
-      Value: 23456
+      Value: 45678
     - Name: iterations
-      Value: 5
+      Value: 10
     - Name: initialFillProbability
-      Value: 0.45
+      Value: 0.547
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
   - NodeId: logical-id-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
     NodeName: Mask To Logical IDs
-    Position: {x: 796.45764, y: -205.00002}
+    Position: {x: 823.0121, y: -207}
     Ports:
     - PortName: Input
       Direction: 0
@@ -84,6 +86,18 @@ MonoBehaviour:
       Value: 2
     - Name: falseLogicalId
       Value: 1
+  - NodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: InvertNode
+    Position: {x: -258.60013, y: -98.999985}
+    Ports:
+    - PortName: Input
+      Direction: 0
+      Type: 0
+    - PortName: Output
+      Direction: 1
+      Type: 0
+    Parameters: []
   Connections:
   - FromNodeId: threshold-node
     FromPortName: Mask
@@ -93,7 +107,11 @@ MonoBehaviour:
     FromPortName: SmoothedMask
     ToNodeId: logical-id-node
     ToPortName: Input
+  - FromNodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
+    FromPortName: Output
+    ToNodeId: threshold-node
+    ToPortName: Input
   - FromNodeId: perlin-node
     FromPortName: Noise
-    ToNodeId: threshold-node
+    ToNodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
     ToPortName: Input

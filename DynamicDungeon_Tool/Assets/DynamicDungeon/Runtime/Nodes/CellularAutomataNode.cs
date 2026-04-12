@@ -15,6 +15,12 @@ namespace DynamicDungeon.Runtime.Nodes
     [Description("Smooths or grows cave-like masks by repeatedly applying cellular automata rules.")]
     public sealed class CellularAutomataNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
+        public enum CellularAutomataInputMode
+        {
+            UseInputAsInitialState = 0,
+            RandomFillInsideInputMask = 1
+        }
+
         private const int DefaultBatchSize = 64;
         private const string DefaultNodeName = "Cellular Automata";
         private const string InputPortName = "Input";
@@ -36,10 +42,15 @@ namespace DynamicDungeon.Runtime.Nodes
         [NeighbourCountRule]
         [Description("Filled cells stay filled when they have one of these neighbouring filled-cell counts. Classic cave default: 4, 5, 6, 7, 8.")]
         private string _survivalRule;
+        [MinValue(0.0f)]
         [Description("Number of cellular automata passes to run.")]
         private int _iterations;
-        [Description("Chance of a cell starting filled when there is no input mask.")]
+        [Range(0.0f, 1.0f)]
+        [Description("Chance of a cell starting filled when generating a random seed, either across the whole map or inside the input mask.")]
         private float _initialFillProbability;
+        [InspectorName("Input Mode")]
+        [Description("Choose whether the connected input mask is the starting cave state, or a boundary region to random-fill and simulate within.")]
+        private CellularAutomataInputMode _inputMode;
         private ChannelDeclaration[] _channelDeclarations;
 
         public IReadOnlyList<NodePortDefinition> Ports
@@ -82,7 +93,7 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public CellularAutomataNode(string nodeId, string nodeName, string inputChannelName, string outputChannelName, string birthRule = "5678", string survivalRule = "45678", int iterations = 1, float initialFillProbability = 0.5f)
+        public CellularAutomataNode(string nodeId, string nodeName, string inputChannelName, string outputChannelName, string birthRule = "5678", string survivalRule = "45678", int iterations = 1, float initialFillProbability = 0.5f, CellularAutomataInputMode inputMode = CellularAutomataInputMode.RandomFillInsideInputMask)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -97,10 +108,11 @@ namespace DynamicDungeon.Runtime.Nodes
             _survivalRule = survivalRule ?? string.Empty;
             _iterations = math.max(0, iterations);
             _initialFillProbability = math.clamp(initialFillProbability, 0.0f, 1.0f);
+            _inputMode = inputMode;
             _ports = new[]
             {
-                new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, false),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.BoolMask)
+                new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, false, "Optional mask used either as the starting cave state or as the region where caves are allowed to form, depending on Input Mode."),
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.BoolMask, PortCapacity.Single, false, "The generated cave mask after the cellular automata passes are applied.")
             };
 
             RefreshChannelDeclarations();
@@ -158,6 +170,17 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     _initialFillProbability = math.clamp(parsedProbability, 0.0f, 1.0f);
                 }
+
+                return;
+            }
+
+            if (string.Equals(name, "inputMode", StringComparison.OrdinalIgnoreCase))
+            {
+                CellularAutomataInputMode parsedInputMode;
+                if (Enum.TryParse(value, true, out parsedInputMode))
+                {
+                    _inputMode = parsedInputMode;
+                }
             }
         }
 
@@ -168,14 +191,21 @@ namespace DynamicDungeon.Runtime.Nodes
             NativeArray<byte> nextState = new NativeArray<byte>(output.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             int birthMask = ParseRuleMask(_birthRule);
             int survivalMask = ParseRuleMask(_survivalRule);
+            bool hasInputMask = !string.IsNullOrWhiteSpace(_inputChannelName);
+            bool constrainToInputMask = hasInputMask && _inputMode == CellularAutomataInputMode.RandomFillInsideInputMask;
+            NativeArray<byte> inputMask = default(NativeArray<byte>);
 
             JobHandle currentHandle;
-            if (!string.IsNullOrWhiteSpace(_inputChannelName))
+            if (hasInputMask)
             {
-                NativeArray<byte> input = context.GetBoolMaskChannel(_inputChannelName);
+                inputMask = context.GetBoolMaskChannel(_inputChannelName);
+            }
+
+            if (hasInputMask && _inputMode == CellularAutomataInputMode.UseInputAsInitialState)
+            {
                 CopyMaskJob copyInputJob = new CopyMaskJob
                 {
-                    Input = input,
+                    Input = inputMask,
                     Output = currentState
                 };
 
@@ -187,7 +217,9 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     Output = currentState,
                     FillProbability = _initialFillProbability,
-                    LocalSeed = context.LocalSeed
+                    LocalSeed = context.LocalSeed,
+                    BoundaryMask = inputMask,
+                    ConstrainToBoundary = constrainToInputMask
                 };
 
                 currentHandle = initialiseJob.Schedule(currentState.Length, DefaultBatchSize, context.InputDependency);
@@ -203,7 +235,9 @@ namespace DynamicDungeon.Runtime.Nodes
                     Width = context.Width,
                     Height = context.Height,
                     BirthMask = birthMask,
-                    SurvivalMask = survivalMask
+                    SurvivalMask = survivalMask,
+                    BoundaryMask = inputMask,
+                    ConstrainToBoundary = constrainToInputMask
                 };
 
                 currentHandle = iterationJob.Schedule(currentState.Length, DefaultBatchSize, currentHandle);
@@ -287,9 +321,18 @@ namespace DynamicDungeon.Runtime.Nodes
             public NativeArray<byte> Output;
             public float FillProbability;
             public long LocalSeed;
+            [ReadOnly]
+            public NativeArray<byte> BoundaryMask;
+            public bool ConstrainToBoundary;
 
             public void Execute(int index)
             {
+                if (ConstrainToBoundary && BoundaryMask[index] == 0)
+                {
+                    Output[index] = 0;
+                    return;
+                }
+
                 uint hashedValue = Hash(index, LocalSeed);
                 float randomValue = (hashedValue & 16777215u) / 16777215.0f;
                 Output[index] = randomValue < FillProbability ? (byte)1 : (byte)0;
@@ -316,9 +359,18 @@ namespace DynamicDungeon.Runtime.Nodes
             public int Height;
             public int BirthMask;
             public int SurvivalMask;
+            [ReadOnly]
+            public NativeArray<byte> BoundaryMask;
+            public bool ConstrainToBoundary;
 
             public void Execute(int index)
             {
+                if (ConstrainToBoundary && BoundaryMask[index] == 0)
+                {
+                    Output[index] = 0;
+                    return;
+                }
+
                 int x = index % Width;
                 int y = index / Width;
                 int liveNeighbourCount = CountLiveNeighbours(x, y);
@@ -356,6 +408,11 @@ namespace DynamicDungeon.Runtime.Nodes
                         }
 
                         int neighbourIndex = neighbourY * Width + neighbourX;
+                        if (ConstrainToBoundary && BoundaryMask[neighbourIndex] == 0)
+                        {
+                            continue;
+                        }
+
                         if (Input[neighbourIndex] != 0)
                         {
                             liveNeighbourCount++;
