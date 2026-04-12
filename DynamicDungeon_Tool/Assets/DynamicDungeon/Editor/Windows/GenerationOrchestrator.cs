@@ -61,6 +61,14 @@ namespace DynamicDungeon.Editor.Windows
             public byte[] BoolMaskChannel;
         }
 
+        public bool IsGenerating
+        {
+            get
+            {
+                return _isGenerating;
+            }
+        }
+
         public GenerationOrchestrator(DynamicDungeonGraphView graphView, Action<string> statusChanged, Action<IReadOnlyList<GraphDiagnostic>> diagnosticsUpdated)
         {
             _graphView = graphView;

@@ -16,9 +16,15 @@ namespace DynamicDungeon.Editor.Windows
         private const float MinExpandedPreviewZoom = 0.1f;
         private const float MaxExpandedPreviewZoom = 16.0f;
         private const float ExpandedPreviewZoomStep = 1.15f;
+        private const float DefaultGroupWidth = 300.0f;
+        private const float DefaultGroupHeight = 200.0f;
+        private const float DefaultNoteWidth = 200.0f;
+        private const float DefaultNoteHeight = 150.0f;
 
         private readonly GridBackground _gridBackground;
         private readonly Dictionary<string, GenNodeView> _nodeViewsById = new Dictionary<string, GenNodeView>();
+        private readonly Dictionary<string, StickyNoteView> _stickyNoteViewsById = new Dictionary<string, StickyNoteView>();
+        private readonly Dictionary<string, GroupView> _groupViewsById = new Dictionary<string, GroupView>();
         private readonly VisualElement _expandedPreviewOverlay;
         private readonly VisualElement _expandedPreviewViewport;
         private readonly Image _expandedPreviewImage;
@@ -29,6 +35,7 @@ namespace DynamicDungeon.Editor.Windows
         private NodeSearchWindow _nodeSearchWindow;
         private GenGraph _graph;
         private GenerationOrchestrator _generationOrchestrator;
+        private Action _afterMutation;
         private string _expandedPreviewNodeId;
         private Vector2 _expandedPreviewPanOffset;
         private Vector2 _expandedPreviewPanOffsetAtDragStart;
@@ -59,6 +66,9 @@ namespace DynamicDungeon.Editor.Windows
             currentGraphView.AddManipulator(new SelectionDragger());
             currentGraphView.AddManipulator(new RectangleSelector());
             graphViewChanged = OnGraphViewChanged;
+
+            elementsAddedToGroup += OnElementsAddedToGroup;
+            elementsRemovedFromGroup += OnElementsRemovedFromGroup;
 
             _gridBackground = new GridBackground();
             _edgeConnectorListener = new GenEdgeConnectorListener();
@@ -119,6 +129,11 @@ namespace DynamicDungeon.Editor.Windows
         public void SetGenerationOrchestrator(GenerationOrchestrator generationOrchestrator)
         {
             _generationOrchestrator = generationOrchestrator;
+        }
+
+        public void SetAfterMutationCallback(Action afterMutation)
+        {
+            _afterMutation = afterMutation;
         }
 
         public void SetGenerationOverlayVisible(bool isVisible)
@@ -226,6 +241,8 @@ namespace DynamicDungeon.Editor.Windows
 
             BuildNodeViews();
             BuildEdgeViews();
+            BuildStickyNoteViews();
+            BuildGroupViews();
             _suppressGraphMutationCallbacks = false;
         }
 
@@ -242,6 +259,8 @@ namespace DynamicDungeon.Editor.Windows
 
             DeleteElements(elementsToRemove);
             _nodeViewsById.Clear();
+            _stickyNoteViewsById.Clear();
+            _groupViewsById.Clear();
             _graph = null;
         }
 
@@ -282,6 +301,7 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             EditorUtility.SetDirty(_graph);
+            _afterMutation?.Invoke();
 
             GenNodeView nodeView = new GenNodeView(
                 _graph,
@@ -289,7 +309,8 @@ namespace DynamicDungeon.Editor.Windows
                 nodeInstance,
                 _generationOrchestrator,
                 _edgeConnectorListener,
-                ShowExpandedPreview);
+                ShowExpandedPreview,
+                _afterMutation);
             _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
             AddElement(nodeView);
 
@@ -304,6 +325,46 @@ namespace DynamicDungeon.Editor.Windows
             _lastGraphLocalMousePosition = graphLocalPosition;
             _nodeSearchWindow.SetGraphLocalSearchPosition(graphLocalPosition);
             SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(graphLocalPosition)), _nodeSearchWindow);
+        }
+
+        public void CreateStickyNote(Vector2 graphLocalPosition)
+        {
+            if (_graph == null)
+            {
+                return;
+            }
+
+            Vector2 contentPosition = ConvertGraphLocalToContentPosition(graphLocalPosition);
+            Rect noteRect = new Rect(contentPosition.x, contentPosition.y, DefaultNoteWidth, DefaultNoteHeight);
+
+            Undo.RecordObject(_graph, "Add Sticky Note");
+            GenStickyNoteData noteData = _graph.AddStickyNote(string.Empty, noteRect);
+            EditorUtility.SetDirty(_graph);
+            _afterMutation?.Invoke();
+
+            StickyNoteView noteView = new StickyNoteView(_graph, noteData, _afterMutation);
+            _stickyNoteViewsById[noteData.NoteId] = noteView;
+            AddElement(noteView);
+        }
+
+        public void CreateGroup(Vector2 graphLocalPosition)
+        {
+            if (_graph == null)
+            {
+                return;
+            }
+
+            Vector2 contentPosition = ConvertGraphLocalToContentPosition(graphLocalPosition);
+            Rect groupRect = new Rect(contentPosition.x, contentPosition.y, DefaultGroupWidth, DefaultGroupHeight);
+
+            Undo.RecordObject(_graph, "Add Group");
+            GenGroupData groupData = _graph.AddGroup("Group", groupRect);
+            EditorUtility.SetDirty(_graph);
+            _afterMutation?.Invoke();
+
+            GroupView groupView = new GroupView(_graph, groupData, _afterMutation);
+            _groupViewsById[groupData.GroupId] = groupView;
+            AddElement(groupView);
         }
 
         private void BuildEdgeViews()
@@ -384,9 +445,76 @@ namespace DynamicDungeon.Editor.Windows
                     nodeInstance,
                     _generationOrchestrator,
                     _edgeConnectorListener,
-                    ShowExpandedPreview);
+                    ShowExpandedPreview,
+                    _afterMutation);
                 _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
                 AddElement(nodeView);
+            }
+        }
+
+        private void BuildStickyNoteViews()
+        {
+            List<GenStickyNoteData> stickyNotes = _graph.StickyNotes ?? new List<GenStickyNoteData>();
+
+            int noteIndex;
+            for (noteIndex = 0; noteIndex < stickyNotes.Count; noteIndex++)
+            {
+                GenStickyNoteData noteData = stickyNotes[noteIndex];
+                if (noteData == null || string.IsNullOrEmpty(noteData.NoteId))
+                {
+                    continue;
+                }
+
+                StickyNoteView noteView = new StickyNoteView(_graph, noteData, _afterMutation);
+                _stickyNoteViewsById[noteData.NoteId] = noteView;
+                AddElement(noteView);
+            }
+        }
+
+        private void BuildGroupViews()
+        {
+            List<GenGroupData> groups = _graph.Groups ?? new List<GenGroupData>();
+
+            int groupIndex;
+            for (groupIndex = 0; groupIndex < groups.Count; groupIndex++)
+            {
+                GenGroupData groupData = groups[groupIndex];
+                if (groupData == null || string.IsNullOrEmpty(groupData.GroupId))
+                {
+                    continue;
+                }
+
+                GroupView groupView = new GroupView(_graph, groupData, _afterMutation);
+                _groupViewsById[groupData.GroupId] = groupView;
+                AddElement(groupView);
+            }
+
+            for (groupIndex = 0; groupIndex < groups.Count; groupIndex++)
+            {
+                GenGroupData groupData = groups[groupIndex];
+                if (groupData == null ||
+                    string.IsNullOrEmpty(groupData.GroupId) ||
+                    groupData.ContainedNodeIds == null)
+                {
+                    continue;
+                }
+
+                GroupView groupView;
+                if (!_groupViewsById.TryGetValue(groupData.GroupId, out groupView))
+                {
+                    continue;
+                }
+
+                int memberIndex;
+                for (memberIndex = 0; memberIndex < groupData.ContainedNodeIds.Count; memberIndex++)
+                {
+                    string nodeId = groupData.ContainedNodeIds[memberIndex];
+                    GenNodeView nodeView;
+                    if (!string.IsNullOrEmpty(nodeId) && _nodeViewsById.TryGetValue(nodeId, out nodeView))
+                    {
+                        groupView.AddElement(nodeView);
+                    }
+                }
             }
         }
 
@@ -546,7 +674,32 @@ namespace DynamicDungeon.Editor.Windows
         private void OnMouseDown(MouseDownEvent mouseDownEvent)
         {
             _lastGraphLocalMousePosition = mouseDownEvent.localMousePosition;
+
+            // Don't steal focus when the click originated inside a text field —
+            // doing so would immediately unfocus the field before the user can type.
+            VisualElement targetElement = mouseDownEvent.target as VisualElement;
+            if (targetElement != null && IsInsideTextField(targetElement))
+            {
+                return;
+            }
+
             Focus();
+        }
+
+        private static bool IsInsideTextField(VisualElement element)
+        {
+            VisualElement current = element;
+            while (current != null)
+            {
+                if (current is TextField)
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
         }
 
         private void OnExpandedPreviewOverlayMouseDown(MouseDownEvent mouseDownEvent)
@@ -677,8 +830,10 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
-            OpenNodeSearch(_lastGraphLocalMousePosition);
-            contextEvent.StopImmediatePropagation();
+            Vector2 localPosition = _lastGraphLocalMousePosition;
+            contextEvent.menu.AppendAction("Add Node...", _ => OpenNodeSearch(localPosition));
+            contextEvent.menu.AppendAction("Add Sticky Note", _ => CreateStickyNote(localPosition));
+            contextEvent.menu.AppendAction("Add Group", _ => CreateGroup(localPosition));
         }
 
         private void OnKeyDown(KeyDownEvent keyDownEvent)
@@ -807,6 +962,7 @@ namespace DynamicDungeon.Editor.Windows
                 if (recordedUndo)
                 {
                     EditorUtility.SetDirty(_graph);
+                    _afterMutation?.Invoke();
                 }
 
                 graphViewChange.edgesToCreate = validEdges;
@@ -815,23 +971,48 @@ namespace DynamicDungeon.Editor.Windows
             if (graphViewChange.elementsToRemove != null && graphViewChange.elementsToRemove.Count > 0)
             {
                 List<string> nodeIdsToRemove = new List<string>();
+                List<string> noteIdsToRemove = new List<string>();
+                List<string> groupIdsToRemove = new List<string>();
                 List<GenConnectionData> connectionsToRemove = new List<GenConnectionData>();
 
                 int elementIndex;
                 for (elementIndex = 0; elementIndex < graphViewChange.elementsToRemove.Count; elementIndex++)
                 {
                     GenNodeView nodeView = graphViewChange.elementsToRemove[elementIndex] as GenNodeView;
-                    if (nodeView == null)
+                    if (nodeView != null)
                     {
+                        string nodeId = nodeView.NodeData.NodeId ?? string.Empty;
+                        if (!nodeIdsToRemove.Contains(nodeId))
+                        {
+                            HideExpandedPreviewIfShowing(nodeId);
+                            nodeView.ClearPreview();
+                            nodeIdsToRemove.Add(nodeId);
+                        }
+
                         continue;
                     }
 
-                    string nodeId = nodeView.NodeData.NodeId ?? string.Empty;
-                    if (!nodeIdsToRemove.Contains(nodeId))
+                    StickyNoteView noteView = graphViewChange.elementsToRemove[elementIndex] as StickyNoteView;
+                    if (noteView != null)
                     {
-                        HideExpandedPreviewIfShowing(nodeId);
-                        nodeView.ClearPreview();
-                        nodeIdsToRemove.Add(nodeId);
+                        string noteId = noteView.NoteId;
+                        if (!string.IsNullOrEmpty(noteId) && !noteIdsToRemove.Contains(noteId))
+                        {
+                            noteIdsToRemove.Add(noteId);
+                        }
+
+                        continue;
+                    }
+
+                    GroupView groupView = graphViewChange.elementsToRemove[elementIndex] as GroupView;
+                    if (groupView != null)
+                    {
+                        string groupId = groupView.GroupId;
+                        if (!string.IsNullOrEmpty(groupId) && !groupIdsToRemove.Contains(groupId))
+                        {
+                            groupIdsToRemove.Add(groupId);
+                            _groupViewsById.Remove(groupId);
+                        }
                     }
                 }
 
@@ -860,7 +1041,12 @@ namespace DynamicDungeon.Editor.Windows
                     }
                 }
 
-                if (nodeIdsToRemove.Count > 0 || connectionsToRemove.Count > 0)
+                bool anyRemoved = nodeIdsToRemove.Count > 0 ||
+                    noteIdsToRemove.Count > 0 ||
+                    groupIdsToRemove.Count > 0 ||
+                    connectionsToRemove.Count > 0;
+
+                if (anyRemoved)
                 {
                     Undo.RecordObject(_graph, "Delete Graph Elements");
 
@@ -874,6 +1060,22 @@ namespace DynamicDungeon.Editor.Windows
                         }
                     }
 
+                    int noteIndex;
+                    for (noteIndex = 0; noteIndex < noteIdsToRemove.Count; noteIndex++)
+                    {
+                        string noteId = noteIdsToRemove[noteIndex];
+                        if (_graph.RemoveStickyNote(noteId))
+                        {
+                            _stickyNoteViewsById.Remove(noteId);
+                        }
+                    }
+
+                    int groupIndex;
+                    for (groupIndex = 0; groupIndex < groupIdsToRemove.Count; groupIndex++)
+                    {
+                        _graph.RemoveGroup(groupIdsToRemove[groupIndex]);
+                    }
+
                     int connectionIndex;
                     for (connectionIndex = 0; connectionIndex < connectionsToRemove.Count; connectionIndex++)
                     {
@@ -883,6 +1085,7 @@ namespace DynamicDungeon.Editor.Windows
 
                     graphStructureChanged = true;
                     EditorUtility.SetDirty(_graph);
+                    _afterMutation?.Invoke();
                 }
             }
 
@@ -892,6 +1095,99 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             return graphViewChange;
+        }
+
+        private void OnElementsAddedToGroup(Group group, System.Collections.Generic.IEnumerable<GraphElement> elements)
+        {
+            if (_suppressGraphMutationCallbacks || _graph == null)
+            {
+                return;
+            }
+
+            GroupView groupView = group as GroupView;
+            if (groupView == null)
+            {
+                return;
+            }
+
+            GenGroupData groupData = _graph.GetGroup(groupView.GroupId);
+            if (groupData == null)
+            {
+                return;
+            }
+
+            bool changed = false;
+            Undo.RecordObject(_graph, "Add Nodes to Group");
+
+            foreach (GraphElement element in elements)
+            {
+                GenNodeView nodeView = element as GenNodeView;
+                if (nodeView == null || nodeView.NodeData == null || string.IsNullOrEmpty(nodeView.NodeData.NodeId))
+                {
+                    continue;
+                }
+
+                string nodeId = nodeView.NodeData.NodeId;
+                if (!groupData.ContainedNodeIds.Contains(nodeId))
+                {
+                    groupData.ContainedNodeIds.Add(nodeId);
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                EditorUtility.SetDirty(_graph);
+                _afterMutation?.Invoke();
+            }
+        }
+
+        private void OnElementsRemovedFromGroup(Group group, System.Collections.Generic.IEnumerable<GraphElement> elements)
+        {
+            if (_suppressGraphMutationCallbacks || _graph == null)
+            {
+                return;
+            }
+
+            GroupView groupView = group as GroupView;
+            if (groupView == null)
+            {
+                return;
+            }
+
+            if (!_groupViewsById.ContainsKey(groupView.GroupId))
+            {
+                return;
+            }
+
+            GenGroupData groupData = _graph.GetGroup(groupView.GroupId);
+            if (groupData == null)
+            {
+                return;
+            }
+
+            bool changed = false;
+            Undo.RecordObject(_graph, "Remove Nodes from Group");
+
+            foreach (GraphElement element in elements)
+            {
+                GenNodeView nodeView = element as GenNodeView;
+                if (nodeView == null || nodeView.NodeData == null || string.IsNullOrEmpty(nodeView.NodeData.NodeId))
+                {
+                    continue;
+                }
+
+                if (groupData.ContainedNodeIds.Remove(nodeView.NodeData.NodeId))
+                {
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                EditorUtility.SetDirty(_graph);
+                _afterMutation?.Invoke();
+            }
         }
 
         private static bool ContainsConnection(IReadOnlyList<GenConnectionData> connections, GenConnectionData candidate)

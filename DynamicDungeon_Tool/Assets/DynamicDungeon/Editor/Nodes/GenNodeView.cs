@@ -22,6 +22,7 @@ namespace DynamicDungeon.Editor.Nodes
         private readonly GenerationOrchestrator _generationOrchestrator;
         private readonly IEdgeConnectorListener _edgeConnectorListener;
         private readonly Action<string, Texture2D, string> _previewDoubleClicked;
+        private readonly Action _afterMutation;
         private readonly Dictionary<string, Port> _portsByName = new Dictionary<string, Port>();
         private readonly Dictionary<string, string> _defaultParameterValuesByName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -57,7 +58,8 @@ namespace DynamicDungeon.Editor.Nodes
             IGenNode nodeInstance,
             GenerationOrchestrator generationOrchestrator,
             IEdgeConnectorListener edgeConnectorListener,
-            Action<string, Texture2D, string> previewDoubleClicked)
+            Action<string, Texture2D, string> previewDoubleClicked,
+            Action afterMutation)
         {
             _graph = graph;
             _nodeData = nodeData;
@@ -65,6 +67,7 @@ namespace DynamicDungeon.Editor.Nodes
             _generationOrchestrator = generationOrchestrator;
             _edgeConnectorListener = edgeConnectorListener;
             _previewDoubleClicked = previewDoubleClicked;
+            _afterMutation = afterMutation;
             EnsureMissingParametersFromDefaults();
             CacheDefaultParameterValues();
 
@@ -106,6 +109,7 @@ namespace DynamicDungeon.Editor.Nodes
             Undo.RecordObject(_graph, "Move Graph Node");
             _nodeData.Position = newPos.position;
             EditorUtility.SetDirty(_graph);
+            _afterMutation?.Invoke();
         }
 
         public bool TryGetPort(string portName, out Port portView)
@@ -408,6 +412,7 @@ namespace DynamicDungeon.Editor.Nodes
             Undo.RecordObject(_graph, "Modify parameter");
             targetParameter.Value = safeNewValue;
             EditorUtility.SetDirty(_graph);
+            _afterMutation?.Invoke();
 
             if (_generationOrchestrator != null)
             {
@@ -459,6 +464,7 @@ namespace DynamicDungeon.Editor.Nodes
             Undo.RecordObject(_graph, "Reset node parameters");
             _nodeData.Parameters = defaultParameters;
             EditorUtility.SetDirty(_graph);
+            _afterMutation?.Invoke();
             PopulateControls();
 
             if (_generationOrchestrator != null)

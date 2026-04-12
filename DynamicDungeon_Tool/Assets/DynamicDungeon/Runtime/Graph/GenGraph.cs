@@ -13,6 +13,8 @@ namespace DynamicDungeon.Runtime.Graph
         public long DefaultSeed;
         public List<GenNodeData> Nodes = new List<GenNodeData>();
         public List<GenConnectionData> Connections = new List<GenConnectionData>();
+        public List<GenStickyNoteData> StickyNotes = new List<GenStickyNoteData>();
+        public List<GenGroupData> Groups = new List<GenGroupData>();
 
         public GenNodeData AddNode(string nodeTypeName, string displayName, Vector2 position)
         {
@@ -52,6 +54,16 @@ namespace DynamicDungeon.Runtime.Graph
                 if (connection.FromNodeId == nodeId || connection.ToNodeId == nodeId)
                 {
                     Connections.RemoveAt(connectionIndex);
+                }
+            }
+
+            int groupIndex;
+            for (groupIndex = 0; groupIndex < Groups.Count; groupIndex++)
+            {
+                GenGroupData group = Groups[groupIndex];
+                if (group != null && group.ContainedNodeIds != null)
+                {
+                    group.ContainedNodeIds.Remove(nodeId);
                 }
             }
 
@@ -138,6 +150,100 @@ namespace DynamicDungeon.Runtime.Graph
             return null;
         }
 
+        public GenStickyNoteData AddStickyNote(string text, Rect position)
+        {
+            EnsureCollectionsInitialised();
+
+            GenStickyNoteData noteData = new GenStickyNoteData();
+            noteData.NoteId = Guid.NewGuid().ToString();
+            noteData.Text = text ?? string.Empty;
+            noteData.Position = position;
+            StickyNotes.Add(noteData);
+            return noteData;
+        }
+
+        public bool RemoveStickyNote(string noteId)
+        {
+            EnsureCollectionsInitialised();
+
+            if (string.IsNullOrEmpty(noteId))
+            {
+                return false;
+            }
+
+            int noteIndex = FindStickyNoteIndex(noteId);
+            if (noteIndex < 0)
+            {
+                return false;
+            }
+
+            StickyNotes.RemoveAt(noteIndex);
+            return true;
+        }
+
+        public GenGroupData AddGroup(string title, Rect position)
+        {
+            EnsureCollectionsInitialised();
+
+            GenGroupData groupData = new GenGroupData();
+            groupData.GroupId = Guid.NewGuid().ToString();
+            groupData.Title = title ?? string.Empty;
+            groupData.Position = position;
+            groupData.ContainedNodeIds = new List<string>();
+            Groups.Add(groupData);
+            return groupData;
+        }
+
+        public bool RemoveGroup(string groupId)
+        {
+            EnsureCollectionsInitialised();
+
+            if (string.IsNullOrEmpty(groupId))
+            {
+                return false;
+            }
+
+            int groupIndex = FindGroupIndex(groupId);
+            if (groupIndex < 0)
+            {
+                return false;
+            }
+
+            Groups.RemoveAt(groupIndex);
+            return true;
+        }
+
+        public bool UpdateGroupMembers(string groupId, List<string> nodeIds)
+        {
+            EnsureCollectionsInitialised();
+
+            GenGroupData groupData = GetGroup(groupId);
+            if (groupData == null)
+            {
+                return false;
+            }
+
+            groupData.ContainedNodeIds = nodeIds != null ? new List<string>(nodeIds) : new List<string>();
+            return true;
+        }
+
+        public GenGroupData GetGroup(string groupId)
+        {
+            EnsureCollectionsInitialised();
+
+            int groupIndex;
+            for (groupIndex = 0; groupIndex < Groups.Count; groupIndex++)
+            {
+                GenGroupData group = Groups[groupIndex];
+                if (group != null && group.GroupId == groupId)
+                {
+                    return group;
+                }
+            }
+
+            return null;
+        }
+
         private void OnEnable()
         {
             EnsureCollectionsInitialised();
@@ -154,6 +260,16 @@ namespace DynamicDungeon.Runtime.Graph
             {
                 Connections = new List<GenConnectionData>();
             }
+
+            if (StickyNotes == null)
+            {
+                StickyNotes = new List<GenStickyNoteData>();
+            }
+
+            if (Groups == null)
+            {
+                Groups = new List<GenGroupData>();
+            }
         }
 
         private int FindNodeIndex(string nodeId)
@@ -165,6 +281,36 @@ namespace DynamicDungeon.Runtime.Graph
                 if (node != null && node.NodeId == nodeId)
                 {
                     return nodeIndex;
+                }
+            }
+
+            return -1;
+        }
+
+        private int FindStickyNoteIndex(string noteId)
+        {
+            int noteIndex;
+            for (noteIndex = 0; noteIndex < StickyNotes.Count; noteIndex++)
+            {
+                GenStickyNoteData note = StickyNotes[noteIndex];
+                if (note != null && note.NoteId == noteId)
+                {
+                    return noteIndex;
+                }
+            }
+
+            return -1;
+        }
+
+        private int FindGroupIndex(string groupId)
+        {
+            int groupIndex;
+            for (groupIndex = 0; groupIndex < Groups.Count; groupIndex++)
+            {
+                GenGroupData group = Groups[groupIndex];
+                if (group != null && group.GroupId == groupId)
+                {
+                    return groupIndex;
                 }
             }
 

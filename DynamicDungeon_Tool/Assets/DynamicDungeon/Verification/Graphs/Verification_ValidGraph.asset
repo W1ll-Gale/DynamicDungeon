@@ -20,7 +20,7 @@ MonoBehaviour:
   - NodeId: perlin-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
     NodeName: Perlin
-    Position: {x: -777, y: -99}
+    Position: {x: -709.068, y: -44.022694}
     Ports:
     - PortName: Noise
       Direction: 1
@@ -37,7 +37,7 @@ MonoBehaviour:
   - NodeId: threshold-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Threshold
-    Position: {x: 54.687874, y: -166.99998}
+    Position: {x: 49.93189, y: 3.977312}
     Ports:
     - PortName: Input
       Direction: 0
@@ -47,11 +47,11 @@ MonoBehaviour:
       Type: 2
     Parameters:
     - Name: threshold
-      Value: 0.5
+      Value: 0.48
   - NodeId: cellular-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Cellular
-    Position: {x: 376.6475, y: -207.00003}
+    Position: {x: 372, y: -44.00004}
     Ports:
     - PortName: Input
       Direction: 0
@@ -73,7 +73,7 @@ MonoBehaviour:
   - NodeId: logical-id-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
     NodeName: Mask To Logical IDs
-    Position: {x: 823.0121, y: -207}
+    Position: {x: 817.9319, y: -36.022686}
     Ports:
     - PortName: Input
       Direction: 0
@@ -89,7 +89,7 @@ MonoBehaviour:
   - NodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
     NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
     NodeName: InvertNode
-    Position: {x: -258.60013, y: -98.999985}
+    Position: {x: -260.51776, y: 31.999962}
     Ports:
     - PortName: Input
       Direction: 0
@@ -107,11 +107,21 @@ MonoBehaviour:
     FromPortName: SmoothedMask
     ToNodeId: logical-id-node
     ToPortName: Input
-  - FromNodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
-    FromPortName: Output
-    ToNodeId: threshold-node
-    ToPortName: Input
   - FromNodeId: perlin-node
     FromPortName: Noise
     ToNodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
     ToPortName: Input
+  - FromNodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
+    FromPortName: Output
+    ToNodeId: threshold-node
+    ToPortName: Input
+  StickyNotes:
+  - NoteId: c4a4b31c-1942-44ce-b4cf-1a320bac6854
+    Text: asdasdasdasd
+    Position:
+      serializedVersion: 2
+      x: -311.40073
+      y: 512.28094
+      width: 200
+      height: 150
+  Groups: []
