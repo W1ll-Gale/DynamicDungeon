@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using DynamicDungeon.Runtime.Graph;
 using UnityEditor;
 using UnityEngine;
 
@@ -76,8 +77,21 @@ namespace DynamicDungeon.Editor
             string folderPath = GetSelectedFolderPath();
             string assetPath = AssetDatabase.GenerateUniqueAssetPath((folderPath + "/" + defaultFileName).Replace("\\", "/"));
             T asset = ScriptableObject.CreateInstance<T>();
+            InitialiseAsset(asset);
             ProjectWindowUtil.CreateAsset(asset, assetPath);
             return asset;
+        }
+
+        private static void InitialiseAsset<T>(T asset) where T : ScriptableObject
+        {
+            GenGraph graph = asset as GenGraph;
+            if (graph == null)
+            {
+                return;
+            }
+
+            graph.SchemaVersion = GraphSchemaVersion.Current;
+            GraphOutputUtility.EnsureSingleOutputNode(graph, false);
         }
     }
 }

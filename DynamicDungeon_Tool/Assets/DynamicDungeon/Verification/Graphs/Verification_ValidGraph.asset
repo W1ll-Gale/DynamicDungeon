@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
   m_Name: Verification_ValidGraph
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
-  SchemaVersion: 1
+  SchemaVersion: 2
   WorldWidth: 128
   WorldHeight: 128
   DefaultSeed: 12345
@@ -37,7 +37,7 @@ MonoBehaviour:
   - NodeId: threshold-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Threshold
-    Position: {x: 49.93189, y: 3.977312}
+    Position: {x: 68.51504, y: 3.9999826}
     Ports:
     - PortName: Input
       Direction: 0
@@ -47,7 +47,7 @@ MonoBehaviour:
       Type: 2
     Parameters:
     - Name: threshold
-      Value: 0.48
+      Value: 0.68
   - NodeId: cellular-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Cellular
@@ -98,6 +98,15 @@ MonoBehaviour:
       Direction: 1
       Type: 0
     Parameters: []
+  - NodeId: graph-output-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
+    NodeName: Output
+    Position: {x: 1176, y: -36}
+    Ports:
+    - PortName: LogicalIds
+      Direction: 0
+      Type: 1
+    Parameters: []
   Connections:
   - FromNodeId: threshold-node
     FromPortName: Mask
@@ -111,6 +120,10 @@ MonoBehaviour:
     FromPortName: Noise
     ToNodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
     ToPortName: Input
+  - FromNodeId: logical-id-node
+    FromPortName: LogicalIds
+    ToNodeId: graph-output-node
+    ToPortName: LogicalIds
   - FromNodeId: 11241ad9-a1bc-45f6-86c5-6514c1267e62
     FromPortName: Output
     ToNodeId: threshold-node

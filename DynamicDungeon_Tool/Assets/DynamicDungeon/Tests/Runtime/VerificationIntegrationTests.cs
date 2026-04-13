@@ -20,7 +20,6 @@ namespace DynamicDungeon.Tests.Runtime
     public sealed class VerificationIntegrationTests
     {
         private const string DefaultIntChannelName = "LogicalIds";
-        private const string CurrentSchemaFieldName = "_currentSchemaVersion";
         private const string DimensionMismatchMessage = "Baked world snapshot dimension mismatch: snapshot is 64x64, current world is 128x128.";
 
         [Test]
@@ -34,6 +33,8 @@ namespace DynamicDungeon.Tests.Runtime
 
                 Assert.That(compileResult.IsSuccess, Is.True);
                 Assert.That(compileResult.Plan, Is.Not.Null);
+                Assert.That(compileResult.HasConnectedOutput, Is.True);
+                Assert.That(compileResult.OutputChannelName, Is.EqualTo(DefaultIntChannelName));
                 Assert.That(CountDiagnostics(compileResult.Diagnostics, DiagnosticSeverity.Error), Is.EqualTo(0));
 
                 Executor executor = new Executor();
@@ -48,6 +49,7 @@ namespace DynamicDungeon.Tests.Runtime
                 Assert.That(GetFloatChannel(executionResult.Snapshot, "Noise"), Is.Not.Null);
                 Assert.That(GetBoolMaskChannel(executionResult.Snapshot, "Mask"), Is.Not.Null);
                 Assert.That(GetBoolMaskChannel(executionResult.Snapshot, "SmoothedMask"), Is.Not.Null);
+                Assert.That(GetIntChannel(executionResult.Snapshot, DefaultIntChannelName), Is.Not.Null);
             }
             finally
             {
@@ -66,11 +68,15 @@ namespace DynamicDungeon.Tests.Runtime
 
             try
             {
-                GenNodeData thresholdNode = new GenNodeData("threshold-node", typeof(ThresholdNode).FullName, "Threshold", Vector2.zero);
-                thresholdNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.Float));
-                thresholdNode.Ports.Add(new GenPortData("Mask", PortDirection.Output, ChannelType.BoolMask));
-                thresholdNode.Parameters.Add(new SerializedParameter("threshold", "0.5"));
-                graph.Nodes.Add(thresholdNode);
+                GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+
+                GenNodeData logicalIdNode = new GenNodeData("logical-id-node", typeof(BoolMaskToLogicalIdNode).FullName, "Mask To Logical IDs", Vector2.zero);
+                logicalIdNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.BoolMask));
+                logicalIdNode.Ports.Add(new GenPortData(DefaultIntChannelName, PortDirection.Output, ChannelType.Int));
+                logicalIdNode.Parameters.Add(new SerializedParameter("trueLogicalId", ((ushort)LogicalTileId.Wall).ToString(CultureInfo.InvariantCulture)));
+                logicalIdNode.Parameters.Add(new SerializedParameter("falseLogicalId", ((ushort)LogicalTileId.Floor).ToString(CultureInfo.InvariantCulture)));
+                graph.Nodes.Add(logicalIdNode);
+                ConnectToOutput(graph, logicalIdNode.NodeId, DefaultIntChannelName);
 
                 GraphCompileResult compileResult = GraphCompiler.Compile(graph);
 
@@ -85,11 +91,8 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
-        public void VersionZeroGraphMigratesToVersionOneBeforeCompilation()
+        public void VersionZeroGraphMigratesToCurrentSchemaBeforeCompilation()
         {
-            int originalCurrentSchemaVersion = GetCurrentSchemaVersionOverride();
-            SetCurrentSchemaVersionOverride(GraphSchemaVersion.Current);
-
             GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
             graph.SchemaVersion = 0;
             graph.WorldWidth = 8;
@@ -98,28 +101,23 @@ namespace DynamicDungeon.Tests.Runtime
 
             try
             {
-                AddFlatFillNode(graph, "flat-node", "Flat Fill", 1.0f);
-
-                List<IGraphMigration> migrations = new List<IGraphMigration>
-                {
-                    new RenameGraphMigration(0, "MigratedGraph")
-                };
-
-                MigrationResult migrationResult = GraphMigrationRunner.RunMigrations(graph, migrations);
+                MigrationResult migrationResult = GraphMigrationRunner.RunMigrations(graph, DefaultGraphMigrations.All);
                 GraphCompileResult compileResult = GraphCompiler.Compile(graph);
 
                 Assert.That(migrationResult.Success, Is.True);
                 Assert.That(migrationResult.FromVersion, Is.EqualTo(0));
-                Assert.That(migrationResult.ToVersion, Is.EqualTo(1));
-                Assert.That(graph.SchemaVersion, Is.EqualTo(1));
+                Assert.That(migrationResult.ToVersion, Is.EqualTo(GraphSchemaVersion.Current));
+                Assert.That(graph.SchemaVersion, Is.EqualTo(GraphSchemaVersion.Current));
+                Assert.That(GraphOutputUtility.FindOutputNode(graph), Is.Not.Null);
                 Assert.That(compileResult.IsSuccess, Is.True);
                 Assert.That(compileResult.Plan, Is.Not.Null);
+                Assert.That(compileResult.HasConnectedOutput, Is.False);
+                Assert.That(compileResult.OutputChannelName, Is.Empty);
 
                 compileResult.Plan.Dispose();
             }
             finally
             {
-                SetCurrentSchemaVersionOverride(originalCurrentSchemaVersion);
                 UnityEngine.Object.DestroyImmediate(graph);
             }
         }
@@ -144,7 +142,6 @@ namespace DynamicDungeon.Tests.Runtime
 
                 SetPrivateField(component, "_grid", grid);
                 SetPrivateField(component, "_biome", biome);
-                SetPrivateField(component, "_intChannelName", DefaultIntChannelName);
                 SetPrivateField(component, "_worldWidth", 128);
                 SetPrivateField(component, "_worldHeight", 128);
                 SetPrivateField(component, "_layerDefinitions", new List<TilemapLayerDefinition> { defaultLayer });
@@ -181,14 +178,6 @@ namespace DynamicDungeon.Tests.Runtime
                 DestroyImmediateIfNotNull(biome);
                 DestroyImmediateIfNotNull(generatorObject);
             }
-        }
-
-        private static void AddFlatFillNode(GenGraph graph, string nodeId, string nodeName, float fillValue)
-        {
-            GenNodeData node = new GenNodeData(nodeId, typeof(FlatFillNode).FullName, nodeName, Vector2.zero);
-            node.Ports.Add(new GenPortData("FlatOutput", PortDirection.Output, ChannelType.Float));
-            node.Parameters.Add(new SerializedParameter("fillValue", fillValue.ToString(CultureInfo.InvariantCulture)));
-            graph.Nodes.Add(node);
         }
 
         private static int CountDiagnostics(IReadOnlyList<GraphDiagnostic> diagnostics, DiagnosticSeverity severity)
@@ -229,6 +218,7 @@ namespace DynamicDungeon.Tests.Runtime
             };
 
             bakedSnapshot.Snapshot = snapshot;
+            bakedSnapshot.OutputChannelName = DefaultIntChannelName;
             return bakedSnapshot;
         }
 
@@ -247,6 +237,7 @@ namespace DynamicDungeon.Tests.Runtime
             graph.WorldWidth = 32;
             graph.WorldHeight = 32;
             graph.DefaultSeed = 123456L;
+            GraphOutputUtility.EnsureSingleOutputNode(graph, false);
 
             GenNodeData perlinNode = new GenNodeData("perlin-node", typeof(PerlinNoiseNode).FullName, "Perlin", Vector2.zero);
             perlinNode.Ports.Add(new GenPortData("Noise", PortDirection.Output, ChannelType.Float));
@@ -271,8 +262,17 @@ namespace DynamicDungeon.Tests.Runtime
             cellularNode.Parameters.Add(new SerializedParameter("initialFillProbability", "0.45"));
             graph.Nodes.Add(cellularNode);
 
+            GenNodeData logicalIdNode = new GenNodeData("logical-id-node", typeof(BoolMaskToLogicalIdNode).FullName, "Mask To Logical IDs", Vector2.zero);
+            logicalIdNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.BoolMask));
+            logicalIdNode.Ports.Add(new GenPortData(DefaultIntChannelName, PortDirection.Output, ChannelType.Int));
+            logicalIdNode.Parameters.Add(new SerializedParameter("trueLogicalId", ((ushort)LogicalTileId.Wall).ToString(CultureInfo.InvariantCulture)));
+            logicalIdNode.Parameters.Add(new SerializedParameter("falseLogicalId", ((ushort)LogicalTileId.Floor).ToString(CultureInfo.InvariantCulture)));
+            graph.Nodes.Add(logicalIdNode);
+
             graph.Connections.Add(new GenConnectionData("perlin-node", "Noise", "threshold-node", "Input"));
             graph.Connections.Add(new GenConnectionData("threshold-node", "Mask", "cellular-node", "Input"));
+            graph.Connections.Add(new GenConnectionData("cellular-node", "SmoothedMask", "logical-id-node", "Input"));
+            ConnectToOutput(graph, logicalIdNode.NodeId, DefaultIntChannelName);
             return graph;
         }
 
@@ -299,19 +299,6 @@ namespace DynamicDungeon.Tests.Runtime
             return null;
         }
 
-        private static int GetCurrentSchemaVersionOverride()
-        {
-            FieldInfo currentSchemaField = GetCurrentSchemaField();
-            return (int)currentSchemaField.GetValue(null);
-        }
-
-        private static FieldInfo GetCurrentSchemaField()
-        {
-            FieldInfo currentSchemaField = typeof(GraphMigrationRunner).GetField(CurrentSchemaFieldName, BindingFlags.Static | BindingFlags.NonPublic);
-            Assert.That(currentSchemaField, Is.Not.Null);
-            return currentSchemaField;
-        }
-
         private static WorldSnapshot.FloatChannelSnapshot GetFloatChannel(WorldSnapshot snapshot, string channelName)
         {
             int index;
@@ -327,6 +314,28 @@ namespace DynamicDungeon.Tests.Runtime
             return null;
         }
 
+        private static WorldSnapshot.IntChannelSnapshot GetIntChannel(WorldSnapshot snapshot, string channelName)
+        {
+            int index;
+            for (index = 0; index < snapshot.IntChannels.Length; index++)
+            {
+                WorldSnapshot.IntChannelSnapshot channel = snapshot.IntChannels[index];
+                if (channel.Name == channelName)
+                {
+                    return channel;
+                }
+            }
+
+            return null;
+        }
+
+        private static void ConnectToOutput(GenGraph graph, string fromNodeId, string fromPortName)
+        {
+            GenNodeData outputNode = GraphOutputUtility.FindOutputNode(graph);
+            Assert.That(outputNode, Is.Not.Null);
+            graph.Connections.Add(new GenConnectionData(fromNodeId, fromPortName, outputNode.NodeId, GraphOutputUtility.OutputInputPortName));
+        }
+
         private static Tilemap GetLayerTilemap(Grid grid, string layerName)
         {
             Transform child = grid.transform.Find("Tilemap_" + layerName);
@@ -337,42 +346,11 @@ namespace DynamicDungeon.Tests.Runtime
             return tilemap;
         }
 
-        private static void SetCurrentSchemaVersionOverride(int schemaVersion)
-        {
-            FieldInfo currentSchemaField = GetCurrentSchemaField();
-            currentSchemaField.SetValue(null, schemaVersion);
-        }
-
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null);
             field.SetValue(target, value);
-        }
-
-        private sealed class RenameGraphMigration : IGraphMigration
-        {
-            private readonly int _fromVersion;
-            private readonly string _graphName;
-
-            public int FromVersion
-            {
-                get
-                {
-                    return _fromVersion;
-                }
-            }
-
-            public RenameGraphMigration(int fromVersion, string graphName)
-            {
-                _fromVersion = fromVersion;
-                _graphName = graphName;
-            }
-
-            public void Migrate(GenGraph graph)
-            {
-                graph.name = _graphName;
-            }
         }
     }
 }

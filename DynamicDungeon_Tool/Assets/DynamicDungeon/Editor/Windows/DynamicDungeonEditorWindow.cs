@@ -208,6 +208,11 @@ namespace DynamicDungeon.Editor.Windows
 
         private void LoadGraph(GenGraph graph)
         {
+            if (graph != null && !TryPrepareGraphForEditing(graph))
+            {
+                return;
+            }
+
             _loadedGraph = graph;
 
             if (_graphField != null)
@@ -233,6 +238,28 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             LoadGraphInCanvas(graph, Vector3.zero, 1.0f);
+        }
+
+        private bool TryPrepareGraphForEditing(GenGraph graph)
+        {
+            bool changed;
+            string errorMessage;
+            if (!GraphOutputUtility.TryUpgradeToCurrentSchema(graph, out changed, out errorMessage))
+            {
+                Debug.LogError("Failed to upgrade graph '" + graph.name + "': " + errorMessage);
+                return false;
+            }
+
+            if (changed)
+            {
+                EditorUtility.SetDirty(graph);
+                if (AutoSave)
+                {
+                    AssetDatabase.SaveAssets();
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -368,6 +395,7 @@ namespace DynamicDungeon.Editor.Windows
 
             if (!string.Equals(viewportGraphGuid, loadedGraphGuid, StringComparison.Ordinal))
             {
+                RequestPreviewRefreshAfterReload();
                 return;
             }
 
@@ -377,6 +405,15 @@ namespace DynamicDungeon.Editor.Windows
                 EditorPrefs.GetFloat(CanvasScrollZPrefsKey, 0.0f));
             float zoomScale = EditorPrefs.GetFloat(CanvasZoomPrefsKey, 1.0f);
             _graphView.RestoreViewportState(scrollOffset, zoomScale);
+            RequestPreviewRefreshAfterReload();
+        }
+
+        private void RequestPreviewRefreshAfterReload()
+        {
+            if (_generationOrchestrator != null && _loadedGraph != null)
+            {
+                _generationOrchestrator.RequestPreviewRefresh();
+            }
         }
 
         private void SaveViewportPreferences()

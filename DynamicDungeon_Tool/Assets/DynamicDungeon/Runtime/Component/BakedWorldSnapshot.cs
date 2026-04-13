@@ -8,6 +8,7 @@ namespace DynamicDungeon.Runtime.Component
     public sealed class BakedWorldSnapshot : ScriptableObject
     {
         public WorldSnapshot Snapshot;
+        public string OutputChannelName = string.Empty;
         public long Seed;
         public string Timestamp = string.Empty;
         public int Width;

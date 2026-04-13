@@ -74,12 +74,22 @@ namespace DynamicDungeon.Runtime.Graph
 
         public static GraphCompileResult Compile(GenGraph graph)
         {
+            return CompileInternal(graph, false);
+        }
+
+        public static GraphCompileResult CompileForPreview(GenGraph graph)
+        {
+            return CompileInternal(graph, true);
+        }
+
+        private static GraphCompileResult CompileInternal(GenGraph graph, bool includeDisconnectedNodes)
+        {
             List<GraphDiagnostic> diagnostics = new List<GraphDiagnostic>();
 
             if (graph == null)
             {
                 diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Graph cannot be null.", null, null));
-                return new GraphCompileResult(false, diagnostics, null);
+                return new GraphCompileResult(false, diagnostics, null, string.Empty, false);
             }
 
             if (graph.WorldWidth <= 0)
@@ -94,26 +104,50 @@ namespace DynamicDungeon.Runtime.Graph
 
             List<GenNodeData> nodeDataList = graph.Nodes ?? new List<GenNodeData>();
             List<GenConnectionData> connectionDataList = graph.Connections ?? new List<GenConnectionData>();
-            List<CompiledNodeInfo> compiledNodes = new List<CompiledNodeInfo>(nodeDataList.Count);
-            Dictionary<string, CompiledNodeInfo> nodesById = new Dictionary<string, CompiledNodeInfo>(nodeDataList.Count, StringComparer.Ordinal);
-
-            CompileNodes(nodeDataList, diagnostics, compiledNodes, nodesById);
+            GenNodeData outputNodeData = FindOutputNodeData(nodeDataList, diagnostics);
 
             if (HasErrors(diagnostics))
             {
-                return new GraphCompileResult(false, diagnostics, null);
+                return new GraphCompileResult(false, diagnostics, null, string.Empty, false);
             }
 
-            ConnectionValidationResult connectionValidation = ValidateConnections(connectionDataList, diagnostics, nodesById);
+            List<GenNodeData> reachableNodeDataList;
+            List<GenConnectionData> reachableConnectionDataList;
+
+            if (includeDisconnectedNodes)
+            {
+                reachableNodeDataList = new List<GenNodeData>(nodeDataList);
+                reachableConnectionDataList = new List<GenConnectionData>(connectionDataList);
+            }
+            else
+            {
+                HashSet<string> reachableNodeIds = BuildReachableNodeIds(outputNodeData.NodeId, connectionDataList);
+                reachableNodeDataList = FilterReachableNodes(nodeDataList, reachableNodeIds);
+                reachableConnectionDataList = FilterReachableConnections(connectionDataList, reachableNodeIds);
+            }
+
+            List<CompiledNodeInfo> compiledNodes = new List<CompiledNodeInfo>(reachableNodeDataList.Count);
+            Dictionary<string, CompiledNodeInfo> nodesById = new Dictionary<string, CompiledNodeInfo>(reachableNodeDataList.Count, StringComparer.Ordinal);
+
+            CompileNodes(reachableNodeDataList, diagnostics, compiledNodes, nodesById);
+
+            if (HasErrors(diagnostics))
+            {
+                return new GraphCompileResult(false, diagnostics, null, string.Empty, false);
+            }
+
+            ConnectionValidationResult connectionValidation = ValidateConnections(reachableConnectionDataList, diagnostics, nodesById);
             ApplyInputConnectionBindings(compiledNodes, connectionValidation.Connections);
-            ValidateRequiredInputs(compiledNodes, connectionValidation.IncomingCountsByPortKey, diagnostics);
+            bool hasConnectedOutput;
+            string outputChannelName = ResolveOutputChannelName(connectionValidation.Connections, outputNodeData.NodeId, out hasConnectedOutput);
+            ValidateRequiredInputs(compiledNodes, connectionValidation.IncomingCountsByPortKey, diagnostics, outputNodeData.NodeId, hasConnectedOutput);
             ValidateChannelOwnership(compiledNodes, diagnostics);
 
             List<CompiledNodeInfo> orderedNodes = TopologicallySort(compiledNodes, connectionValidation.Connections, diagnostics);
 
             if (HasErrors(diagnostics))
             {
-                return new GraphCompileResult(false, diagnostics, null);
+                return new GraphCompileResult(false, diagnostics, null, outputChannelName, hasConnectedOutput);
             }
 
             try
@@ -127,13 +161,116 @@ namespace DynamicDungeon.Runtime.Graph
                 }
 
                 ExecutionPlan plan = ExecutionPlan.Build(orderedRuntimeNodes, graph.WorldWidth, graph.WorldHeight, graph.DefaultSeed);
-                return new GraphCompileResult(true, diagnostics, plan);
+                return new GraphCompileResult(true, diagnostics, plan, outputChannelName, hasConnectedOutput);
             }
             catch (Exception exception)
             {
                 diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Execution plan build failed: " + exception.Message, null, null));
-                return new GraphCompileResult(false, diagnostics, null);
+                return new GraphCompileResult(false, diagnostics, null, outputChannelName, hasConnectedOutput);
             }
+        }
+
+        private static GenNodeData FindOutputNodeData(IReadOnlyList<GenNodeData> nodeDataList, List<GraphDiagnostic> diagnostics)
+        {
+            GenNodeData outputNodeData = null;
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < nodeDataList.Count; nodeIndex++)
+            {
+                GenNodeData nodeData = nodeDataList[nodeIndex];
+                if (!GraphOutputUtility.IsOutputNode(nodeData))
+                {
+                    continue;
+                }
+
+                if (outputNodeData != null)
+                {
+                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Graph contains more than one output node.", nodeData != null ? nodeData.NodeId : null, null));
+                    return null;
+                }
+
+                outputNodeData = nodeData;
+            }
+
+            if (outputNodeData == null)
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Graph must contain an output node.", null, null));
+            }
+
+            return outputNodeData;
+        }
+
+        private static HashSet<string> BuildReachableNodeIds(string outputNodeId, IReadOnlyList<GenConnectionData> connectionDataList)
+        {
+            HashSet<string> reachableNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            string resolvedOutputNodeId = outputNodeId ?? string.Empty;
+            Queue<string> pendingNodeIds = new Queue<string>();
+            reachableNodeIds.Add(resolvedOutputNodeId);
+            pendingNodeIds.Enqueue(resolvedOutputNodeId);
+
+            while (pendingNodeIds.Count > 0)
+            {
+                string targetNodeId = pendingNodeIds.Dequeue();
+
+                int connectionIndex;
+                for (connectionIndex = 0; connectionIndex < connectionDataList.Count; connectionIndex++)
+                {
+                    GenConnectionData connectionData = connectionDataList[connectionIndex];
+                    if (connectionData == null ||
+                        !string.Equals(connectionData.ToNodeId, targetNodeId, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    string sourceNodeId = connectionData.FromNodeId ?? string.Empty;
+                    if (reachableNodeIds.Add(sourceNodeId))
+                    {
+                        pendingNodeIds.Enqueue(sourceNodeId);
+                    }
+                }
+            }
+
+            return reachableNodeIds;
+        }
+
+        private static List<GenNodeData> FilterReachableNodes(IReadOnlyList<GenNodeData> nodeDataList, HashSet<string> reachableNodeIds)
+        {
+            List<GenNodeData> reachableNodes = new List<GenNodeData>();
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < nodeDataList.Count; nodeIndex++)
+            {
+                GenNodeData nodeData = nodeDataList[nodeIndex];
+                if (nodeData != null && reachableNodeIds.Contains(nodeData.NodeId ?? string.Empty))
+                {
+                    reachableNodes.Add(nodeData);
+                }
+            }
+
+            return reachableNodes;
+        }
+
+        private static List<GenConnectionData> FilterReachableConnections(IReadOnlyList<GenConnectionData> connectionDataList, HashSet<string> reachableNodeIds)
+        {
+            List<GenConnectionData> reachableConnections = new List<GenConnectionData>();
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < connectionDataList.Count; connectionIndex++)
+            {
+                GenConnectionData connectionData = connectionDataList[connectionIndex];
+                if (connectionData == null)
+                {
+                    continue;
+                }
+
+                if (reachableNodeIds.Contains(connectionData.FromNodeId ?? string.Empty) &&
+                    reachableNodeIds.Contains(connectionData.ToNodeId ?? string.Empty))
+                {
+                    reachableConnections.Add(connectionData);
+                }
+            }
+
+            return reachableConnections;
         }
 
         private static void CompileNodes(IReadOnlyList<GenNodeData> nodeDataList, List<GraphDiagnostic> diagnostics, List<CompiledNodeInfo> compiledNodes, Dictionary<string, CompiledNodeInfo> nodesById)
@@ -377,7 +514,7 @@ namespace DynamicDungeon.Runtime.Graph
             }
         }
 
-        private static void ValidateRequiredInputs(IReadOnlyList<CompiledNodeInfo> compiledNodes, IReadOnlyDictionary<string, int> incomingCountsByPortKey, List<GraphDiagnostic> diagnostics)
+        private static void ValidateRequiredInputs(IReadOnlyList<CompiledNodeInfo> compiledNodes, IReadOnlyDictionary<string, int> incomingCountsByPortKey, List<GraphDiagnostic> diagnostics, string outputNodeId, bool hasConnectedOutput)
         {
             int nodeIndex;
             for (nodeIndex = 0; nodeIndex < compiledNodes.Count; nodeIndex++)
@@ -398,12 +535,39 @@ namespace DynamicDungeon.Runtime.Graph
                     int connectionCount;
                     incomingCountsByPortKey.TryGetValue(portKey, out connectionCount);
 
+                    if (!hasConnectedOutput &&
+                        string.Equals(compiledNode.Node.NodeId, outputNodeId, StringComparison.Ordinal) &&
+                        string.Equals(port.Name, GraphOutputUtility.OutputInputPortName, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
                     if (connectionCount == 0)
                     {
                         diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Required input port '" + port.Name + "' on node '" + compiledNode.Node.NodeName + "' is not connected.", compiledNode.Node.NodeId, port.Name));
                     }
                 }
             }
+        }
+
+        private static string ResolveOutputChannelName(IReadOnlyList<ValidatedConnection> validatedConnections, string outputNodeId, out bool hasConnectedOutput)
+        {
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < validatedConnections.Count; connectionIndex++)
+            {
+                ValidatedConnection connection = validatedConnections[connectionIndex];
+                if (!string.Equals(connection.ToNode.Node.NodeId, outputNodeId, StringComparison.Ordinal) ||
+                    !string.Equals(connection.ToPort.Name, GraphOutputUtility.OutputInputPortName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                hasConnectedOutput = true;
+                return connection.FromPort.Name;
+            }
+
+            hasConnectedOutput = false;
+            return string.Empty;
         }
 
         private static void ValidateChannelOwnership(IReadOnlyList<CompiledNodeInfo> compiledNodes, List<GraphDiagnostic> diagnostics)

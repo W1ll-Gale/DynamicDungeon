@@ -23,14 +23,12 @@ namespace DynamicDungeon.Runtime.Component
         private const string GeneratingStatusLabel = "Generating...";
         private const string DoneStatusLabel = "Done";
         private const string FailedStatusLabel = "Failed";
-        private const string DefaultIntChannelName = "LogicalIds";
         private const string BakeEditorOnlyMessage = "Bake is only available in the Unity Editor.";
         private const string BakeInProgressMessage = "Cannot bake while generation is already running.";
         private const string BakedSnapshotMissingDataMessage = "Assigned baked world snapshot is missing snapshot data.";
         private const string BakedSnapshotPathFormat = "Assets/{0}_BakedSnapshot.asset";
         private const string BakedSnapshotDimensionMismatchMessageFormat = "Baked world snapshot dimension mismatch: snapshot is {0}x{1}, current world is {2}x{3}.";
         private const string MissingGraphMessage = "Dungeon generation failed: no GenGraph is assigned.";
-        private const string GraphMigrationWarningMessageFormat = "GenGraph '{0}' is at schema version {1}, but tool schema version is {2}. The graph may need migration.";
         private const string GraphCompilationFailedMessage = "Graph compilation failed.";
 
         [SerializeField]
@@ -59,9 +57,6 @@ namespace DynamicDungeon.Runtime.Component
 
         [SerializeField]
         private BiomeAsset _biome;
-
-        [SerializeField]
-        private string _intChannelName = DefaultIntChannelName;
 
         [SerializeField]
         private Vector3Int _tilemapOffset;
@@ -140,9 +135,15 @@ namespace DynamicDungeon.Runtime.Component
                 ValidateConfiguration();
 
                 long seed = GetSeedForRun();
-                WorldSnapshot snapshot = ExecuteGenerationSynchronously(seed);
-                WriteSnapshotToTilemaps(snapshot);
-                SaveBakedSnapshotAsset(snapshot, seed);
+                string outputChannelName;
+                bool hasConnectedOutput;
+                WorldSnapshot snapshot = ExecuteGenerationSynchronously(seed, out outputChannelName, out hasConnectedOutput);
+                if (hasConnectedOutput)
+                {
+                    WriteSnapshotToTilemaps(snapshot, outputChannelName);
+                }
+
+                SaveBakedSnapshotAsset(snapshot, seed, outputChannelName);
 
                 _statusLabel = DoneStatusLabel;
             }
@@ -340,16 +341,16 @@ namespace DynamicDungeon.Runtime.Component
                 ValidateConfiguration();
 
                 long seed = GetSeedForRun();
-                ExecutionPlan plan;
+                GraphCompileResult compileResult;
                 string compileErrorMessage;
-                if (!TryCompileGraphToExecutionPlan(seed, out plan, out compileErrorMessage))
+                if (!TryCompileGraph(seed, out compileResult, out compileErrorMessage))
                 {
                     _statusLabel = FailedStatusLabel;
                     RaiseGenerationCompleted(CreateFailureArgs(compileErrorMessage));
                     return;
                 }
 
-                ExecutionResult executionResult = await _executor.ExecuteAsync(plan, cancellationToken);
+                ExecutionResult executionResult = await _executor.ExecuteAsync(compileResult.Plan, cancellationToken);
 
                 if (executionResult.WasCancelled)
                 {
@@ -373,7 +374,10 @@ namespace DynamicDungeon.Runtime.Component
                     return;
                 }
 
-                WriteSnapshotToTilemaps(executionResult.Snapshot);
+                if (compileResult.HasConnectedOutput)
+                {
+                    WriteSnapshotToTilemaps(executionResult.Snapshot, compileResult.OutputChannelName);
+                }
 
                 GenerationCompletedArgs completedArgs = new GenerationCompletedArgs();
                 completedArgs.Snapshot = executionResult.Snapshot;
@@ -404,11 +408,6 @@ namespace DynamicDungeon.Runtime.Component
                 throw new InvalidOperationException("WorldHeight must be greater than zero.");
             }
 
-            if (string.IsNullOrWhiteSpace(_intChannelName))
-            {
-                throw new InvalidOperationException("IntChannelName must be non-empty.");
-            }
-
             if (_biome == null)
             {
                 throw new InvalidOperationException("DungeonGeneratorComponent requires a Biome assignment.");
@@ -422,9 +421,9 @@ namespace DynamicDungeon.Runtime.Component
             ResolveGrid(true);
         }
 
-        private bool TryCompileGraphToExecutionPlan(long seed, out ExecutionPlan plan, out string errorMessage)
+        private bool TryCompileGraph(long seed, out GraphCompileResult compileResult, out string errorMessage)
         {
-            plan = null;
+            compileResult = null;
             errorMessage = null;
 
             if (_graph == null)
@@ -434,17 +433,21 @@ namespace DynamicDungeon.Runtime.Component
                 return false;
             }
 
-            if (GraphSchemaVersion.Current > _graph.SchemaVersion)
+            bool graphChanged;
+            string migrationErrorMessage;
+            if (!GraphOutputUtility.TryUpgradeToCurrentSchema(_graph, out graphChanged, out migrationErrorMessage))
             {
-                Debug.LogWarning(
-                    string.Format(
-                        CultureInfo.InvariantCulture,
-                        GraphMigrationWarningMessageFormat,
-                        _graph.name,
-                        _graph.SchemaVersion,
-                        GraphSchemaVersion.Current),
-                    this);
+                Debug.LogError("Graph upgrade failed: " + migrationErrorMessage, this);
+                errorMessage = migrationErrorMessage ?? GraphCompilationFailedMessage;
+                return false;
             }
+
+#if UNITY_EDITOR
+            if (graphChanged)
+            {
+                EditorUtility.SetDirty(_graph);
+            }
+#endif
 
             int originalWorldWidth = _graph.WorldWidth;
             int originalWorldHeight = _graph.WorldHeight;
@@ -456,7 +459,7 @@ namespace DynamicDungeon.Runtime.Component
                 _graph.WorldHeight = _worldHeight;
                 _graph.DefaultSeed = seed;
 
-                GraphCompileResult compileResult = GraphCompiler.Compile(_graph);
+                compileResult = GraphCompiler.Compile(_graph);
                 if (!compileResult.IsSuccess || compileResult.Plan == null)
                 {
                     LogCompileDiagnostics(compileResult.Diagnostics);
@@ -464,7 +467,6 @@ namespace DynamicDungeon.Runtime.Component
                     return false;
                 }
 
-                plan = compileResult.Plan;
                 return true;
             }
             finally
@@ -511,16 +513,21 @@ namespace DynamicDungeon.Runtime.Component
             }
         }
 
-        private WorldSnapshot ExecuteGenerationSynchronously(long seed)
+        private WorldSnapshot ExecuteGenerationSynchronously(long seed, out string outputChannelName, out bool hasConnectedOutput)
         {
-            ExecutionPlan plan;
+            outputChannelName = string.Empty;
+            hasConnectedOutput = false;
+
+            GraphCompileResult compileResult;
             string errorMessage;
-            if (!TryCompileGraphToExecutionPlan(seed, out plan, out errorMessage))
+            if (!TryCompileGraph(seed, out compileResult, out errorMessage))
             {
                 throw new InvalidOperationException(errorMessage ?? GraphCompilationFailedMessage);
             }
 
-            ExecutionResult executionResult = _executor.ExecuteAsync(plan, CancellationToken.None).GetAwaiter().GetResult();
+            outputChannelName = compileResult.OutputChannelName;
+            hasConnectedOutput = compileResult.HasConnectedOutput;
+            ExecutionResult executionResult = _executor.ExecuteAsync(compileResult.Plan, CancellationToken.None).GetAwaiter().GetResult();
 
             if (executionResult.WasCancelled)
             {
@@ -559,7 +566,13 @@ namespace DynamicDungeon.Runtime.Component
 
             try
             {
-                WriteSnapshotToTilemaps(bakedSnapshot.Snapshot);
+                if (string.IsNullOrWhiteSpace(bakedSnapshot.OutputChannelName))
+                {
+                    snapshot = bakedSnapshot.Snapshot;
+                    return true;
+                }
+
+                WriteSnapshotToTilemaps(bakedSnapshot.Snapshot, bakedSnapshot.OutputChannelName);
                 snapshot = bakedSnapshot.Snapshot;
                 return true;
             }
@@ -604,18 +617,23 @@ namespace DynamicDungeon.Runtime.Component
             return true;
         }
 
-        private void WriteSnapshotToTilemaps(WorldSnapshot snapshot)
+        private void WriteSnapshotToTilemaps(WorldSnapshot snapshot, string outputChannelName)
         {
+            if (string.IsNullOrWhiteSpace(outputChannelName))
+            {
+                return;
+            }
+
             Grid resolvedGrid = ResolveGrid(true);
             TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
 
             _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
             _tilemapLayerWriter.ClearAll();
-            _tilemapOutputPass.Execute(snapshot, _intChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+            _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
         }
 
 #if UNITY_EDITOR
-        private void SaveBakedSnapshotAsset(WorldSnapshot snapshot, long seed)
+        private void SaveBakedSnapshotAsset(WorldSnapshot snapshot, long seed, string outputChannelName)
         {
             UnityEngine.SceneManagement.Scene activeScene = gameObject.scene;
             string sceneName = string.IsNullOrWhiteSpace(activeScene.name) ? "Untitled" : activeScene.name;
@@ -635,6 +653,7 @@ namespace DynamicDungeon.Runtime.Component
             }
 
             bakedSnapshot.Snapshot = snapshot;
+            bakedSnapshot.OutputChannelName = outputChannelName ?? string.Empty;
             bakedSnapshot.Seed = seed;
             bakedSnapshot.Timestamp = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
             bakedSnapshot.Width = snapshot.Width;

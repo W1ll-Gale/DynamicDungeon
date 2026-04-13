@@ -265,7 +265,6 @@ namespace DynamicDungeon.Editor.Utilities
             serializedObject.FindProperty("_graph").objectReferenceValue = graph;
             serializedObject.FindProperty("_grid").objectReferenceValue = grid;
             serializedObject.FindProperty("_biome").objectReferenceValue = biome;
-            serializedObject.FindProperty("_intChannelName").stringValue = "LogicalIds";
             serializedObject.FindProperty("_tilemapOffset").vector3IntValue = Vector3Int.zero;
             serializedObject.FindProperty("_bakedWorldSnapshot").objectReferenceValue = bakedSnapshot;
 
@@ -342,11 +341,15 @@ namespace DynamicDungeon.Editor.Utilities
             graph.Nodes.Clear();
             graph.Connections.Clear();
 
-            GenNodeData thresholdNode = new GenNodeData("threshold-node", typeof(ThresholdNode).FullName, "Threshold", Vector2.zero);
-            thresholdNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.Float));
-            thresholdNode.Ports.Add(new GenPortData("Mask", PortDirection.Output, ChannelType.BoolMask));
-            thresholdNode.Parameters.Add(new SerializedParameter("threshold", "0.5"));
-            graph.Nodes.Add(thresholdNode);
+            GenNodeData logicalIdNode = new GenNodeData("logical-id-node", typeof(BoolMaskToLogicalIdNode).FullName, "Mask To Logical IDs", Vector2.zero);
+            logicalIdNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.BoolMask));
+            logicalIdNode.Ports.Add(new GenPortData("LogicalIds", PortDirection.Output, ChannelType.Int));
+            logicalIdNode.Parameters.Add(new SerializedParameter("trueLogicalId", ((ushort)LogicalTileId.Wall).ToString(CultureInfo.InvariantCulture)));
+            logicalIdNode.Parameters.Add(new SerializedParameter("falseLogicalId", ((ushort)LogicalTileId.Floor).ToString(CultureInfo.InvariantCulture)));
+            graph.Nodes.Add(logicalIdNode);
+
+            GenNodeData outputNode = GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+            graph.Connections.Add(new GenConnectionData(logicalIdNode.NodeId, "LogicalIds", outputNode.NodeId, GraphOutputUtility.OutputInputPortName));
 
             EditorUtility.SetDirty(graph);
         }
@@ -403,6 +406,7 @@ namespace DynamicDungeon.Editor.Utilities
             };
 
             bakedSnapshot.Snapshot = snapshot;
+            bakedSnapshot.OutputChannelName = "LogicalIds";
             EditorUtility.SetDirty(bakedSnapshot);
         }
 
@@ -446,9 +450,12 @@ namespace DynamicDungeon.Editor.Utilities
             logicalIdNode.Parameters.Add(new SerializedParameter("falseLogicalId", ((ushort)LogicalTileId.Floor).ToString(CultureInfo.InvariantCulture)));
             graph.Nodes.Add(logicalIdNode);
 
+            GenNodeData outputNode = GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+
             graph.Connections.Add(new GenConnectionData("perlin-node", "Noise", "threshold-node", "Input"));
             graph.Connections.Add(new GenConnectionData("threshold-node", "Mask", "cellular-node", "Input"));
             graph.Connections.Add(new GenConnectionData("cellular-node", "SmoothedMask", "logical-id-node", "Input"));
+            graph.Connections.Add(new GenConnectionData("logical-id-node", "LogicalIds", outputNode.NodeId, GraphOutputUtility.OutputInputPortName));
 
             EditorUtility.SetDirty(graph);
         }

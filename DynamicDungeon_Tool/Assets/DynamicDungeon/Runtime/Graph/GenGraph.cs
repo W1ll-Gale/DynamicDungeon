@@ -39,6 +39,12 @@ namespace DynamicDungeon.Runtime.Graph
                 return false;
             }
 
+            GenNodeData nodeData = Nodes[nodeIndex];
+            if (GraphOutputUtility.IsOutputNode(nodeData))
+            {
+                return false;
+            }
+
             Nodes.RemoveAt(nodeIndex);
 
             int connectionIndex;

@@ -15,9 +15,10 @@ namespace DynamicDungeon.Tests.Runtime
 {
     public sealed class GraphCompilerTests
     {
-        private const float DefaultFillValue = 6.5f;
-        private const string FlatOutputChannelName = "FlatOutput";
-        private const string CopyOutputChannelName = "CopiedOutput";
+        private const int DefaultFillValue = 6;
+        private const string SharedOutputChannelName = "LogicalIds";
+        private const string CopyOutputChannelName = "CopiedLogicalIds";
+        private const string MergeOutputChannelName = "MergedLogicalIds";
 
         [Test]
         public void ValidSingleNodeGraphCompilesSuccessfullyAndBuildsPlan()
@@ -25,12 +26,11 @@ namespace DynamicDungeon.Tests.Runtime
             GenGraph graph = CreateGraph();
             try
             {
-                AddFlatFillNode(graph, "flat-node", "Flat Fill", DefaultFillValue);
-
                 GraphCompileResult result = GraphCompiler.Compile(graph);
 
                 Assert.That(result.IsSuccess, Is.True);
                 Assert.That(result.Plan, Is.Not.Null);
+                Assert.That(result.HasConnectedOutput, Is.False);
                 Assert.That(CountDiagnostics(result.Diagnostics, DiagnosticSeverity.Error), Is.EqualTo(0));
 
                 result.Plan.Dispose();
@@ -48,7 +48,9 @@ namespace DynamicDungeon.Tests.Runtime
             try
             {
                 GenNodeData node = new GenNodeData("unknown-node", "DynamicDungeon.Runtime.Nodes.DoesNotExistNode", "Missing Node", Vector2.zero);
+                node.Ports.Add(new GenPortData(SharedOutputChannelName, PortDirection.Output, ChannelType.Int));
                 graph.Nodes.Add(node);
+                ConnectToOutput(graph, node.NodeId, SharedOutputChannelName);
 
                 GraphCompileResult result = GraphCompiler.Compile(graph);
 
@@ -84,6 +86,7 @@ namespace DynamicDungeon.Tests.Runtime
 
                 graph.Connections.Add(new GenConnectionData("copy-a", "ChannelA", "copy-b", "ChannelA"));
                 graph.Connections.Add(new GenConnectionData("copy-b", "ChannelB", "copy-a", "ChannelB"));
+                ConnectToOutput(graph, "copy-a", "ChannelA");
 
                 GraphCompileResult result = GraphCompiler.Compile(graph);
 
@@ -109,6 +112,7 @@ namespace DynamicDungeon.Tests.Runtime
                     "Copy Node",
                     "RequiredInput",
                     CopyOutputChannelName);
+                ConnectToOutput(graph, "copy-node", CopyOutputChannelName);
 
                 GraphCompileResult result = GraphCompiler.Compile(graph);
 
@@ -128,14 +132,42 @@ namespace DynamicDungeon.Tests.Runtime
             GenGraph graph = CreateGraph();
             try
             {
-                AddFlatFillNode(graph, "flat-a", "Flat A", 1.0f);
-                AddFlatFillNode(graph, "flat-b", "Flat B", 2.0f);
+                AddIntFillNode(graph, "fill-a", "Fill A", SharedOutputChannelName, 1);
+                AddIntFillNode(graph, "fill-b", "Fill B", SharedOutputChannelName, 2);
+                AddMergeNode(graph, "merge-node", "Merge", MergeOutputChannelName);
+                graph.Connections.Add(new GenConnectionData("fill-a", SharedOutputChannelName, "merge-node", "Left"));
+                graph.Connections.Add(new GenConnectionData("fill-b", SharedOutputChannelName, "merge-node", "Right"));
+                ConnectToOutput(graph, "merge-node", MergeOutputChannelName);
 
                 GraphCompileResult result = GraphCompiler.Compile(graph);
 
                 Assert.That(result.IsSuccess, Is.False);
                 Assert.That(result.Plan, Is.Null);
-                Assert.That(ContainsError(result.Diagnostics, "Channel 'FlatOutput' is owned"), Is.True);
+                Assert.That(ContainsError(result.Diagnostics, "Channel '" + SharedOutputChannelName + "' is owned"), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
+        public void DisconnectedInvalidBranchIsIgnoredWhenOutputPathIsValid()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                AddIntFillNode(graph, "fill-node", "Fill", SharedOutputChannelName, DefaultFillValue);
+                AddCopyNode(graph, "disconnected-copy", "Disconnected Copy", "MissingInput", "UnusedOutput");
+                ConnectToOutput(graph, "fill-node", SharedOutputChannelName);
+
+                GraphCompileResult result = GraphCompiler.Compile(graph);
+
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Plan, Is.Not.Null);
+                Assert.That(ContainsError(result.Diagnostics, "MissingInput"), Is.False);
+
+                result.Plan.Dispose();
             }
             finally
             {
@@ -149,14 +181,17 @@ namespace DynamicDungeon.Tests.Runtime
             GenGraph graph = CreateGraph();
             try
             {
-                AddFlatFillNode(graph, "flat-node", "Flat Fill", DefaultFillValue);
-                AddCopyNode(graph, "copy-node", "Copy Node", FlatOutputChannelName, CopyOutputChannelName);
-                graph.Connections.Add(new GenConnectionData("flat-node", FlatOutputChannelName, "copy-node", FlatOutputChannelName));
+                AddIntFillNode(graph, "fill-node", "Fill", SharedOutputChannelName, DefaultFillValue);
+                AddCopyNode(graph, "copy-node", "Copy Node", SharedOutputChannelName, CopyOutputChannelName);
+                graph.Connections.Add(new GenConnectionData("fill-node", SharedOutputChannelName, "copy-node", SharedOutputChannelName));
+                ConnectToOutput(graph, "copy-node", CopyOutputChannelName);
 
                 GraphCompileResult compileResult = GraphCompiler.Compile(graph);
 
                 Assert.That(compileResult.IsSuccess, Is.True);
                 Assert.That(compileResult.Plan, Is.Not.Null);
+                Assert.That(compileResult.OutputChannelName, Is.EqualTo(CopyOutputChannelName));
+                Assert.That(compileResult.HasConnectedOutput, Is.True);
 
                 Executor executor = new Executor();
                 ExecutionResult executionResult = await executor.ExecuteAsync(compileResult.Plan, CancellationToken.None);
@@ -166,12 +201,12 @@ namespace DynamicDungeon.Tests.Runtime
                 Assert.That(executionResult.ErrorMessage, Is.Null);
                 Assert.That(executionResult.Snapshot, Is.Not.Null);
 
-                WorldSnapshot.FloatChannelSnapshot flatOutput = GetFloatChannel(executionResult.Snapshot, FlatOutputChannelName);
-                WorldSnapshot.FloatChannelSnapshot copiedOutput = GetFloatChannel(executionResult.Snapshot, CopyOutputChannelName);
+                WorldSnapshot.IntChannelSnapshot filledOutput = GetIntChannel(executionResult.Snapshot, SharedOutputChannelName);
+                WorldSnapshot.IntChannelSnapshot copiedOutput = GetIntChannel(executionResult.Snapshot, CopyOutputChannelName);
 
-                Assert.That(flatOutput, Is.Not.Null);
+                Assert.That(filledOutput, Is.Not.Null);
                 Assert.That(copiedOutput, Is.Not.Null);
-                AssertAllValuesEqual(flatOutput.Data, DefaultFillValue);
+                AssertAllValuesEqual(filledOutput.Data, DefaultFillValue);
                 AssertAllValuesEqual(copiedOutput.Data, DefaultFillValue);
             }
             finally
@@ -183,20 +218,36 @@ namespace DynamicDungeon.Tests.Runtime
         private static void AddCopyNode(GenGraph graph, string nodeId, string nodeName, string inputPortName, string outputPortName)
         {
             GenNodeData node = new GenNodeData(nodeId, typeof(GraphCompilerCopyNode).FullName, nodeName, Vector2.zero);
-            node.Ports.Add(new GenPortData(inputPortName, PortDirection.Input, ChannelType.Float));
-            node.Ports.Add(new GenPortData(outputPortName, PortDirection.Output, ChannelType.Float));
+            node.Ports.Add(new GenPortData(inputPortName, PortDirection.Input, ChannelType.Int));
+            node.Ports.Add(new GenPortData(outputPortName, PortDirection.Output, ChannelType.Int));
             graph.Nodes.Add(node);
         }
 
-        private static void AddFlatFillNode(GenGraph graph, string nodeId, string nodeName, float fillValue)
+        private static void AddIntFillNode(GenGraph graph, string nodeId, string nodeName, string outputChannelName, int fillValue)
         {
-            GenNodeData node = new GenNodeData(nodeId, typeof(FlatFillNode).FullName, nodeName, Vector2.zero);
-            node.Ports.Add(new GenPortData(FlatOutputChannelName, PortDirection.Output, ChannelType.Float));
+            GenNodeData node = new GenNodeData(nodeId, typeof(GraphCompilerIntFillNode).FullName, nodeName, Vector2.zero);
+            node.Ports.Add(new GenPortData(outputChannelName, PortDirection.Output, ChannelType.Int));
             node.Parameters.Add(new SerializedParameter("fillValue", fillValue.ToString(CultureInfo.InvariantCulture)));
             graph.Nodes.Add(node);
         }
 
-        private static void AssertAllValuesEqual(float[] values, float expectedValue)
+        private static void AddMergeNode(GenGraph graph, string nodeId, string nodeName, string outputPortName)
+        {
+            GenNodeData node = new GenNodeData(nodeId, typeof(GraphCompilerMergeNode).FullName, nodeName, Vector2.zero);
+            node.Ports.Add(new GenPortData("Left", PortDirection.Input, ChannelType.Int));
+            node.Ports.Add(new GenPortData("Right", PortDirection.Input, ChannelType.Int));
+            node.Ports.Add(new GenPortData(outputPortName, PortDirection.Output, ChannelType.Int));
+            graph.Nodes.Add(node);
+        }
+
+        private static void ConnectToOutput(GenGraph graph, string fromNodeId, string fromPortName)
+        {
+            GenNodeData outputNode = GraphOutputUtility.FindOutputNode(graph);
+            Assert.That(outputNode, Is.Not.Null);
+            graph.Connections.Add(new GenConnectionData(fromNodeId, fromPortName, outputNode.NodeId, GraphOutputUtility.OutputInputPortName));
+        }
+
+        private static void AssertAllValuesEqual(int[] values, int expectedValue)
         {
             int index;
             for (index = 0; index < values.Length; index++)
@@ -241,18 +292,20 @@ namespace DynamicDungeon.Tests.Runtime
         private static GenGraph CreateGraph()
         {
             GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
+            graph.SchemaVersion = GraphSchemaVersion.Current;
             graph.WorldWidth = 4;
             graph.WorldHeight = 3;
             graph.DefaultSeed = 12345L;
+            GraphOutputUtility.EnsureSingleOutputNode(graph, false);
             return graph;
         }
 
-        private static WorldSnapshot.FloatChannelSnapshot GetFloatChannel(WorldSnapshot snapshot, string channelName)
+        private static WorldSnapshot.IntChannelSnapshot GetIntChannel(WorldSnapshot snapshot, string channelName)
         {
             int index;
-            for (index = 0; index < snapshot.FloatChannels.Length; index++)
+            for (index = 0; index < snapshot.IntChannels.Length; index++)
             {
-                WorldSnapshot.FloatChannelSnapshot channel = snapshot.FloatChannels[index];
+                WorldSnapshot.IntChannelSnapshot channel = snapshot.IntChannels[index];
                 if (channel.Name == channelName)
                 {
                     return channel;
@@ -322,21 +375,21 @@ namespace DynamicDungeon.Tests.Runtime
             _outputChannelName = outputChannelName;
             _ports = new[]
             {
-                new NodePortDefinition(_inputChannelName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, true),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float)
+                new NodePortDefinition(_inputChannelName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, true),
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Int)
             };
             _channelDeclarations = new[]
             {
-                new ChannelDeclaration(_inputChannelName, ChannelType.Float, false),
-                new ChannelDeclaration(_outputChannelName, ChannelType.Float, true)
+                new ChannelDeclaration(_inputChannelName, ChannelType.Int, false),
+                new ChannelDeclaration(_outputChannelName, ChannelType.Int, true)
             };
         }
 
         public JobHandle Schedule(NodeExecutionContext context)
         {
-            NativeArray<float> input = context.GetFloatChannel(_inputChannelName);
-            NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
-            CopyFloatJob job = new CopyFloatJob
+            NativeArray<int> input = context.GetIntChannel(_inputChannelName);
+            NativeArray<int> output = context.GetIntChannel(_outputChannelName);
+            CopyIntJob job = new CopyIntJob
             {
                 Input = input,
                 Output = output
@@ -345,12 +398,153 @@ namespace DynamicDungeon.Tests.Runtime
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
         }
 
-        private struct CopyFloatJob : IJobParallelFor
+        private struct CopyIntJob : IJobParallelFor
         {
             [ReadOnly]
-            public NativeArray<float> Input;
+            public NativeArray<int> Input;
 
-            public NativeArray<float> Output;
+            public NativeArray<int> Output;
+
+            public void Execute(int index)
+            {
+                Output[index] = Input[index];
+            }
+        }
+    }
+
+    internal sealed class GraphCompilerIntFillNode : IGenNode
+    {
+        private const int DefaultBatchSize = 64;
+
+        private readonly NodePortDefinition[] _ports;
+        private readonly ChannelDeclaration[] _channelDeclarations;
+        private readonly string _nodeId;
+        private readonly string _nodeName;
+        private readonly string _outputChannelName;
+        private readonly int _fillValue;
+
+        public IReadOnlyList<NodePortDefinition> Ports => _ports;
+        public IReadOnlyList<ChannelDeclaration> ChannelDeclarations => _channelDeclarations;
+        public IReadOnlyList<BlackboardKey> BlackboardDeclarations => Array.Empty<BlackboardKey>();
+        public string NodeId => _nodeId;
+        public string NodeName => _nodeName;
+
+        public GraphCompilerIntFillNode(string nodeId, string nodeName, string outputChannelName, int fillValue)
+        {
+            _nodeId = nodeId;
+            _nodeName = nodeName;
+            _outputChannelName = outputChannelName;
+            _fillValue = fillValue;
+            _ports = new[]
+            {
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Int)
+            };
+            _channelDeclarations = new[]
+            {
+                new ChannelDeclaration(_outputChannelName, ChannelType.Int, true)
+            };
+        }
+
+        public JobHandle Schedule(NodeExecutionContext context)
+        {
+            NativeArray<int> output = context.GetIntChannel(_outputChannelName);
+            FillIntJob job = new FillIntJob
+            {
+                Output = output,
+                FillValue = _fillValue
+            };
+
+            return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
+        }
+
+        private struct FillIntJob : IJobParallelFor
+        {
+            public NativeArray<int> Output;
+            public int FillValue;
+
+            public void Execute(int index)
+            {
+                Output[index] = FillValue;
+            }
+        }
+    }
+
+    internal sealed class GraphCompilerMergeNode : IGenNode, IInputConnectionReceiver
+    {
+        private const int DefaultBatchSize = 64;
+
+        private readonly NodePortDefinition[] _ports;
+        private readonly string _nodeId;
+        private readonly string _nodeName;
+        private readonly string _outputChannelName;
+
+        private string _leftChannelName = "Left";
+        private string _rightChannelName = "Right";
+        private ChannelDeclaration[] _channelDeclarations;
+
+        public IReadOnlyList<NodePortDefinition> Ports => _ports;
+        public IReadOnlyList<ChannelDeclaration> ChannelDeclarations => _channelDeclarations;
+        public IReadOnlyList<BlackboardKey> BlackboardDeclarations => Array.Empty<BlackboardKey>();
+        public string NodeId => _nodeId;
+        public string NodeName => _nodeName;
+
+        public GraphCompilerMergeNode(string nodeId, string nodeName, string outputChannelName)
+        {
+            _nodeId = nodeId;
+            _nodeName = nodeName;
+            _outputChannelName = outputChannelName;
+            _ports = new[]
+            {
+                new NodePortDefinition("Left", PortDirection.Input, ChannelType.Int, PortCapacity.Single, true),
+                new NodePortDefinition("Right", PortDirection.Input, ChannelType.Int, PortCapacity.Single, true),
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Int)
+            };
+
+            RefreshChannelDeclarations();
+        }
+
+        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        {
+            string leftChannelName;
+            string rightChannelName;
+            _leftChannelName = inputConnections != null && inputConnections.TryGetValue("Left", out leftChannelName)
+                ? leftChannelName ?? string.Empty
+                : string.Empty;
+            _rightChannelName = inputConnections != null && inputConnections.TryGetValue("Right", out rightChannelName)
+                ? rightChannelName ?? string.Empty
+                : string.Empty;
+            RefreshChannelDeclarations();
+        }
+
+        public JobHandle Schedule(NodeExecutionContext context)
+        {
+            NativeArray<int> left = context.GetIntChannel(_leftChannelName);
+            NativeArray<int> output = context.GetIntChannel(_outputChannelName);
+            CopyIntJob job = new CopyIntJob
+            {
+                Input = left,
+                Output = output
+            };
+
+            return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
+        }
+
+        private void RefreshChannelDeclarations()
+        {
+            _channelDeclarations = new[]
+            {
+                new ChannelDeclaration(_leftChannelName, ChannelType.Int, false),
+                new ChannelDeclaration(_rightChannelName, ChannelType.Int, false),
+                new ChannelDeclaration(_outputChannelName, ChannelType.Int, true)
+            };
+        }
+
+        private struct CopyIntJob : IJobParallelFor
+        {
+            [ReadOnly]
+            public NativeArray<int> Input;
+
+            public NativeArray<int> Output;
 
             public void Execute(int index)
             {

@@ -32,7 +32,6 @@ namespace DynamicDungeon.Editor.Inspectors
         private SerializedProperty _gridProperty;
         private SerializedProperty _layerDefinitionsProperty;
         private SerializedProperty _biomeProperty;
-        private SerializedProperty _intChannelNameProperty;
         private SerializedProperty _tilemapOffsetProperty;
         private SerializedProperty _bakedWorldSnapshotProperty;
 
@@ -52,7 +51,6 @@ namespace DynamicDungeon.Editor.Inspectors
             _gridProperty = serializedObject.FindProperty("_grid");
             _layerDefinitionsProperty = serializedObject.FindProperty("_layerDefinitions");
             _biomeProperty = serializedObject.FindProperty("_biome");
-            _intChannelNameProperty = serializedObject.FindProperty("_intChannelName");
             _tilemapOffsetProperty = serializedObject.FindProperty("_tilemapOffset");
             _bakedWorldSnapshotProperty = serializedObject.FindProperty("_bakedWorldSnapshot");
 
@@ -193,7 +191,6 @@ namespace DynamicDungeon.Editor.Inspectors
         {
             BeginSection("Output");
 
-            EditorGUILayout.PropertyField(_intChannelNameProperty, new GUIContent("Int Channel Name"));
             EditorGUILayout.PropertyField(_tilemapOffsetProperty, new GUIContent("Tilemap Offset"));
 
             EditorGUILayout.PropertyField(_biomeProperty, new GUIContent("Biome Asset"));
@@ -348,10 +345,16 @@ namespace DynamicDungeon.Editor.Inspectors
             Rect rowRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
             float contentStartX = rowRect.x + ReorderHandleWidth;
             Rect foldoutRect = new Rect(contentStartX, rowRect.y, InlineFoldoutWidth, rowRect.height);
-            Rect fieldRect = new Rect(
+            float objectFieldX = rowRect.x + EditorGUIUtility.labelWidth;
+            Rect labelRect = new Rect(
                 foldoutRect.xMax + 2.0f,
                 rowRect.y,
-                rowRect.xMax - (foldoutRect.xMax + 2.0f),
+                objectFieldX - (foldoutRect.xMax + 6.0f),
+                rowRect.height);
+            Rect fieldRect = new Rect(
+                objectFieldX,
+                rowRect.y,
+                rowRect.xMax - objectFieldX,
                 rowRect.height);
 
             TilemapLayerDefinition layerDefinition = elementProperty.objectReferenceValue as TilemapLayerDefinition;
@@ -366,7 +369,20 @@ namespace DynamicDungeon.Editor.Inspectors
                 elementProperty.isExpanded = false;
             }
 
-            EditorGUI.PropertyField(fieldRect, elementProperty, BuildLayerDefinitionLabel(layerDefinition, index));
+            EditorGUI.LabelField(labelRect, BuildLayerDefinitionLabel(layerDefinition, index));
+
+            EditorGUI.BeginChangeCheck();
+            Object newLayerDefinition = EditorGUI.ObjectField(fieldRect, GUIContent.none, elementProperty.objectReferenceValue, typeof(TilemapLayerDefinition), false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                elementProperty.objectReferenceValue = newLayerDefinition;
+                layerDefinition = elementProperty.objectReferenceValue as TilemapLayerDefinition;
+                canExpandInline = layerDefinition != null;
+                if (!canExpandInline)
+                {
+                    elementProperty.isExpanded = false;
+                }
+            }
 
             if (layerDefinition == null || !elementProperty.isExpanded)
             {

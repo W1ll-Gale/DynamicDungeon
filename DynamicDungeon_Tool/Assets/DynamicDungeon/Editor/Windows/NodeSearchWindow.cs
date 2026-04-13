@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DynamicDungeon.Editor.Utilities;
+using DynamicDungeon.Runtime.Graph;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
@@ -34,6 +35,14 @@ namespace DynamicDungeon.Editor.Windows
             for (nodeIndex = 0; nodeIndex < nodeTypes.Count; nodeIndex++)
             {
                 Type nodeType = nodeTypes[nodeIndex];
+                if (GraphOutputUtility.IsOutputNodeType(nodeType) &&
+                    _graphView != null &&
+                    _graphView.Graph != null &&
+                    GraphOutputUtility.CountOutputNodes(_graphView.Graph) > 0)
+                {
+                    continue;
+                }
+
                 string category = NodeDiscovery.GetNodeCategory(nodeType);
                 if (!string.Equals(currentCategory, category, StringComparison.Ordinal))
                 {

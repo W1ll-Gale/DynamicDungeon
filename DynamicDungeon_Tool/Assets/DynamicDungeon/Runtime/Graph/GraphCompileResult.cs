@@ -8,12 +8,16 @@ namespace DynamicDungeon.Runtime.Graph
         public bool IsSuccess;
         public IReadOnlyList<GraphDiagnostic> Diagnostics;
         public ExecutionPlan Plan;
+        public string OutputChannelName;
+        public bool HasConnectedOutput;
 
-        public GraphCompileResult(bool isSuccess, IReadOnlyList<GraphDiagnostic> diagnostics, ExecutionPlan plan)
+        public GraphCompileResult(bool isSuccess, IReadOnlyList<GraphDiagnostic> diagnostics, ExecutionPlan plan, string outputChannelName, bool hasConnectedOutput)
         {
             IsSuccess = isSuccess;
             Diagnostics = diagnostics;
             Plan = plan;
+            OutputChannelName = outputChannelName;
+            HasConnectedOutput = hasConnectedOutput;
         }
     }
 }

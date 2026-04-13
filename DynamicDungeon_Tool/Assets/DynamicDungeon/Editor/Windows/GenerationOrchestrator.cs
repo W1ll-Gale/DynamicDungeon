@@ -273,7 +273,7 @@ namespace DynamicDungeon.Editor.Windows
                 bool generateAll = forceFullGeneration || _generateAllRequested || _lastSnapshot == null;
                 _generateAllRequested = false;
 
-                GraphCompileResult compileResult = GraphCompiler.Compile(_graph);
+                GraphCompileResult compileResult = GraphCompiler.CompileForPreview(_graph);
                 if (!compileResult.IsSuccess || compileResult.Plan == null)
                 {
                     if (compileResult.Plan != null)
@@ -868,8 +868,28 @@ namespace DynamicDungeon.Editor.Windows
                 }
             }
 
+            if (job.Node is DynamicDungeon.Runtime.Nodes.TilemapOutputNode)
+            {
+                for (channelIndex = 0; channelIndex < job.Channels.Count; channelIndex++)
+                {
+                    ChannelDeclaration channelDeclaration = job.Channels[channelIndex];
+                    if (IsPreviewableChannelType(channelDeclaration.Type))
+                    {
+                        outputDeclaration = channelDeclaration;
+                        return true;
+                    }
+                }
+            }
+
             outputDeclaration = default;
             return false;
+        }
+
+        private static bool IsPreviewableChannelType(ChannelType channelType)
+        {
+            return channelType == ChannelType.Float ||
+                   channelType == ChannelType.Int ||
+                   channelType == ChannelType.BoolMask;
         }
 
         private static void CopyNativeArray(NativeArray<float> source, float[] destination)

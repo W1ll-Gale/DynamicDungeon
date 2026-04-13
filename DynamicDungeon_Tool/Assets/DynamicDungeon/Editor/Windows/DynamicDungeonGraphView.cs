@@ -313,6 +313,16 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
+            if (GraphOutputUtility.IsOutputNodeType(nodeType))
+            {
+                GenNodeData existingOutputNode = GraphOutputUtility.FindOutputNode(_graph);
+                if (existingOutputNode != null)
+                {
+                    SelectAndFrameNode(existingOutputNode.NodeId);
+                    return;
+                }
+            }
+
             Vector2 graphContentPosition = ConvertGraphLocalToContentPosition(graphLocalPosition);
             string displayName = NodeDiscovery.GetNodeDisplayName(nodeType);
 
@@ -346,6 +356,7 @@ namespace DynamicDungeon.Editor.Windows
             _afterMutation?.Invoke();
 
             GenNodeView nodeView = CreateNodeView(nodeData, nodeInstance);
+            ProtectOutputNode(nodeView);
             _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
             AddElement(nodeView);
 
@@ -475,6 +486,7 @@ namespace DynamicDungeon.Editor.Windows
                 }
 
                 GenNodeView nodeView = CreateNodeView(nodeData, nodeInstance);
+                ProtectOutputNode(nodeView);
                 _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
                 AddElement(nodeView);
             }
@@ -1073,6 +1085,11 @@ namespace DynamicDungeon.Editor.Windows
                     GenNodeView nodeView = graphViewChange.elementsToRemove[elementIndex] as GenNodeView;
                     if (nodeView != null)
                     {
+                        if (GraphOutputUtility.IsOutputNode(nodeView.NodeData))
+                        {
+                            continue;
+                        }
+
                         string nodeId = nodeView.NodeData.NodeId ?? string.Empty;
                         if (!nodeIdsToRemove.Contains(nodeId))
                         {
@@ -1187,6 +1204,16 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             return graphViewChange;
+        }
+
+        private static void ProtectOutputNode(GenNodeView nodeView)
+        {
+            if (nodeView == null || !GraphOutputUtility.IsOutputNode(nodeView.NodeData))
+            {
+                return;
+            }
+
+            nodeView.capabilities &= ~Capabilities.Deletable;
         }
 
         private void OnElementsAddedToGroup(Group group, System.Collections.Generic.IEnumerable<GraphElement> elements)
