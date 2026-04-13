@@ -7,6 +7,8 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Core
 {
+    [NodeCategory("Blackboard")]
+    [NodeDisplayName("Blackboard Reader")]
     [Description("Reads a numeric blackboard value and writes it into every cell of a float output channel.")]
     public sealed class BlackboardReaderNode : IGenNode
     {

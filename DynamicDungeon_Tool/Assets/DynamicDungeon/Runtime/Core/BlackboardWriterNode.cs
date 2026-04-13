@@ -7,6 +7,8 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Core
 {
+    [NodeCategory("Blackboard")]
+    [NodeDisplayName("Blackboard Writer")]
     [Description("Writes a numeric value into the blackboard so downstream nodes can read it.")]
     public sealed class BlackboardWriterNode : IGenNode
     {

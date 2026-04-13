@@ -11,6 +11,8 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [NodeCategory("Generators")]
+    [NodeDisplayName("Perlin Noise")]
     [Description("Generates layered Perlin noise as a float map for terrain, masks, or other procedural inputs.")]
     public sealed class PerlinNoiseNode : IGenNode, IParameterReceiver
     {

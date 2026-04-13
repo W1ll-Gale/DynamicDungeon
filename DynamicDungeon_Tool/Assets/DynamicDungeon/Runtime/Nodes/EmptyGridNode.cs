@@ -10,6 +10,8 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [NodeCategory("Generators")]
+    [NodeDisplayName("Empty Grid")]
     [Description("Creates a fresh float grid and fills every cell with the same value.")]
     public sealed class EmptyGridNode : IGenNode, IParameterReceiver
     {

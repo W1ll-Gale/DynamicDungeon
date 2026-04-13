@@ -9,6 +9,8 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [NodeCategory("Filters")]
+    [NodeDisplayName("Blend")]
     [Description("Blends two float inputs together using a bool mask to choose between them per cell.")]
     public sealed class BlendNode : IGenNode, IInputConnectionReceiver
     {

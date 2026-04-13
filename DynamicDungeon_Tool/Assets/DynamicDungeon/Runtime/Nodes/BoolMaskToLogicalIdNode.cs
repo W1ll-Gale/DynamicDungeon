@@ -27,6 +27,8 @@ namespace DynamicDungeon.Runtime.Nodes
         }
     }
 
+    [NodeCategory("Output")]
+    [NodeDisplayName("Bool Mask to Logical ID")]
     [Description("Converts a bool mask into logical tile IDs for true and false cells.")]
     public sealed class BoolMaskToLogicalIdNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

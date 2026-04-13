@@ -12,6 +12,8 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [NodeCategory("Filters")]
+    [NodeDisplayName("Threshold")]
     [Description("Turns a float input into a bool mask by comparing each cell against a threshold.")]
     public sealed class ThresholdNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

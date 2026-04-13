@@ -11,6 +11,8 @@ using Unity.Mathematics;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [NodeCategory("Math")]
+    [NodeDisplayName("Math")]
     [Description("Applies a math operation to float input A with either float input B or a fallback scalar.")]
     public sealed class MathNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

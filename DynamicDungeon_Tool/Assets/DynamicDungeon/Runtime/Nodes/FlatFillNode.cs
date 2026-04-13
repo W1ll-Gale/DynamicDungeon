@@ -8,6 +8,8 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [NodeCategory("Generators")]
+    [NodeDisplayName("Flat Fill")]
     [Description("Outputs a flat float map where every cell uses the same fill value.")]
     public sealed class FlatFillNode : IGenNode
     {
