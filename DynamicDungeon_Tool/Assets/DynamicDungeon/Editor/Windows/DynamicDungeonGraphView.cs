@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Runtime.Core;
@@ -103,6 +104,7 @@ namespace DynamicDungeon.Editor.Windows
 
             RegisterCallback<MouseMoveEvent>(OnMouseMove);
             RegisterCallback<MouseDownEvent>(OnMouseDown);
+            RegisterCallback<MouseDownEvent>(OnMouseDownCapture, TrickleDown.TrickleDown);
             RegisterCallback<ContextualMenuPopulateEvent>(OnGraphContextualMenuPopulate, TrickleDown.TrickleDown);
             RegisterCallback<KeyDownEvent>(OnKeyDown);
         }
@@ -360,7 +362,7 @@ namespace DynamicDungeon.Editor.Windows
             SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(graphLocalPosition)), _nodeSearchWindow);
         }
 
-        public void CreateStickyNote(Vector2 graphLocalPosition)
+        public void CreateStickyNote(Vector2 graphLocalPosition, string initialText = "")
         {
             if (_graph == null)
             {
@@ -371,7 +373,7 @@ namespace DynamicDungeon.Editor.Windows
             Rect noteRect = new Rect(contentPosition.x, contentPosition.y, DefaultNoteWidth, DefaultNoteHeight);
 
             Undo.RecordObject(_graph, "Add Sticky Note");
-            GenStickyNoteData noteData = _graph.AddStickyNote(string.Empty, noteRect);
+            GenStickyNoteData noteData = _graph.AddStickyNote(initialText ?? string.Empty, noteRect);
             EditorUtility.SetDirty(_graph);
             _afterMutation?.Invoke();
 
@@ -732,6 +734,33 @@ namespace DynamicDungeon.Editor.Windows
         private void OnMouseMove(MouseMoveEvent moveEvent)
         {
             _lastGraphLocalMousePosition = moveEvent.localMousePosition;
+        }
+
+        private void OnMouseDownCapture(MouseDownEvent mouseDownEvent)
+        {
+            if (mouseDownEvent.shiftKey && mouseDownEvent.button == 0)
+            {
+                VisualElement targetElement = mouseDownEvent.target as VisualElement;
+                if (targetElement != null && IsInsideTextField(targetElement))
+                {
+                    return;
+                }
+
+                GraphElement clickedElement = FindOwningGraphElement(targetElement);
+                if (clickedElement != null && (clickedElement.capabilities & Capabilities.Selectable) != 0)
+                {
+                    if (selection.Contains(clickedElement))
+                    {
+                        RemoveFromSelection(clickedElement);
+                    }
+                    else
+                    {
+                        AddToSelection(clickedElement);
+                    }
+                    
+                    mouseDownEvent.StopPropagation();
+                }
+            }
         }
 
         private void OnMouseDown(MouseDownEvent mouseDownEvent)

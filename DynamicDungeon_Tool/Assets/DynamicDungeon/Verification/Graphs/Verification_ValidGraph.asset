@@ -20,7 +20,7 @@ MonoBehaviour:
   - NodeId: perlin-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
     NodeName: Perlin
-    Position: {x: -709.068, y: -44.022694}
+    Position: {x: -744.1, y: 4.0000267}
     Ports:
     - PortName: Noise
       Direction: 1
@@ -116,12 +116,12 @@ MonoBehaviour:
     ToNodeId: threshold-node
     ToPortName: Input
   StickyNotes:
-  - NoteId: c4a4b31c-1942-44ce-b4cf-1a320bac6854
-    Text: asdasdasdasd
+  - NoteId: 991400f4-fd35-4822-aecd-fe79ab60a319
+    Text: sadadasdadssaddsasd
     Position:
       serializedVersion: 2
-      x: -311.40073
-      y: 512.28094
+      x: -414.16928
+      y: -196.99039
       width: 200
       height: 150
   Groups: []

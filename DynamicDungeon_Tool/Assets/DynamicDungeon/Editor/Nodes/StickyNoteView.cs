@@ -11,6 +11,8 @@ namespace DynamicDungeon.Editor.Nodes
     {
         private static readonly Color NoteBackgroundColour = new Color(0.97f, 0.95f, 0.6f, 1.0f);
         private static readonly Color NoteForegroundColour = new Color(0.08f, 0.08f, 0.08f, 1.0f);
+        private static readonly Color NoteSelectedBorderColour = new Color(0.24f, 0.54f, 0.84f, 1.0f);
+        private static readonly Color NoteUnselectedBorderColour = new Color(0.8f, 0.78f, 0.45f, 1.0f);
 
         private readonly GenGraph _graph;
         private readonly GenStickyNoteData _noteData;
@@ -45,6 +47,14 @@ namespace DynamicDungeon.Editor.Nodes
             style.borderTopRightRadius = 4.0f;
             style.borderBottomLeftRadius = 4.0f;
             style.borderBottomRightRadius = 4.0f;
+            style.borderTopWidth = 1.0f;
+            style.borderBottomWidth = 1.0f;
+            style.borderLeftWidth = 1.0f;
+            style.borderRightWidth = 1.0f;
+            style.borderTopColor = NoteUnselectedBorderColour;
+            style.borderBottomColor = NoteUnselectedBorderColour;
+            style.borderLeftColor = NoteUnselectedBorderColour;
+            style.borderRightColor = NoteUnselectedBorderColour;
             style.paddingTop = 6.0f;
             style.paddingBottom = 6.0f;
             style.paddingLeft = 8.0f;
@@ -63,9 +73,30 @@ namespace DynamicDungeon.Editor.Nodes
             _contentsField.style.flexGrow = 1.0f;
             _contentsField.style.color = NoteForegroundColour;
             _contentsField.style.backgroundColor = Color.clear;
+            _contentsField.style.borderTopWidth = 0.0f;
+            _contentsField.style.borderBottomWidth = 0.0f;
+            _contentsField.style.borderLeftWidth = 0.0f;
+            _contentsField.style.borderRightWidth = 0.0f;
             _contentsField.RegisterCallback<FocusOutEvent>(OnContentsFocusOut);
             _contentsField.RegisterCallback<KeyDownEvent>(OnContentsFieldKeyDown);
+
+            VisualElement textInput = _contentsField.Q("unity-text-input");
+            if (textInput != null)
+            {
+                textInput.style.backgroundColor = Color.clear;
+                textInput.style.borderTopWidth = 0.0f;
+                textInput.style.borderBottomWidth = 0.0f;
+                textInput.style.borderLeftWidth = 0.0f;
+                textInput.style.borderRightWidth = 0.0f;
+                textInput.style.color = NoteForegroundColour;
+                textInput.style.paddingTop = 0.0f;
+                textInput.style.paddingBottom = 0.0f;
+                textInput.style.paddingLeft = 0.0f;
+                textInput.style.paddingRight = 0.0f;
+            }
+
             Add(_contentsField);
+            this.AddManipulator(new ContextualMenuManipulator(OnContextMenuPopulate));
 
             _suppressSync = true;
             SetPosition(noteData.Position);
@@ -103,6 +134,14 @@ namespace DynamicDungeon.Editor.Nodes
                 return;
             }
 
+            EnterEditMode();
+
+            e.StopPropagation();
+            focusController?.IgnoreEvent(e);
+        }
+
+        private void EnterEditMode()
+        {
             _contentsField.SetValueWithoutNotify(_contentsLabel.text);
             _contentsLabel.style.display = DisplayStyle.None;
             _contentsField.style.display = DisplayStyle.Flex;
@@ -110,15 +149,90 @@ namespace DynamicDungeon.Editor.Nodes
             VisualElement textInput = _contentsField.Q("unity-text-input");
             if (textInput != null)
             {
+                textInput.style.backgroundColor = Color.clear;
+                textInput.style.borderTopWidth = 0.0f;
+                textInput.style.borderBottomWidth = 0.0f;
+                textInput.style.borderLeftWidth = 0.0f;
+                textInput.style.borderRightWidth = 0.0f;
+                textInput.style.color = NoteForegroundColour;
+                textInput.style.paddingTop = 0.0f;
+                textInput.style.paddingBottom = 0.0f;
+                textInput.style.paddingLeft = 0.0f;
+                textInput.style.paddingRight = 0.0f;
                 textInput.Focus();
             }
             else
             {
                 _contentsField.Focus();
             }
+        }
 
-            e.StopPropagation();
-            focusController?.IgnoreEvent(e);
+        private void OnContextMenuPopulate(ContextualMenuPopulateEvent contextEvent)
+        {
+            contextEvent.menu.AppendAction("Edit Note", _ => EnterEditMode());
+            contextEvent.menu.AppendAction("Duplicate Note", _ => DuplicateNote());
+            contextEvent.menu.AppendAction("Delete", _ => DeleteNote());
+            contextEvent.menu.AppendSeparator();
+            contextEvent.menu.AppendAction("Copy Text", _ => CopyTextToClipboard(), _ => string.IsNullOrEmpty(_noteData?.Text) ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
+            contextEvent.menu.AppendAction("Clear Text", _ => ClearText(), _ => string.IsNullOrEmpty(_noteData?.Text) ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
+            contextEvent.menu.AppendSeparator();
+            contextEvent.menu.AppendAction("Select All Notes", _ => SelectAllNotes());
+        }
+
+        private void DuplicateNote()
+        {
+            DynamicDungeon.Editor.Windows.DynamicDungeonGraphView graphView = GetFirstAncestorOfType<DynamicDungeon.Editor.Windows.DynamicDungeonGraphView>();
+            if (graphView != null && _noteData != null)
+            {
+                Rect currentUIPos = GetPosition();
+                Vector2 newUIPos = new Vector2(currentUIPos.x + 20.0f, currentUIPos.y + 20.0f);
+                graphView.CreateStickyNote(newUIPos, _noteData.Text);
+            }
+        }
+
+        private void CopyTextToClipboard()
+        {
+            if (_noteData != null && !string.IsNullOrEmpty(_noteData.Text))
+            {
+                GUIUtility.systemCopyBuffer = _noteData.Text;
+            }
+        }
+
+        private void ClearText()
+        {
+            if (_noteData != null)
+            {
+                _contentsField.SetValueWithoutNotify(string.Empty);
+                _contentsLabel.text = string.Empty;
+                
+                if (_graph != null)
+                {
+                    Undo.RecordObject(_graph, "Clear Sticky Note Text");
+                    _noteData.Text = string.Empty;
+                    EditorUtility.SetDirty(_graph);
+                    _afterMutation?.Invoke();
+                }
+            }
+        }
+
+        private void SelectAllNotes()
+        {
+            GraphView graphView = GetFirstAncestorOfType<GraphView>();
+            if (graphView != null)
+            {
+                graphView.ClearSelection();
+                graphView.Query<StickyNoteView>().ForEach(note => graphView.AddToSelection(note));
+            }
+        }
+
+        private void DeleteNote()
+        {
+            GraphView graphView = GetFirstAncestorOfType<GraphView>();
+            if (graphView != null)
+            {
+                System.Collections.Generic.List<GraphElement> elementsToDelete = new System.Collections.Generic.List<GraphElement> { this };
+                graphView.DeleteElements(elementsToDelete);
+            }
         }
 
         private void OnContentsFocusOut(FocusOutEvent e)
@@ -154,6 +268,32 @@ namespace DynamicDungeon.Editor.Nodes
                 _contentsLabel.style.display = DisplayStyle.Flex;
                 e.StopPropagation();
             }
+        }
+
+        public override void OnSelected()
+        {
+            base.OnSelected();
+            style.borderTopWidth = 2.0f;
+            style.borderBottomWidth = 2.0f;
+            style.borderLeftWidth = 2.0f;
+            style.borderRightWidth = 2.0f;
+            style.borderTopColor = NoteSelectedBorderColour;
+            style.borderBottomColor = NoteSelectedBorderColour;
+            style.borderLeftColor = NoteSelectedBorderColour;
+            style.borderRightColor = NoteSelectedBorderColour;
+        }
+
+        public override void OnUnselected()
+        {
+            base.OnUnselected();
+            style.borderTopWidth = 1.0f;
+            style.borderBottomWidth = 1.0f;
+            style.borderLeftWidth = 1.0f;
+            style.borderRightWidth = 1.0f;
+            style.borderTopColor = NoteUnselectedBorderColour;
+            style.borderBottomColor = NoteUnselectedBorderColour;
+            style.borderLeftColor = NoteUnselectedBorderColour;
+            style.borderRightColor = NoteUnselectedBorderColour;
         }
     }
 }

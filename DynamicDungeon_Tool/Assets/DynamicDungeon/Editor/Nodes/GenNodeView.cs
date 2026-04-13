@@ -203,13 +203,74 @@ namespace DynamicDungeon.Editor.Nodes
                             "Reset Node Parameters",
                             _ => { },
                             _ => DropdownMenuAction.Status.Disabled);
-                        return;
+                    }
+                    else
+                    {
+                        menuPopulateEvent.menu.AppendAction(
+                            "Reset Node Parameters",
+                            _ => ResetNodeParametersToDefaults());
                     }
 
                     menuPopulateEvent.menu.AppendAction(
-                        "Reset Node Parameters",
-                        _ => ResetNodeParametersToDefaults());
+                        "Remove from Group",
+                        _ => RemoveFromGroup(),
+                        _ => IsInAnyGroup() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
                 }));
+        }
+
+        private bool IsInAnyGroup()
+        {
+            GraphView graphView = GetFirstAncestorOfType<GraphView>();
+            if (graphView == null) return false;
+
+            bool inGroup = false;
+            graphView.Query<Group>().ForEach(group =>
+            {
+                if (group.ContainsElement(this))
+                {
+                    inGroup = true;
+                }
+            });
+
+            return inGroup;
+        }
+
+        private void RemoveFromGroup()
+        {
+            GraphView graphView = GetFirstAncestorOfType<GraphView>();
+            if (graphView == null) return;
+
+            System.Collections.Generic.List<GraphElement> selectedElements = new System.Collections.Generic.List<GraphElement>();
+            foreach (ISelectable selectable in graphView.selection)
+            {
+                GraphElement element = selectable as GraphElement;
+                if (element != null)
+                {
+                    selectedElements.Add(element);
+                }
+            }
+
+            if (!selectedElements.Contains(this))
+            {
+                selectedElements.Add(this);
+            }
+
+            graphView.Query<Group>().ForEach(group =>
+            {
+                System.Collections.Generic.List<GraphElement> elementsToRemove = new System.Collections.Generic.List<GraphElement>();
+                foreach (GraphElement element in selectedElements)
+                {
+                    if (group.ContainsElement(element))
+                    {
+                        elementsToRemove.Add(element);
+                    }
+                }
+
+                if (elementsToRemove.Count > 0)
+                {
+                    group.RemoveElements(elementsToRemove);
+                }
+            });
         }
 
         private void ApplyNodeTitleTooltip()
