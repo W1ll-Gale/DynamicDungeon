@@ -18,6 +18,7 @@ namespace DynamicDungeon.Editor.Windows
         private ObjectField _graphField;
         private Label _statusLabel;
         private ToolbarToggle _autoSaveToggle;
+        private BreadcrumbBar _breadcrumbBar;
         private DynamicDungeonGraphView _graphView;
         private GenerationOrchestrator _generationOrchestrator;
         private DiagnosticsPanel _diagnosticsPanel;
@@ -81,6 +82,9 @@ namespace DynamicDungeon.Editor.Windows
             Toolbar toolbar = BuildToolbar();
             rootVisualElement.Add(toolbar);
 
+            _breadcrumbBar = new BreadcrumbBar(OnBreadcrumbGraphChanged);
+            rootVisualElement.Add(_breadcrumbBar);
+
             _graphView = new DynamicDungeonGraphView();
             rootVisualElement.Add(_graphView);
 
@@ -90,15 +94,13 @@ namespace DynamicDungeon.Editor.Windows
             _generationOrchestrator = new GenerationOrchestrator(_graphView, SetStatus, OnDiagnosticsUpdated);
             _graphView.SetGenerationOrchestrator(_generationOrchestrator);
             _graphView.SetAfterMutationCallback(OnAfterGraphMutation);
+            _graphView.SetSubGraphEnterCallback(OnEnterSubGraph);
 
             _graphField.SetValueWithoutNotify(_loadedGraph);
 
             if (_loadedGraph != null)
             {
-                _generationOrchestrator.SetGraph(_loadedGraph);
-                _graphView.LoadGraph(_loadedGraph);
-                _diagnosticsPanel.SetGraphContext(_graphView, _loadedGraph);
-                _generationOrchestrator.RequestPreviewRefresh();
+                _breadcrumbBar.Push(_loadedGraph, _loadedGraph.name);
             }
             else
             {
@@ -204,6 +206,34 @@ namespace DynamicDungeon.Editor.Windows
                 _graphField.SetValueWithoutNotify(graph);
             }
 
+            // Reset the breadcrumb trail whenever a new top-level graph is picked
+            // from the ObjectField — navigation history for the previous graph is
+            // no longer meaningful.
+            if (_breadcrumbBar != null)
+            {
+                // Flush all entries by popping past index 0 (BreadcrumbBar.PopTo
+                // discards silently when depth is out of range), then Push the new
+                // root.  Push fires OnBreadcrumbGraphChanged which loads the canvas,
+                // so we return early to avoid a second load via LoadGraphInCanvas.
+                _breadcrumbBar.ResetTo(graph, graph != null ? graph.name : string.Empty);
+
+                if (graph != null)
+                {
+                    return;
+                }
+            }
+
+            LoadGraphInCanvas(graph, Vector3.zero, 1.0f);
+        }
+
+        /// <summary>
+        /// Reloads the canvas, orchestrator, and diagnostics panel for
+        /// <paramref name="graph"/> and restores the supplied viewport state.
+        /// This is the single point through which all graph-change events
+        /// (direct load, Push, PopTo) route their canvas updates.
+        /// </summary>
+        private void LoadGraphInCanvas(GenGraph graph, Vector3 scrollOffset, float zoomScale)
+        {
             if (_generationOrchestrator != null)
             {
                 _generationOrchestrator.SetGraph(graph);
@@ -218,7 +248,12 @@ namespace DynamicDungeon.Editor.Windows
                 else
                 {
                     _graphView.LoadGraph(graph);
-                    _generationOrchestrator.RequestPreviewRefresh();
+                    _graphView.RestoreViewportState(scrollOffset, zoomScale);
+
+                    if (_generationOrchestrator != null)
+                    {
+                        _generationOrchestrator.RequestPreviewRefresh();
+                    }
                 }
             }
 
@@ -230,6 +265,37 @@ namespace DynamicDungeon.Editor.Windows
 
             SetStatus(IdleStatusText);
             RefreshWindowTitle();
+        }
+
+        // --- Sub-graph navigation ---
+
+        /// <summary>
+        /// Called by <see cref="DynamicDungeonGraphView"/> when a sub-graph node's
+        /// Enter action is triggered.  Captures the current viewport and delegates
+        /// to <see cref="BreadcrumbBar.Push"/>.
+        /// </summary>
+        private void OnEnterSubGraph(GenGraph nestedGraph, string label)
+        {
+            if (nestedGraph == null || _breadcrumbBar == null || _graphView == null)
+            {
+                return;
+            }
+
+            Vector3 currentScrollOffset;
+            float currentZoomScale;
+            _graphView.GetViewportState(out currentScrollOffset, out currentZoomScale);
+            _breadcrumbBar.SaveViewportState(currentScrollOffset, currentZoomScale);
+
+            // Push fires OnBreadcrumbGraphChanged which loads the canvas.
+            _breadcrumbBar.Push(nestedGraph, label);
+        }
+
+        /// <summary>
+        /// Called by <see cref="BreadcrumbBar"/> whenever the visible graph changes.
+        /// </summary>
+        private void OnBreadcrumbGraphChanged(GenGraph graph, Vector3 scrollOffset, float zoomScale)
+        {
+            LoadGraphInCanvas(graph, scrollOffset, zoomScale);
         }
 
         private void OnAfterGraphMutation()

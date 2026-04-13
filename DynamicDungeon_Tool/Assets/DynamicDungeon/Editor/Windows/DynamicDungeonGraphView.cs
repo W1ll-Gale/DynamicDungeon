@@ -36,6 +36,12 @@ namespace DynamicDungeon.Editor.Windows
         private GenGraph _graph;
         private GenerationOrchestrator _generationOrchestrator;
         private Action _afterMutation;
+
+        // Callback fired when a sub-graph node's Enter button is activated.
+        // Arguments: the nested GenGraph to navigate into, the label to show
+        // in the breadcrumb bar.
+        private Action<GenGraph, string> _onEnterSubGraph;
+
         private string _expandedPreviewNodeId;
         private Vector2 _expandedPreviewPanOffset;
         private Vector2 _expandedPreviewPanOffsetAtDragStart;
@@ -134,6 +140,40 @@ namespace DynamicDungeon.Editor.Windows
         public void SetAfterMutationCallback(Action afterMutation)
         {
             _afterMutation = afterMutation;
+        }
+
+        /// <summary>
+        /// Registers the callback that is invoked when a sub-graph node's
+        /// "↓ Enter" action is triggered.  The breadcrumb bar wires this up so
+        /// it can push a new level onto the trail.
+        /// </summary>
+        public void SetSubGraphEnterCallback(Action<GenGraph, string> onEnterSubGraph)
+        {
+            _onEnterSubGraph = onEnterSubGraph;
+        }
+
+        /// <summary>
+        /// Returns the current canvas scroll offset and zoom scale so the caller
+        /// can save them before navigating away to a sub-graph.
+        /// </summary>
+        public void GetViewportState(out Vector3 scrollOffset, out float zoomScale)
+        {
+            scrollOffset = contentViewContainer.resolvedStyle.translate;
+            zoomScale = contentViewContainer.resolvedStyle.scale.value.x;
+        }
+
+        /// <summary>
+        /// Restores a previously saved canvas scroll offset and zoom scale.
+        /// Used when the user navigates back to a parent graph via the breadcrumb.
+        /// </summary>
+        public void RestoreViewportState(Vector3 scrollOffset, float zoomScale)
+        {
+            float safeZoom = Mathf.Clamp(
+                zoomScale,
+                ContentZoomer.DefaultMinScale,
+                ContentZoomer.DefaultMaxScale);
+
+            UpdateViewTransform(scrollOffset, new Vector3(safeZoom, safeZoom, 1.0f));
         }
 
         public void SetGenerationOverlayVisible(bool isVisible)
@@ -303,14 +343,7 @@ namespace DynamicDungeon.Editor.Windows
             EditorUtility.SetDirty(_graph);
             _afterMutation?.Invoke();
 
-            GenNodeView nodeView = new GenNodeView(
-                _graph,
-                nodeData,
-                nodeInstance,
-                _generationOrchestrator,
-                _edgeConnectorListener,
-                ShowExpandedPreview,
-                _afterMutation);
+            GenNodeView nodeView = CreateNodeView(nodeData, nodeInstance);
             _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
             AddElement(nodeView);
 
@@ -439,14 +472,7 @@ namespace DynamicDungeon.Editor.Windows
                     continue;
                 }
 
-                GenNodeView nodeView = new GenNodeView(
-                    _graph,
-                    nodeData,
-                    nodeInstance,
-                    _generationOrchestrator,
-                    _edgeConnectorListener,
-                    ShowExpandedPreview,
-                    _afterMutation);
+                GenNodeView nodeView = CreateNodeView(nodeData, nodeInstance);
                 _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
                 AddElement(nodeView);
             }
@@ -516,6 +542,43 @@ namespace DynamicDungeon.Editor.Windows
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Instantiates the correct node view type for <paramref name="nodeData"/>.
+        /// Returns a <see cref="SubGraphNodeView"/> when the resolved node type
+        /// carries a <see cref="SubGraphNodeAttribute"/>, and a plain
+        /// <see cref="GenNodeView"/> otherwise.
+        /// </summary>
+        private GenNodeView CreateNodeView(GenNodeData nodeData, IGenNode nodeInstance)
+        {
+            Type nodeType = nodeInstance != null ? nodeInstance.GetType() : null;
+            SubGraphNodeAttribute subGraphAttribute = nodeType != null
+                ? Attribute.GetCustomAttribute(nodeType, typeof(SubGraphNodeAttribute)) as SubGraphNodeAttribute
+                : null;
+
+            if (subGraphAttribute != null)
+            {
+                return new SubGraphNodeView(
+                    _graph,
+                    nodeData,
+                    nodeInstance,
+                    _generationOrchestrator,
+                    _edgeConnectorListener,
+                    ShowExpandedPreview,
+                    _afterMutation,
+                    subGraphAttribute.NestedGraphParameterName,
+                    _onEnterSubGraph);
+            }
+
+            return new GenNodeView(
+                _graph,
+                nodeData,
+                nodeInstance,
+                _generationOrchestrator,
+                _edgeConnectorListener,
+                ShowExpandedPreview,
+                _afterMutation);
         }
 
         private Vector2 ConvertGraphLocalToContentPosition(Vector2 graphLocalPosition)

@@ -11,7 +11,7 @@ using UnityEngine.UIElements;
 
 namespace DynamicDungeon.Editor.Nodes
 {
-    public sealed class GenNodeView : Node
+    public class GenNodeView : Node
     {
         private static readonly Vector2 DefaultNodeSize = new Vector2(240.0f, 180.0f);
         private static readonly Vector2 ThumbnailSize = new Vector2(120.0f, 80.0f);
