@@ -3,12 +3,19 @@ using System.Collections.Generic;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using System.Reflection;
 using DynamicDungeon.Runtime.Core;
+using UnityEditor;
 
 namespace DynamicDungeon.Editor.Utilities
 {
+    [InitializeOnLoad]
     public static class NodeDiscovery
     {
         private static IReadOnlyList<Type> _cachedNodeTypes;
+
+        static NodeDiscovery()
+        {
+            AssemblyReloadEvents.afterAssemblyReload += ClearCache;
+        }
 
         public static IReadOnlyList<Type> DiscoverNodeTypes()
         {
@@ -92,6 +99,11 @@ namespace DynamicDungeon.Editor.Utilities
             }
 
             return descriptionAttribute.Description;
+        }
+
+        public static void ClearCache()
+        {
+            _cachedNodeTypes = null;
         }
 
         private static int CompareNodeTypes(Type left, Type right)

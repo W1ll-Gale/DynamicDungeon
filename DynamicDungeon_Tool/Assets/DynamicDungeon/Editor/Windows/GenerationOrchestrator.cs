@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
@@ -30,6 +31,8 @@ namespace DynamicDungeon.Editor.Windows
         private GenGraph _graph;
         private ExecutionPlan _cachedPlan;
         private WorldSnapshot _lastSnapshot;
+        private Task<ExecutionResult> _activeExecutionTask;
+        private IReadOnlyList<GraphDiagnostic> _activeCompileDiagnostics;
         private CancellationTokenSource _generationCancellationTokenSource;
         private bool _debounceScheduled;
         private bool _editorUpdateSubscribed;
@@ -37,6 +40,7 @@ namespace DynamicDungeon.Editor.Windows
         private bool _isGenerating;
         private bool _isDisposed;
         private bool _loadingIndicatorsVisible;
+        private bool _suppressFollowUpGeneration;
         private int _activeGenerationVersion;
         private double _loadingIndicatorTime;
         private double _nextGenerationTime;
@@ -78,6 +82,9 @@ namespace DynamicDungeon.Editor.Windows
             _pendingDirtyNodeIds = new HashSet<string>(StringComparer.Ordinal);
             _pendingPreviewUpdatesLock = new object();
             _pendingPreviewUpdates = new Queue<PreviewUpdateData>();
+            _activeCompileDiagnostics = Array.Empty<GraphDiagnostic>();
+
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
         }
 
         public void SetGraph(GenGraph graph)
@@ -184,8 +191,13 @@ namespace DynamicDungeon.Editor.Windows
 
         public void CancelGeneration()
         {
+            _generateAllRequested = false;
+            _suppressFollowUpGeneration = true;
             CancelInFlightExecution();
             ClearScheduledRefresh();
+            WaitForActiveExecutionCompletion();
+            FinishActiveGeneration();
+            ClearPendingPreviewUpdates();
 
             if (!_isGenerating)
             {
@@ -215,6 +227,8 @@ namespace DynamicDungeon.Editor.Windows
                 EditorApplication.update -= OnEditorUpdate;
                 _editorUpdateSubscribed = false;
             }
+
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
         }
 
         private void BeginGeneration(bool forceFullGeneration)
@@ -234,10 +248,10 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
-            RunGenerationAsync(forceFullGeneration);
+            StartGeneration(forceFullGeneration);
         }
 
-        private async void RunGenerationAsync(bool forceFullGeneration)
+        private void StartGeneration(bool forceFullGeneration)
         {
             _isGenerating = true;
             _activeGenerationVersion++;
@@ -270,6 +284,10 @@ namespace DynamicDungeon.Editor.Windows
                     ReplaceCachedPlan(null);
                     ReportDiagnostics(compileResult.Diagnostics);
                     _statusChanged?.Invoke(FailedStatusText);
+                    DisposeCancellationSource();
+                    _activeCompileDiagnostics = Array.Empty<GraphDiagnostic>();
+                    _isGenerating = false;
+                    ReleaseEditorUpdateSubscriptionIfIdle();
                     return;
                 }
 
@@ -300,53 +318,22 @@ namespace DynamicDungeon.Editor.Windows
                 }
 
                 ReplaceCachedPlan(plan);
-
-                ExecutionResult executionResult = await _executor.ExecuteAsync(
+                _activeCompileDiagnostics = compileResult.Diagnostics ?? Array.Empty<GraphDiagnostic>();
+                _activeExecutionTask = _executor.ExecuteAsync(
                     plan,
                     cancellationToken,
                     null,
                     false,
                     completedJobIndex => QueueCompletedJobPreview(plan, completedJobIndex, generationVersion));
-                if (executionResult.WasCancelled || cancellationToken.IsCancellationRequested)
-                {
-                    ProcessPendingPreviewUpdates();
-                    HideLoadingIndicators(IdleStatusText, true);
-                    return;
-                }
-
-                if (!executionResult.IsSuccess || executionResult.Snapshot == null)
-                {
-                    HideLoadingIndicators(FailedStatusText, true);
-                    ReportDiagnostics(CreateExecutionFailureDiagnostics(compileResult.Diagnostics, executionResult.ErrorMessage));
-                    return;
-                }
-
-                _lastSnapshot = executionResult.Snapshot;
-                ProcessPendingPreviewUpdates();
-                UpdateNodePreviewsFromPlan(plan);
-                HideLoadingIndicators(DoneStatusText, false);
-                ReportDiagnostics(compileResult.Diagnostics);
             }
             catch (Exception exception)
             {
                 HideLoadingIndicators(FailedStatusText, true);
                 Debug.LogErrorFormat("Editor generation failed: {0}", exception.Message);
                 ReportDiagnostics(CreateExecutionFailureDiagnostics(Array.Empty<GraphDiagnostic>(), exception.Message));
-            }
-            finally
-            {
+                DisposeCancellationSource();
+                _activeCompileDiagnostics = Array.Empty<GraphDiagnostic>();
                 _isGenerating = false;
-
-                if (_generateAllRequested)
-                {
-                    BeginGeneration(true);
-                }
-                else if (_pendingDirtyNodeIds.Count > 0)
-                {
-                    PropagatePendingDirtyNodesToCachedPlan();
-                    ScheduleDebouncedRefresh();
-                }
-
                 ReleaseEditorUpdateSubscriptionIfIdle();
             }
         }
@@ -373,6 +360,11 @@ namespace DynamicDungeon.Editor.Windows
                 ClearPendingPreviewUpdates();
                 ReleaseEditorUpdateSubscriptionIfIdle();
                 return;
+            }
+
+            if (_activeExecutionTask != null && _activeExecutionTask.IsCompleted)
+            {
+                FinishActiveGeneration();
             }
 
             TryShowLoadingIndicators();
@@ -431,6 +423,76 @@ namespace DynamicDungeon.Editor.Windows
             }
         }
 
+        private void FinishActiveGeneration()
+        {
+            Task<ExecutionResult> completedTask = _activeExecutionTask;
+            if (completedTask == null)
+            {
+                if (_suppressFollowUpGeneration)
+                {
+                    _pendingDirtyNodeIds.Clear();
+                    _suppressFollowUpGeneration = false;
+                }
+
+                return;
+            }
+
+            _activeExecutionTask = null;
+
+            try
+            {
+                ExecutionResult executionResult = completedTask.GetAwaiter().GetResult();
+                if (executionResult.WasCancelled)
+                {
+                    ProcessPendingPreviewUpdates();
+                    HideLoadingIndicators(IdleStatusText, true);
+                }
+                else if (!executionResult.IsSuccess || executionResult.Snapshot == null)
+                {
+                    HideLoadingIndicators(FailedStatusText, true);
+                    ReportDiagnostics(CreateExecutionFailureDiagnostics(_activeCompileDiagnostics, executionResult.ErrorMessage));
+                }
+                else
+                {
+                    _lastSnapshot = executionResult.Snapshot;
+                    ProcessPendingPreviewUpdates();
+                    UpdateNodePreviewsFromPlan(_cachedPlan);
+                    HideLoadingIndicators(DoneStatusText, false);
+                    ReportDiagnostics(_activeCompileDiagnostics);
+                }
+            }
+            catch (Exception exception)
+            {
+                HideLoadingIndicators(FailedStatusText, true);
+                Debug.LogErrorFormat("Editor generation failed: {0}", exception.Message);
+                ReportDiagnostics(CreateExecutionFailureDiagnostics(Array.Empty<GraphDiagnostic>(), exception.Message));
+            }
+            finally
+            {
+                DisposeCancellationSource();
+                _activeCompileDiagnostics = Array.Empty<GraphDiagnostic>();
+                _isGenerating = false;
+
+                if (_suppressFollowUpGeneration)
+                {
+                    _pendingDirtyNodeIds.Clear();
+                    _generateAllRequested = false;
+                    _suppressFollowUpGeneration = false;
+                }
+                else if (_generateAllRequested)
+                {
+                    BeginGeneration(true);
+                }
+                else if (_pendingDirtyNodeIds.Count > 0)
+                {
+                    PropagatePendingDirtyNodesToCachedPlan();
+                    ScheduleDebouncedRefresh();
+                }
+
+                ReleaseEditorUpdateSubscriptionIfIdle();
+            }
+        }
+
         private void ReplaceCachedPlan(ExecutionPlan plan)
         {
             if (_cachedPlan != null && !ReferenceEquals(_cachedPlan, plan))
@@ -446,6 +508,23 @@ namespace DynamicDungeon.Editor.Windows
             if (_generationCancellationTokenSource != null)
             {
                 _generationCancellationTokenSource.Cancel();
+            }
+        }
+
+        private void WaitForActiveExecutionCompletion()
+        {
+            Task<ExecutionResult> activeExecutionTask = _activeExecutionTask;
+            if (activeExecutionTask == null || activeExecutionTask.IsCompleted)
+            {
+                return;
+            }
+
+            try
+            {
+                activeExecutionTask.Wait();
+            }
+            catch (AggregateException)
+            {
             }
         }
 
@@ -594,6 +673,18 @@ namespace DynamicDungeon.Editor.Windows
             {
                 _pendingPreviewUpdates.Clear();
             }
+        }
+
+        private void OnBeforeAssemblyReload()
+        {
+            if (!_isGenerating && _activeExecutionTask == null)
+            {
+                ClearScheduledRefresh();
+                return;
+            }
+
+            Debug.Log("Generation cancelled for domain reload.");
+            CancelGeneration();
         }
 
         private void UpdateNodePreviewsFromPlan(ExecutionPlan plan)
