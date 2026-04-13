@@ -11,5 +11,6 @@ namespace DynamicDungeon.Runtime.Graph
         public string Title;
         public Rect Position;
         public List<string> ContainedNodeIds = new List<string>();
+        public Color BackgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.3f);
     }
 }
