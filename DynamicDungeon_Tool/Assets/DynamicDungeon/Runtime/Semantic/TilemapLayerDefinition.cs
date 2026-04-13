@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Semantic
 {
-    [CreateAssetMenu(fileName = "TilemapLayerDefinition", menuName = "DynamicDungeon/Tilemap Layer Definition")]
     public sealed class TilemapLayerDefinition : ScriptableObject
     {
         public string LayerName = "Default";

@@ -8,7 +8,6 @@ using UnityEditor;
 
 namespace DynamicDungeon.Runtime.Semantic
 {
-    [CreateAssetMenu(fileName = "TileSemanticRegistry", menuName = "DynamicDungeon/Tile Semantic Registry")]
     public sealed class TileSemanticRegistry : ScriptableObject
     {
         private const string RegistryAssetPath = "Assets/DynamicDungeon/TileSemanticRegistry.asset";

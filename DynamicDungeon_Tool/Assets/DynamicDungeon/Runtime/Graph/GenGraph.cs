@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Graph
 {
-    [CreateAssetMenu(fileName = "GenGraph", menuName = "DynamicDungeon/Generation Graph")]
     public sealed class GenGraph : ScriptableObject
     {
         public int SchemaVersion;

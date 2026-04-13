@@ -4,7 +4,6 @@ using UnityEngine.Tilemaps;
 
 namespace DynamicDungeon.Runtime.Biome
 {
-    [CreateAssetMenu(fileName = "Biome", menuName = "DynamicDungeon/Biome")]
     public sealed class BiomeAsset : ScriptableObject
     {
         public List<BiomeTileMapping> TileMappings = new List<BiomeTileMapping>();
