@@ -24,8 +24,10 @@ namespace DynamicDungeon.Editor.Windows
         private ObjectField _graphField;
         private Label _statusLabel;
         private ToolbarToggle _autoSaveToggle;
+        private ToolbarToggle _settingsToggle;
         private BreadcrumbBar _breadcrumbBar;
         private DynamicDungeonGraphView _graphView;
+        private GraphSettingsPanel _settingsPanel;
         private GenerationOrchestrator _generationOrchestrator;
         private DiagnosticsPanel _diagnosticsPanel;
         private bool _skipNextPreviewRefresh;
@@ -35,6 +37,9 @@ namespace DynamicDungeon.Editor.Windows
 
         [SerializeField]
         private bool _isDiagnosticsPanelCollapsed;
+
+        [SerializeField]
+        private bool _isSettingsPanelOpen;
 
         [SerializeField]
         private float _diagnosticsPanelExpandedHeight = DiagnosticsPanelHeight;
@@ -92,8 +97,20 @@ namespace DynamicDungeon.Editor.Windows
             _breadcrumbBar = new BreadcrumbBar(OnBreadcrumbGraphChanged);
             rootVisualElement.Add(_breadcrumbBar);
 
+            VisualElement contentArea = new VisualElement();
+            contentArea.style.flexDirection = FlexDirection.Row;
+            contentArea.style.flexGrow = 1;
+            rootVisualElement.Add(contentArea);
+
             _graphView = new DynamicDungeonGraphView();
-            rootVisualElement.Add(_graphView);
+            _graphView.style.flexGrow = 1;
+            contentArea.Add(_graphView);
+
+            _settingsPanel = new GraphSettingsPanel(
+                () => _generationOrchestrator?.RequestPreviewRefresh(),
+                OnAfterGraphMutation);
+            _settingsPanel.style.display = _isSettingsPanelOpen ? DisplayStyle.Flex : DisplayStyle.None;
+            contentArea.Add(_settingsPanel);
 
             _diagnosticsPanel = BuildDiagnosticsPanel();
             rootVisualElement.Add(_diagnosticsPanel);
@@ -170,6 +187,17 @@ namespace DynamicDungeon.Editor.Windows
             _statusLabel.style.marginLeft = 8.0f;
             _statusLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
             toolbar.Add(_statusLabel);
+
+            VisualElement toolbarSpacer = new VisualElement();
+            toolbarSpacer.style.flexGrow = 1;
+            toolbar.Add(toolbarSpacer);
+
+            _settingsToggle = new ToolbarToggle();
+            _settingsToggle.text = "Settings";
+            _settingsToggle.tooltip = "Toggle Graph Settings panel";
+            _settingsToggle.SetValueWithoutNotify(_isSettingsPanelOpen);
+            _settingsToggle.RegisterValueChangedCallback(OnSettingsToggleChanged);
+            toolbar.Add(_settingsToggle);
 
             return toolbar;
         }
@@ -270,6 +298,8 @@ namespace DynamicDungeon.Editor.Windows
         /// </summary>
         private void LoadGraphInCanvas(GenGraph graph, Vector3 scrollOffset, float zoomScale)
         {
+            _settingsPanel?.SetGraph(graph);
+
             if (_generationOrchestrator != null)
             {
                 _generationOrchestrator.SetGraph(graph);
@@ -352,6 +382,15 @@ namespace DynamicDungeon.Editor.Windows
         private void OnAutoSaveToggleChanged(ChangeEvent<bool> changeEvent)
         {
             AutoSave = changeEvent.newValue;
+        }
+
+        private void OnSettingsToggleChanged(ChangeEvent<bool> changeEvent)
+        {
+            _isSettingsPanelOpen = changeEvent.newValue;
+            if (_settingsPanel != null)
+            {
+                _settingsPanel.style.display = _isSettingsPanelOpen ? DisplayStyle.Flex : DisplayStyle.None;
+            }
         }
 
         private void OnDiagnosticsUpdated(IReadOnlyList<GraphDiagnostic> diagnostics)

@@ -1,5 +1,7 @@
+using System.Globalization;
 using DynamicDungeon.Editor.Windows;
 using DynamicDungeon.Runtime.Component;
+using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using DynamicDungeon.Runtime.Semantic;
 using UnityEditor;
@@ -34,11 +36,15 @@ namespace DynamicDungeon.Editor.Inspectors
         private SerializedProperty _biomeProperty;
         private SerializedProperty _tilemapOffsetProperty;
         private SerializedProperty _bakedWorldSnapshotProperty;
+        private SerializedProperty _propertyOverridesProperty;
 
+        private SerializedObject _graphSerializedObject;
         private ReorderableList _layerDefinitionsList;
         private GUIStyle _sectionTitleStyle;
         private GUIStyle _statusBannerTextStyle;
         private GUIStyle _mutedMiniLabelStyle;
+
+        private GenGraph _previousGraph;
 
         private void OnEnable()
         {
@@ -53,6 +59,13 @@ namespace DynamicDungeon.Editor.Inspectors
             _biomeProperty = serializedObject.FindProperty("_biome");
             _tilemapOffsetProperty = serializedObject.FindProperty("_tilemapOffset");
             _bakedWorldSnapshotProperty = serializedObject.FindProperty("_bakedWorldSnapshot");
+            _propertyOverridesProperty = serializedObject.FindProperty("_propertyOverrides");
+
+            _previousGraph = _graphProperty.objectReferenceValue as GenGraph;
+            if (_previousGraph != null)
+            {
+                _graphSerializedObject = new SerializedObject(_previousGraph);
+            }
 
             InitialiseLayerDefinitionsList();
             EditorApplication.update += OnEditorUpdate;
@@ -70,8 +83,10 @@ namespace DynamicDungeon.Editor.Inspectors
             EnsureStyles();
 
             serializedObject.Update();
+            _graphSerializedObject?.Update();
 
             bool openGraphRequested = DrawGraphSection();
+            DrawExposedPropertyOverridesSection();
             DrawGenerationSettingsSection();
             DrawOutputSection();
             bool applyLayerStructureRequested = DrawAutomationSection();
@@ -83,6 +98,21 @@ namespace DynamicDungeon.Editor.Inspectors
             DrawStatusSection(component, out generateRequested, out cancelRequested);
 
             serializedObject.ApplyModifiedProperties();
+            _graphSerializedObject?.ApplyModifiedProperties();
+
+            GenGraph currentGraph = _graphProperty.objectReferenceValue as GenGraph;
+            if (!ReferenceEquals(currentGraph, _previousGraph))
+            {
+                _previousGraph = currentGraph;
+                _graphSerializedObject = currentGraph != null ? new SerializedObject(currentGraph) : null;
+                if (currentGraph != null)
+                {
+                    Undo.RecordObject(component, "Reconcile Exposed Property Overrides");
+                    component.ReconcilePropertyOverrides();
+                    EditorUtility.SetDirty(component);
+                    serializedObject.Update();
+                }
+            }
 
             if (openGraphRequested)
             {
@@ -168,21 +198,133 @@ namespace DynamicDungeon.Editor.Inspectors
             return openGraphRequested;
         }
 
+        private void DrawExposedPropertyOverridesSection()
+        {
+            GenGraph graph = _graphProperty.objectReferenceValue as GenGraph;
+
+            if (graph == null || graph.ExposedProperties == null || graph.ExposedProperties.Count == 0)
+            {
+                return;
+            }
+
+            BeginSection("Exposed Properties");
+            EditorGUILayout.LabelField("Override per-instance values for this component.", _mutedMiniLabelStyle);
+            GUILayout.Space(2.0f);
+
+            int propertyIndex;
+            for (propertyIndex = 0; propertyIndex < graph.ExposedProperties.Count; propertyIndex++)
+            {
+                ExposedProperty exposedProp = graph.ExposedProperties[propertyIndex];
+                if (exposedProp == null)
+                {
+                    continue;
+                }
+
+                SerializedProperty overrideElement = FindOverrideSerializedProperty(exposedProp.PropertyName);
+                if (overrideElement == null)
+                {
+                    continue;
+                }
+
+                SerializedProperty overrideValueProp = overrideElement.FindPropertyRelative("OverrideValue");
+                if (overrideValueProp == null)
+                {
+                    continue;
+                }
+
+                string currentValue = overrideValueProp.stringValue;
+
+                EditorGUI.BeginChangeCheck();
+
+                if (exposedProp.Type == ChannelType.Float)
+                {
+                    float floatValue;
+                    float.TryParse(currentValue, NumberStyles.Float, CultureInfo.InvariantCulture, out floatValue);
+                    float newFloat = EditorGUILayout.FloatField(exposedProp.PropertyName, floatValue);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        overrideValueProp.stringValue = newFloat.ToString("G", CultureInfo.InvariantCulture);
+                    }
+                }
+                else
+                {
+                    int intValue;
+                    int.TryParse(currentValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out intValue);
+                    int newInt = EditorGUILayout.IntField(exposedProp.PropertyName, intValue);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        overrideValueProp.stringValue = newInt.ToString(CultureInfo.InvariantCulture);
+                    }
+                }
+            }
+
+            EndSection();
+        }
+
+        private SerializedProperty FindOverrideSerializedProperty(string propertyName)
+        {
+            if (_propertyOverridesProperty == null)
+            {
+                return null;
+            }
+
+            int index;
+            for (index = 0; index < _propertyOverridesProperty.arraySize; index++)
+            {
+                SerializedProperty element = _propertyOverridesProperty.GetArrayElementAtIndex(index);
+                SerializedProperty nameProp = element.FindPropertyRelative("PropertyName");
+                if (nameProp != null && string.Equals(nameProp.stringValue, propertyName, System.StringComparison.Ordinal))
+                {
+                    return element;
+                }
+            }
+
+            return null;
+        }
+
         private void DrawGenerationSettingsSection()
         {
             BeginSection("Generation Settings");
 
             EditorGUILayout.PropertyField(_generateOnStartProperty, new GUIContent("Generate On Start"));
-            EditorGUILayout.PropertyField(_seedModeProperty, new GUIContent("Seed Mode"));
 
-            SeedMode seedMode = (SeedMode)_seedModeProperty.enumValueIndex;
-            if (seedMode == SeedMode.Stable)
+            GenGraph graph = _graphProperty.objectReferenceValue as GenGraph;
+            if (graph != null && _graphSerializedObject != null)
             {
-                EditorGUILayout.PropertyField(_stableSeedProperty, new GUIContent("Stable Seed"));
-            }
+                SerializedProperty seedModeProp = _graphSerializedObject.FindProperty("DefaultSeedMode");
+                SerializedProperty seedProp = _graphSerializedObject.FindProperty("DefaultSeed");
+                SerializedProperty widthProp = _graphSerializedObject.FindProperty("WorldWidth");
+                SerializedProperty heightProp = _graphSerializedObject.FindProperty("WorldHeight");
 
-            EditorGUILayout.PropertyField(_worldWidthProperty, new GUIContent("World Width"));
-            EditorGUILayout.PropertyField(_worldHeightProperty, new GUIContent("World Height"));
+                EditorGUILayout.PropertyField(seedModeProp, new GUIContent("Seed Mode"));
+
+                SeedMode seedMode = (SeedMode)seedModeProp.enumValueIndex;
+                if (seedMode == SeedMode.Stable)
+                {
+                    EditorGUILayout.PropertyField(seedProp, new GUIContent("Stable Seed"));
+                }
+                else
+                {
+                    DungeonGeneratorComponent component = (DungeonGeneratorComponent)target;
+                    EditorGUI.BeginDisabledGroup(true);
+                    EditorGUILayout.LongField(new GUIContent("Last Seed", "Seed used in the most recent generation run."), component.LastUsedSeed);
+                    EditorGUI.EndDisabledGroup();
+                }
+
+                EditorGUILayout.PropertyField(widthProp, new GUIContent("World Width"));
+                EditorGUILayout.PropertyField(heightProp, new GUIContent("World Height"));
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(_seedModeProperty, new GUIContent("Seed Mode"));
+                SeedMode seedMode = (SeedMode)_seedModeProperty.enumValueIndex;
+                if (seedMode == SeedMode.Stable)
+                {
+                    EditorGUILayout.PropertyField(_stableSeedProperty, new GUIContent("Stable Seed"));
+                }
+                EditorGUILayout.PropertyField(_worldWidthProperty, new GUIContent("World Width"));
+                EditorGUILayout.PropertyField(_worldHeightProperty, new GUIContent("World Height"));
+            }
 
             EndSection();
         }
@@ -570,7 +712,12 @@ namespace DynamicDungeon.Editor.Inspectors
         private void OnEditorUpdate()
         {
             DungeonGeneratorComponent component = target as DungeonGeneratorComponent;
-            if (component != null && component.IsGenerating)
+            if (component == null)
+            {
+                return;
+            }
+
+            if (component.IsGenerating || component.Graph != null)
             {
                 Repaint();
             }

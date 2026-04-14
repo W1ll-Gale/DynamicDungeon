@@ -142,6 +142,12 @@ namespace DynamicDungeon.Runtime.Core
                 }
 
                 int blackboardCapacity = CountBlackboardDeclarations(plan);
+                IReadOnlyDictionary<string, float> initialBlackboardValues = plan.InitialNumericBlackboardValues;
+                if (initialBlackboardValues != null)
+                {
+                    blackboardCapacity += initialBlackboardValues.Count;
+                }
+
                 if (blackboardCapacity < MinimumNativeMapCapacity)
                 {
                     blackboardCapacity = MinimumNativeMapCapacity;
@@ -149,6 +155,15 @@ namespace DynamicDungeon.Runtime.Core
 
                 numericBlackboard = new NumericBlackboard(blackboardCapacity, Allocator.Persistent);
                 managedBlackboard = new ManagedBlackboard();
+
+                // Write exposed property defaults (and any component overrides) before the first node runs.
+                if (initialBlackboardValues != null)
+                {
+                    foreach (KeyValuePair<string, float> entry in initialBlackboardValues)
+                    {
+                        numericBlackboard.Write(new FixedString64Bytes(entry.Key), entry.Value);
+                    }
+                }
 
                 int dirtyJobCount = CountDirtyJobs(plan);
                 int completedDirtyJobs = 0;

@@ -1,19 +1,38 @@
 using System;
 using System.Collections.Generic;
+using DynamicDungeon.Runtime.Biome;
+using DynamicDungeon.Runtime.Component;
+using DynamicDungeon.Runtime.Core;
+using DynamicDungeon.Runtime.Semantic;
 using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Graph
 {
     public sealed class GenGraph : ScriptableObject
     {
+        // Graph identity
         public int SchemaVersion;
+
+        // World settings
         public int WorldWidth = 128;
         public int WorldHeight = 128;
         public long DefaultSeed;
+        public SeedMode DefaultSeedMode = SeedMode.Stable;
+        public int MaxValidationRetries = 1;
+
+        // Asset references
+        public BiomeAsset Biome;
+        public TileSemanticRegistry TileSemanticRegistry;
+
+        // Sub-graph scope
+        public bool PromoteBlackboardToParentScope;
+
+        // Graph elements
         public List<GenNodeData> Nodes = new List<GenNodeData>();
         public List<GenConnectionData> Connections = new List<GenConnectionData>();
         public List<GenStickyNoteData> StickyNotes = new List<GenStickyNoteData>();
         public List<GenGroupData> Groups = new List<GenGroupData>();
+        public List<ExposedProperty> ExposedProperties = new List<ExposedProperty>();
 
         public GenNodeData AddNode(string nodeTypeName, string displayName, Vector2 position)
         {
@@ -249,6 +268,77 @@ namespace DynamicDungeon.Runtime.Graph
             return null;
         }
 
+        public ExposedProperty AddExposedProperty(string name, ChannelType type, string defaultValue)
+        {
+            EnsureCollectionsInitialised();
+
+            if (type != ChannelType.Float && type != ChannelType.Int)
+            {
+                return null;
+            }
+
+            ExposedProperty property = new ExposedProperty();
+            property.PropertyId = Guid.NewGuid().ToString();
+            property.PropertyName = name ?? string.Empty;
+            property.Type = type;
+            property.DefaultValue = defaultValue ?? "0";
+            ExposedProperties.Add(property);
+            return property;
+        }
+
+        public bool RemoveExposedProperty(string propertyId)
+        {
+            EnsureCollectionsInitialised();
+
+            if (string.IsNullOrEmpty(propertyId))
+            {
+                return false;
+            }
+
+            int propertyIndex = FindExposedPropertyIndex(propertyId);
+            if (propertyIndex < 0)
+            {
+                return false;
+            }
+
+            ExposedProperties.RemoveAt(propertyIndex);
+            return true;
+        }
+
+        public ExposedProperty GetExposedProperty(string propertyId)
+        {
+            EnsureCollectionsInitialised();
+
+            int propertyIndex;
+            for (propertyIndex = 0; propertyIndex < ExposedProperties.Count; propertyIndex++)
+            {
+                ExposedProperty property = ExposedProperties[propertyIndex];
+                if (property != null && property.PropertyId == propertyId)
+                {
+                    return property;
+                }
+            }
+
+            return null;
+        }
+
+        public ExposedProperty GetExposedPropertyByName(string propertyName)
+        {
+            EnsureCollectionsInitialised();
+
+            int propertyIndex;
+            for (propertyIndex = 0; propertyIndex < ExposedProperties.Count; propertyIndex++)
+            {
+                ExposedProperty property = ExposedProperties[propertyIndex];
+                if (property != null && string.Equals(property.PropertyName, propertyName, StringComparison.Ordinal))
+                {
+                    return property;
+                }
+            }
+
+            return null;
+        }
+
         private void OnEnable()
         {
             EnsureCollectionsInitialised();
@@ -274,6 +364,11 @@ namespace DynamicDungeon.Runtime.Graph
             if (Groups == null)
             {
                 Groups = new List<GenGroupData>();
+            }
+
+            if (ExposedProperties == null)
+            {
+                ExposedProperties = new List<ExposedProperty>();
             }
         }
 
@@ -316,6 +411,21 @@ namespace DynamicDungeon.Runtime.Graph
                 if (group != null && group.GroupId == groupId)
                 {
                     return groupIndex;
+                }
+            }
+
+            return -1;
+        }
+
+        private int FindExposedPropertyIndex(string propertyId)
+        {
+            int propertyIndex;
+            for (propertyIndex = 0; propertyIndex < ExposedProperties.Count; propertyIndex++)
+            {
+                ExposedProperty property = ExposedProperties[propertyIndex];
+                if (property != null && property.PropertyId == propertyId)
+                {
+                    return propertyIndex;
                 }
             }
 

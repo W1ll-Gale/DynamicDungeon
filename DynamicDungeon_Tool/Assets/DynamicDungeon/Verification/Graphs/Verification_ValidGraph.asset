@@ -16,6 +16,11 @@ MonoBehaviour:
   WorldWidth: 128
   WorldHeight: 128
   DefaultSeed: 12345
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 0}
+  TileSemanticRegistry: {fileID: 0}
+  PromoteBlackboardToParentScope: 0
   Nodes:
   - NodeId: perlin-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
@@ -138,3 +143,4 @@ MonoBehaviour:
       width: 200
       height: 150
   Groups: []
+  ExposedProperties: []

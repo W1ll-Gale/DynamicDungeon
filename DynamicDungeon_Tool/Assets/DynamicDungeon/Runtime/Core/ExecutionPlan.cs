@@ -10,6 +10,7 @@ namespace DynamicDungeon.Runtime.Core
         private readonly Dictionary<string, int> _jobIndexByNodeId;
         private readonly Dictionary<string, long> _localSeedsByNodeId;
         private readonly WorldData _allocatedWorld;
+        private Dictionary<string, float> _initialNumericBlackboardValues;
         private bool _isDisposed;
 
         public IReadOnlyList<NodeJobDescriptor> Jobs
@@ -28,6 +29,14 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
+        public IReadOnlyDictionary<string, float> InitialNumericBlackboardValues
+        {
+            get
+            {
+                return _initialNumericBlackboardValues;
+            }
+        }
+
         private ExecutionPlan(List<NodeJobDescriptor> jobs, Dictionary<string, int> jobIndexByNodeId, Dictionary<string, long> localSeedsByNodeId, WorldData allocatedWorld)
         {
             _jobs = jobs ?? throw new ArgumentNullException(nameof(jobs));
@@ -37,7 +46,12 @@ namespace DynamicDungeon.Runtime.Core
             _isDisposed = false;
         }
 
-        public static ExecutionPlan Build(IReadOnlyList<IGenNode> orderedNodes, int width, int height, long globalSeed)
+        public static ExecutionPlan Build(
+            IReadOnlyList<IGenNode> orderedNodes,
+            int width,
+            int height,
+            long globalSeed,
+            IReadOnlyDictionary<string, float> initialBlackboardValues = null)
         {
             if (orderedNodes == null)
             {
@@ -60,6 +74,15 @@ namespace DynamicDungeon.Runtime.Core
             Dictionary<string, int> jobIndexByNodeId = new Dictionary<string, int>(orderedNodes.Count, StringComparer.Ordinal);
             Dictionary<string, long> localSeedsByNodeId = new Dictionary<string, long>(orderedNodes.Count, StringComparer.Ordinal);
             HashSet<FixedString64Bytes> writtenBlackboardKeys = new HashSet<FixedString64Bytes>();
+
+            // Treat exposed property keys as already-written so nodes that read them pass validation.
+            if (initialBlackboardValues != null)
+            {
+                foreach (KeyValuePair<string, float> entry in initialBlackboardValues)
+                {
+                    writtenBlackboardKeys.Add(new FixedString64Bytes(entry.Key));
+                }
+            }
 
             try
             {
@@ -94,13 +117,40 @@ namespace DynamicDungeon.Runtime.Core
                     jobs.Add(new NodeJobDescriptor(node, copiedChannels, true));
                 }
 
-                return new ExecutionPlan(jobs, jobIndexByNodeId, localSeedsByNodeId, allocatedWorld);
+                ExecutionPlan plan = new ExecutionPlan(jobs, jobIndexByNodeId, localSeedsByNodeId, allocatedWorld);
+                if (initialBlackboardValues != null && initialBlackboardValues.Count > 0)
+                {
+                    plan._initialNumericBlackboardValues = new Dictionary<string, float>(initialBlackboardValues.Count, StringComparer.Ordinal);
+                    foreach (KeyValuePair<string, float> entry in initialBlackboardValues)
+                    {
+                        plan._initialNumericBlackboardValues[entry.Key] = entry.Value;
+                    }
+                }
+
+                return plan;
             }
             catch
             {
                 allocatedWorld.Dispose();
                 throw;
             }
+        }
+
+        public void SetInitialBlackboardValue(string key, float value)
+        {
+            ThrowIfDisposed();
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException("Blackboard key must be non-empty.", nameof(key));
+            }
+
+            if (_initialNumericBlackboardValues == null)
+            {
+                _initialNumericBlackboardValues = new Dictionary<string, float>(StringComparer.Ordinal);
+            }
+
+            _initialNumericBlackboardValues[key] = value;
         }
 
         public long GetLocalSeed(string nodeId)

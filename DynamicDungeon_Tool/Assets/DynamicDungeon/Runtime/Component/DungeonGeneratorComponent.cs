@@ -64,6 +64,9 @@ namespace DynamicDungeon.Runtime.Component
         [SerializeField]
         private BakedWorldSnapshot _bakedWorldSnapshot;
 
+        [SerializeField]
+        private List<ExposedPropertyOverride> _propertyOverrides = new List<ExposedPropertyOverride>();
+
         private readonly Executor _executor = new Executor();
         private readonly TilemapOutputPass _tilemapOutputPass = new TilemapOutputPass();
         private readonly TilemapLayerWriter _tilemapLayerWriter = new TilemapLayerWriter();
@@ -73,6 +76,7 @@ namespace DynamicDungeon.Runtime.Component
         private CancellationTokenSource _generationCancellationSource;
         private Task _currentGenerationTask = Task.CompletedTask;
         private string _statusLabel = IdleStatusLabel;
+        private long _lastUsedSeed;
 
         public event Action OnGenerationStarted;
         public event Action<GenerationCompletedArgs> OnGenerationCompleted;
@@ -111,6 +115,66 @@ namespace DynamicDungeon.Runtime.Component
             {
                 _graph = value;
             }
+        }
+
+        public List<ExposedPropertyOverride> PropertyOverrides
+        {
+            get
+            {
+                return _propertyOverrides;
+            }
+        }
+
+        public long LastUsedSeed
+        {
+            get
+            {
+                return _lastUsedSeed;
+            }
+        }
+
+        public void ReconcilePropertyOverrides()
+        {
+            if (_propertyOverrides == null)
+            {
+                _propertyOverrides = new List<ExposedPropertyOverride>();
+            }
+
+            if (_graph == null || _graph.ExposedProperties == null)
+            {
+                _propertyOverrides.Clear();
+                return;
+            }
+
+            List<ExposedProperty> exposedProperties = _graph.ExposedProperties;
+
+            // Build a reordered list that matches the graph's property order.
+            List<ExposedPropertyOverride> reordered = new List<ExposedPropertyOverride>(exposedProperties.Count);
+
+            int graphIndex;
+            for (graphIndex = 0; graphIndex < exposedProperties.Count; graphIndex++)
+            {
+                ExposedProperty graphProperty = exposedProperties[graphIndex];
+                if (graphProperty == null || string.IsNullOrWhiteSpace(graphProperty.PropertyName))
+                {
+                    continue;
+                }
+
+                ExposedPropertyOverride existingOverride = FindOverrideByName(graphProperty.PropertyName);
+                if (existingOverride != null)
+                {
+                    reordered.Add(existingOverride);
+                }
+                else
+                {
+                    ExposedPropertyOverride newOverride = new ExposedPropertyOverride();
+                    newOverride.PropertyName = graphProperty.PropertyName;
+                    newOverride.OverrideValue = graphProperty.DefaultValue ?? "0";
+                    reordered.Add(newOverride);
+                }
+            }
+
+            _propertyOverrides = reordered;
         }
 
         public void CancelGeneration()
@@ -285,16 +349,21 @@ namespace DynamicDungeon.Runtime.Component
 
         private long GetSeedForRun()
         {
-            if (_seedMode == SeedMode.Stable)
+            SeedMode modeToUse = _graph != null ? _graph.DefaultSeedMode : _seedMode;
+
+            if (modeToUse == SeedMode.Stable)
             {
-                return _stableSeed;
+                long stableSeed = _graph != null ? _graph.DefaultSeed : _stableSeed;
+                _lastUsedSeed = stableSeed;
+                return stableSeed;
             }
 
             unchecked
             {
                 long upperBits = (long)_seedRandom.Next() << 32;
                 long lowerBits = (uint)_seedRandom.Next();
-                return upperBits | lowerBits;
+                _lastUsedSeed = upperBits | lowerBits;
+                return _lastUsedSeed;
             }
         }
 
@@ -350,6 +419,7 @@ namespace DynamicDungeon.Runtime.Component
                     return;
                 }
 
+                ApplyPropertyOverrides(compileResult.Plan);
                 ExecutionResult executionResult = await _executor.ExecuteAsync(compileResult.Plan, cancellationToken);
 
                 if (executionResult.WasCancelled)
@@ -398,12 +468,15 @@ namespace DynamicDungeon.Runtime.Component
 
         private void ValidateConfiguration()
         {
-            if (_worldWidth <= 0)
+            int worldWidth = _graph != null ? _graph.WorldWidth : _worldWidth;
+            int worldHeight = _graph != null ? _graph.WorldHeight : _worldHeight;
+
+            if (worldWidth <= 0)
             {
                 throw new InvalidOperationException("WorldWidth must be greater than zero.");
             }
 
-            if (_worldHeight <= 0)
+            if (worldHeight <= 0)
             {
                 throw new InvalidOperationException("WorldHeight must be greater than zero.");
             }
@@ -449,14 +522,10 @@ namespace DynamicDungeon.Runtime.Component
             }
 #endif
 
-            int originalWorldWidth = _graph.WorldWidth;
-            int originalWorldHeight = _graph.WorldHeight;
             long originalSeed = _graph.DefaultSeed;
 
             try
             {
-                _graph.WorldWidth = _worldWidth;
-                _graph.WorldHeight = _worldHeight;
                 _graph.DefaultSeed = seed;
 
                 compileResult = GraphCompiler.Compile(_graph);
@@ -471,8 +540,6 @@ namespace DynamicDungeon.Runtime.Component
             }
             finally
             {
-                _graph.WorldWidth = originalWorldWidth;
-                _graph.WorldHeight = originalWorldHeight;
                 _graph.DefaultSeed = originalSeed;
             }
         }
@@ -527,6 +594,7 @@ namespace DynamicDungeon.Runtime.Component
 
             outputChannelName = compileResult.OutputChannelName;
             hasConnectedOutput = compileResult.HasConnectedOutput;
+            ApplyPropertyOverrides(compileResult.Plan);
             ExecutionResult executionResult = _executor.ExecuteAsync(compileResult.Plan, CancellationToken.None).GetAwaiter().GetResult();
 
             if (executionResult.WasCancelled)
@@ -630,6 +698,80 @@ namespace DynamicDungeon.Runtime.Component
             _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
             _tilemapLayerWriter.ClearAll();
             _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+        }
+
+        private void ApplyPropertyOverrides(ExecutionPlan plan)
+        {
+            if (plan == null || _propertyOverrides == null || _propertyOverrides.Count == 0 || _graph == null)
+            {
+                return;
+            }
+
+            int overrideIndex;
+            for (overrideIndex = 0; overrideIndex < _propertyOverrides.Count; overrideIndex++)
+            {
+                ExposedPropertyOverride propertyOverride = _propertyOverrides[overrideIndex];
+                if (propertyOverride == null || string.IsNullOrWhiteSpace(propertyOverride.PropertyName))
+                {
+                    continue;
+                }
+
+                ExposedProperty graphProperty = _graph.GetExposedPropertyByName(propertyOverride.PropertyName);
+                if (graphProperty == null)
+                {
+                    continue;
+                }
+
+                float floatValue = 0.0f;
+                bool parsed = false;
+
+                if (graphProperty.Type == ChannelType.Float)
+                {
+                    parsed = float.TryParse(
+                        propertyOverride.OverrideValue,
+                        NumberStyles.Float | NumberStyles.AllowThousands,
+                        CultureInfo.InvariantCulture,
+                        out floatValue);
+                }
+                else if (graphProperty.Type == ChannelType.Int)
+                {
+                    int intValue;
+                    parsed = int.TryParse(
+                        propertyOverride.OverrideValue,
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out intValue);
+                    if (parsed)
+                    {
+                        floatValue = (float)intValue;
+                    }
+                }
+
+                if (parsed)
+                {
+                    plan.SetInitialBlackboardValue(propertyOverride.PropertyName, floatValue);
+                }
+            }
+        }
+
+        private ExposedPropertyOverride FindOverrideByName(string propertyName)
+        {
+            if (_propertyOverrides == null)
+            {
+                return null;
+            }
+
+            int overrideIndex;
+            for (overrideIndex = 0; overrideIndex < _propertyOverrides.Count; overrideIndex++)
+            {
+                ExposedPropertyOverride propertyOverride = _propertyOverrides[overrideIndex];
+                if (propertyOverride != null && string.Equals(propertyOverride.PropertyName, propertyName, StringComparison.Ordinal))
+                {
+                    return propertyOverride;
+                }
+            }
+
+            return null;
         }
 
 #if UNITY_EDITOR

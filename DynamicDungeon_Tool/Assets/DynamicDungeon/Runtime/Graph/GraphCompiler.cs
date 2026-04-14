@@ -160,7 +160,8 @@ namespace DynamicDungeon.Runtime.Graph
                     orderedRuntimeNodes.Add(orderedNodes[nodeIndex].Node);
                 }
 
-                ExecutionPlan plan = ExecutionPlan.Build(orderedRuntimeNodes, graph.WorldWidth, graph.WorldHeight, graph.DefaultSeed);
+                Dictionary<string, float> initialBlackboardValues = BuildExposedPropertyInitialValues(graph.ExposedProperties);
+                ExecutionPlan plan = ExecutionPlan.Build(orderedRuntimeNodes, graph.WorldWidth, graph.WorldHeight, graph.DefaultSeed, initialBlackboardValues);
                 return new GraphCompileResult(true, diagnostics, plan, outputChannelName, hasConnectedOutput);
             }
             catch (Exception exception)
@@ -1168,6 +1169,53 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             return null;
+        }
+
+        private static Dictionary<string, float> BuildExposedPropertyInitialValues(IReadOnlyList<ExposedProperty> exposedProperties)
+        {
+            if (exposedProperties == null || exposedProperties.Count == 0)
+            {
+                return null;
+            }
+
+            Dictionary<string, float> initialValues = new Dictionary<string, float>(exposedProperties.Count, StringComparer.Ordinal);
+
+            int index;
+            for (index = 0; index < exposedProperties.Count; index++)
+            {
+                ExposedProperty property = exposedProperties[index];
+                if (property == null || string.IsNullOrWhiteSpace(property.PropertyName))
+                {
+                    continue;
+                }
+
+                if (initialValues.ContainsKey(property.PropertyName))
+                {
+                    continue;
+                }
+
+                float floatValue = 0.0f;
+                if (property.Type == ChannelType.Float)
+                {
+                    float parsedFloat;
+                    if (float.TryParse(property.DefaultValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedFloat))
+                    {
+                        floatValue = parsedFloat;
+                    }
+                }
+                else if (property.Type == ChannelType.Int)
+                {
+                    int parsedInt;
+                    if (int.TryParse(property.DefaultValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedInt))
+                    {
+                        floatValue = (float)parsedInt;
+                    }
+                }
+
+                initialValues[property.PropertyName] = floatValue;
+            }
+
+            return initialValues.Count > 0 ? initialValues : null;
         }
 
         private static bool HasErrors(IReadOnlyList<GraphDiagnostic> diagnostics)
