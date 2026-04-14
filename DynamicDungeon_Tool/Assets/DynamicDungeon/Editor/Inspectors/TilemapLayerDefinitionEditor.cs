@@ -4,6 +4,7 @@ using System.Reflection;
 using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Runtime.Semantic;
 using UnityEditor;
+using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
 namespace DynamicDungeon.Editor.Inspectors
@@ -16,24 +17,116 @@ namespace DynamicDungeon.Editor.Inspectors
         private const float ChipHeight = 20.0f;
 
         private static List<ComponentTypeOption> _cachedComponentTypes;
+        private static AdvancedDropdownState _componentPickerState;
 
         private readonly struct ComponentTypeOption
         {
+            public readonly string CategoryPath;
+            public readonly string CategoryName;
             public readonly string DisplayName;
             public readonly string FullName;
 
-            public ComponentTypeOption(string displayName, string fullName)
+            public ComponentTypeOption(string categoryPath, string categoryName, string displayName, string fullName)
             {
+                CategoryPath = categoryPath;
+                CategoryName = categoryName;
                 DisplayName = displayName;
                 FullName = fullName;
+            }
+        }
+
+        private sealed class ComponentPickerDropdown : AdvancedDropdown
+        {
+            private readonly List<ComponentTypeOption> _options;
+            private readonly IList<string> _existingComponentTypeNames;
+            private readonly Action<string> _onSelect;
+
+            private sealed class ComponentTypeDropdownItem : AdvancedDropdownItem
+            {
+                public readonly string FullTypeName;
+
+                public ComponentTypeDropdownItem(string displayName, string fullTypeName)
+                    : base(displayName)
+                {
+                    FullTypeName = fullTypeName;
+                }
+            }
+
+            public ComponentPickerDropdown(
+                AdvancedDropdownState state,
+                List<ComponentTypeOption> options,
+                IList<string> existingComponentTypeNames,
+                Action<string> onSelect)
+                : base(state)
+            {
+                _options = options ?? new List<ComponentTypeOption>();
+                _existingComponentTypeNames = existingComponentTypeNames;
+                _onSelect = onSelect;
+                minimumSize = new Vector2(340.0f, 320.0f);
+            }
+
+            protected override AdvancedDropdownItem BuildRoot()
+            {
+                AdvancedDropdownItem root = new AdvancedDropdownItem("Components");
+                Dictionary<string, AdvancedDropdownItem> folderLookup = new Dictionary<string, AdvancedDropdownItem>(StringComparer.Ordinal);
+
+                int index;
+                for (index = 0; index < _options.Count; index++)
+                {
+                    ComponentTypeOption option = _options[index];
+                    if (ContainsIgnoreCase(_existingComponentTypeNames, option.FullName))
+                    {
+                        continue;
+                    }
+
+                    AdvancedDropdownItem parent = root;
+                    if (!string.IsNullOrWhiteSpace(option.CategoryPath))
+                    {
+                        string[] pathSegments = option.CategoryPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                        string currentPath = string.Empty;
+
+                        int segmentIndex;
+                        for (segmentIndex = 0; segmentIndex < pathSegments.Length; segmentIndex++)
+                        {
+                            string segment = pathSegments[segmentIndex].Trim();
+                            if (string.IsNullOrWhiteSpace(segment))
+                            {
+                                continue;
+                            }
+
+                            currentPath = string.IsNullOrWhiteSpace(currentPath)
+                                ? segment
+                                : currentPath + "/" + segment;
+
+                            if (!folderLookup.TryGetValue(currentPath, out AdvancedDropdownItem folder))
+                            {
+                                folder = new AdvancedDropdownItem(segment);
+                                parent.AddChild(folder);
+                                folderLookup[currentPath] = folder;
+                            }
+
+                            parent = folder;
+                        }
+                    }
+
+                    parent.AddChild(new ComponentTypeDropdownItem(option.DisplayName, option.FullName));
+                }
+
+                return root;
+            }
+
+            protected override void ItemSelected(AdvancedDropdownItem item)
+            {
+                if (item is ComponentTypeDropdownItem componentItem)
+                {
+                    _onSelect?.Invoke(componentItem.FullTypeName);
+                }
             }
         }
 
         private SerializedProperty _routingTagsProperty;
 
         private string _manualTagToAdd = string.Empty;
-        private string _componentSearch = string.Empty;
-
         private GUIStyle _sectionTitleStyle;
         private GUIStyle _chipStyle;
         private GUIStyle _mutedLabelStyle;
@@ -218,10 +311,10 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.LabelField("Components", _sectionTitleStyle);
             GUILayout.Space(2.0f);
 
-            _componentSearch = EditorGUILayout.TextField("Filter", _componentSearch);
-            if (GUILayout.Button("Add Component"))
+            Rect addComponentButtonRect = GUILayoutUtility.GetRect(0.0f, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+            if (GUI.Button(addComponentButtonRect, "Add Component", EditorStyles.miniButton))
             {
-                ShowComponentMenu();
+                ShowComponentPicker(addComponentButtonRect);
             }
 
             if (Definition.ComponentsToAdd == null)
@@ -314,38 +407,12 @@ namespace DynamicDungeon.Editor.Inspectors
             _manualTagToAdd = string.Empty;
         }
 
-        private void ShowComponentMenu()
+        private void ShowComponentPicker(Rect buttonRect)
         {
             List<ComponentTypeOption> allOptions = GetAvailableComponentTypes();
-            GenericMenu menu = new GenericMenu();
-            int addedCount = 0;
-
-            int index;
-            for (index = 0; index < allOptions.Count; index++)
-            {
-                ComponentTypeOption option = allOptions[index];
-                if (!string.IsNullOrWhiteSpace(_componentSearch) &&
-                    option.DisplayName.IndexOf(_componentSearch, StringComparison.OrdinalIgnoreCase) < 0 &&
-                    option.FullName.IndexOf(_componentSearch, StringComparison.OrdinalIgnoreCase) < 0)
-                {
-                    continue;
-                }
-
-                if (ContainsIgnoreCase(Definition.ComponentsToAdd, option.FullName))
-                {
-                    continue;
-                }
-
-                addedCount++;
-                menu.AddItem(new GUIContent(option.DisplayName), false, () => AddComponentType(option.FullName));
-            }
-
-            if (addedCount == 0)
-            {
-                menu.AddDisabledItem(new GUIContent("No matching component types"));
-            }
-
-            menu.ShowAsContext();
+            _componentPickerState ??= new AdvancedDropdownState();
+            ComponentPickerDropdown dropdown = new ComponentPickerDropdown(_componentPickerState, allOptions, Definition.ComponentsToAdd, AddComponentType);
+            dropdown.Show(buttonRect);
         }
 
         private void AddComponentType(string fullTypeName)
@@ -516,12 +583,52 @@ namespace DynamicDungeon.Editor.Inspectors
                 string displayName = shortNameCounts[type.Name] > 1 && !string.IsNullOrWhiteSpace(type.Namespace)
                     ? type.Name + " (" + type.Namespace + ")"
                     : type.Name;
-                options.Add(new ComponentTypeOption(displayName, type.FullName));
+                string categoryPath = GetComponentCategoryPath(type);
+                string categoryName = GetCategoryLeafName(categoryPath);
+                options.Add(new ComponentTypeOption(categoryPath, categoryName, displayName, type.FullName));
             }
 
-            options.Sort((left, right) => string.Compare(left.DisplayName, right.DisplayName, StringComparison.OrdinalIgnoreCase));
+            options.Sort((left, right) =>
+            {
+                int categoryComparison = string.Compare(left.CategoryPath, right.CategoryPath, StringComparison.OrdinalIgnoreCase);
+                if (categoryComparison != 0)
+                {
+                    return categoryComparison;
+                }
+
+                return string.Compare(left.DisplayName, right.DisplayName, StringComparison.OrdinalIgnoreCase);
+            });
             _cachedComponentTypes = options;
             return _cachedComponentTypes;
+        }
+
+        private static string GetComponentCategoryPath(Type type)
+        {
+            AddComponentMenu addComponentMenu = type.GetCustomAttribute<AddComponentMenu>();
+            if (addComponentMenu != null && !string.IsNullOrWhiteSpace(addComponentMenu.componentMenu))
+            {
+                return addComponentMenu.componentMenu.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(type.Namespace))
+            {
+                return type.Namespace.Replace('.', '/');
+            }
+
+            return "Custom";
+        }
+
+        private static string GetCategoryLeafName(string categoryPath)
+        {
+            if (string.IsNullOrWhiteSpace(categoryPath))
+            {
+                return "Custom";
+            }
+
+            int separatorIndex = categoryPath.LastIndexOf('/');
+            return separatorIndex >= 0 && separatorIndex < categoryPath.Length - 1
+                ? categoryPath.Substring(separatorIndex + 1)
+                : categoryPath;
         }
 
         private static int CountOtherCatchAllLayers(TilemapLayerDefinition currentDefinition)

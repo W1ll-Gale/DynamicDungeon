@@ -15,7 +15,8 @@ namespace DynamicDungeon.Editor.Inspectors
         private const float ChipPadding = 10.0f;
         private const float ChipSpacing = 4.0f;
         private const float ChipHeight = 20.0f;
-        private const float PreviewTileSize = 56.0f;
+        private const float PreviewTileSize = 72.0f;
+        private const float InlineAssetPreviewSize = 18.0f;
         private const float PreviewHeightMin = 120.0f;
         private const float PreviewHeightMax = 420.0f;
         private const float PreviewResizeHandleHeight = 14.0f;
@@ -24,6 +25,7 @@ namespace DynamicDungeon.Editor.Inspectors
         private const float MappingListMaxHeight = 520.0f;
 
         private readonly Dictionary<int, int> _weightedPreviewHighlights = new Dictionary<int, int>();
+        private readonly Dictionary<int, UnityEditor.Editor> _inlineAssetEditors = new Dictionary<int, UnityEditor.Editor>();
 
         private SerializedProperty _tileMappingsProperty;
 
@@ -56,6 +58,11 @@ namespace DynamicDungeon.Editor.Inspectors
             _isPreviewExpanded = SessionState.GetBool(GetPreviewExpandedKey(), true);
             _previewHeight = SessionState.GetFloat(GetPreviewHeightKey(), 180.0f);
             _previewHeight = Mathf.Clamp(_previewHeight, PreviewHeightMin, PreviewHeightMax);
+        }
+
+        private void OnDisable()
+        {
+            DisposeInlineAssetEditors();
         }
 
         public override void OnInspectorGUI()
@@ -207,44 +214,50 @@ namespace DynamicDungeon.Editor.Inspectors
             else if (mapping.TileType == TileMappingType.RuleTile)
             {
                 RuleTile currentRuleTile = mapping.Tile as RuleTile;
-                RuleTile newRuleTile = (RuleTile)EditorGUILayout.ObjectField("Rule Tile", currentRuleTile, typeof(RuleTile), false);
+                RuleTile newRuleTile = DrawAssetFieldWithPreview("Rule Tile", currentRuleTile, GetInlineEditorStateKey(mappingIndex, "RuleTile"));
                 if (!ReferenceEquals(newRuleTile, currentRuleTile))
                 {
                     Undo.RecordObject(Biome, "Assign Rule Tile");
                     mapping.Tile = newRuleTile;
                     EditorUtility.SetDirty(Biome);
                 }
+                DrawInlineAssetEditor(newRuleTile, GetInlineEditorStateKey(mappingIndex, "RuleTile"));
             }
             else if (mapping.TileType == TileMappingType.AnimatedTile)
             {
                 AnimatedTile currentAnimatedTile = mapping.Tile as AnimatedTile;
-                AnimatedTile newAnimatedTile = (AnimatedTile)EditorGUILayout.ObjectField("Animated Tile", currentAnimatedTile, typeof(AnimatedTile), false);
+                AnimatedTile newAnimatedTile = DrawAssetFieldWithPreview("Animated Tile", currentAnimatedTile, GetInlineEditorStateKey(mappingIndex, "AnimatedTile"));
                 if (!ReferenceEquals(newAnimatedTile, currentAnimatedTile))
                 {
                     Undo.RecordObject(Biome, "Assign Animated Tile");
                     mapping.Tile = newAnimatedTile;
                     EditorUtility.SetDirty(Biome);
                 }
+                DrawInlineAssetEditor(newAnimatedTile, GetInlineEditorStateKey(mappingIndex, "AnimatedTile"));
             }
             else if (mapping.TileType == TileMappingType.Sprite)
             {
-                Sprite newSprite = (Sprite)EditorGUILayout.ObjectField("Sprite", mapping.SpriteAsset, typeof(Sprite), false);
-                if (!ReferenceEquals(newSprite, mapping.SpriteAsset))
+                Sprite currentSprite = mapping.SpriteAsset;
+                Sprite newSprite = DrawAssetFieldWithPreview("Sprite", currentSprite, GetInlineEditorStateKey(mappingIndex, "Sprite"));
+                if (!ReferenceEquals(newSprite, currentSprite))
                 {
                     Undo.RecordObject(Biome, "Assign Sprite");
                     mapping.SpriteAsset = newSprite;
                     EditorUtility.SetDirty(Biome);
                 }
+                DrawInlineAssetEditor(newSprite, GetInlineEditorStateKey(mappingIndex, "Sprite"));
             }
             else
             {
-                TileBase newTile = (TileBase)EditorGUILayout.ObjectField("Tile", mapping.Tile, typeof(TileBase), false);
-                if (!ReferenceEquals(newTile, mapping.Tile))
+                TileBase currentTile = mapping.Tile;
+                TileBase newTile = DrawAssetFieldWithPreview("Tile", currentTile, GetInlineEditorStateKey(mappingIndex, "Tile"));
+                if (!ReferenceEquals(newTile, currentTile))
                 {
                     Undo.RecordObject(Biome, "Assign Tile");
                     mapping.Tile = newTile;
                     EditorUtility.SetDirty(Biome);
                 }
+                DrawInlineAssetEditor(newTile, GetInlineEditorStateKey(mappingIndex, "Tile"));
             }
 
             EditorGUILayout.EndVertical();
@@ -298,13 +311,15 @@ namespace DynamicDungeon.Editor.Inspectors
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 GUI.backgroundColor = previousBackground;
 
-                TileBase newTile = (TileBase)EditorGUILayout.ObjectField("Tile", weightedEntry.Tile, typeof(TileBase), false);
-                if (!ReferenceEquals(newTile, weightedEntry.Tile))
+                TileBase currentTile = weightedEntry.Tile;
+                TileBase newTile = DrawAssetFieldWithPreview("Tile", currentTile, GetInlineEditorStateKey(mappingIndex, "WeightedTile." + index));
+                if (!ReferenceEquals(newTile, currentTile))
                 {
                     Undo.RecordObject(Biome, "Assign Weighted Tile");
                     weightedEntry.Tile = newTile;
                     EditorUtility.SetDirty(Biome);
                 }
+                DrawInlineAssetEditor(newTile, GetInlineEditorStateKey(mappingIndex, "WeightedTile." + index));
 
                 float newWeight = EditorGUILayout.FloatField("Weight", weightedEntry.Weight);
                 if (!Mathf.Approximately(newWeight, weightedEntry.Weight))
@@ -399,16 +414,13 @@ namespace DynamicDungeon.Editor.Inspectors
                     EditorGUILayout.BeginHorizontal();
                 }
 
-                GUIStyle buttonStyle = index == _selectedMappingIndex ? _selectedPreviewStyle : GUI.skin.button;
-                Color previousBackground = GUI.backgroundColor;
-                GUI.backgroundColor = GetPreviewColour(mapping.LogicalId);
                 string previewLabel = BuildPreviewLabel(mapping, registry);
-                if (GUILayout.Button(previewLabel, buttonStyle, GUILayout.Width(PreviewTileSize), GUILayout.Height(PreviewTileSize)))
+                Rect previewRect = GUILayoutUtility.GetRect(PreviewTileSize, PreviewTileSize, GUILayout.Width(PreviewTileSize), GUILayout.Height(PreviewTileSize));
+                if (DrawPreviewCell(previewRect, mapping, previewLabel, index == _selectedMappingIndex))
                 {
                     _selectedMappingIndex = index;
                     _pendingScrollToSelection = true;
                 }
-                GUI.backgroundColor = previousBackground;
 
                 currentColumn++;
                 if (currentColumn >= columns)
@@ -579,8 +591,11 @@ namespace DynamicDungeon.Editor.Inspectors
 
             if (_selectedPreviewStyle == null)
             {
-                _selectedPreviewStyle = new GUIStyle(GUI.skin.button);
+                _selectedPreviewStyle = new GUIStyle(EditorStyles.whiteMiniLabel);
                 _selectedPreviewStyle.fontStyle = FontStyle.Bold;
+                _selectedPreviewStyle.alignment = TextAnchor.MiddleCenter;
+                _selectedPreviewStyle.wordWrap = true;
+                _selectedPreviewStyle.clipping = TextClipping.Clip;
             }
 
             if (_previewFoldoutStyle == null)
@@ -588,6 +603,149 @@ namespace DynamicDungeon.Editor.Inspectors
                 _previewFoldoutStyle = new GUIStyle(EditorStyles.foldout);
                 _previewFoldoutStyle.fontStyle = FontStyle.Bold;
             }
+        }
+
+        private T DrawAssetFieldWithPreview<T>(string label, T asset, string stateKey) where T : UnityEngine.Object
+        {
+            Rect rowRect = EditorGUILayout.GetControlRect(false, Mathf.Max(EditorGUIUtility.singleLineHeight, InlineAssetPreviewSize));
+            Rect valueRect = EditorGUI.PrefixLabel(rowRect, new GUIContent(label));
+            Rect previewRect = new Rect(
+                valueRect.x,
+                valueRect.y + Mathf.Max(0.0f, (valueRect.height - InlineAssetPreviewSize) * 0.5f),
+                InlineAssetPreviewSize,
+                InlineAssetPreviewSize);
+            Rect fieldRect = new Rect(
+                previewRect.xMax + 4.0f,
+                valueRect.y,
+                Mathf.Max(0.0f, valueRect.width - InlineAssetPreviewSize - 4.0f),
+                EditorGUIUtility.singleLineHeight);
+
+            DrawInlineAssetPreviewThumbnail(previewRect, asset);
+            T newAsset = (T)EditorGUI.ObjectField(fieldRect, GUIContent.none, asset, typeof(T), false);
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Space(EditorGUIUtility.labelWidth);
+            GUILayout.FlexibleSpace();
+            DrawInlineEditorToggle(asset, stateKey);
+            EditorGUILayout.EndHorizontal();
+
+            return newAsset;
+        }
+
+        private void DrawInlineEditorToggle(UnityEngine.Object asset, string stateKey)
+        {
+            if (asset == null)
+            {
+                SessionState.SetBool(stateKey, false);
+                return;
+            }
+
+            bool isExpanded = SessionState.GetBool(stateKey, false);
+            bool newIsExpanded = GUILayout.Toggle(isExpanded, isExpanded ? "Hide" : "Edit", EditorStyles.miniButton, GUILayout.Width(42.0f));
+            if (newIsExpanded != isExpanded)
+            {
+                SessionState.SetBool(stateKey, newIsExpanded);
+            }
+        }
+
+        private void DrawInlineAssetPreviewThumbnail(Rect previewRect, UnityEngine.Object asset)
+        {
+            EditorGUI.DrawRect(previewRect, new Color(0.14f, 0.14f, 0.14f, 1.0f));
+            Rect innerRect = new Rect(previewRect.x + 1.0f, previewRect.y + 1.0f, previewRect.width - 2.0f, previewRect.height - 2.0f);
+            EditorGUI.DrawRect(innerRect, new Color(0.20f, 0.20f, 0.20f, 1.0f));
+
+            if (asset == null)
+            {
+                return;
+            }
+
+            if (asset is Sprite sprite)
+            {
+                DrawSprite(innerRect, sprite);
+                return;
+            }
+
+            if (asset is TileBase tileAsset)
+            {
+                Sprite tileSprite = GetSpriteFromTile(tileAsset);
+                if (tileSprite != null)
+                {
+                    DrawSprite(innerRect, tileSprite);
+                    return;
+                }
+            }
+
+            Texture previewTexture = AssetPreview.GetAssetPreview(asset);
+            if (previewTexture == null)
+            {
+                previewTexture = AssetPreview.GetMiniThumbnail(asset);
+            }
+
+            if (previewTexture != null)
+            {
+                GUI.DrawTexture(innerRect, previewTexture, ScaleMode.ScaleToFit, true);
+            }
+        }
+
+        private void DrawInlineAssetEditor(UnityEngine.Object asset, string stateKey)
+        {
+            if (asset == null || !SessionState.GetBool(stateKey, false))
+            {
+                return;
+            }
+
+            UnityEditor.Editor assetEditor = GetInlineAssetEditor(asset);
+            if (assetEditor == null)
+            {
+                return;
+            }
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField(asset.name, _mutedLabelStyle);
+            assetEditor.OnInspectorGUI();
+            EditorGUILayout.EndVertical();
+        }
+
+        private UnityEditor.Editor GetInlineAssetEditor(UnityEngine.Object asset)
+        {
+            if (asset == null)
+            {
+                return null;
+            }
+
+            int assetId = asset.GetInstanceID();
+            if (_inlineAssetEditors.TryGetValue(assetId, out UnityEditor.Editor existingEditor) &&
+                existingEditor != null &&
+                existingEditor.target == asset)
+            {
+                return existingEditor;
+            }
+
+            if (existingEditor != null)
+            {
+                DestroyImmediate(existingEditor);
+            }
+
+            UnityEditor.Editor createdEditor = UnityEditor.Editor.CreateEditor(asset);
+            if (createdEditor != null)
+            {
+                _inlineAssetEditors[assetId] = createdEditor;
+            }
+
+            return createdEditor;
+        }
+
+        private void DisposeInlineAssetEditors()
+        {
+            foreach (KeyValuePair<int, UnityEditor.Editor> pair in _inlineAssetEditors)
+            {
+                if (pair.Value != null)
+                {
+                    DestroyImmediate(pair.Value);
+                }
+            }
+
+            _inlineAssetEditors.Clear();
         }
 
         private void DrawPreviewResizeHandle()
@@ -670,6 +828,52 @@ namespace DynamicDungeon.Editor.Inspectors
             return mapping.LogicalId + "\nMissing";
         }
 
+        private bool DrawPreviewCell(Rect rect, BiomeTileMapping mapping, string label, bool isSelected)
+        {
+            Event currentEvent = Event.current;
+            bool isHovered = currentEvent != null && rect.Contains(currentEvent.mousePosition);
+            Color borderColour = isSelected
+                ? new Color(0.62f, 0.78f, 1.0f, 1.0f)
+                : (isHovered ? new Color(0.45f, 0.45f, 0.45f, 1.0f) : new Color(0.22f, 0.22f, 0.22f, 1.0f));
+
+            EditorGUI.DrawRect(rect, borderColour);
+
+            Rect innerRect = new Rect(rect.x + 1.0f, rect.y + 1.0f, rect.width - 2.0f, rect.height - 2.0f);
+            EditorGUI.DrawRect(innerRect, new Color(0.17f, 0.17f, 0.17f, 1.0f));
+
+            Rect previewRect = new Rect(innerRect.x + 4.0f, innerRect.y + 4.0f, innerRect.width - 8.0f, innerRect.height - 8.0f);
+            if (!DrawPreviewVisual(previewRect, mapping))
+            {
+                EditorGUI.DrawRect(previewRect, GetPreviewColour(mapping.LogicalId));
+            }
+
+            Rect labelBackgroundRect = new Rect(
+                previewRect.x + 4.0f,
+                previewRect.y + ((previewRect.height - 26.0f) * 0.5f),
+                previewRect.width - 8.0f,
+                26.0f);
+            EditorGUI.DrawRect(labelBackgroundRect, new Color(0.08f, 0.08f, 0.08f, 0.68f));
+
+            Rect labelRect = new Rect(
+                labelBackgroundRect.x + 2.0f,
+                labelBackgroundRect.y + 1.0f,
+                labelBackgroundRect.width - 4.0f,
+                labelBackgroundRect.height - 2.0f);
+            GUI.Label(labelRect, label, _selectedPreviewStyle);
+
+            if (currentEvent != null &&
+                currentEvent.type == EventType.MouseDown &&
+                currentEvent.button == 0 &&
+                rect.Contains(currentEvent.mousePosition))
+            {
+                currentEvent.Use();
+                GUI.changed = true;
+                return true;
+            }
+
+            return false;
+        }
+
         private static string GetSafeDisplayName(string displayName)
         {
             return string.IsNullOrWhiteSpace(displayName) ? "Unnamed" : displayName;
@@ -706,6 +910,121 @@ namespace DynamicDungeon.Editor.Inspectors
             }
 
             return (entry.Weight / totalWeight) * 100.0f;
+        }
+
+        private static bool DrawPreviewVisual(Rect rect, BiomeTileMapping mapping)
+        {
+            if (mapping == null)
+            {
+                return false;
+            }
+
+            Sprite sprite = GetAssignedPreviewSprite(mapping);
+            if (sprite != null)
+            {
+                DrawSprite(rect, sprite);
+                return true;
+            }
+
+            UnityEngine.Object previewObject = GetAssignedPreviewObject(mapping);
+            if (previewObject == null)
+            {
+                return false;
+            }
+
+            Texture previewTexture = AssetPreview.GetAssetPreview(previewObject);
+            if (previewTexture == null)
+            {
+                previewTexture = AssetPreview.GetMiniThumbnail(previewObject);
+            }
+
+            if (previewTexture == null)
+            {
+                return false;
+            }
+
+            GUI.DrawTexture(rect, previewTexture, ScaleMode.ScaleToFit, true);
+            return true;
+        }
+
+        private static Sprite GetAssignedPreviewSprite(BiomeTileMapping mapping)
+        {
+            if (mapping.TileType == TileMappingType.Sprite)
+            {
+                return mapping.SpriteAsset;
+            }
+
+            if (mapping.TileType == TileMappingType.WeightedRandom)
+            {
+                WeightedTileEntry weightedEntry = GetFirstPreviewableWeightedEntry(mapping.WeightedTiles);
+                return weightedEntry != null ? GetSpriteFromTile(weightedEntry.Tile) : null;
+            }
+
+            return GetSpriteFromTile(mapping.Tile);
+        }
+
+        private static UnityEngine.Object GetAssignedPreviewObject(BiomeTileMapping mapping)
+        {
+            if (mapping.TileType == TileMappingType.Sprite)
+            {
+                return mapping.SpriteAsset;
+            }
+
+            if (mapping.TileType == TileMappingType.WeightedRandom)
+            {
+                WeightedTileEntry weightedEntry = GetFirstPreviewableWeightedEntry(mapping.WeightedTiles);
+                return weightedEntry != null ? weightedEntry.Tile : null;
+            }
+
+            return mapping.Tile;
+        }
+
+        private static WeightedTileEntry GetFirstPreviewableWeightedEntry(IList<WeightedTileEntry> weightedTiles)
+        {
+            if (weightedTiles == null)
+            {
+                return null;
+            }
+
+            int index;
+            for (index = 0; index < weightedTiles.Count; index++)
+            {
+                WeightedTileEntry entry = weightedTiles[index];
+                if (entry != null && entry.Tile != null)
+                {
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
+        private static Sprite GetSpriteFromTile(TileBase tile)
+        {
+            Tile unityTile = tile as Tile;
+            if (unityTile != null)
+            {
+                return unityTile.sprite;
+            }
+
+            return null;
+        }
+
+        private static void DrawSprite(Rect rect, Sprite sprite)
+        {
+            if (sprite == null || sprite.texture == null)
+            {
+                return;
+            }
+
+            Rect textureRect = sprite.textureRect;
+            Rect uv = new Rect(
+                textureRect.x / sprite.texture.width,
+                textureRect.y / sprite.texture.height,
+                textureRect.width / sprite.texture.width,
+                textureRect.height / sprite.texture.height);
+
+            GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv, true);
         }
 
         private int GetHighlightedWeightedIndex(int mappingIndex)
@@ -834,6 +1153,11 @@ namespace DynamicDungeon.Editor.Inspectors
         private string GetPreviewHeightKey()
         {
             return "DynamicDungeon.BiomeAssetEditor.PreviewHeight." + target.GetInstanceID();
+        }
+
+        private string GetInlineEditorStateKey(int mappingIndex, string slotName)
+        {
+            return "DynamicDungeon.BiomeAssetEditor.InlineEditor." + target.GetInstanceID() + "." + mappingIndex + "." + slotName;
         }
     }
 }
