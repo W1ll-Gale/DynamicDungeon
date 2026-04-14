@@ -2,6 +2,7 @@
     "name": "DynamicDungeon.Tests",
     "rootNamespace": "DynamicDungeon.Tests",
     "references": [
+        "DynamicDungeon.Editor",
         "DynamicDungeon.Runtime",
         "Unity.Collections",
         "Unity.Jobs",

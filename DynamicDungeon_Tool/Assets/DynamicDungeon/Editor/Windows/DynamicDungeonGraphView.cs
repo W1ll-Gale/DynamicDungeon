@@ -32,6 +32,7 @@ namespace DynamicDungeon.Editor.Windows
         private readonly Label _expandedPreviewTitle;
         private readonly VisualElement _generationOverlay;
         private readonly IEdgeConnectorListener _edgeConnectorListener;
+        private IVisualElementScheduledItem _expandedPreviewDeferredFitSchedule;
 
         private NodeSearchWindow _nodeSearchWindow;
         private GenGraph _graph;
@@ -44,11 +45,14 @@ namespace DynamicDungeon.Editor.Windows
         private Action<GenGraph, string> _onEnterSubGraph;
 
         private string _expandedPreviewNodeId;
+        private Texture2D _expandedPreviewTexture;
         private Vector2 _expandedPreviewPanOffset;
         private Vector2 _expandedPreviewPanOffsetAtDragStart;
         private Vector2 _expandedPreviewPanMousePositionAtDragStart;
+        private Vector2 _expandedPreviewLastAutoFitViewportSize = new Vector2(-1.0f, -1.0f);
         private float _expandedPreviewZoom = 1.0f;
         private bool _expandedPreviewNeedsFit;
+        private bool _expandedPreviewAutoFitUntilInteraction;
         private bool _isPanningExpandedPreview;
         private bool _suppressGraphMutationCallbacks;
         private Vector2 _lastGraphLocalMousePosition;
@@ -93,6 +97,7 @@ namespace DynamicDungeon.Editor.Windows
             _expandedPreviewOverlay.RegisterCallback<MouseDownEvent>(OnExpandedPreviewOverlayMouseDown);
             _expandedPreviewOverlay.RegisterCallback<MouseMoveEvent>(OnExpandedPreviewOverlayMouseMove);
             _expandedPreviewOverlay.RegisterCallback<MouseUpEvent>(OnExpandedPreviewOverlayMouseUp);
+            _expandedPreviewOverlay.RegisterCallback<WheelEvent>(OnExpandedPreviewOverlayWheel);
             _expandedPreviewViewport.RegisterCallback<MouseDownEvent>(OnExpandedPreviewViewportMouseDown);
             _expandedPreviewViewport.RegisterCallback<MouseMoveEvent>(OnExpandedPreviewViewportMouseMove);
             _expandedPreviewViewport.RegisterCallback<MouseUpEvent>(OnExpandedPreviewViewportMouseUp);
@@ -229,17 +234,7 @@ namespace DynamicDungeon.Editor.Windows
             {
                 nodeView.SetPreview(texture);
 
-                if (_expandedPreviewNodeId == nodeId)
-                {
-                    if (texture == null)
-                    {
-                        HideExpandedPreview();
-                    }
-                    else
-                    {
-                        ShowExpandedPreview(nodeId, texture, nodeView.title);
-                    }
-                }
+                UpdateExpandedPreviewForCurrentNode(nodeId, texture, nodeView.title);
 
                 return;
             }
@@ -579,7 +574,7 @@ namespace DynamicDungeon.Editor.Windows
                     nodeInstance,
                     _generationOrchestrator,
                     _edgeConnectorListener,
-                    ShowExpandedPreview,
+                    OpenExpandedPreview,
                     _afterMutation,
                     subGraphAttribute.NestedGraphParameterName,
                     _onEnterSubGraph);
@@ -591,7 +586,7 @@ namespace DynamicDungeon.Editor.Windows
                 nodeInstance,
                 _generationOrchestrator,
                 _edgeConnectorListener,
-                ShowExpandedPreview,
+                OpenExpandedPreview,
                 _afterMutation);
         }
 
@@ -657,6 +652,7 @@ namespace DynamicDungeon.Editor.Windows
             overlay.style.backgroundColor = new Color(0.0f, 0.0f, 0.0f, 0.92f);
             overlay.style.justifyContent = Justify.Center;
             overlay.style.alignItems = Align.Center;
+            overlay.pickingMode = PickingMode.Position;
 
             titleLabel = new Label();
             titleLabel.style.position = Position.Absolute;
@@ -678,6 +674,7 @@ namespace DynamicDungeon.Editor.Windows
             viewport.style.bottom = 24.0f;
             viewport.style.overflow = Overflow.Hidden;
             viewport.style.unityBackgroundImageTintColor = Color.white;
+            viewport.pickingMode = PickingMode.Position;
             overlay.Add(viewport);
 
             image = new Image();
@@ -826,7 +823,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnExpandedPreviewOverlayMouseMove(MouseMoveEvent mouseMoveEvent)
         {
-            if (!_isPanningExpandedPreview || !_expandedPreviewOverlay.HasMouseCapture())
+            if (!_isPanningExpandedPreview)
             {
                 return;
             }
@@ -846,9 +843,20 @@ namespace DynamicDungeon.Editor.Windows
             mouseUpEvent.StopImmediatePropagation();
         }
 
+        private void OnExpandedPreviewOverlayWheel(WheelEvent wheelEvent)
+        {
+            if (_expandedPreviewTexture == null)
+            {
+                return;
+            }
+
+            HandleExpandedPreviewWheel(ToExpandedPreviewViewportLocal(wheelEvent.localMousePosition), wheelEvent.delta.y);
+            wheelEvent.StopImmediatePropagation();
+        }
+
         private void OnExpandedPreviewViewportMouseDown(MouseDownEvent mouseDownEvent)
         {
-            if (_expandedPreviewImage.image == null || !IsExpandedPreviewPanButton(mouseDownEvent.button))
+            if (_expandedPreviewTexture == null || !IsExpandedPreviewPanButton(mouseDownEvent.button))
             {
                 return;
             }
@@ -866,7 +874,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnExpandedPreviewViewportMouseMove(MouseMoveEvent mouseMoveEvent)
         {
-            if (!_isPanningExpandedPreview || !_expandedPreviewOverlay.HasMouseCapture())
+            if (!_isPanningExpandedPreview)
             {
                 return;
             }
@@ -888,37 +896,13 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnExpandedPreviewViewportWheel(WheelEvent wheelEvent)
         {
-            Texture texture = _expandedPreviewImage.image;
-            if (texture == null)
+            if (_expandedPreviewTexture == null)
             {
                 return;
             }
 
-            float zoomFactor = wheelEvent.delta.y < 0.0f ? ExpandedPreviewZoomStep : 1.0f / ExpandedPreviewZoomStep;
-            float newZoom = Mathf.Clamp(_expandedPreviewZoom * zoomFactor, MinExpandedPreviewZoom, MaxExpandedPreviewZoom);
-            if (Mathf.Approximately(newZoom, _expandedPreviewZoom))
-            {
-                return;
-            }
-
-            float oldScaledWidth = texture.width * _expandedPreviewZoom;
-            float oldScaledHeight = texture.height * _expandedPreviewZoom;
-            float oldBaseX = (_expandedPreviewViewport.resolvedStyle.width - oldScaledWidth) * 0.5f;
-            float oldBaseY = (_expandedPreviewViewport.resolvedStyle.height - oldScaledHeight) * 0.5f;
-            Vector2 oldTopLeft = new Vector2(oldBaseX, oldBaseY) + _expandedPreviewPanOffset;
-            Vector2 textureSpacePoint = (wheelEvent.localMousePosition - oldTopLeft) / _expandedPreviewZoom;
-
-            _expandedPreviewZoom = newZoom;
-
-            float newScaledWidth = texture.width * _expandedPreviewZoom;
-            float newScaledHeight = texture.height * _expandedPreviewZoom;
-            float newBaseX = (_expandedPreviewViewport.resolvedStyle.width - newScaledWidth) * 0.5f;
-            float newBaseY = (_expandedPreviewViewport.resolvedStyle.height - newScaledHeight) * 0.5f;
-            Vector2 newTopLeft = wheelEvent.localMousePosition - (textureSpacePoint * _expandedPreviewZoom);
-            _expandedPreviewPanOffset = newTopLeft - new Vector2(newBaseX, newBaseY);
-
-            ApplyExpandedPreviewTransform();
-            wheelEvent.StopPropagation();
+            HandleExpandedPreviewWheel(wheelEvent.localMousePosition, wheelEvent.delta.y);
+            wheelEvent.StopImmediatePropagation();
         }
 
         private void OnExpandedPreviewViewportGeometryChanged(GeometryChangedEvent geometryChangedEvent)
@@ -1394,7 +1378,7 @@ namespace DynamicDungeon.Editor.Windows
                 1.0f);
         }
 
-        private void ShowExpandedPreview(string nodeId, Texture2D texture, string titleText)
+        private void OpenExpandedPreview(string nodeId, Texture2D texture, string titleText)
         {
             if (texture == null)
             {
@@ -1403,31 +1387,75 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             EnsureExpandedPreviewOverlayAttached();
-            _expandedPreviewNodeId = nodeId ?? string.Empty;
-            _expandedPreviewImage.image = texture;
-            _expandedPreviewImage.style.width = texture.width;
-            _expandedPreviewImage.style.height = texture.height;
-            _expandedPreviewTitle.text = string.IsNullOrWhiteSpace(titleText) ? "Preview" : titleText;
+            EndExpandedPreviewPan();
+            _expandedPreviewPanOffset = Vector2.zero;
+            _expandedPreviewPanOffsetAtDragStart = Vector2.zero;
+            _expandedPreviewPanMousePositionAtDragStart = Vector2.zero;
+            _expandedPreviewLastAutoFitViewportSize = new Vector2(-1.0f, -1.0f);
+            SetExpandedPreviewContent(nodeId, texture, titleText);
             _expandedPreviewOverlay.style.display = DisplayStyle.Flex;
             _expandedPreviewOverlay.BringToFront();
             _expandedPreviewNeedsFit = true;
-            _isPanningExpandedPreview = false;
+            _expandedPreviewAutoFitUntilInteraction = true;
             Focus();
+            EnsureExpandedPreviewDeferredFitScheduled();
+        }
+
+        private void RefreshExpandedPreview(string nodeId, Texture2D texture, string titleText)
+        {
+            if (texture == null)
+            {
+                HideExpandedPreview();
+                return;
+            }
+
+            bool isVisibleSameNode =
+                IsExpandedPreviewVisible() &&
+                string.Equals(_expandedPreviewNodeId, nodeId, StringComparison.Ordinal) &&
+                _expandedPreviewImage.image != null;
+            bool shouldFit = _expandedPreviewNeedsFit ||
+                             _expandedPreviewAutoFitUntilInteraction ||
+                             !isVisibleSameNode;
+
+            EnsureExpandedPreviewOverlayAttached();
+            SetExpandedPreviewContent(nodeId, texture, titleText);
+            _expandedPreviewOverlay.style.display = DisplayStyle.Flex;
+            _expandedPreviewOverlay.BringToFront();
+            _expandedPreviewNeedsFit = shouldFit;
+            if (shouldFit)
+            {
+                _expandedPreviewAutoFitUntilInteraction = true;
+                if (!isVisibleSameNode)
+                {
+                    _expandedPreviewLastAutoFitViewportSize = new Vector2(-1.0f, -1.0f);
+                }
+            }
+            Focus();
+            if (shouldFit)
+            {
+                EnsureExpandedPreviewDeferredFitScheduled();
+                return;
+            }
+
             UpdateExpandedPreviewTransformIfNeeded();
         }
 
         private void HideExpandedPreview()
         {
             _expandedPreviewOverlay.style.display = DisplayStyle.None;
+            DestroyExpandedPreviewTexture();
             _expandedPreviewImage.image = null;
             _expandedPreviewTitle.text = string.Empty;
             _expandedPreviewNodeId = null;
             _expandedPreviewPanOffset = Vector2.zero;
             _expandedPreviewPanOffsetAtDragStart = Vector2.zero;
             _expandedPreviewPanMousePositionAtDragStart = Vector2.zero;
+            _expandedPreviewLastAutoFitViewportSize = new Vector2(-1.0f, -1.0f);
             _expandedPreviewZoom = 1.0f;
             _expandedPreviewNeedsFit = false;
+            _expandedPreviewAutoFitUntilInteraction = false;
             _isPanningExpandedPreview = false;
+            PauseExpandedPreviewDeferredFitSchedule();
 
             if (_expandedPreviewViewport.HasMouseCapture())
             {
@@ -1469,30 +1497,44 @@ namespace DynamicDungeon.Editor.Windows
         {
             if (_expandedPreviewOverlay.style.display != DisplayStyle.Flex || _expandedPreviewImage.image == null)
             {
+                PauseExpandedPreviewDeferredFitSchedule();
                 return;
             }
 
             if (_expandedPreviewViewport.resolvedStyle.width <= 0.0f || _expandedPreviewViewport.resolvedStyle.height <= 0.0f)
             {
+                EnsureExpandedPreviewDeferredFitScheduled();
                 return;
             }
 
-            if (_expandedPreviewNeedsFit)
+            Vector2 viewportSize = new Vector2(
+                _expandedPreviewViewport.resolvedStyle.width,
+                _expandedPreviewViewport.resolvedStyle.height);
+            bool viewportSizeChangedSinceLastAutoFit =
+                _expandedPreviewLastAutoFitViewportSize.x < 0.0f ||
+                _expandedPreviewLastAutoFitViewportSize.y < 0.0f ||
+                !Mathf.Approximately(_expandedPreviewLastAutoFitViewportSize.x, viewportSize.x) ||
+                !Mathf.Approximately(_expandedPreviewLastAutoFitViewportSize.y, viewportSize.y);
+
+            if (_expandedPreviewNeedsFit || (_expandedPreviewAutoFitUntilInteraction && viewportSizeChangedSinceLastAutoFit))
             {
-                Texture texture = _expandedPreviewImage.image;
-                float zoomByWidth = _expandedPreviewViewport.resolvedStyle.width / texture.width;
-                float zoomByHeight = _expandedPreviewViewport.resolvedStyle.height / texture.height;
-                _expandedPreviewZoom = Mathf.Clamp(Mathf.Min(zoomByWidth, zoomByHeight), MinExpandedPreviewZoom, MaxExpandedPreviewZoom);
+                _expandedPreviewZoom = CalculateExpandedPreviewFitZoom(
+                    viewportSize.x,
+                    viewportSize.y,
+                    _expandedPreviewTexture.width,
+                    _expandedPreviewTexture.height);
                 _expandedPreviewPanOffset = Vector2.zero;
                 _expandedPreviewNeedsFit = false;
+                _expandedPreviewLastAutoFitViewportSize = viewportSize;
             }
 
             ApplyExpandedPreviewTransform();
+            PauseExpandedPreviewDeferredFitSchedule();
         }
 
         private void ApplyExpandedPreviewTransform()
         {
-            Texture texture = _expandedPreviewImage.image;
+            Texture texture = _expandedPreviewTexture;
             if (texture == null)
             {
                 return;
@@ -1510,10 +1552,12 @@ namespace DynamicDungeon.Editor.Windows
 
         private void BeginExpandedPreviewPan(Vector2 viewportLocalMousePosition)
         {
+            _expandedPreviewAutoFitUntilInteraction = false;
             _isPanningExpandedPreview = true;
             _expandedPreviewPanMousePositionAtDragStart = viewportLocalMousePosition;
             _expandedPreviewPanOffsetAtDragStart = _expandedPreviewPanOffset;
             _expandedPreviewOverlay.CaptureMouse();
+            _expandedPreviewViewport.CaptureMouse();
         }
 
         private void UpdateExpandedPreviewPan(Vector2 viewportLocalMousePosition)
@@ -1545,6 +1589,191 @@ namespace DynamicDungeon.Editor.Windows
         private static bool IsExpandedPreviewPanButton(int mouseButton)
         {
             return mouseButton == 0 || mouseButton == 2;
+        }
+
+        private void UpdateExpandedPreviewForCurrentNode(string nodeId, Texture2D texture, string titleText)
+        {
+            if (!string.Equals(_expandedPreviewNodeId, nodeId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (texture == null)
+            {
+                HideExpandedPreview();
+                return;
+            }
+
+            if (IsExpandedPreviewVisible())
+            {
+                RefreshExpandedPreview(nodeId, texture, titleText);
+                return;
+            }
+
+            OpenExpandedPreview(nodeId, texture, titleText);
+        }
+
+        private void SetExpandedPreviewContent(string nodeId, Texture2D texture, string titleText)
+        {
+            _expandedPreviewNodeId = nodeId ?? string.Empty;
+            ReplaceExpandedPreviewTexture(texture);
+            _expandedPreviewImage.image = _expandedPreviewTexture;
+            _expandedPreviewTitle.text = string.IsNullOrWhiteSpace(titleText) ? "Preview" : titleText;
+        }
+
+        private bool IsExpandedPreviewVisible()
+        {
+            return _expandedPreviewOverlay.style.display == DisplayStyle.Flex;
+        }
+
+        internal static float CalculateExpandedPreviewFitZoom(float viewportWidth, float viewportHeight, float textureWidth, float textureHeight)
+        {
+            if (viewportWidth <= 0.0f || viewportHeight <= 0.0f || textureWidth <= 0.0f || textureHeight <= 0.0f)
+            {
+                return 1.0f;
+            }
+
+            float zoomByWidth = viewportWidth / textureWidth;
+            float zoomByHeight = viewportHeight / textureHeight;
+            return Mathf.Clamp(Mathf.Min(zoomByWidth, zoomByHeight), MinExpandedPreviewZoom, MaxExpandedPreviewZoom);
+        }
+
+        internal void OpenExpandedPreviewForTesting(string nodeId, Texture2D texture, string titleText)
+        {
+            OpenExpandedPreview(nodeId, texture, titleText);
+        }
+
+        internal void UpdateExpandedPreviewForCurrentNodeForTesting(string nodeId, Texture2D texture, string titleText)
+        {
+            UpdateExpandedPreviewForCurrentNode(nodeId, texture, titleText);
+        }
+
+        internal void SetExpandedPreviewTransformStateForTesting(float zoom, Vector2 panOffset, bool needsFit)
+        {
+            _expandedPreviewZoom = zoom;
+            _expandedPreviewPanOffset = panOffset;
+            _expandedPreviewNeedsFit = needsFit;
+        }
+
+        internal bool IsExpandedPreviewVisibleForTesting
+        {
+            get
+            {
+                return IsExpandedPreviewVisible();
+            }
+        }
+
+        internal string ExpandedPreviewNodeIdForTesting
+        {
+            get
+            {
+                return _expandedPreviewNodeId;
+            }
+        }
+
+        internal float ExpandedPreviewZoomForTesting
+        {
+            get
+            {
+                return _expandedPreviewZoom;
+            }
+        }
+
+        internal Vector2 ExpandedPreviewPanOffsetForTesting
+        {
+            get
+            {
+                return _expandedPreviewPanOffset;
+            }
+        }
+
+        internal bool ExpandedPreviewNeedsFitForTesting
+        {
+            get
+            {
+                return _expandedPreviewNeedsFit;
+            }
+        }
+
+        private void HandleExpandedPreviewWheel(Vector2 viewportLocalMousePosition, float wheelDeltaY)
+        {
+            if (_expandedPreviewTexture == null)
+            {
+                return;
+            }
+
+            _expandedPreviewAutoFitUntilInteraction = false;
+            float zoomFactor = wheelDeltaY < 0.0f ? ExpandedPreviewZoomStep : 1.0f / ExpandedPreviewZoomStep;
+            float newZoom = Mathf.Clamp(_expandedPreviewZoom * zoomFactor, MinExpandedPreviewZoom, MaxExpandedPreviewZoom);
+            if (Mathf.Approximately(newZoom, _expandedPreviewZoom))
+            {
+                return;
+            }
+
+            float oldScaledWidth = _expandedPreviewTexture.width * _expandedPreviewZoom;
+            float oldScaledHeight = _expandedPreviewTexture.height * _expandedPreviewZoom;
+            float oldBaseX = (_expandedPreviewViewport.resolvedStyle.width - oldScaledWidth) * 0.5f;
+            float oldBaseY = (_expandedPreviewViewport.resolvedStyle.height - oldScaledHeight) * 0.5f;
+            Vector2 oldTopLeft = new Vector2(oldBaseX, oldBaseY) + _expandedPreviewPanOffset;
+            Vector2 textureSpacePoint = (viewportLocalMousePosition - oldTopLeft) / _expandedPreviewZoom;
+
+            _expandedPreviewZoom = newZoom;
+
+            float newScaledWidth = _expandedPreviewTexture.width * _expandedPreviewZoom;
+            float newScaledHeight = _expandedPreviewTexture.height * _expandedPreviewZoom;
+            float newBaseX = (_expandedPreviewViewport.resolvedStyle.width - newScaledWidth) * 0.5f;
+            float newBaseY = (_expandedPreviewViewport.resolvedStyle.height - newScaledHeight) * 0.5f;
+            Vector2 newTopLeft = viewportLocalMousePosition - (textureSpacePoint * _expandedPreviewZoom);
+            _expandedPreviewPanOffset = newTopLeft - new Vector2(newBaseX, newBaseY);
+
+            ApplyExpandedPreviewTransform();
+        }
+
+        private void EnsureExpandedPreviewDeferredFitScheduled()
+        {
+            if (!_expandedPreviewNeedsFit)
+            {
+                return;
+            }
+
+            if (_expandedPreviewDeferredFitSchedule == null)
+            {
+                _expandedPreviewDeferredFitSchedule = schedule.Execute(UpdateExpandedPreviewTransformIfNeeded).Every(16);
+                return;
+            }
+
+            _expandedPreviewDeferredFitSchedule.Resume();
+        }
+
+        private void PauseExpandedPreviewDeferredFitSchedule()
+        {
+            _expandedPreviewDeferredFitSchedule?.Pause();
+        }
+
+        private void ReplaceExpandedPreviewTexture(Texture2D sourceTexture)
+        {
+            DestroyExpandedPreviewTexture();
+
+            if (sourceTexture == null)
+            {
+                _expandedPreviewTexture = null;
+                return;
+            }
+
+            _expandedPreviewTexture = UnityEngine.Object.Instantiate(sourceTexture);
+            _expandedPreviewTexture.name = sourceTexture.name + "_ExpandedPreview";
+            _expandedPreviewTexture.hideFlags = HideFlags.HideAndDontSave;
+        }
+
+        private void DestroyExpandedPreviewTexture()
+        {
+            if (_expandedPreviewTexture == null)
+            {
+                return;
+            }
+
+            UnityEngine.Object.DestroyImmediate(_expandedPreviewTexture);
+            _expandedPreviewTexture = null;
         }
     }
 }
