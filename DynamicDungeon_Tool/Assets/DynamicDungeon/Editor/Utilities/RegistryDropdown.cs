@@ -118,6 +118,106 @@ namespace DynamicDungeon.Editor.Utilities
             }
         }
 
+        private sealed class SearchableTagPopup : PopupWindowContent
+        {
+            private readonly SerializedObject _serializedObject;
+            private readonly string _propertyPath;
+            private readonly List<string> _allTags;
+            private readonly float _width;
+
+            private SearchField _searchField;
+            private string _search = string.Empty;
+            private Vector2 _scrollPosition;
+            private bool _shouldFocusSearch;
+
+            public SearchableTagPopup(SerializedProperty listProperty, List<string> allTags, float width)
+            {
+                _serializedObject = listProperty.serializedObject;
+                _propertyPath = listProperty.propertyPath;
+                _allTags = allTags ?? new List<string>();
+                _width = Mathf.Max(260.0f, width);
+            }
+
+            public override Vector2 GetWindowSize()
+            {
+                return new Vector2(_width, 320.0f);
+            }
+
+            public override void OnOpen()
+            {
+                _searchField = new SearchField();
+                _shouldFocusSearch = true;
+            }
+
+            public override void OnGUI(Rect rect)
+            {
+                Rect searchRect = new Rect(rect.x + 6.0f, rect.y + 6.0f, rect.width - 12.0f, 20.0f);
+                Rect listRect = new Rect(rect.x + 6.0f, searchRect.yMax + 6.0f, rect.width - 12.0f, rect.height - searchRect.height - 18.0f);
+
+                _search = _searchField != null
+                    ? _searchField.OnGUI(searchRect, _search)
+                    : EditorGUI.TextField(searchRect, _search);
+
+                if (_shouldFocusSearch && _searchField != null && Event.current.type == EventType.Repaint)
+                {
+                    _searchField.SetFocus();
+                    _shouldFocusSearch = false;
+                }
+
+                SerializedProperty listProperty = _serializedObject.FindProperty(_propertyPath);
+                List<string> filteredTags = GetFilteredTags();
+                if (listProperty == null || filteredTags.Count == 0)
+                {
+                    EditorGUI.LabelField(listRect, "No tags available", EditorStyles.centeredGreyMiniLabel);
+                    return;
+                }
+
+                float rowHeight = EditorGUIUtility.singleLineHeight + 4.0f;
+                Rect contentRect = new Rect(0.0f, 0.0f, listRect.width - 16.0f, filteredTags.Count * rowHeight);
+                _scrollPosition = GUI.BeginScrollView(listRect, _scrollPosition, contentRect);
+
+                int index;
+                for (index = 0; index < filteredTags.Count; index++)
+                {
+                    string tag = filteredTags[index];
+                    Rect rowRect = new Rect(0.0f, index * rowHeight, contentRect.width, rowHeight);
+                    bool isSelected = ContainsString(listProperty, tag);
+                    bool newIsSelected = EditorGUI.ToggleLeft(rowRect, tag, isSelected);
+                    if (newIsSelected != isSelected)
+                    {
+                        ToggleStringValue(listProperty, tag, newIsSelected, newIsSelected ? "Add Tag" : "Remove Tag");
+                    }
+                }
+
+                GUI.EndScrollView();
+            }
+
+            private List<string> GetFilteredTags()
+            {
+                List<string> filteredTags = new List<string>();
+                int index;
+                for (index = 0; index < _allTags.Count; index++)
+                {
+                    string tag = _allTags[index];
+                    if (string.IsNullOrWhiteSpace(tag))
+                    {
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(_search) &&
+                        tag.IndexOf(_search, System.StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
+                    filteredTags.Add(tag);
+                }
+
+                filteredTags.Sort(System.StringComparer.OrdinalIgnoreCase);
+                return filteredTags;
+            }
+        }
+
         public static void LogicalIdDropdown(string label, SerializedProperty property, TileSemanticRegistry registry)
         {
             Rect controlRect = EditorGUILayout.GetControlRect();
@@ -163,7 +263,7 @@ namespace DynamicDungeon.Editor.Utilities
         {
             Rect controlRect = EditorGUILayout.GetControlRect();
             Rect buttonRect = EditorGUI.PrefixLabel(controlRect, new GUIContent(label));
-            if (!GUI.Button(buttonRect, "Add Tag", EditorStyles.popup))
+            if (!GUI.Button(buttonRect, "Select Tags", EditorStyles.popup))
             {
                 return;
             }
@@ -175,20 +275,7 @@ namespace DynamicDungeon.Editor.Utilities
                 return;
             }
 
-            List<SearchOption> options = new List<SearchOption>();
-            int index;
-            for (index = 0; index < allTags.Count; index++)
-            {
-                string tag = allTags[index];
-                if (string.IsNullOrWhiteSpace(tag) || ContainsString(listProperty, tag))
-                {
-                    continue;
-                }
-
-                options.Add(new SearchOption(tag, tag, false, () => AddStringValue(listProperty, tag, "Add Tag")));
-            }
-
-            PopupWindow.Show(buttonRect, new SearchableOptionPopup(options, "No remaining tags", buttonRect.width + 40.0f));
+            PopupWindow.Show(buttonRect, new SearchableTagPopup(listProperty, allTags, buttonRect.width + 40.0f));
         }
 
         internal static string BuildLogicalIdLabel(ushort logicalId, TileSemanticRegistry registry)
@@ -239,6 +326,31 @@ namespace DynamicDungeon.Editor.Utilities
             EditorUtility.SetDirty(targetObject);
         }
 
+        private static void ToggleStringValue(SerializedProperty listProperty, string value, bool shouldExist, string undoName)
+        {
+            Object targetObject = listProperty.serializedObject.targetObject;
+            Undo.RecordObject(targetObject, undoName);
+            listProperty.serializedObject.Update();
+
+            int existingIndex = FindStringIndex(listProperty, value);
+            if (shouldExist)
+            {
+                if (existingIndex < 0)
+                {
+                    int insertIndex = listProperty.arraySize;
+                    listProperty.InsertArrayElementAtIndex(insertIndex);
+                    listProperty.GetArrayElementAtIndex(insertIndex).stringValue = value;
+                }
+            }
+            else if (existingIndex >= 0)
+            {
+                listProperty.DeleteArrayElementAtIndex(existingIndex);
+            }
+
+            listProperty.serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(targetObject);
+        }
+
         private static int CompareEntriesByLogicalId(TileEntry left, TileEntry right)
         {
             if (ReferenceEquals(left, right))
@@ -257,6 +369,21 @@ namespace DynamicDungeon.Editor.Utilities
             }
 
             return left.LogicalId.CompareTo(right.LogicalId);
+        }
+
+        private static int FindStringIndex(SerializedProperty listProperty, string value)
+        {
+            int index;
+            for (index = 0; index < listProperty.arraySize; index++)
+            {
+                SerializedProperty elementProperty = listProperty.GetArrayElementAtIndex(index);
+                if (string.Equals(elementProperty.stringValue, value, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
         }
 
         private static string GetSafeSearchTags(TileEntry entry)
