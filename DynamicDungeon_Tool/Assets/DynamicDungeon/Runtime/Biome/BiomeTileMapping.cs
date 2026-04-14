@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Tilemaps;
 
 namespace DynamicDungeon.Runtime.Biome
@@ -9,7 +10,8 @@ namespace DynamicDungeon.Runtime.Biome
         Direct,
         WeightedRandom,
         RuleTile,
-        AnimatedTile
+        AnimatedTile,
+        Sprite
     }
 
     [Serializable]
@@ -25,6 +27,13 @@ namespace DynamicDungeon.Runtime.Biome
         public ushort LogicalId;
         public TileMappingType TileType;
         public TileBase Tile;
+        public Sprite SpriteAsset;
         public List<WeightedTileEntry> WeightedTiles = new List<WeightedTileEntry>();
+
+        [NonSerialized]
+        public Tile GeneratedSpriteTile;
+
+        [NonSerialized]
+        public Sprite GeneratedSpriteSource;
     }
 }

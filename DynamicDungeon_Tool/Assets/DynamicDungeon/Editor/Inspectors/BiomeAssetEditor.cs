@@ -226,6 +226,16 @@ namespace DynamicDungeon.Editor.Inspectors
                     EditorUtility.SetDirty(Biome);
                 }
             }
+            else if (mapping.TileType == TileMappingType.Sprite)
+            {
+                Sprite newSprite = (Sprite)EditorGUILayout.ObjectField("Sprite", mapping.SpriteAsset, typeof(Sprite), false);
+                if (!ReferenceEquals(newSprite, mapping.SpriteAsset))
+                {
+                    Undo.RecordObject(Biome, "Assign Sprite");
+                    mapping.SpriteAsset = newSprite;
+                    EditorUtility.SetDirty(Biome);
+                }
+            }
             else
             {
                 TileBase newTile = (TileBase)EditorGUILayout.ObjectField("Tile", mapping.Tile, typeof(TileBase), false);

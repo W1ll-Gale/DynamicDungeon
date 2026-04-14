@@ -135,6 +135,62 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        [Test]
+        public void ExecuteWritesGeneratedTileForSpriteMappings()
+        {
+            Grid grid = null;
+            TileSemanticRegistry registry = null;
+            BiomeAsset biome = null;
+            TilemapLayerDefinition floorLayer = null;
+            TilemapLayerDefinition defaultLayer = null;
+            Texture2D spriteTexture = null;
+            Sprite sprite = null;
+
+            try
+            {
+                grid = CreateGrid();
+                registry = CreateRegistry();
+                biome = CreateBiome();
+                floorLayer = CreateLayerDefinition("Floor", false, "Walkable");
+                defaultLayer = CreateLayerDefinition("Default", true);
+                spriteTexture = CreateTexture(Color.yellow);
+                sprite = CreateSprite(spriteTexture);
+
+                AddRegistryEntry(registry, LogicalTileId.Floor, "Floor", "Walkable");
+                biome.TileMappings.Add(new BiomeTileMapping
+                {
+                    LogicalId = LogicalTileId.Floor,
+                    TileType = TileMappingType.Sprite,
+                    SpriteAsset = sprite
+                });
+
+                WorldSnapshot snapshot = CreateSnapshot(1, 1, new[] { (int)LogicalTileId.Floor });
+                TilemapLayerWriter writer = new TilemapLayerWriter();
+                TilemapOutputPass outputPass = new TilemapOutputPass();
+                TilemapLayerDefinition[] layers = new[] { floorLayer, defaultLayer };
+
+                writer.EnsureTimelapsCreated(grid, layers);
+                outputPass.Execute(snapshot, LogicalChannelName, biome, registry, writer, layers, Vector3Int.zero);
+
+                Tilemap floorTilemap = GetLayerTilemap(grid, "Floor");
+                TileBase placedTile = floorTilemap.GetTile(Vector3Int.zero);
+
+                Assert.That(placedTile, Is.Not.Null);
+                Assert.That(placedTile, Is.TypeOf<Tile>());
+                Assert.That(floorTilemap.GetSprite(Vector3Int.zero), Is.SameAs(sprite));
+            }
+            finally
+            {
+                DestroyImmediateIfNotNull(sprite);
+                DestroyImmediateIfNotNull(spriteTexture);
+                DestroyImmediateIfNotNull(floorLayer);
+                DestroyImmediateIfNotNull(defaultLayer);
+                DestroyImmediateIfNotNull(biome);
+                DestroyImmediateIfNotNull(registry);
+                DestroyImmediateIfNotNull(grid != null ? grid.gameObject : null);
+            }
+        }
+
         private static void AddBiomeMapping(BiomeAsset biome, ushort logicalId, TileBase tile)
         {
             BiomeTileMapping mapping = new BiomeTileMapping();
@@ -244,6 +300,19 @@ namespace DynamicDungeon.Tests.Runtime
             Tile tile = ScriptableObject.CreateInstance<Tile>();
             tile.color = colour;
             return tile;
+        }
+
+        private static Sprite CreateSprite(Texture2D texture)
+        {
+            return Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 16.0f);
+        }
+
+        private static Texture2D CreateTexture(Color colour)
+        {
+            Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            texture.SetPixel(0, 0, colour);
+            texture.Apply();
+            return texture;
         }
 
         private static void DestroyImmediateIfNotNull(UnityEngine.Object unityObject)

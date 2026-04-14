@@ -8,6 +8,11 @@ namespace DynamicDungeon.Runtime.Biome
     {
         public List<BiomeTileMapping> TileMappings = new List<BiomeTileMapping>();
 
+        private void OnDisable()
+        {
+            ReleaseGeneratedSpriteTiles();
+        }
+
         public bool TryGetTile(ushort logicalId, out TileBase tile)
         {
             return TryGetTile(logicalId, Vector2Int.zero, out tile);
@@ -36,7 +41,24 @@ namespace DynamicDungeon.Runtime.Biome
                 return TryResolveWeightedTile(mapping, cellPosition, out tile);
             }
 
+            if (mapping.TileType == TileMappingType.Sprite)
+            {
+                return TryResolveSpriteTile(mapping, out tile);
+            }
+
             tile = mapping.Tile;
+            return tile != null;
+        }
+
+        private bool TryResolveSpriteTile(BiomeTileMapping mapping, out TileBase tile)
+        {
+            if (mapping.SpriteAsset == null)
+            {
+                tile = null;
+                return false;
+            }
+
+            tile = GetOrCreateSpriteTile(mapping);
             return tile != null;
         }
 
@@ -103,6 +125,59 @@ namespace DynamicDungeon.Runtime.Biome
                 uint unsignedHash = (uint)hash;
                 return (float)(unsignedHash / 4294967296.0d) * totalWeight;
             }
+        }
+
+        private TileBase GetOrCreateSpriteTile(BiomeTileMapping mapping)
+        {
+            if (mapping.GeneratedSpriteTile != null && mapping.GeneratedSpriteSource == mapping.SpriteAsset)
+            {
+                return mapping.GeneratedSpriteTile;
+            }
+
+            ReleaseGeneratedSpriteTile(mapping);
+
+            Tile spriteTile = CreateInstance<Tile>();
+            spriteTile.sprite = mapping.SpriteAsset;
+            spriteTile.name = mapping.SpriteAsset.name + "_GeneratedTile";
+            spriteTile.hideFlags = HideFlags.HideAndDontSave;
+
+            mapping.GeneratedSpriteTile = spriteTile;
+            mapping.GeneratedSpriteSource = mapping.SpriteAsset;
+            return spriteTile;
+        }
+
+        private void ReleaseGeneratedSpriteTiles()
+        {
+            if (TileMappings == null)
+            {
+                return;
+            }
+
+            int index;
+            for (index = 0; index < TileMappings.Count; index++)
+            {
+                ReleaseGeneratedSpriteTile(TileMappings[index]);
+            }
+        }
+
+        private static void ReleaseGeneratedSpriteTile(BiomeTileMapping mapping)
+        {
+            if (mapping == null || mapping.GeneratedSpriteTile == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(mapping.GeneratedSpriteTile);
+            }
+            else
+            {
+                DestroyImmediate(mapping.GeneratedSpriteTile);
+            }
+
+            mapping.GeneratedSpriteTile = null;
+            mapping.GeneratedSpriteSource = null;
         }
     }
 }

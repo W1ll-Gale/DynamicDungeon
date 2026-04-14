@@ -105,6 +105,43 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        [Test]
+        public void TryGetTileCreatesReusableTileFromSpriteMapping()
+        {
+            BiomeAsset biome = ScriptableObject.CreateInstance<BiomeAsset>();
+            Texture2D spriteTexture = CreateTexture(Color.yellow);
+            Sprite sprite = CreateSprite(spriteTexture);
+
+            try
+            {
+                biome.TileMappings.Add(new BiomeTileMapping
+                {
+                    LogicalId = 21,
+                    TileType = TileMappingType.Sprite,
+                    SpriteAsset = sprite
+                });
+
+                TileBase resolvedA;
+                TileBase resolvedB;
+                bool firstResolved = biome.TryGetTile(21, new Vector2Int(3, 4), out resolvedA);
+                bool secondResolved = biome.TryGetTile(21, new Vector2Int(9, 2), out resolvedB);
+
+                Assert.That(firstResolved, Is.True);
+                Assert.That(secondResolved, Is.True);
+                Assert.That(resolvedA, Is.SameAs(resolvedB));
+
+                Tile generatedTile = resolvedA as Tile;
+                Assert.That(generatedTile, Is.Not.Null);
+                Assert.That(generatedTile.sprite, Is.SameAs(sprite));
+            }
+            finally
+            {
+                Object.DestroyImmediate(sprite);
+                Object.DestroyImmediate(spriteTexture);
+                Object.DestroyImmediate(biome);
+            }
+        }
+
         private static BiomeTileMapping CreateWeightedMapping(ushort logicalId, TileBase firstTile, float firstWeight, TileBase secondTile, float secondWeight)
         {
             BiomeTileMapping mapping = new BiomeTileMapping();
@@ -122,6 +159,19 @@ namespace DynamicDungeon.Tests.Runtime
             });
 
             return mapping;
+        }
+
+        private static Sprite CreateSprite(Texture2D texture)
+        {
+            return Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 16.0f);
+        }
+
+        private static Texture2D CreateTexture(Color colour)
+        {
+            Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            texture.SetPixel(0, 0, colour);
+            texture.Apply();
+            return texture;
         }
     }
 }
