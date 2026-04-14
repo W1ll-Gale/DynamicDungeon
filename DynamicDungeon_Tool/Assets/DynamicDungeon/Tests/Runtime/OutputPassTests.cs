@@ -80,11 +80,84 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        [Test]
+        public void ExecuteUsesPositionAwareBiomeResolutionForWeightedMappings()
+        {
+            Grid grid = null;
+            TileSemanticRegistry registry = null;
+            BiomeAsset biome = null;
+            TilemapLayerDefinition solidLayer = null;
+            TilemapLayerDefinition defaultLayer = null;
+            Tile firstWeightedTile = null;
+            Tile secondWeightedTile = null;
+
+            try
+            {
+                grid = CreateGrid();
+                registry = CreateRegistry();
+                biome = CreateBiome();
+                solidLayer = CreateLayerDefinition("Solid", false, "Solid");
+                defaultLayer = CreateLayerDefinition("Default", true);
+                firstWeightedTile = CreateTile(Color.cyan);
+                secondWeightedTile = CreateTile(Color.magenta);
+
+                AddRegistryEntry(registry, 42, "Weighted Wall", "Solid");
+                AddWeightedBiomeMapping(biome, 42, firstWeightedTile, 1.0f, secondWeightedTile, 1.0f);
+
+                WorldSnapshot snapshot = CreateSnapshot(2, 1, new[] { 42, 42 });
+                TilemapLayerWriter writer = new TilemapLayerWriter();
+                TilemapOutputPass outputPass = new TilemapOutputPass();
+                TilemapLayerDefinition[] layers = new[] { solidLayer, defaultLayer };
+
+                writer.EnsureTimelapsCreated(grid, layers);
+                outputPass.Execute(snapshot, LogicalChannelName, biome, registry, writer, layers, Vector3Int.zero);
+
+                Tilemap solidTilemap = GetLayerTilemap(grid, "Solid");
+                TileBase expectedFirstTile;
+                TileBase expectedSecondTile;
+                bool firstResolved = biome.TryGetTile(42, new Vector2Int(0, 0), out expectedFirstTile);
+                bool secondResolved = biome.TryGetTile(42, new Vector2Int(1, 0), out expectedSecondTile);
+
+                Assert.That(firstResolved, Is.True);
+                Assert.That(secondResolved, Is.True);
+                Assert.That(solidTilemap.GetTile(new Vector3Int(0, 0, 0)), Is.SameAs(expectedFirstTile));
+                Assert.That(solidTilemap.GetTile(new Vector3Int(1, 0, 0)), Is.SameAs(expectedSecondTile));
+            }
+            finally
+            {
+                DestroyImmediateIfNotNull(firstWeightedTile);
+                DestroyImmediateIfNotNull(secondWeightedTile);
+                DestroyImmediateIfNotNull(solidLayer);
+                DestroyImmediateIfNotNull(defaultLayer);
+                DestroyImmediateIfNotNull(biome);
+                DestroyImmediateIfNotNull(registry);
+                DestroyImmediateIfNotNull(grid != null ? grid.gameObject : null);
+            }
+        }
+
         private static void AddBiomeMapping(BiomeAsset biome, ushort logicalId, TileBase tile)
         {
             BiomeTileMapping mapping = new BiomeTileMapping();
             mapping.LogicalId = logicalId;
             mapping.Tile = tile;
+            biome.TileMappings.Add(mapping);
+        }
+
+        private static void AddWeightedBiomeMapping(BiomeAsset biome, ushort logicalId, TileBase firstTile, float firstWeight, TileBase secondTile, float secondWeight)
+        {
+            BiomeTileMapping mapping = new BiomeTileMapping();
+            mapping.LogicalId = logicalId;
+            mapping.TileType = TileMappingType.WeightedRandom;
+            mapping.WeightedTiles.Add(new WeightedTileEntry
+            {
+                Tile = firstTile,
+                Weight = firstWeight
+            });
+            mapping.WeightedTiles.Add(new WeightedTileEntry
+            {
+                Tile = secondTile,
+                Weight = secondWeight
+            });
             biome.TileMappings.Add(mapping);
         }
 

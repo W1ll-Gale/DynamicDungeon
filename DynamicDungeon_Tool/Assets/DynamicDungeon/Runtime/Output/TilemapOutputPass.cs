@@ -58,8 +58,11 @@ namespace DynamicDungeon.Runtime.Output
                 }
 
                 ushort logicalId = unchecked((ushort)logicalIdValue);
+                int x = index % snapshot.Width;
+                int y = index / snapshot.Width;
+                Vector2Int cellPosition = new Vector2Int(x, y);
                 TileBase tile;
-                if (!biome.TryGetTile(logicalId, out tile))
+                if (!biome.TryGetTile(logicalId, cellPosition, out tile))
                 {
                     continue;
                 }
@@ -71,8 +74,6 @@ namespace DynamicDungeon.Runtime.Output
                     continue;
                 }
 
-                int x = index % snapshot.Width;
-                int y = index / snapshot.Width;
                 Vector3Int position = new Vector3Int(x + tilemapOffset.x, y + tilemapOffset.y, tilemapOffset.z);
                 writer.WriteTile(position, tile, layer);
             }

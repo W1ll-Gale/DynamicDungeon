@@ -2,7 +2,8 @@
     "name": "DynamicDungeon.Editor",
     "rootNamespace": "DynamicDungeon.Editor",
     "references": [
-        "DynamicDungeon.Runtime"
+        "DynamicDungeon.Runtime",
+        "Unity.2D.Tilemap.Extras"
     ],
     "includePlatforms": [
         "Editor"
