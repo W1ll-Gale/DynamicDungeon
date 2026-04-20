@@ -9,6 +9,7 @@ namespace DynamicDungeon.Runtime.Graph
         public string FromPortName = string.Empty;
         public string ToNodeId = string.Empty;
         public string ToPortName = string.Empty;
+        public CastMode CastMode = CastMode.None;
 
         public GenConnectionData()
         {

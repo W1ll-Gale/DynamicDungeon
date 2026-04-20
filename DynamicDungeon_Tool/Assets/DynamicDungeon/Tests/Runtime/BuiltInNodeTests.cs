@@ -173,7 +173,7 @@ namespace DynamicDungeon.Tests.Runtime
 
             try
             {
-                output = CastRegistry.Cast<int>(input, ChannelType.Float, ChannelType.Int, Allocator.Temp);
+                output = CastRegistry.Cast<int>(input, ChannelType.Float, ChannelType.Int, CastMode.FloatToIntFloor, Allocator.Temp);
                 CollectionAssert.AreEqual(new[] { -2, -1, 0, 2 }, output.ToArray());
             }
             finally
@@ -195,7 +195,7 @@ namespace DynamicDungeon.Tests.Runtime
 
             try
             {
-                output = CastRegistry.Cast<byte>(input, ChannelType.Float, ChannelType.BoolMask, Allocator.Temp);
+                output = CastRegistry.Cast<byte>(input, ChannelType.Float, ChannelType.BoolMask, CastMode.FloatToBoolMask, Allocator.Temp);
                 CollectionAssert.AreEqual(new byte[] { 0, 0, 1, 1 }, output.ToArray());
             }
             finally

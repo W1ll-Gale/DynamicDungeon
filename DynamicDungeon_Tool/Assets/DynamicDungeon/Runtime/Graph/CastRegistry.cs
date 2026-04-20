@@ -1,6 +1,7 @@
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 using DynamicDungeon.Runtime.Core;
 
 namespace DynamicDungeon.Runtime.Graph
@@ -9,30 +10,71 @@ namespace DynamicDungeon.Runtime.Graph
     {
         public static bool CanCast(ChannelType fromType, ChannelType toType)
         {
+            CastMode defaultMode;
+            return CanCast(fromType, toType, out defaultMode);
+        }
+
+        public static bool CanCast(ChannelType fromType, ChannelType toType, out CastMode defaultMode)
+        {
             if (fromType == toType)
             {
+                defaultMode = CastMode.None;
                 return true;
             }
 
             if (fromType == ChannelType.Float && toType == ChannelType.Int)
             {
+                defaultMode = CastMode.FloatToIntFloor;
                 return true;
             }
 
             if (fromType == ChannelType.Float && toType == ChannelType.BoolMask)
             {
+                defaultMode = CastMode.FloatToBoolMask;
                 return true;
             }
 
             if (fromType == ChannelType.Int && toType == ChannelType.BoolMask)
             {
+                defaultMode = CastMode.IntToBoolMask;
                 return true;
             }
 
+            defaultMode = CastMode.None;
             return false;
         }
 
-        public static NativeArray<T> Cast<T>(object source, ChannelType fromType, ChannelType toType, Allocator allocator)
+        public static NativeArray<int> CastFloatToInt(NativeArray<float> source, CastMode mode, Allocator allocator)
+        {
+            if (allocator == Allocator.None)
+            {
+                throw new ArgumentException("A valid allocator is required.", nameof(allocator));
+            }
+
+            NativeArray<int> result = new NativeArray<int>(source.Length, allocator, NativeArrayOptions.UninitializedMemory);
+
+            int index;
+            if (mode == CastMode.FloatToIntRound)
+            {
+                for (index = 0; index < source.Length; index++)
+                {
+                    // Rounds half toward positive infinity — floor(x + 0.5f).
+                    // 0.5 rounds to 1, -0.5 rounds to 0.
+                    result[index] = (int)math.floor(source[index] + 0.5f);
+                }
+            }
+            else
+            {
+                for (index = 0; index < source.Length; index++)
+                {
+                    result[index] = (int)math.floor(source[index]);
+                }
+            }
+
+            return result;
+        }
+
+        public static NativeArray<T> Cast<T>(object source, ChannelType fromType, ChannelType toType, CastMode mode, Allocator allocator)
             where T : unmanaged
         {
             if (allocator == Allocator.None)
@@ -48,7 +90,7 @@ namespace DynamicDungeon.Runtime.Graph
             if (fromType == ChannelType.Float && toType == ChannelType.Int)
             {
                 ValidateTargetType<T>(typeof(int), toType);
-                return ReinterpretResult<T, int>(CastFloatToInt(source, allocator));
+                return ReinterpretResult<T, int>(CastFloatToIntFromObject(source, mode, allocator));
             }
 
             if (fromType == ChannelType.Float && toType == ChannelType.BoolMask)
@@ -84,21 +126,6 @@ namespace DynamicDungeon.Runtime.Graph
             throw new InvalidOperationException("Unsupported same-type cast for channel type '" + fromType + "'.");
         }
 
-        private static Type ResolveManagedType(ChannelType type)
-        {
-            switch (type)
-            {
-                case ChannelType.Float:
-                    return typeof(float);
-                case ChannelType.Int:
-                    return typeof(int);
-                case ChannelType.BoolMask:
-                    return typeof(byte);
-                default:
-                    throw new InvalidOperationException("Unsupported channel type '" + type + "'.");
-            }
-        }
-
         private static void ValidateTargetType<T>(Type expectedType, ChannelType toType)
             where T : unmanaged
         {
@@ -132,18 +159,10 @@ namespace DynamicDungeon.Runtime.Graph
             return result;
         }
 
-        private static NativeArray<int> CastFloatToInt(object source, Allocator allocator)
+        private static NativeArray<int> CastFloatToIntFromObject(object source, CastMode mode, Allocator allocator)
         {
             NativeArray<float> sourceArray = ExtractSourceArray<float>(source, ChannelType.Float);
-            NativeArray<int> result = new NativeArray<int>(sourceArray.Length, allocator, NativeArrayOptions.UninitializedMemory);
-
-            int index;
-            for (index = 0; index < sourceArray.Length; index++)
-            {
-                result[index] = (int)Math.Floor(sourceArray[index]);
-            }
-
-            return result;
+            return CastFloatToInt(sourceArray, mode, allocator);
         }
 
         private static NativeArray<byte> CastFloatToBoolMask(object source, Allocator allocator)

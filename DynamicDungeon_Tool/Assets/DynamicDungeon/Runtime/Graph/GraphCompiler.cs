@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using DynamicDungeon.Runtime.Core;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Graph
@@ -29,13 +33,17 @@ namespace DynamicDungeon.Runtime.Graph
             public readonly NodePortDefinition FromPort;
             public readonly CompiledNodeInfo ToNode;
             public readonly NodePortDefinition ToPort;
+            public readonly CastMode CastMode;
+            public readonly string CastChannelName;
 
-            public ValidatedConnection(CompiledNodeInfo fromNode, NodePortDefinition fromPort, CompiledNodeInfo toNode, NodePortDefinition toPort)
+            public ValidatedConnection(CompiledNodeInfo fromNode, NodePortDefinition fromPort, CompiledNodeInfo toNode, NodePortDefinition toPort, CastMode castMode, string castChannelName)
             {
                 FromNode = fromNode;
                 FromPort = fromPort;
                 ToNode = toNode;
                 ToPort = toPort;
+                CastMode = castMode;
+                CastChannelName = castChannelName;
             }
         }
 
@@ -150,14 +158,16 @@ namespace DynamicDungeon.Runtime.Graph
                 return new GraphCompileResult(false, diagnostics, null, outputChannelName, hasConnectedOutput);
             }
 
+            List<CompiledNodeInfo> allOrderedNodes = InsertImplicitCastNodes(orderedNodes, connectionValidation.Connections);
+
             try
             {
-                List<IGenNode> orderedRuntimeNodes = new List<IGenNode>(orderedNodes.Count);
+                List<IGenNode> orderedRuntimeNodes = new List<IGenNode>(allOrderedNodes.Count);
 
                 int nodeIndex;
-                for (nodeIndex = 0; nodeIndex < orderedNodes.Count; nodeIndex++)
+                for (nodeIndex = 0; nodeIndex < allOrderedNodes.Count; nodeIndex++)
                 {
-                    orderedRuntimeNodes.Add(orderedNodes[nodeIndex].Node);
+                    orderedRuntimeNodes.Add(allOrderedNodes[nodeIndex].Node);
                 }
 
                 Dictionary<string, float> initialBlackboardValues = BuildExposedPropertyInitialValues(graph.ExposedProperties);
@@ -400,6 +410,7 @@ namespace DynamicDungeon.Runtime.Graph
         {
             List<ValidatedConnection> validatedConnections = new List<ValidatedConnection>(connectionDataList.Count);
             Dictionary<string, int> incomingCountsByPortKey = new Dictionary<string, int>(StringComparer.Ordinal);
+            int implicitCastIndex = 0;
 
             int connectionIndex;
             for (connectionIndex = 0; connectionIndex < connectionDataList.Count; connectionIndex++)
@@ -451,10 +462,15 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
-                if (fromPort.Type != toPort.Type && !CastRegistry.CanCast(fromPort.Type, toPort.Type))
+                CastMode defaultMode = CastMode.None;
+
+                if (fromPort.Type != toPort.Type)
                 {
-                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Connection from '" + fromNode.Node.NodeName + "." + fromPort.Name + "' to '" + toNode.Node.NodeName + "." + toPort.Name + "' is type-incompatible.", toNode.Node.NodeId, toPort.Name));
-                    continue;
+                    if (!CastRegistry.CanCast(fromPort.Type, toPort.Type, out defaultMode))
+                    {
+                        diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Connection from '" + fromNode.Node.NodeName + "." + fromPort.Name + "' to '" + toNode.Node.NodeName + "." + toPort.Name + "' is type-incompatible.", toNode.Node.NodeId, toPort.Name));
+                        continue;
+                    }
                 }
 
                 string targetPortKey = CreatePortKey(toNode.Node.NodeId, toPort.Name);
@@ -467,8 +483,24 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
+                CastMode castMode;
+                string castChannelName;
+
+                if (fromPort.Type == toPort.Type)
+                {
+                    castMode = CastMode.None;
+                    castChannelName = null;
+                }
+                else
+                {
+                    castMode = (connectionData.CastMode == CastMode.None) ? defaultMode : connectionData.CastMode;
+                    connectionData.CastMode = castMode;
+                    castChannelName = "__cast_" + implicitCastIndex.ToString(CultureInfo.InvariantCulture);
+                    implicitCastIndex++;
+                }
+
                 incomingCountsByPortKey[targetPortKey] = existingIncomingCount + 1;
-                validatedConnections.Add(new ValidatedConnection(fromNode, fromPort, toNode, toPort));
+                validatedConnections.Add(new ValidatedConnection(fromNode, fromPort, toNode, toPort, castMode, castChannelName));
             }
 
             return new ConnectionValidationResult(validatedConnections, incomingCountsByPortKey);
@@ -491,7 +523,12 @@ namespace DynamicDungeon.Runtime.Graph
 
                 if (!nodeConnections.ContainsKey(connection.ToPort.Name))
                 {
-                    nodeConnections.Add(connection.ToPort.Name, connection.FromPort.Name);
+                    // For cast connections the downstream node reads from the implicit cast channel.
+                    // For same-type connections it reads directly from the source port's channel.
+                    string sourceChannelName = (connection.CastMode != CastMode.None)
+                        ? connection.CastChannelName
+                        : connection.FromPort.Name;
+                    nodeConnections.Add(connection.ToPort.Name, sourceChannelName);
                 }
             }
 
@@ -1235,6 +1272,229 @@ namespace DynamicDungeon.Runtime.Graph
         private static string CreatePortKey(string nodeId, string portName)
         {
             return (nodeId ?? string.Empty) + "::" + (portName ?? string.Empty);
+        }
+
+        private static List<CompiledNodeInfo> InsertImplicitCastNodes(List<CompiledNodeInfo> sortedNodes, IReadOnlyList<ValidatedConnection> validatedConnections)
+        {
+            Dictionary<string, List<ImplicitCastNode>> castNodesBeforeNode = new Dictionary<string, List<ImplicitCastNode>>(StringComparer.Ordinal);
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < validatedConnections.Count; connectionIndex++)
+            {
+                ValidatedConnection connection = validatedConnections[connectionIndex];
+                if (connection.CastMode == CastMode.None)
+                {
+                    continue;
+                }
+
+                ImplicitCastNode castNode = new ImplicitCastNode(
+                    connection.CastChannelName,
+                    connection.FromPort.Name,
+                    connection.FromPort.Type,
+                    connection.CastChannelName,
+                    connection.ToPort.Type,
+                    connection.CastMode);
+
+                string destNodeId = connection.ToNode.Node.NodeId;
+                List<ImplicitCastNode> castNodesForDest;
+                if (!castNodesBeforeNode.TryGetValue(destNodeId, out castNodesForDest))
+                {
+                    castNodesForDest = new List<ImplicitCastNode>();
+                    castNodesBeforeNode.Add(destNodeId, castNodesForDest);
+                }
+
+                castNodesForDest.Add(castNode);
+            }
+
+            if (castNodesBeforeNode.Count == 0)
+            {
+                return sortedNodes;
+            }
+
+            List<CompiledNodeInfo> result = new List<CompiledNodeInfo>(sortedNodes.Count + castNodesBeforeNode.Count);
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < sortedNodes.Count; nodeIndex++)
+            {
+                CompiledNodeInfo compiledNode = sortedNodes[nodeIndex];
+
+                List<ImplicitCastNode> castNodesForThis;
+                if (castNodesBeforeNode.TryGetValue(compiledNode.Node.NodeId, out castNodesForThis))
+                {
+                    int castNodeIndex;
+                    for (castNodeIndex = 0; castNodeIndex < castNodesForThis.Count; castNodeIndex++)
+                    {
+                        result.Add(new CompiledNodeInfo(null, castNodesForThis[castNodeIndex], new Dictionary<string, NodePortDefinition>(StringComparer.Ordinal)));
+                    }
+                }
+
+                result.Add(compiledNode);
+            }
+
+            return result;
+        }
+
+        private sealed class ImplicitCastNode : IGenNode
+        {
+            private const int DefaultBatchSize = 64;
+            private const string ImplicitCastNodeName = "Implicit Cast";
+
+            private static readonly NodePortDefinition[] _noPorts = Array.Empty<NodePortDefinition>();
+            private static readonly BlackboardKey[] _noBlackboardDeclarations = Array.Empty<BlackboardKey>();
+
+            private readonly string _nodeId;
+            private readonly string _sourceChannelName;
+            private readonly string _outputChannelName;
+            private readonly CastMode _castMode;
+            private readonly ChannelDeclaration[] _channelDeclarations;
+
+            public IReadOnlyList<NodePortDefinition> Ports
+            {
+                get
+                {
+                    return _noPorts;
+                }
+            }
+
+            public IReadOnlyList<ChannelDeclaration> ChannelDeclarations
+            {
+                get
+                {
+                    return _channelDeclarations;
+                }
+            }
+
+            public IReadOnlyList<BlackboardKey> BlackboardDeclarations
+            {
+                get
+                {
+                    return _noBlackboardDeclarations;
+                }
+            }
+
+            public string NodeId
+            {
+                get
+                {
+                    return _nodeId;
+                }
+            }
+
+            public string NodeName
+            {
+                get
+                {
+                    return ImplicitCastNodeName;
+                }
+            }
+
+            public ImplicitCastNode(string nodeId, string sourceChannelName, ChannelType sourceType, string outputChannelName, ChannelType outputType, CastMode castMode)
+            {
+                _nodeId = nodeId;
+                _sourceChannelName = sourceChannelName;
+                _outputChannelName = outputChannelName;
+                _castMode = castMode;
+                _channelDeclarations = new[]
+                {
+                    new ChannelDeclaration(sourceChannelName, sourceType, false),
+                    new ChannelDeclaration(outputChannelName, outputType, true)
+                };
+            }
+
+            public JobHandle Schedule(NodeExecutionContext context)
+            {
+                if (_castMode == CastMode.FloatToIntFloor)
+                {
+                    NativeArray<float> source = context.GetFloatChannel(_sourceChannelName);
+                    NativeArray<int> output = context.GetIntChannel(_outputChannelName);
+                    FloatToIntFloorJob floorJob = new FloatToIntFloorJob { Source = source, Output = output };
+                    return floorJob.Schedule(source.Length, DefaultBatchSize, context.InputDependency);
+                }
+
+                if (_castMode == CastMode.FloatToIntRound)
+                {
+                    NativeArray<float> source = context.GetFloatChannel(_sourceChannelName);
+                    NativeArray<int> output = context.GetIntChannel(_outputChannelName);
+                    FloatToIntRoundJob roundJob = new FloatToIntRoundJob { Source = source, Output = output };
+                    return roundJob.Schedule(source.Length, DefaultBatchSize, context.InputDependency);
+                }
+
+                if (_castMode == CastMode.FloatToBoolMask)
+                {
+                    NativeArray<float> source = context.GetFloatChannel(_sourceChannelName);
+                    NativeArray<byte> output = context.GetBoolMaskChannel(_outputChannelName);
+                    FloatToBoolMaskJob boolJob = new FloatToBoolMaskJob { Source = source, Output = output };
+                    return boolJob.Schedule(source.Length, DefaultBatchSize, context.InputDependency);
+                }
+
+                if (_castMode == CastMode.IntToBoolMask)
+                {
+                    NativeArray<int> source = context.GetIntChannel(_sourceChannelName);
+                    NativeArray<byte> output = context.GetBoolMaskChannel(_outputChannelName);
+                    IntToBoolMaskJob intBoolJob = new IntToBoolMaskJob { Source = source, Output = output };
+                    return intBoolJob.Schedule(source.Length, DefaultBatchSize, context.InputDependency);
+                }
+
+                throw new InvalidOperationException("Implicit cast node has unrecognised cast mode '" + _castMode + "'.");
+            }
+
+            [BurstCompile]
+            private struct FloatToIntFloorJob : IJobParallelFor
+            {
+                [ReadOnly]
+                public NativeArray<float> Source;
+
+                public NativeArray<int> Output;
+
+                public void Execute(int index)
+                {
+                    Output[index] = (int)math.floor(Source[index]);
+                }
+            }
+
+            [BurstCompile]
+            private struct FloatToIntRoundJob : IJobParallelFor
+            {
+                [ReadOnly]
+                public NativeArray<float> Source;
+
+                public NativeArray<int> Output;
+
+                // Rounds half toward positive infinity: floor(x + 0.5f).
+                // 0.5 rounds to 1, -0.5 rounds to 0.
+                public void Execute(int index)
+                {
+                    Output[index] = (int)math.floor(Source[index] + 0.5f);
+                }
+            }
+
+            [BurstCompile]
+            private struct FloatToBoolMaskJob : IJobParallelFor
+            {
+                [ReadOnly]
+                public NativeArray<float> Source;
+
+                public NativeArray<byte> Output;
+
+                public void Execute(int index)
+                {
+                    Output[index] = Source[index] > 0.5f ? (byte)1 : (byte)0;
+                }
+            }
+
+            [BurstCompile]
+            private struct IntToBoolMaskJob : IJobParallelFor
+            {
+                [ReadOnly]
+                public NativeArray<int> Source;
+
+                public NativeArray<byte> Output;
+
+                public void Execute(int index)
+                {
+                    Output[index] = Source[index] != 0 ? (byte)1 : (byte)0;
+                }
+            }
         }
     }
 }
