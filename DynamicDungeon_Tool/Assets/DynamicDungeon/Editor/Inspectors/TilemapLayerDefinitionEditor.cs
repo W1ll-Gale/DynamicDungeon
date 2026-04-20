@@ -12,24 +12,37 @@ namespace DynamicDungeon.Editor.Inspectors
     [CustomEditor(typeof(TilemapLayerDefinition))]
     public sealed class TilemapLayerDefinitionEditor : UnityEditor.Editor
     {
+        private const float SectionPadding = 6.0f;
+        private const float SectionSpacing = 4.0f;
+        private const float SectionTitleHeight = 18.0f;
+        private const float RowSpacing = 4.0f;
         private const float ChipPadding = 10.0f;
         private const float ChipSpacing = 4.0f;
         private const float ChipHeight = 20.0f;
+        private const float ComponentEntryPadding = 4.0f;
+        private const float ComponentButtonSpacing = 4.0f;
+        private const float ComponentUpButtonWidth = 36.0f;
+        private const float ComponentDownButtonWidth = 48.0f;
+        private const float ComponentDeleteButtonWidth = 58.0f;
+        private const float WarningIconWidth = 20.0f;
 
         private static List<ComponentTypeOption> _cachedComponentTypes;
         private static AdvancedDropdownState _componentPickerState;
+        private static readonly Dictionary<int, string> ManualTagInputs = new Dictionary<int, string>();
+
+        private static GUIStyle _sectionTitleStyle;
+        private static GUIStyle _chipStyle;
+        private static GUIStyle _mutedLabelStyle;
 
         private readonly struct ComponentTypeOption
         {
             public readonly string CategoryPath;
-            public readonly string CategoryName;
             public readonly string DisplayName;
             public readonly string FullName;
 
-            public ComponentTypeOption(string categoryPath, string categoryName, string displayName, string fullName)
+            public ComponentTypeOption(string categoryPath, string displayName, string fullName)
             {
                 CategoryPath = categoryPath;
-                CategoryName = categoryName;
                 DisplayName = displayName;
                 FullName = fullName;
             }
@@ -124,13 +137,6 @@ namespace DynamicDungeon.Editor.Inspectors
             }
         }
 
-        private SerializedProperty _routingTagsProperty;
-
-        private string _manualTagToAdd = string.Empty;
-        private GUIStyle _sectionTitleStyle;
-        private GUIStyle _chipStyle;
-        private GUIStyle _mutedLabelStyle;
-
         private TilemapLayerDefinition Definition
         {
             get
@@ -139,27 +145,64 @@ namespace DynamicDungeon.Editor.Inspectors
             }
         }
 
-        private void OnEnable()
-        {
-            _routingTagsProperty = serializedObject.FindProperty("RoutingTags");
-        }
-
         public override void OnInspectorGUI()
         {
             EnsureStyles();
+            TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
+            float contentWidth = Mathf.Max(EditorGUIUtility.currentViewWidth - 44.0f, 240.0f);
+            float contentHeight = GetEmbeddedInspectorHeight(Definition, registry, contentWidth);
+            Rect contentRect = GUILayoutUtility.GetRect(0.0f, contentHeight, GUILayout.ExpandWidth(true));
+            DrawEmbeddedInspector(contentRect, serializedObject, Definition, registry);
+        }
+
+        internal static float GetEmbeddedInspectorHeight(TilemapLayerDefinition definition, TileSemanticRegistry registry, float width)
+        {
+            EnsureStyles();
+
+            float safeWidth = Mathf.Max(width, 240.0f);
+            float totalHeight = 0.0f;
+            totalHeight += GetLayerIdentitySectionHeight(definition, safeWidth);
+            totalHeight += SectionSpacing;
+            totalHeight += GetRoutingTagsSectionHeight(definition, registry, safeWidth);
+            totalHeight += SectionSpacing;
+            totalHeight += GetComponentsSectionHeight(definition, safeWidth);
+            totalHeight += SectionSpacing;
+            totalHeight += GetLayerPreviewSectionHeight(definition, registry, safeWidth);
+            return totalHeight;
+        }
+
+        internal static void DrawEmbeddedInspector(Rect rect, SerializedObject serializedObject, TilemapLayerDefinition definition, TileSemanticRegistry registry)
+        {
+            if (definition == null || serializedObject == null)
+            {
+                return;
+            }
+
+            EnsureStyles();
             serializedObject.Update();
 
-            TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
+            float currentY = rect.y;
 
-            DrawLayerIdentitySection();
-            GUILayout.Space(4.0f);
-            DrawRoutingTagsSection(registry);
-            GUILayout.Space(4.0f);
-            DrawComponentsSection();
-            GUILayout.Space(4.0f);
-            DrawLayerPreviewSection(registry);
+            Rect identityRect = new Rect(rect.x, currentY, rect.width, GetLayerIdentitySectionHeight(definition, rect.width));
+            DrawLayerIdentitySection(identityRect, definition);
+            currentY = identityRect.yMax + SectionSpacing;
 
-            serializedObject.ApplyModifiedProperties();
+            SerializedProperty routingTagsProperty = serializedObject.FindProperty("RoutingTags");
+            Rect routingRect = new Rect(rect.x, currentY, rect.width, GetRoutingTagsSectionHeight(definition, registry, rect.width));
+            DrawRoutingTagsSection(routingRect, serializedObject, definition, routingTagsProperty, registry);
+            currentY = routingRect.yMax + SectionSpacing;
+
+            Rect componentsRect = new Rect(rect.x, currentY, rect.width, GetComponentsSectionHeight(definition, rect.width));
+            DrawComponentsSection(componentsRect, definition);
+            currentY = componentsRect.yMax + SectionSpacing;
+
+            Rect previewRect = new Rect(rect.x, currentY, rect.width, GetLayerPreviewSectionHeight(definition, registry, rect.width));
+            DrawLayerPreviewSection(previewRect, definition, registry);
+
+            if (serializedObject.ApplyModifiedProperties())
+            {
+                EditorUtility.SetDirty(definition);
+            }
         }
 
         internal static List<TileEntry> GetMatchedEntries(TileSemanticRegistry registry, IList<string> routingTags)
@@ -184,19 +227,6 @@ namespace DynamicDungeon.Editor.Inspectors
 
             matchedEntries.Sort((left, right) => left.LogicalId.CompareTo(right.LogicalId));
             return matchedEntries;
-        }
-
-        internal static List<string> GetAvailableComponentTypeNames()
-        {
-            List<string> typeNames = new List<string>();
-            List<ComponentTypeOption> options = GetAvailableComponentTypes();
-            int index;
-            for (index = 0; index < options.Count; index++)
-            {
-                typeNames.Add(options[index].FullName);
-            }
-
-            return typeNames;
         }
 
         internal static Type ResolveComponentType(string componentTypeName)
@@ -227,247 +257,305 @@ namespace DynamicDungeon.Editor.Inspectors
             return null;
         }
 
-        private void DrawLayerIdentitySection()
-        {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Layer Identity", _sectionTitleStyle);
-            GUILayout.Space(2.0f);
-
-            string newLayerName = EditorGUILayout.TextField("Layer Name", Definition.LayerName);
-            if (!string.Equals(newLayerName, Definition.LayerName, StringComparison.Ordinal))
-            {
-                Undo.RecordObject(Definition, "Change Layer Name");
-                Definition.LayerName = newLayerName;
-                EditorUtility.SetDirty(Definition);
-            }
-
-            int newSortOrder = EditorGUILayout.IntField("Sort Order", Definition.SortOrder);
-            if (newSortOrder != Definition.SortOrder)
-            {
-                Undo.RecordObject(Definition, "Change Sort Order");
-                Definition.SortOrder = newSortOrder;
-                EditorUtility.SetDirty(Definition);
-            }
-
-            bool newIsCatchAll = EditorGUILayout.Toggle("Is Catch-All", Definition.IsCatchAll);
-            if (newIsCatchAll != Definition.IsCatchAll)
-            {
-                Undo.RecordObject(Definition, "Change Catch-All");
-                Definition.IsCatchAll = newIsCatchAll;
-                EditorUtility.SetDirty(Definition);
-            }
-
-            int conflictingCatchAllCount = Definition.IsCatchAll ? CountOtherCatchAllLayers(Definition) : 0;
-            if (conflictingCatchAllCount > 0)
-            {
-                EditorGUILayout.HelpBox("Another " + conflictingCatchAllCount + " TilemapLayerDefinition assets are also marked catch-all.", MessageType.Warning);
-            }
-
-            EditorGUILayout.EndVertical();
-        }
-
-        private void DrawRoutingTagsSection(TileSemanticRegistry registry)
-        {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Routing Tags", _sectionTitleStyle);
-            GUILayout.Space(2.0f);
-
-            DrawEditableTagChips(Definition.RoutingTags, removeIndex =>
-            {
-                Undo.RecordObject(Definition, "Remove Routing Tag");
-                Definition.RoutingTags.RemoveAt(removeIndex);
-                EditorUtility.SetDirty(Definition);
-                serializedObject.Update();
-            });
-
-            if (registry != null)
-            {
-                RegistryDropdown.TagDropdown("Add Routing Tag", _routingTagsProperty, registry);
-                serializedObject.Update();
-            }
-            else
-            {
-                EditorGUILayout.HelpBox("Registry not found — type tag manually", MessageType.Warning);
-                EditorGUILayout.BeginHorizontal();
-                _manualTagToAdd = EditorGUILayout.TextField("New Routing Tag", _manualTagToAdd);
-                if (GUILayout.Button("Add Tag", GUILayout.Width(74.0f)))
-                {
-                    TryAddManualRoutingTag();
-                }
-                EditorGUILayout.EndHorizontal();
-            }
-
-            GUILayout.Space(4.0f);
-            EditorGUILayout.LabelField("Matched IDs", _mutedLabelStyle);
-            List<TileEntry> matchedEntries = GetMatchedEntries(registry, Definition.RoutingTags);
-            DrawReadOnlyEntryChips(matchedEntries);
-
-            EditorGUILayout.EndVertical();
-        }
-
-        private void DrawComponentsSection()
-        {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Components", _sectionTitleStyle);
-            GUILayout.Space(2.0f);
-
-            Rect addComponentButtonRect = GUILayoutUtility.GetRect(0.0f, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
-            if (GUI.Button(addComponentButtonRect, "Add Component", EditorStyles.miniButton))
-            {
-                ShowComponentPicker(addComponentButtonRect);
-            }
-
-            if (Definition.ComponentsToAdd == null)
-            {
-                Definition.ComponentsToAdd = new List<string>();
-            }
-
-            int index;
-            for (index = 0; index < Definition.ComponentsToAdd.Count; index++)
-            {
-                string componentTypeName = Definition.ComponentsToAdd[index];
-                Type resolvedType = ResolveComponentType(componentTypeName);
-
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                EditorGUILayout.BeginHorizontal();
-                string displayName = resolvedType != null ? resolvedType.Name : componentTypeName;
-                EditorGUILayout.LabelField(displayName);
-                if (resolvedType == null)
-                {
-                    GUIContent warningIcon = EditorGUIUtility.IconContent("console.warnicon");
-                    GUILayout.Label(warningIcon, GUILayout.Width(20.0f));
-                }
-
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Up", GUILayout.Width(36.0f)) && index > 0)
-                {
-                    MoveComponent(index, index - 1);
-                    EditorGUILayout.EndHorizontal();
-                    EditorGUILayout.EndVertical();
-                    break;
-                }
-
-                if (GUILayout.Button("Down", GUILayout.Width(48.0f)) && index < Definition.ComponentsToAdd.Count - 1)
-                {
-                    MoveComponent(index, index + 1);
-                    EditorGUILayout.EndHorizontal();
-                    EditorGUILayout.EndVertical();
-                    break;
-                }
-
-                if (GUILayout.Button("Delete", GUILayout.Width(58.0f)))
-                {
-                    RemoveComponentAt(index);
-                    EditorGUILayout.EndHorizontal();
-                    EditorGUILayout.EndVertical();
-                    break;
-                }
-                EditorGUILayout.EndHorizontal();
-
-                EditorGUILayout.LabelField(componentTypeName, _mutedLabelStyle);
-                EditorGUILayout.EndVertical();
-            }
-
-            if (Definition.ComponentsToAdd.Count == 0)
-            {
-                EditorGUILayout.LabelField("No components configured.", _mutedLabelStyle);
-            }
-
-            EditorGUILayout.EndVertical();
-        }
-
-        private void DrawLayerPreviewSection(TileSemanticRegistry registry)
-        {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Layer Preview", _sectionTitleStyle);
-            GUILayout.Space(2.0f);
-
-            int matchedCount = GetMatchedEntries(registry, Definition.RoutingTags).Count;
-            EditorGUILayout.LabelField("This layer will receive " + matchedCount + " tile types");
-
-            if (Definition.IsCatchAll)
-            {
-                EditorGUILayout.LabelField("This layer will also receive all unmatched tile types");
-            }
-
-            EditorGUILayout.EndVertical();
-        }
-
-        private void TryAddManualRoutingTag()
-        {
-            string trimmedTag = string.IsNullOrWhiteSpace(_manualTagToAdd) ? string.Empty : _manualTagToAdd.Trim();
-            if (string.IsNullOrWhiteSpace(trimmedTag) || ContainsIgnoreCase(Definition.RoutingTags, trimmedTag))
-            {
-                return;
-            }
-
-            Undo.RecordObject(Definition, "Add Routing Tag");
-            Definition.RoutingTags.Add(trimmedTag);
-            EditorUtility.SetDirty(Definition);
-            _manualTagToAdd = string.Empty;
-        }
-
-        private void ShowComponentPicker(Rect buttonRect)
+        internal static void ShowComponentPicker(Rect buttonRect, TilemapLayerDefinition definition)
         {
             List<ComponentTypeOption> allOptions = GetAvailableComponentTypes();
             _componentPickerState ??= new AdvancedDropdownState();
-            ComponentPickerDropdown dropdown = new ComponentPickerDropdown(_componentPickerState, allOptions, Definition.ComponentsToAdd, AddComponentType);
+            IList<string> existingComponents = definition != null && definition.ComponentsToAdd != null
+                ? definition.ComponentsToAdd
+                : Array.Empty<string>();
+            ComponentPickerDropdown dropdown = new ComponentPickerDropdown(_componentPickerState, allOptions, existingComponents, fullTypeName => AddComponentType(definition, fullTypeName));
             dropdown.Show(buttonRect);
         }
 
-        private void AddComponentType(string fullTypeName)
+        internal static void AddComponentType(TilemapLayerDefinition definition, string fullTypeName)
         {
-            if (ContainsIgnoreCase(Definition.ComponentsToAdd, fullTypeName))
+            if (definition == null || string.IsNullOrWhiteSpace(fullTypeName))
             {
                 return;
             }
 
-            Undo.RecordObject(Definition, "Add Component Type");
-            Definition.ComponentsToAdd.Add(fullTypeName);
-            EditorUtility.SetDirty(Definition);
-        }
-
-        private void MoveComponent(int fromIndex, int toIndex)
-        {
-            Undo.RecordObject(Definition, "Reorder Component Type");
-            string componentTypeName = Definition.ComponentsToAdd[fromIndex];
-            Definition.ComponentsToAdd.RemoveAt(fromIndex);
-            Definition.ComponentsToAdd.Insert(toIndex, componentTypeName);
-            EditorUtility.SetDirty(Definition);
-        }
-
-        private void RemoveComponentAt(int index)
-        {
-            Undo.RecordObject(Definition, "Delete Component Type");
-            Definition.ComponentsToAdd.RemoveAt(index);
-            EditorUtility.SetDirty(Definition);
-        }
-
-        private void DrawEditableTagChips(IList<string> tags, Action<int> onRemove)
-        {
-            if (tags == null || tags.Count == 0)
+            if (definition.ComponentsToAdd == null)
             {
-                EditorGUILayout.LabelField("No routing tags assigned.", _mutedLabelStyle);
+                Undo.RecordObject(definition, "Initialise Component Types");
+                definition.ComponentsToAdd = new List<string>();
+            }
+
+            if (ContainsIgnoreCase(definition.ComponentsToAdd, fullTypeName))
+            {
                 return;
             }
 
-            float availableWidth = Mathf.Max(EditorGUIUtility.currentViewWidth - 72.0f, 120.0f);
-            float contentHeight = CalculateChipAreaHeight(tags, availableWidth, false);
-            Rect contentRect = GUILayoutUtility.GetRect(availableWidth, contentHeight, GUILayout.ExpandWidth(true));
-            DrawTagChipArea(contentRect, tags, onRemove);
+            Undo.RecordObject(definition, "Add Component Type");
+            definition.ComponentsToAdd.Add(fullTypeName);
+            EditorUtility.SetDirty(definition);
         }
 
-        private void DrawTagChipArea(Rect rect, IList<string> tags, Action<int> onRemove)
+        internal static int CountOtherCatchAllLayers(TilemapLayerDefinition currentDefinition)
         {
+            int count = 0;
+            string[] guids = AssetDatabase.FindAssets("t:TilemapLayerDefinition");
+
+            int index;
+            for (index = 0; index < guids.Length; index++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guids[index]);
+                TilemapLayerDefinition layerDefinition = AssetDatabase.LoadAssetAtPath<TilemapLayerDefinition>(assetPath);
+                if (layerDefinition == null || ReferenceEquals(layerDefinition, currentDefinition))
+                {
+                    continue;
+                }
+
+                if (layerDefinition.IsCatchAll)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static void DrawLayerIdentitySection(Rect rect, TilemapLayerDefinition definition)
+        {
+            DrawSectionBackground(rect, "Layer Identity", out Rect contentRect);
+            float currentY = contentRect.y;
+
+            Rect layerNameRect = new Rect(contentRect.x, currentY, contentRect.width, EditorGUIUtility.singleLineHeight);
+            string newLayerName = EditorGUI.TextField(layerNameRect, "Layer Name", definition.LayerName);
+            if (!string.Equals(newLayerName, definition.LayerName, StringComparison.Ordinal))
+            {
+                Undo.RecordObject(definition, "Change Layer Name");
+                definition.LayerName = newLayerName;
+                EditorUtility.SetDirty(definition);
+            }
+
+            currentY = layerNameRect.yMax + RowSpacing;
+
+            Rect sortOrderRect = new Rect(contentRect.x, currentY, contentRect.width, EditorGUIUtility.singleLineHeight);
+            int newSortOrder = EditorGUI.IntField(sortOrderRect, "Sort Order", definition.SortOrder);
+            if (newSortOrder != definition.SortOrder)
+            {
+                Undo.RecordObject(definition, "Change Sort Order");
+                definition.SortOrder = newSortOrder;
+                EditorUtility.SetDirty(definition);
+            }
+
+            currentY = sortOrderRect.yMax + RowSpacing;
+
+            Rect catchAllRect = new Rect(contentRect.x, currentY, contentRect.width, EditorGUIUtility.singleLineHeight);
+            bool newIsCatchAll = EditorGUI.Toggle(catchAllRect, "Is Catch-All", definition.IsCatchAll);
+            if (newIsCatchAll != definition.IsCatchAll)
+            {
+                Undo.RecordObject(definition, "Change Catch-All");
+                definition.IsCatchAll = newIsCatchAll;
+                EditorUtility.SetDirty(definition);
+            }
+
+            int conflictingCatchAllCount = definition.IsCatchAll ? CountOtherCatchAllLayers(definition) : 0;
+            if (conflictingCatchAllCount > 0)
+            {
+                string message = "Another " + conflictingCatchAllCount + " TilemapLayerDefinition assets are also marked catch-all.";
+                float warningHeight = GetHelpBoxHeight(message, contentRect.width);
+                Rect warningRect = new Rect(contentRect.x, catchAllRect.yMax + RowSpacing, contentRect.width, warningHeight);
+                EditorGUI.HelpBox(warningRect, message, MessageType.Warning);
+            }
+        }
+
+        private static void DrawRoutingTagsSection(
+            Rect rect,
+            SerializedObject serializedObject,
+            TilemapLayerDefinition definition,
+            SerializedProperty routingTagsProperty,
+            TileSemanticRegistry registry)
+        {
+            DrawSectionBackground(rect, "Routing Tags", out Rect contentRect);
+            float currentY = contentRect.y;
+
+            float tagAreaHeight = CalculateChipAreaHeight(definition.RoutingTags, contentRect.width, false);
+            Rect tagsRect = new Rect(contentRect.x, currentY, contentRect.width, tagAreaHeight);
+            DrawEditableTagChips(tagsRect, definition, removeIndex =>
+            {
+                Undo.RecordObject(definition, "Remove Routing Tag");
+                definition.RoutingTags.RemoveAt(removeIndex);
+                EditorUtility.SetDirty(definition);
+                serializedObject.Update();
+            });
+
+            currentY = tagsRect.yMax + RowSpacing;
+
+            if (registry != null)
+            {
+                Rect dropdownRect = new Rect(contentRect.x, currentY, contentRect.width, EditorGUIUtility.singleLineHeight);
+                RegistryDropdown.TagDropdown(dropdownRect, "Select Tags", routingTagsProperty, registry);
+                currentY = dropdownRect.yMax + RowSpacing;
+            }
+            else
+            {
+                string warningMessage = "Registry not found - type tag manually";
+                float warningHeight = GetHelpBoxHeight(warningMessage, contentRect.width);
+                Rect warningRect = new Rect(contentRect.x, currentY, contentRect.width, warningHeight);
+                EditorGUI.HelpBox(warningRect, warningMessage, MessageType.Warning);
+                currentY = warningRect.yMax + RowSpacing;
+
+                int instanceId = definition.GetInstanceID();
+                if (!ManualTagInputs.TryGetValue(instanceId, out string manualTag))
+                {
+                    manualTag = string.Empty;
+                }
+
+                float buttonWidth = 74.0f;
+                Rect manualFieldRect = new Rect(contentRect.x, currentY, contentRect.width - buttonWidth - RowSpacing, EditorGUIUtility.singleLineHeight);
+                Rect addButtonRect = new Rect(manualFieldRect.xMax + RowSpacing, currentY, buttonWidth, EditorGUIUtility.singleLineHeight);
+                manualTag = EditorGUI.TextField(manualFieldRect, "New Routing Tag", manualTag);
+                if (GUI.Button(addButtonRect, "Add Tag"))
+                {
+                    string trimmedTag = string.IsNullOrWhiteSpace(manualTag) ? string.Empty : manualTag.Trim();
+                    if (!string.IsNullOrWhiteSpace(trimmedTag) && !ContainsIgnoreCase(definition.RoutingTags, trimmedTag))
+                    {
+                        Undo.RecordObject(definition, "Add Routing Tag");
+                        definition.RoutingTags.Add(trimmedTag);
+                        EditorUtility.SetDirty(definition);
+                        manualTag = string.Empty;
+                    }
+                }
+
+                ManualTagInputs[instanceId] = manualTag;
+                currentY = manualFieldRect.yMax + RowSpacing;
+            }
+
+            Rect matchedLabelRect = new Rect(contentRect.x, currentY, contentRect.width, EditorGUIUtility.singleLineHeight);
+            EditorGUI.LabelField(matchedLabelRect, "Matched IDs", _mutedLabelStyle);
+            currentY = matchedLabelRect.yMax + 2.0f;
+
+            List<TileEntry> matchedEntries = GetMatchedEntries(registry, definition.RoutingTags);
+            float matchedAreaHeight = CalculateMatchedEntryAreaHeight(matchedEntries, contentRect.width);
+            Rect matchedAreaRect = new Rect(contentRect.x, currentY, contentRect.width, matchedAreaHeight);
+            DrawMatchedEntryChips(matchedAreaRect, matchedEntries);
+        }
+
+        private static void DrawComponentsSection(Rect rect, TilemapLayerDefinition definition)
+        {
+            DrawSectionBackground(rect, "Components", out Rect contentRect);
+            float currentY = contentRect.y;
+
+            Rect addComponentButtonRect = new Rect(contentRect.x, currentY, contentRect.width, EditorGUIUtility.singleLineHeight);
+            if (GUI.Button(addComponentButtonRect, "Add Component", EditorStyles.miniButton))
+            {
+                ShowComponentPicker(addComponentButtonRect, definition);
+            }
+
+            currentY = addComponentButtonRect.yMax + RowSpacing;
+
+            if (definition.ComponentsToAdd == null)
+            {
+                Undo.RecordObject(definition, "Initialise Component Types");
+                definition.ComponentsToAdd = new List<string>();
+                EditorUtility.SetDirty(definition);
+            }
+
+            if (definition.ComponentsToAdd.Count == 0)
+            {
+                Rect emptyRect = new Rect(contentRect.x, currentY, contentRect.width, EditorGUIUtility.singleLineHeight);
+                EditorGUI.LabelField(emptyRect, "No components configured.", _mutedLabelStyle);
+                return;
+            }
+
+            int index;
+            for (index = 0; index < definition.ComponentsToAdd.Count; index++)
+            {
+                Rect entryRect = new Rect(contentRect.x, currentY, contentRect.width, GetSingleComponentEntryHeight());
+                if (DrawSingleComponentEntry(entryRect, definition, index))
+                {
+                    break;
+                }
+
+                currentY = entryRect.yMax + RowSpacing;
+            }
+        }
+
+        private static void DrawLayerPreviewSection(Rect rect, TilemapLayerDefinition definition, TileSemanticRegistry registry)
+        {
+            DrawSectionBackground(rect, "Layer Preview", out Rect contentRect);
+
+            int matchedCount = GetMatchedEntries(registry, definition.RoutingTags).Count;
+            Rect summaryRect = new Rect(contentRect.x, contentRect.y, contentRect.width, EditorGUIUtility.singleLineHeight);
+            EditorGUI.LabelField(summaryRect, "This layer will receive " + matchedCount + " tile types");
+
+            if (definition.IsCatchAll)
+            {
+                Rect catchAllRect = new Rect(contentRect.x, summaryRect.yMax + RowSpacing, contentRect.width, EditorGUIUtility.singleLineHeight);
+                EditorGUI.LabelField(catchAllRect, "This layer will also receive all unmatched tile types");
+            }
+        }
+
+        private static bool DrawSingleComponentEntry(Rect rect, TilemapLayerDefinition definition, int index)
+        {
+            GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
+
+            string componentTypeName = definition.ComponentsToAdd[index];
+            Type resolvedType = ResolveComponentType(componentTypeName);
+            Rect innerRect = InsetRect(rect, ComponentEntryPadding);
+            Rect topRowRect = new Rect(innerRect.x, innerRect.y, innerRect.width, EditorGUIUtility.singleLineHeight);
+
+            float rightX = topRowRect.xMax;
+
+            Rect deleteRect = new Rect(rightX - ComponentDeleteButtonWidth, topRowRect.y, ComponentDeleteButtonWidth, topRowRect.height);
+            rightX = deleteRect.x - ComponentButtonSpacing;
+            Rect downRect = new Rect(rightX - ComponentDownButtonWidth, topRowRect.y, ComponentDownButtonWidth, topRowRect.height);
+            rightX = downRect.x - ComponentButtonSpacing;
+            Rect upRect = new Rect(rightX - ComponentUpButtonWidth, topRowRect.y, ComponentUpButtonWidth, topRowRect.height);
+            rightX = upRect.x - ComponentButtonSpacing;
+
+            if (resolvedType == null)
+            {
+                Rect warningRect = new Rect(rightX - WarningIconWidth, topRowRect.y, WarningIconWidth, topRowRect.height);
+                GUI.Label(warningRect, EditorGUIUtility.IconContent("console.warnicon"));
+                rightX = warningRect.x - ComponentButtonSpacing;
+            }
+
+            string displayName = resolvedType != null ? resolvedType.Name : componentTypeName;
+            Rect labelRect = new Rect(topRowRect.x, topRowRect.y, Mathf.Max(0.0f, rightX - topRowRect.x), topRowRect.height);
+            EditorGUI.LabelField(labelRect, displayName);
+
+            if (GUI.Button(upRect, "Up") && index > 0)
+            {
+                MoveComponent(definition, index, index - 1);
+                return true;
+            }
+
+            if (GUI.Button(downRect, "Down") && index < definition.ComponentsToAdd.Count - 1)
+            {
+                MoveComponent(definition, index, index + 1);
+                return true;
+            }
+
+            if (GUI.Button(deleteRect, "Delete"))
+            {
+                RemoveComponentAt(definition, index);
+                return true;
+            }
+
+            Rect fullNameRect = new Rect(innerRect.x, topRowRect.yMax + RowSpacing, innerRect.width, EditorGUIUtility.singleLineHeight);
+            EditorGUI.LabelField(fullNameRect, componentTypeName, _mutedLabelStyle);
+            return false;
+        }
+
+        private static void DrawEditableTagChips(Rect rect, TilemapLayerDefinition definition, Action<int> onRemove)
+        {
+            if (definition.RoutingTags == null || definition.RoutingTags.Count == 0)
+            {
+                EditorGUI.LabelField(rect, "No routing tags assigned.", _mutedLabelStyle);
+                return;
+            }
+
             float currentX = rect.x;
             float currentY = rect.y;
 
             int index;
-            for (index = 0; index < tags.Count; index++)
+            for (index = 0; index < definition.RoutingTags.Count; index++)
             {
-                string tag = tags[index] + " ×";
-                Vector2 chipSize = _chipStyle.CalcSize(new GUIContent(tag));
-                float chipWidth = chipSize.x + ChipPadding;
+                string label = definition.RoutingTags[index] + " x";
+                float chipWidth = _chipStyle.CalcSize(new GUIContent(label)).x + ChipPadding;
                 if (currentX > rect.x && currentX + chipWidth > rect.xMax)
                 {
                     currentX = rect.x;
@@ -475,45 +563,36 @@ namespace DynamicDungeon.Editor.Inspectors
                 }
 
                 Rect chipRect = new Rect(currentX, currentY, chipWidth, ChipHeight);
-                if (GUI.Button(chipRect, tag, _chipStyle))
+                if (GUI.Button(chipRect, label, _chipStyle))
                 {
                     onRemove?.Invoke(index);
+                    break;
                 }
 
                 currentX += chipWidth + ChipSpacing;
             }
         }
 
-        private void DrawReadOnlyEntryChips(IList<TileEntry> matchedEntries)
+        private static void DrawMatchedEntryChips(Rect rect, IList<TileEntry> matchedEntries)
         {
             if (matchedEntries == null || matchedEntries.Count == 0)
             {
-                EditorGUILayout.LabelField("No Logical IDs currently match these routing tags.", _mutedLabelStyle);
+                EditorGUI.LabelField(rect, "No Logical IDs currently match these routing tags.", _mutedLabelStyle);
                 return;
             }
 
-            List<string> labels = new List<string>(matchedEntries.Count);
+            float currentX = rect.x;
+            float currentY = rect.y;
+
             int index;
             for (index = 0; index < matchedEntries.Count; index++)
             {
                 TileEntry entry = matchedEntries[index];
-                labels.Add(entry.LogicalId + ": " + GetSafeDisplayName(entry.DisplayName));
-            }
-
-            float availableWidth = Mathf.Max(EditorGUIUtility.currentViewWidth - 72.0f, 120.0f);
-            float contentHeight = CalculateChipAreaHeight(labels, availableWidth, true);
-            Rect contentRect = GUILayoutUtility.GetRect(availableWidth, contentHeight, GUILayout.ExpandWidth(true));
-
-            float currentX = contentRect.x;
-            float currentY = contentRect.y;
-            for (index = 0; index < labels.Count; index++)
-            {
-                string label = labels[index];
-                Vector2 chipSize = _chipStyle.CalcSize(new GUIContent(label));
-                float chipWidth = chipSize.x + ChipPadding;
-                if (currentX > contentRect.x && currentX + chipWidth > contentRect.xMax)
+                string label = entry.LogicalId + ": " + GetSafeDisplayName(entry.DisplayName);
+                float chipWidth = _chipStyle.CalcSize(new GUIContent(label)).x + ChipPadding;
+                if (currentX > rect.x && currentX + chipWidth > rect.xMax)
                 {
-                    currentX = contentRect.x;
+                    currentX = rect.x;
                     currentY += ChipHeight + ChipSpacing;
                 }
 
@@ -523,7 +602,167 @@ namespace DynamicDungeon.Editor.Inspectors
             }
         }
 
-        private void EnsureStyles()
+        private static float GetLayerIdentitySectionHeight(TilemapLayerDefinition definition, float width)
+        {
+            float contentHeight = (EditorGUIUtility.singleLineHeight * 3.0f) + (RowSpacing * 2.0f);
+            int conflictingCatchAllCount = definition != null && definition.IsCatchAll ? CountOtherCatchAllLayers(definition) : 0;
+            if (conflictingCatchAllCount > 0)
+            {
+                string message = "Another " + conflictingCatchAllCount + " TilemapLayerDefinition assets are also marked catch-all.";
+                contentHeight += RowSpacing + GetHelpBoxHeight(message, GetContentWidth(width));
+            }
+
+            return GetSectionHeight(contentHeight);
+        }
+
+        private static float GetRoutingTagsSectionHeight(TilemapLayerDefinition definition, TileSemanticRegistry registry, float width)
+        {
+            float contentWidth = GetContentWidth(width);
+            float contentHeight = CalculateChipAreaHeight(definition != null ? definition.RoutingTags : null, contentWidth, false);
+            contentHeight += RowSpacing;
+
+            if (registry != null)
+            {
+                contentHeight += EditorGUIUtility.singleLineHeight + RowSpacing;
+            }
+            else
+            {
+                contentHeight += GetHelpBoxHeight("Registry not found - type tag manually", contentWidth) + RowSpacing;
+                contentHeight += EditorGUIUtility.singleLineHeight + RowSpacing;
+            }
+
+            contentHeight += EditorGUIUtility.singleLineHeight + 2.0f;
+            contentHeight += CalculateMatchedEntryAreaHeight(GetMatchedEntries(registry, definition != null ? definition.RoutingTags : null), contentWidth);
+            return GetSectionHeight(contentHeight);
+        }
+
+        private static float GetComponentsSectionHeight(TilemapLayerDefinition definition, float width)
+        {
+            float contentHeight = EditorGUIUtility.singleLineHeight + RowSpacing;
+            if (definition == null || definition.ComponentsToAdd == null || definition.ComponentsToAdd.Count == 0)
+            {
+                contentHeight += EditorGUIUtility.singleLineHeight;
+                return GetSectionHeight(contentHeight);
+            }
+
+            int index;
+            for (index = 0; index < definition.ComponentsToAdd.Count; index++)
+            {
+                contentHeight += GetSingleComponentEntryHeight();
+                if (index < definition.ComponentsToAdd.Count - 1)
+                {
+                    contentHeight += RowSpacing;
+                }
+            }
+
+            return GetSectionHeight(contentHeight);
+        }
+
+        private static float GetLayerPreviewSectionHeight(TilemapLayerDefinition definition, TileSemanticRegistry registry, float width)
+        {
+            float contentHeight = EditorGUIUtility.singleLineHeight;
+            if (definition != null && definition.IsCatchAll)
+            {
+                contentHeight += RowSpacing + EditorGUIUtility.singleLineHeight;
+            }
+
+            return GetSectionHeight(contentHeight);
+        }
+
+        private static float GetSingleComponentEntryHeight()
+        {
+            return (ComponentEntryPadding * 2.0f) + (EditorGUIUtility.singleLineHeight * 2.0f) + RowSpacing;
+        }
+
+        private static float CalculateChipAreaHeight(IList<string> values, float availableWidth, bool readOnly)
+        {
+            if (values == null || values.Count == 0)
+            {
+                return EditorGUIUtility.singleLineHeight;
+            }
+
+            float currentWidth = 0.0f;
+            float height = ChipHeight;
+
+            int index;
+            for (index = 0; index < values.Count; index++)
+            {
+                string label = readOnly ? values[index] : values[index] + " x";
+                float chipWidth = _chipStyle.CalcSize(new GUIContent(label)).x + ChipPadding;
+                if (currentWidth > 0.0f && currentWidth + chipWidth > availableWidth)
+                {
+                    currentWidth = 0.0f;
+                    height += ChipHeight + ChipSpacing;
+                }
+
+                currentWidth += chipWidth + ChipSpacing;
+            }
+
+            return height;
+        }
+
+        private static float CalculateMatchedEntryAreaHeight(IList<TileEntry> matchedEntries, float availableWidth)
+        {
+            if (matchedEntries == null || matchedEntries.Count == 0)
+            {
+                return EditorGUIUtility.singleLineHeight;
+            }
+
+            float currentWidth = 0.0f;
+            float height = ChipHeight;
+
+            int index;
+            for (index = 0; index < matchedEntries.Count; index++)
+            {
+                TileEntry entry = matchedEntries[index];
+                string label = entry.LogicalId + ": " + GetSafeDisplayName(entry.DisplayName);
+                float chipWidth = _chipStyle.CalcSize(new GUIContent(label)).x + ChipPadding;
+                if (currentWidth > 0.0f && currentWidth + chipWidth > availableWidth)
+                {
+                    currentWidth = 0.0f;
+                    height += ChipHeight + ChipSpacing;
+                }
+
+                currentWidth += chipWidth + ChipSpacing;
+            }
+
+            return height;
+        }
+
+        private static float GetSectionHeight(float contentHeight)
+        {
+            return SectionPadding + SectionTitleHeight + 2.0f + contentHeight + SectionPadding;
+        }
+
+        private static float GetContentWidth(float sectionWidth)
+        {
+            return Mathf.Max(sectionWidth - (SectionPadding * 2.0f), 120.0f);
+        }
+
+        private static float GetHelpBoxHeight(string message, float width)
+        {
+            return EditorStyles.helpBox.CalcHeight(new GUIContent(message), Mathf.Max(width, 120.0f));
+        }
+
+        private static Rect InsetRect(Rect rect, float inset)
+        {
+            return new Rect(rect.x + inset, rect.y + inset, rect.width - (inset * 2.0f), rect.height - (inset * 2.0f));
+        }
+
+        private static void DrawSectionBackground(Rect rect, string title, out Rect contentRect)
+        {
+            GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
+            Rect titleRect = new Rect(rect.x + SectionPadding, rect.y + SectionPadding, rect.width - (SectionPadding * 2.0f), SectionTitleHeight);
+            GUI.Label(titleRect, title, _sectionTitleStyle);
+
+            contentRect = new Rect(
+                rect.x + SectionPadding,
+                titleRect.yMax + 2.0f,
+                rect.width - (SectionPadding * 2.0f),
+                rect.height - SectionPadding - (titleRect.yMax - rect.y) - 2.0f);
+        }
+
+        private static void EnsureStyles()
         {
             if (_sectionTitleStyle == null)
             {
@@ -584,8 +823,7 @@ namespace DynamicDungeon.Editor.Inspectors
                     ? type.Name + " (" + type.Namespace + ")"
                     : type.Name;
                 string categoryPath = GetComponentCategoryPath(type);
-                string categoryName = GetCategoryLeafName(categoryPath);
-                options.Add(new ComponentTypeOption(categoryPath, categoryName, displayName, type.FullName));
+                options.Add(new ComponentTypeOption(categoryPath, displayName, type.FullName));
             }
 
             options.Sort((left, right) =>
@@ -598,8 +836,21 @@ namespace DynamicDungeon.Editor.Inspectors
 
                 return string.Compare(left.DisplayName, right.DisplayName, StringComparison.OrdinalIgnoreCase);
             });
+
             _cachedComponentTypes = options;
             return _cachedComponentTypes;
+        }
+
+        internal static List<string> GetAvailableComponentTypeNames()
+        {
+            List<ComponentTypeOption> options = GetAvailableComponentTypes();
+            List<string> names = new List<string>(options.Count);
+            int i;
+            for (i = 0; i < options.Count; i++)
+            {
+                names.Add(options[i].FullName);
+            }
+            return names;
         }
 
         private static string GetComponentCategoryPath(Type type)
@@ -618,69 +869,20 @@ namespace DynamicDungeon.Editor.Inspectors
             return "Custom";
         }
 
-        private static string GetCategoryLeafName(string categoryPath)
+        private static void MoveComponent(TilemapLayerDefinition definition, int fromIndex, int toIndex)
         {
-            if (string.IsNullOrWhiteSpace(categoryPath))
-            {
-                return "Custom";
-            }
-
-            int separatorIndex = categoryPath.LastIndexOf('/');
-            return separatorIndex >= 0 && separatorIndex < categoryPath.Length - 1
-                ? categoryPath.Substring(separatorIndex + 1)
-                : categoryPath;
+            Undo.RecordObject(definition, "Reorder Component Type");
+            string componentTypeName = definition.ComponentsToAdd[fromIndex];
+            definition.ComponentsToAdd.RemoveAt(fromIndex);
+            definition.ComponentsToAdd.Insert(toIndex, componentTypeName);
+            EditorUtility.SetDirty(definition);
         }
 
-        private static int CountOtherCatchAllLayers(TilemapLayerDefinition currentDefinition)
+        private static void RemoveComponentAt(TilemapLayerDefinition definition, int index)
         {
-            int count = 0;
-            string[] guids = AssetDatabase.FindAssets("t:TilemapLayerDefinition");
-
-            int index;
-            for (index = 0; index < guids.Length; index++)
-            {
-                string assetPath = AssetDatabase.GUIDToAssetPath(guids[index]);
-                TilemapLayerDefinition layerDefinition = AssetDatabase.LoadAssetAtPath<TilemapLayerDefinition>(assetPath);
-                if (layerDefinition == null || ReferenceEquals(layerDefinition, currentDefinition))
-                {
-                    continue;
-                }
-
-                if (layerDefinition.IsCatchAll)
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        private float CalculateChipAreaHeight(IList<string> values, float availableWidth, bool readOnly)
-        {
-            if (values == null || values.Count == 0)
-            {
-                return ChipHeight;
-            }
-
-            float currentWidth = 0.0f;
-            float height = ChipHeight;
-
-            int index;
-            for (index = 0; index < values.Count; index++)
-            {
-                string label = readOnly ? values[index] : values[index] + " ×";
-                Vector2 chipSize = _chipStyle.CalcSize(new GUIContent(label));
-                float chipWidth = chipSize.x + ChipPadding;
-                if (currentWidth > 0.0f && currentWidth + chipWidth > availableWidth)
-                {
-                    currentWidth = 0.0f;
-                    height += ChipHeight + ChipSpacing;
-                }
-
-                currentWidth += chipWidth + ChipSpacing;
-            }
-
-            return height;
+            Undo.RecordObject(definition, "Delete Component Type");
+            definition.ComponentsToAdd.RemoveAt(index);
+            EditorUtility.SetDirty(definition);
         }
 
         private static bool ContainsIgnoreCase(IList<string> values, string value)

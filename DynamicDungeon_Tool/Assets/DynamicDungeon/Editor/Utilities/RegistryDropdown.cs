@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DynamicDungeon.Runtime.Semantic;
 using UnityEditor;
@@ -13,9 +14,9 @@ namespace DynamicDungeon.Editor.Utilities
             public readonly string DisplayName;
             public readonly string SearchText;
             public readonly bool IsSelected;
-            public readonly System.Action OnSelect;
+            public readonly Action OnSelect;
 
-            public SearchOption(string displayName, string searchText, bool isSelected, System.Action onSelect)
+            public SearchOption(string displayName, string searchText, bool isSelected, Action onSelect)
             {
                 DisplayName = displayName;
                 SearchText = searchText;
@@ -84,7 +85,7 @@ namespace DynamicDungeon.Editor.Utilities
                 {
                     SearchOption option = filteredOptions[index];
                     Rect rowRect = new Rect(0.0f, index * rowHeight, contentRect.width, rowHeight);
-                    string rowLabel = option.IsSelected ? "✓ " + option.DisplayName : option.DisplayName;
+                    string rowLabel = option.IsSelected ? "[Current] " + option.DisplayName : option.DisplayName;
                     if (GUI.Button(rowRect, rowLabel, EditorStyles.miniButton))
                     {
                         option.OnSelect?.Invoke();
@@ -107,8 +108,8 @@ namespace DynamicDungeon.Editor.Utilities
                 for (index = 0; index < _options.Count; index++)
                 {
                     SearchOption option = _options[index];
-                    if (option.DisplayName.IndexOf(_search, System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        option.SearchText.IndexOf(_search, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (option.DisplayName.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        option.SearchText.IndexOf(_search, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         filteredOptions.Add(option);
                     }
@@ -205,7 +206,7 @@ namespace DynamicDungeon.Editor.Utilities
                     }
 
                     if (!string.IsNullOrWhiteSpace(_search) &&
-                        tag.IndexOf(_search, System.StringComparison.OrdinalIgnoreCase) < 0)
+                        tag.IndexOf(_search, StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         continue;
                     }
@@ -213,7 +214,7 @@ namespace DynamicDungeon.Editor.Utilities
                     filteredTags.Add(tag);
                 }
 
-                filteredTags.Sort(System.StringComparer.OrdinalIgnoreCase);
+                filteredTags.Sort(StringComparer.OrdinalIgnoreCase);
                 return filteredTags;
             }
         }
@@ -221,10 +222,20 @@ namespace DynamicDungeon.Editor.Utilities
         public static void LogicalIdDropdown(string label, SerializedProperty property, TileSemanticRegistry registry)
         {
             Rect controlRect = EditorGUILayout.GetControlRect();
-            Rect buttonRect = EditorGUI.PrefixLabel(controlRect, new GUIContent(label));
+            LogicalIdDropdown(controlRect, label, property, registry);
+        }
+
+        public static void LogicalIdDropdown(Rect rect, string label, SerializedProperty property, TileSemanticRegistry registry)
+        {
+            Rect buttonRect = EditorGUI.PrefixLabel(rect, new GUIContent(label));
+            LogicalIdDropdown(buttonRect, property, registry);
+        }
+
+        public static void LogicalIdDropdown(Rect rect, SerializedProperty property, TileSemanticRegistry registry)
+        {
             string buttonLabel = BuildLogicalIdLabel((ushort)Mathf.Max(property.intValue, 0), registry);
 
-            if (!GUI.Button(buttonRect, buttonLabel, EditorStyles.popup))
+            if (!GUI.Button(rect, buttonLabel, EditorStyles.popup))
             {
                 return;
             }
@@ -232,7 +243,7 @@ namespace DynamicDungeon.Editor.Utilities
             List<TileEntry> entries = registry != null ? registry.Entries : null;
             if (entries == null || entries.Count == 0)
             {
-                PopupWindow.Show(buttonRect, new SearchableOptionPopup(new List<SearchOption>(), "No registry entries available", buttonRect.width + 40.0f));
+                PopupWindow.Show(rect, new SearchableOptionPopup(new List<SearchOption>(), "No registry entries available", rect.width + 40.0f));
                 return;
             }
 
@@ -256,14 +267,24 @@ namespace DynamicDungeon.Editor.Utilities
                 options.Add(new SearchOption(itemLabel, searchText, isSelected, () => SetIntPropertyValue(property, logicalId, "Change Logical ID")));
             }
 
-            PopupWindow.Show(buttonRect, new SearchableOptionPopup(options, "No matching registry entries", buttonRect.width + 40.0f));
+            PopupWindow.Show(rect, new SearchableOptionPopup(options, "No matching registry entries", rect.width + 40.0f));
         }
 
         public static void TagDropdown(string label, SerializedProperty listProperty, TileSemanticRegistry registry)
         {
             Rect controlRect = EditorGUILayout.GetControlRect();
-            Rect buttonRect = EditorGUI.PrefixLabel(controlRect, new GUIContent(label));
-            if (!GUI.Button(buttonRect, "Select Tags", EditorStyles.popup))
+            TagDropdown(controlRect, label, listProperty, registry);
+        }
+
+        public static void TagDropdown(Rect rect, string label, SerializedProperty listProperty, TileSemanticRegistry registry)
+        {
+            Rect buttonRect = EditorGUI.PrefixLabel(rect, new GUIContent(label));
+            TagDropdown(buttonRect, listProperty, registry);
+        }
+
+        public static void TagDropdown(Rect rect, SerializedProperty listProperty, TileSemanticRegistry registry)
+        {
+            if (!GUI.Button(rect, "Select Tags", EditorStyles.popup))
             {
                 return;
             }
@@ -271,11 +292,11 @@ namespace DynamicDungeon.Editor.Utilities
             List<string> allTags = registry != null ? registry.AllTags : null;
             if (allTags == null || allTags.Count == 0)
             {
-                PopupWindow.Show(buttonRect, new SearchableOptionPopup(new List<SearchOption>(), "No tags available", buttonRect.width + 40.0f));
+                PopupWindow.Show(rect, new SearchableOptionPopup(new List<SearchOption>(), "No tags available", rect.width + 40.0f));
                 return;
             }
 
-            PopupWindow.Show(buttonRect, new SearchableTagPopup(listProperty, allTags, buttonRect.width + 40.0f));
+            PopupWindow.Show(rect, new SearchableTagPopup(listProperty, allTags, rect.width + 40.0f));
         }
 
         internal static string BuildLogicalIdLabel(ushort logicalId, TileSemanticRegistry registry)
@@ -295,7 +316,7 @@ namespace DynamicDungeon.Editor.Utilities
             for (index = 0; index < listProperty.arraySize; index++)
             {
                 SerializedProperty elementProperty = listProperty.GetArrayElementAtIndex(index);
-                if (string.Equals(elementProperty.stringValue, value, System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(elementProperty.stringValue, value, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -304,21 +325,9 @@ namespace DynamicDungeon.Editor.Utilities
             return false;
         }
 
-        private static void AddStringValue(SerializedProperty listProperty, string value, string undoName)
-        {
-            Object targetObject = listProperty.serializedObject.targetObject;
-            Undo.RecordObject(targetObject, undoName);
-            listProperty.serializedObject.Update();
-            int index = listProperty.arraySize;
-            listProperty.InsertArrayElementAtIndex(index);
-            listProperty.GetArrayElementAtIndex(index).stringValue = value;
-            listProperty.serializedObject.ApplyModifiedProperties();
-            EditorUtility.SetDirty(targetObject);
-        }
-
         private static void SetIntPropertyValue(SerializedProperty property, int value, string undoName)
         {
-            Object targetObject = property.serializedObject.targetObject;
+            UnityEngine.Object targetObject = property.serializedObject.targetObject;
             Undo.RecordObject(targetObject, undoName);
             property.serializedObject.Update();
             property.intValue = value;
@@ -328,7 +337,7 @@ namespace DynamicDungeon.Editor.Utilities
 
         private static void ToggleStringValue(SerializedProperty listProperty, string value, bool shouldExist, string undoName)
         {
-            Object targetObject = listProperty.serializedObject.targetObject;
+            UnityEngine.Object targetObject = listProperty.serializedObject.targetObject;
             Undo.RecordObject(targetObject, undoName);
             listProperty.serializedObject.Update();
 
@@ -377,7 +386,7 @@ namespace DynamicDungeon.Editor.Utilities
             for (index = 0; index < listProperty.arraySize; index++)
             {
                 SerializedProperty elementProperty = listProperty.GetArrayElementAtIndex(index);
-                if (string.Equals(elementProperty.stringValue, value, System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(elementProperty.stringValue, value, StringComparison.OrdinalIgnoreCase))
                 {
                     return index;
                 }

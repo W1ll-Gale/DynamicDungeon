@@ -1,9 +1,11 @@
 using System.Globalization;
+using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Editor.Windows;
 using DynamicDungeon.Runtime.Component;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using DynamicDungeon.Runtime.Semantic;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -16,14 +18,8 @@ namespace DynamicDungeon.Editor.Inspectors
         private const float CompactButtonWidth = 118.0f;
         private const float StatusBannerHeight = 24.0f;
         private const float LargeActionButtonHeight = 30.0f;
-        private const float ReorderHandleWidth = 18.0f;
-        private const float InlineFoldoutWidth = 14.0f;
         private const float InlineInspectorPadding = 6.0f;
         private const float InlineInspectorSpacing = 4.0f;
-        private const float InlineFieldSpacing = 3.0f;
-        private const float InlineCompactRowSpacing = 8.0f;
-        private const float InlineCompactLabelWidth = 78.0f;
-        private const float InlineCollectionInset = 10.0f;
 
         private SerializedProperty _generateOnStartProperty;
         private SerializedProperty _seedModeProperty;
@@ -168,14 +164,6 @@ namespace DynamicDungeon.Editor.Inspectors
                 _mutedMiniLabelStyle = new GUIStyle(EditorStyles.miniLabel);
                 _mutedMiniLabelStyle.normal.textColor = new Color(0.72f, 0.72f, 0.72f, 1.0f);
             }
-        }
-
-        private void InitialiseLayerDefinitionsList()
-        {
-            _layerDefinitionsList = new ReorderableList(serializedObject, _layerDefinitionsProperty, true, true, true, true);
-            _layerDefinitionsList.drawHeaderCallback = DrawLayerDefinitionsHeader;
-            _layerDefinitionsList.drawElementCallback = DrawLayerDefinitionElement;
-            _layerDefinitionsList.elementHeightCallback = GetLayerDefinitionElementHeight;
         }
 
         private bool DrawGraphSection()
@@ -474,215 +462,93 @@ namespace DynamicDungeon.Editor.Inspectors
             return "Use Generate for an editor-time run, or enable Generate On Start for runtime generation.";
         }
 
-        private void DrawLayerDefinitionsHeader(Rect rect)
+        private void InitialiseLayerDefinitionsList()
         {
-            EditorGUI.LabelField(rect, "Layer Definitions");
+            _layerDefinitionsList = new ReorderableList(serializedObject, _layerDefinitionsProperty, true, true, true, true);
+            _layerDefinitionsList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Layer Definitions");
+            _layerDefinitionsList.drawElementCallback = DrawLayerDefinitionListElement;
+            _layerDefinitionsList.elementHeightCallback = GetLayerDefinitionElementHeight;
         }
 
-        private void DrawLayerDefinitionElement(Rect rect, int index, bool isActive, bool isFocused)
+        private void DrawLayerDefinitionListElement(Rect rect, int index, bool isActive, bool isFocused)
         {
             SerializedProperty elementProperty = _layerDefinitionsProperty.GetArrayElementAtIndex(index);
-            rect.y += 3.0f;
-
-            Rect rowRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
-            float contentStartX = rowRect.x + ReorderHandleWidth;
-            Rect foldoutRect = new Rect(contentStartX, rowRect.y, InlineFoldoutWidth, rowRect.height);
-            float objectFieldX = rowRect.x + EditorGUIUtility.labelWidth;
-            Rect labelRect = new Rect(
-                foldoutRect.xMax + 2.0f,
-                rowRect.y,
-                objectFieldX - (foldoutRect.xMax + 6.0f),
-                rowRect.height);
-            Rect fieldRect = new Rect(
-                objectFieldX,
-                rowRect.y,
-                rowRect.xMax - objectFieldX,
-                rowRect.height);
-
             TilemapLayerDefinition layerDefinition = elementProperty.objectReferenceValue as TilemapLayerDefinition;
-            bool canExpandInline = layerDefinition != null;
-            if (canExpandInline)
+
+            rect.y += 3.0f;
+            rect.height = EditorGUIUtility.singleLineHeight;
+
+            if (layerDefinition != null)
             {
+                Rect foldoutRect = new Rect(rect.x + 18.0f, rect.y, 16.0f, rect.height);
                 elementProperty.isExpanded = EditorGUI.Foldout(foldoutRect, elementProperty.isExpanded, GUIContent.none, true);
             }
             else
             {
-                EditorGUI.LabelField(foldoutRect, GUIContent.none);
                 elementProperty.isExpanded = false;
             }
 
+            Rect labelRect = new Rect(rect.x + 36.0f, rect.y, 120.0f, rect.height);
             EditorGUI.LabelField(labelRect, BuildLayerDefinitionLabel(layerDefinition, index));
 
+            Rect fieldRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, rect.width - EditorGUIUtility.labelWidth, rect.height);
             EditorGUI.BeginChangeCheck();
-            Object newLayerDefinition = EditorGUI.ObjectField(fieldRect, GUIContent.none, elementProperty.objectReferenceValue, typeof(TilemapLayerDefinition), false);
+            UnityEngine.Object newLayerDefinition = EditorGUI.ObjectField(fieldRect, GUIContent.none, elementProperty.objectReferenceValue, typeof(TilemapLayerDefinition), false);
             if (EditorGUI.EndChangeCheck())
             {
                 elementProperty.objectReferenceValue = newLayerDefinition;
                 layerDefinition = elementProperty.objectReferenceValue as TilemapLayerDefinition;
-                canExpandInline = layerDefinition != null;
-                if (!canExpandInline)
+                if (layerDefinition == null)
                 {
                     elementProperty.isExpanded = false;
                 }
             }
 
-            if (layerDefinition == null || !elementProperty.isExpanded)
+            if (layerDefinition != null && elementProperty.isExpanded)
             {
-                return;
-            }
+                float bodyWidth = Mathf.Max(rect.width - 20.0f - (InlineInspectorPadding * 2.0f), 240.0f);
+                float contentHeight = TilemapLayerDefinitionEditor.GetEmbeddedInspectorHeight(layerDefinition, TileSemanticRegistry.GetOrLoad(), bodyWidth);
+                Rect bodyRect = new Rect(
+                    rect.x + 20.0f,
+                    rect.yMax + InlineInspectorSpacing,
+                    rect.width - 20.0f,
+                    contentHeight + (InlineInspectorPadding * 2.0f));
+                GUI.Box(bodyRect, GUIContent.none, EditorStyles.helpBox);
 
-            SerializedObject layerDefinitionObject = new SerializedObject(layerDefinition);
-            layerDefinitionObject.Update();
+                Rect contentRect = new Rect(
+                    bodyRect.x + InlineInspectorPadding,
+                    bodyRect.y + InlineInspectorPadding,
+                    bodyRect.width - (InlineInspectorPadding * 2.0f),
+                    bodyRect.height - (InlineInspectorPadding * 2.0f));
 
-            Rect bodyRect = new Rect(
-                fieldRect.x,
-                rowRect.yMax + InlineInspectorSpacing,
-                rowRect.xMax - fieldRect.x,
-                GetInlineLayerDefinitionBodyHeight(layerDefinitionObject));
-
-            GUI.Box(bodyRect, GUIContent.none, EditorStyles.helpBox);
-
-            Rect contentRect = new Rect(
-                bodyRect.x + InlineInspectorPadding,
-                bodyRect.y + InlineInspectorPadding,
-                bodyRect.width - (InlineInspectorPadding * 2.0f),
-                bodyRect.height - (InlineInspectorPadding * 2.0f));
-
-            DrawInlineLayerDefinitionFields(contentRect, layerDefinitionObject);
-
-            if (layerDefinitionObject.ApplyModifiedProperties())
-            {
-                EditorUtility.SetDirty(layerDefinition);
+                SerializedObject layerSerializedObject = new SerializedObject(layerDefinition);
+                TilemapLayerDefinitionEditor.DrawEmbeddedInspector(contentRect, layerSerializedObject, layerDefinition, TileSemanticRegistry.GetOrLoad());
             }
         }
 
-        private static GUIContent BuildLayerDefinitionLabel(TilemapLayerDefinition layerDefinition, int index)
+        private static string BuildLayerDefinitionLabel(TilemapLayerDefinition layerDefinition, int index)
         {
             if (layerDefinition == null)
             {
-                return new GUIContent("Layer " + (index + 1));
+                return "Layer " + (index + 1);
             }
 
-            string label = string.IsNullOrWhiteSpace(layerDefinition.LayerName) ? layerDefinition.name : layerDefinition.LayerName;
-            return new GUIContent(label);
+            return string.IsNullOrWhiteSpace(layerDefinition.LayerName) ? layerDefinition.name : layerDefinition.LayerName;
         }
 
         private float GetLayerDefinitionElementHeight(int index)
         {
             SerializedProperty elementProperty = _layerDefinitionsProperty.GetArrayElementAtIndex(index);
-            float height = EditorGUIUtility.singleLineHeight + 6.0f;
-
-            if (!elementProperty.isExpanded)
-            {
-                return height;
-            }
-
+            float baseHeight = EditorGUIUtility.singleLineHeight + 6.0f;
             TilemapLayerDefinition layerDefinition = elementProperty.objectReferenceValue as TilemapLayerDefinition;
-            if (layerDefinition == null)
+            if (layerDefinition == null || !elementProperty.isExpanded)
             {
-                return height;
+                return baseHeight;
             }
 
-            SerializedObject layerDefinitionObject = new SerializedObject(layerDefinition);
-            return height + InlineInspectorSpacing + GetInlineLayerDefinitionBodyHeight(layerDefinitionObject);
-        }
-
-        private float GetInlineLayerDefinitionBodyHeight(SerializedObject layerDefinitionObject)
-        {
-            SerializedProperty layerNameProperty = layerDefinitionObject.FindProperty("LayerName");
-            SerializedProperty sortOrderProperty = layerDefinitionObject.FindProperty("SortOrder");
-            SerializedProperty isCatchAllProperty = layerDefinitionObject.FindProperty("IsCatchAll");
-            SerializedProperty routingTagsProperty = layerDefinitionObject.FindProperty("RoutingTags");
-            SerializedProperty componentsToAddProperty = layerDefinitionObject.FindProperty("ComponentsToAdd");
-
-            float contentHeight = 0.0f;
-            contentHeight += GetPropertyHeightSafe(layerNameProperty);
-            contentHeight += InlineFieldSpacing;
-            contentHeight += Mathf.Max(GetPropertyHeightSafe(sortOrderProperty), GetPropertyHeightSafe(isCatchAllProperty));
-            contentHeight += InlineFieldSpacing;
-            contentHeight += GetPropertyHeightSafe(routingTagsProperty);
-            contentHeight += InlineFieldSpacing;
-            contentHeight += GetPropertyHeightSafe(componentsToAddProperty);
-
-            return contentHeight + (InlineInspectorPadding * 2.0f);
-        }
-
-        private void DrawInlineLayerDefinitionFields(Rect rect, SerializedObject layerDefinitionObject)
-        {
-            SerializedProperty layerNameProperty = layerDefinitionObject.FindProperty("LayerName");
-            SerializedProperty sortOrderProperty = layerDefinitionObject.FindProperty("SortOrder");
-            SerializedProperty isCatchAllProperty = layerDefinitionObject.FindProperty("IsCatchAll");
-            SerializedProperty routingTagsProperty = layerDefinitionObject.FindProperty("RoutingTags");
-            SerializedProperty componentsToAddProperty = layerDefinitionObject.FindProperty("ComponentsToAdd");
-
-            float previousLabelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = InlineCompactLabelWidth;
-
-            float currentY = rect.y;
-
-            if (layerNameProperty != null)
-            {
-                float layerNameHeight = EditorGUI.GetPropertyHeight(layerNameProperty, true);
-                Rect layerNameRect = new Rect(rect.x, currentY, rect.width, layerNameHeight);
-                EditorGUI.PropertyField(layerNameRect, layerNameProperty);
-                currentY += layerNameHeight + InlineFieldSpacing;
-            }
-
-            if (sortOrderProperty != null || isCatchAllProperty != null)
-            {
-                float compactRowHeight = Mathf.Max(GetPropertyHeightSafe(sortOrderProperty), GetPropertyHeightSafe(isCatchAllProperty));
-                float sortWidth = (rect.width * 0.58f) - (InlineCompactRowSpacing * 0.5f);
-                float catchAllWidth = rect.width - sortWidth - InlineCompactRowSpacing;
-
-                if (sortOrderProperty != null)
-                {
-                    Rect sortOrderRect = new Rect(rect.x, currentY, sortWidth, compactRowHeight);
-                    EditorGUI.PropertyField(sortOrderRect, sortOrderProperty);
-                }
-
-                if (isCatchAllProperty != null)
-                {
-                    Rect catchAllRect = new Rect(rect.x + sortWidth + InlineCompactRowSpacing, currentY, catchAllWidth, compactRowHeight);
-                    EditorGUI.PropertyField(catchAllRect, isCatchAllProperty);
-                }
-
-                currentY += compactRowHeight + InlineFieldSpacing;
-            }
-
-            EditorGUIUtility.labelWidth = previousLabelWidth;
-
-            if (routingTagsProperty != null)
-            {
-                float routingTagsHeight = EditorGUI.GetPropertyHeight(routingTagsProperty, true);
-                Rect routingTagsRect = new Rect(
-                    rect.x + InlineCollectionInset,
-                    currentY,
-                    rect.width - InlineCollectionInset,
-                    routingTagsHeight);
-                EditorGUI.PropertyField(routingTagsRect, routingTagsProperty, true);
-                currentY += routingTagsHeight + InlineFieldSpacing;
-            }
-
-            if (componentsToAddProperty != null)
-            {
-                float componentsHeight = EditorGUI.GetPropertyHeight(componentsToAddProperty, true);
-                Rect componentsRect = new Rect(
-                    rect.x + InlineCollectionInset,
-                    currentY,
-                    rect.width - InlineCollectionInset,
-                    componentsHeight);
-                EditorGUI.PropertyField(componentsRect, componentsToAddProperty, true);
-            }
-        }
-
-        private static float GetPropertyHeightSafe(SerializedProperty property)
-        {
-            if (property == null)
-            {
-                return EditorGUIUtility.singleLineHeight;
-            }
-
-            return EditorGUI.GetPropertyHeight(property, true);
+            float contentWidth = Mathf.Max(EditorGUIUtility.currentViewWidth - 110.0f, 240.0f);
+            float contentHeight = TilemapLayerDefinitionEditor.GetEmbeddedInspectorHeight(layerDefinition, TileSemanticRegistry.GetOrLoad(), contentWidth);
+            return baseHeight + InlineInspectorSpacing + (InlineInspectorPadding * 2.0f) + contentHeight;
         }
 
         private void BeginSection(string title)
