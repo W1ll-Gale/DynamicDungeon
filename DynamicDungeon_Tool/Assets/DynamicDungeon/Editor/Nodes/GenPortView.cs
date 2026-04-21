@@ -76,6 +76,27 @@ namespace DynamicDungeon.Editor.Nodes
             return fromType != toType && CastRegistry.CanCast(fromType, toType);
         }
 
+        public CastMode GetDefaultCastMode(Port otherPort)
+        {
+            GenPortView otherGenPort = otherPort as GenPortView;
+            if (otherGenPort == null)
+            {
+                return CastMode.None;
+            }
+
+            ChannelType fromType;
+            ChannelType toType;
+            ResolveConnectionTypes(otherGenPort, out fromType, out toType);
+
+            CastMode defaultMode;
+            if (fromType != toType && CastRegistry.CanCast(fromType, toType, out defaultMode))
+            {
+                return defaultMode;
+            }
+
+            return CastMode.None;
+        }
+
         public Color GetPortColour()
         {
             return PortColourRegistry.GetColour(_portDefinition.Type);

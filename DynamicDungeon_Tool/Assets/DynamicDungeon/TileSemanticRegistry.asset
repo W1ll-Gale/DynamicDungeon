@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: TileSemanticRegistry
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Semantic.TileSemanticRegistry
   Entries:
+  - LogicalId: 0
+    DisplayName: Void
+    Tags: []
   - LogicalId: 1
     DisplayName: Floor
     Tags:
@@ -21,6 +24,16 @@ MonoBehaviour:
     DisplayName: Wall
     Tags:
     - Solid
+  - LogicalId: 3
+    DisplayName: Liquid
+    Tags:
+    - Liquid
+  - LogicalId: 4
+    DisplayName: Access
+    Tags:
+    - Trigger
   AllTags:
   - Walkable
   - Solid
+  - Liquid
+  - Trigger

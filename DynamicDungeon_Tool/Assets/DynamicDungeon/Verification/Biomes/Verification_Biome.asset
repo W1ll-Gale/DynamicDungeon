@@ -14,6 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Biome.BiomeAsset
   TileMappings:
   - LogicalId: 1
-    Tile: {fileID: 11400000, guid: 2a615788883415448b13662929897784, type: 2}
-  - LogicalId: 2
+    TileType: 0
     Tile: {fileID: 11400000, guid: 26d4a84984b9f6645b688bc57e9f8ad4, type: 2}
+    SpriteAsset: {fileID: 6328390875930085828, guid: 1f73bcc5983085b4d9620306a62843be, type: 3}
+    WeightedTiles: []
+  - LogicalId: 2
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 2a615788883415448b13662929897784, type: 2}
+    SpriteAsset: {fileID: 6328390875930085828, guid: 1f73bcc5983085b4d9620306a62843be, type: 3}
+    WeightedTiles: []

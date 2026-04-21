@@ -448,7 +448,8 @@ namespace DynamicDungeon.Editor.Windows
                     connection.FromPortName,
                     connection.ToNodeId,
                     toPortView,
-                    connection.ToPortName);
+                    connection.ToPortName,
+                    connection.CastMode);
                 AddElement(edgeView);
             }
         }
@@ -699,23 +700,20 @@ namespace DynamicDungeon.Editor.Windows
             string fromPortName,
             string toNodeId,
             Port toPortView,
-            string toPortName)
+            string toPortName,
+            CastMode castMode = CastMode.None)
         {
-            bool isCastEdge = GenPortUtility.RequiresCast(fromPortView, toPortView);
-            Color edgeColour = ResolveEdgeColour(fromPortView, toPortView, isCastEdge);
-            Edge edgeView = new Edge();
+            Color edgeColour = ResolveEdgeColour(fromPortView, toPortView, castMode != CastMode.None);
+            GenEdgeView edgeView = new GenEdgeView(castMode, edgeColour);
 
             edgeView.output = fromPortView;
             edgeView.input = toPortView;
             edgeView.output.Connect(edgeView);
             edgeView.input.Connect(edgeView);
-            edgeView.userData = new GenConnectionData(fromNodeId, fromPortName, toNodeId, toPortName);
 
-            if (edgeView.edgeControl != null)
-            {
-                edgeView.edgeControl.inputColor = edgeColour;
-                edgeView.edgeControl.outputColor = edgeColour;
-            }
+            GenConnectionData connectionData = new GenConnectionData(fromNodeId, fromPortName, toNodeId, toPortName);
+            connectionData.CastMode = castMode;
+            edgeView.userData = connectionData;
 
             ConfigureEdgeCallbacks(edgeView);
             return edgeView;
@@ -729,9 +727,41 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
+            GenEdgeView genEdge = edge as GenEdgeView;
+            if (genEdge != null && genEdge.IsCastEdge)
+            {
+                ChannelType fromType;
+                ChannelType toType;
+                GetPortTypesFromCastMode(genEdge.ActiveCastMode, out fromType, out toType);
+
+                List<CastMode> validModes = GetValidCastModesForPortPair(fromType, toType);
+                CastMode currentMode = genEdge.ActiveCastMode;
+
+                int modeIndex;
+                for (modeIndex = 0; modeIndex < validModes.Count; modeIndex++)
+                {
+                    CastMode mode = validModes[modeIndex];
+                    string menuItemLabel = "Cast Mode/" + GetCastModeDisplayName(mode);
+
+                    CastMode capturedMode = mode;
+                    Edge capturedEdge = edge;
+
+                    DropdownMenuAction.Status itemStatus = mode == currentMode
+                        ? DropdownMenuAction.Status.Checked
+                        : DropdownMenuAction.Status.Normal;
+
+                    contextEvent.menu.AppendAction(
+                        menuItemLabel,
+                        _ => ApplyCastModeChange(capturedEdge, capturedMode),
+                        _ => itemStatus);
+                }
+
+                contextEvent.menu.AppendSeparator();
+            }
+
             contextEvent.menu.AppendAction(
                 "Delete",
-                action =>
+                _ =>
                 {
                     List<GraphElement> elementsToDelete = new List<GraphElement>();
                     elementsToDelete.Add(edge);
@@ -1024,27 +1054,50 @@ namespace DynamicDungeon.Editor.Windows
                     }
 
                     graphStructureChanged = true;
-                    edge.userData = new GenConnectionData(
+
+                    bool isNewEdgeCast = GenPortUtility.RequiresCast(outputPort, inputPort);
+                    CastMode newEdgeCastMode = CastMode.None;
+
+                    if (isNewEdgeCast)
+                    {
+                        CastMode resolvedDefault;
+                        CastRegistry.CanCast(outputPortDefinition.Type, inputPortDefinition.Type, out resolvedDefault);
+                        newEdgeCastMode = resolvedDefault;
+
+                        // Persist the default cast mode on the graph connection that was just added.
+                        GenConnectionData graphConnection = FindConnectionInGraph(
+                            fromNodeView.NodeData.NodeId,
+                            outputPortDefinition.Name,
+                            toNodeView.NodeData.NodeId,
+                            inputPortDefinition.Name);
+
+                        if (graphConnection != null)
+                        {
+                            graphConnection.CastMode = newEdgeCastMode;
+                        }
+                    }
+
+                    GenConnectionData newConnectionData = new GenConnectionData(
                         fromNodeView.NodeData.NodeId,
                         outputPortDefinition.Name,
                         toNodeView.NodeData.NodeId,
                         inputPortDefinition.Name);
+                    newConnectionData.CastMode = newEdgeCastMode;
 
-                    outputPort.Connect(edge);
-                    inputPort.Connect(edge);
-                    Color edgeColour = ResolveEdgeColour(outputPort, inputPort, GenPortUtility.RequiresCast(outputPort, inputPort));
-                    if (edge.edgeControl != null)
-                    {
-                        edge.edgeControl.inputColor = edgeColour;
-                        edge.edgeControl.outputColor = edgeColour;
-                    }
+                    Color edgeColour = ResolveEdgeColour(outputPort, inputPort, isNewEdgeCast);
+                    GenEdgeView genEdgeView = new GenEdgeView(newEdgeCastMode, edgeColour);
+                    genEdgeView.output = outputPort;
+                    genEdgeView.input = inputPort;
+                    outputPort.Connect(genEdgeView);
+                    inputPort.Connect(genEdgeView);
+                    genEdgeView.userData = newConnectionData;
 
                     outputPort.portColor = GenPortUtility.GetPortColour(outputPort);
                     inputPort.portColor = GenPortUtility.GetPortColour(inputPort);
                     fromNodeView.RefreshPorts();
                     toNodeView.RefreshPorts();
-                    ConfigureEdgeCallbacks(edge);
-                    validEdges.Add(edge);
+                    ConfigureEdgeCallbacks(genEdgeView);
+                    validEdges.Add(genEdgeView);
                 }
 
                 if (recordedUndo)
@@ -1774,6 +1827,149 @@ namespace DynamicDungeon.Editor.Windows
 
             UnityEngine.Object.DestroyImmediate(_expandedPreviewTexture);
             _expandedPreviewTexture = null;
+        }
+
+        private void ApplyCastModeChange(Edge edge, CastMode newMode)
+        {
+            if (_graph == null || edge == null)
+            {
+                return;
+            }
+
+            GenEdgeView genEdge = edge as GenEdgeView;
+            GenConnectionData userData = edge.userData as GenConnectionData;
+            if (userData == null)
+            {
+                return;
+            }
+
+            GenConnectionData graphConnection = FindConnectionInGraph(
+                userData.FromNodeId,
+                userData.FromPortName,
+                userData.ToNodeId,
+                userData.ToPortName);
+
+            if (graphConnection == null)
+            {
+                return;
+            }
+
+            Undo.RecordObject(_graph, "Change Cast Mode");
+            graphConnection.CastMode = newMode;
+            userData.CastMode = newMode;
+            EditorUtility.SetDirty(_graph);
+
+            if (genEdge != null)
+            {
+                genEdge.ApplyCastMode(newMode);
+            }
+
+            // Force a full recompile so the new cast mode is reflected in the implicit cast node.
+            if (_generationOrchestrator != null)
+            {
+                _generationOrchestrator.RequestPreviewRefresh();
+            }
+
+            _afterMutation?.Invoke();
+        }
+
+        private GenConnectionData FindConnectionInGraph(
+            string fromNodeId,
+            string fromPortName,
+            string toNodeId,
+            string toPortName)
+        {
+            if (_graph == null || _graph.Connections == null)
+            {
+                return null;
+            }
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < _graph.Connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = _graph.Connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(connection.FromNodeId, fromNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.FromPortName, fromPortName, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToNodeId, toNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToPortName, toPortName, StringComparison.Ordinal))
+                {
+                    return connection;
+                }
+            }
+
+            return null;
+        }
+
+        private static void GetPortTypesFromCastMode(CastMode mode, out ChannelType fromType, out ChannelType toType)
+        {
+            switch (mode)
+            {
+                case CastMode.FloatToIntFloor:
+                case CastMode.FloatToIntRound:
+                    fromType = ChannelType.Float;
+                    toType = ChannelType.Int;
+                    return;
+                case CastMode.FloatToBoolMask:
+                    fromType = ChannelType.Float;
+                    toType = ChannelType.BoolMask;
+                    return;
+                case CastMode.IntToBoolMask:
+                    fromType = ChannelType.Int;
+                    toType = ChannelType.BoolMask;
+                    return;
+                default:
+                    fromType = ChannelType.Float;
+                    toType = ChannelType.Float;
+                    return;
+            }
+        }
+
+        private static List<CastMode> GetValidCastModesForPortPair(ChannelType fromType, ChannelType toType)
+        {
+            List<CastMode> modes = new List<CastMode>();
+
+            if (fromType == ChannelType.Float && toType == ChannelType.Int)
+            {
+                modes.Add(CastMode.FloatToIntFloor);
+                modes.Add(CastMode.FloatToIntRound);
+                return modes;
+            }
+
+            if (fromType == ChannelType.Float && toType == ChannelType.BoolMask)
+            {
+                modes.Add(CastMode.FloatToBoolMask);
+                return modes;
+            }
+
+            if (fromType == ChannelType.Int && toType == ChannelType.BoolMask)
+            {
+                modes.Add(CastMode.IntToBoolMask);
+                return modes;
+            }
+
+            return modes;
+        }
+
+        private static string GetCastModeDisplayName(CastMode mode)
+        {
+            switch (mode)
+            {
+                case CastMode.FloatToIntFloor:
+                    return "Floor";
+                case CastMode.FloatToIntRound:
+                    return "Round";
+                case CastMode.FloatToBoolMask:
+                    return "Float to Bool Mask";
+                case CastMode.IntToBoolMask:
+                    return "Int to Bool Mask";
+                default:
+                    return mode.ToString();
+            }
         }
     }
 }
