@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DynamicDungeon.Editor.Windows;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
@@ -57,7 +58,30 @@ namespace DynamicDungeon.Editor.Nodes
                     continue;
                 }
 
-                graphView.AddElement(createdEdge);
+                DynamicDungeonGraphView dynamicDungeonGraphView = graphView as DynamicDungeonGraphView;
+                Edge edgeToAdd = dynamicDungeonGraphView != null
+                    ? dynamicDungeonGraphView.NormaliseCreatedEdge(createdEdge)
+                    : createdEdge;
+
+                if (!ReferenceEquals(edgeToAdd, createdEdge))
+                {
+                    if (createdEdge.output != null)
+                    {
+                        createdEdge.output.Disconnect(createdEdge);
+                    }
+
+                    if (createdEdge.input != null)
+                    {
+                        createdEdge.input.Disconnect(createdEdge);
+                    }
+
+                    if (createdEdge.parent != null)
+                    {
+                        createdEdge.RemoveFromHierarchy();
+                    }
+                }
+
+                graphView.AddElement(edgeToAdd);
             }
         }
 

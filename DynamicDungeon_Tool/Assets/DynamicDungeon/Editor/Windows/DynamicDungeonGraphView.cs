@@ -301,6 +301,52 @@ namespace DynamicDungeon.Editor.Windows
             _graph = null;
         }
 
+        public Edge NormaliseCreatedEdge(Edge edge)
+        {
+            GenEdgeView existingGenEdgeView = edge as GenEdgeView;
+            if (existingGenEdgeView != null)
+            {
+                return existingGenEdgeView;
+            }
+
+            if (edge == null || edge.output == null || edge.input == null)
+            {
+                return edge;
+            }
+
+            GenNodeView fromNodeView = edge.output.node as GenNodeView;
+            GenNodeView toNodeView = edge.input.node as GenNodeView;
+            NodePortDefinition fromPortDefinition;
+            NodePortDefinition toPortDefinition;
+            if (fromNodeView == null ||
+                toNodeView == null ||
+                !GenPortUtility.TryGetPortDefinition(edge.output, out fromPortDefinition) ||
+                !GenPortUtility.TryGetPortDefinition(edge.input, out toPortDefinition))
+            {
+                return edge;
+            }
+
+            CastMode castMode = CastMode.None;
+            GenConnectionData connectionData = edge.userData as GenConnectionData;
+            if (connectionData != null)
+            {
+                castMode = connectionData.CastMode;
+            }
+            else if (GenPortUtility.RequiresCast(edge.output, edge.input))
+            {
+                CastRegistry.CanCast(fromPortDefinition.Type, toPortDefinition.Type, out castMode);
+            }
+
+            return CreateEdgeView(
+                fromNodeView.NodeData.NodeId,
+                edge.output,
+                fromPortDefinition.Name,
+                toNodeView.NodeData.NodeId,
+                edge.input,
+                toPortDefinition.Name,
+                castMode);
+        }
+
         public void CreateNodeFromSearch(Type nodeType, Vector2 graphLocalPosition)
         {
             if (_graph == null || nodeType == null)
@@ -703,8 +749,9 @@ namespace DynamicDungeon.Editor.Windows
             string toPortName,
             CastMode castMode = CastMode.None)
         {
-            Color edgeColour = ResolveEdgeColour(fromPortView, toPortView, castMode != CastMode.None);
-            GenEdgeView edgeView = new GenEdgeView(castMode, edgeColour);
+            Color outputEdgeColour = ResolveOutputEdgeColour(fromPortView);
+            Color inputEdgeColour = ResolveInputEdgeColour(fromPortView, toPortView, castMode != CastMode.None);
+            GenEdgeView edgeView = new GenEdgeView(castMode, outputEdgeColour, inputEdgeColour);
 
             edgeView.output = fromPortView;
             edgeView.input = toPortView;
@@ -986,7 +1033,7 @@ namespace DynamicDungeon.Editor.Windows
             foreach (ISelectable selectable in selection)
             {
                 GraphElement graphElement = selectable as GraphElement;
-                if (graphElement != null)
+                if (graphElement != null && CanDeleteGraphElement(graphElement))
                 {
                     elementsToDelete.Add(graphElement);
                 }
@@ -1084,8 +1131,9 @@ namespace DynamicDungeon.Editor.Windows
                         inputPortDefinition.Name);
                     newConnectionData.CastMode = newEdgeCastMode;
 
-                    Color edgeColour = ResolveEdgeColour(outputPort, inputPort, isNewEdgeCast);
-                    GenEdgeView genEdgeView = new GenEdgeView(newEdgeCastMode, edgeColour);
+                    Color outputEdgeColour = ResolveOutputEdgeColour(outputPort);
+                    Color inputEdgeColour = ResolveInputEdgeColour(outputPort, inputPort, isNewEdgeCast);
+                    GenEdgeView genEdgeView = new GenEdgeView(newEdgeCastMode, outputEdgeColour, inputEdgeColour);
                     genEdgeView.output = outputPort;
                     genEdgeView.input = inputPort;
                     outputPort.Connect(genEdgeView);
@@ -1253,6 +1301,11 @@ namespace DynamicDungeon.Editor.Windows
             nodeView.capabilities &= ~Capabilities.Deletable;
         }
 
+        private static bool CanDeleteGraphElement(GraphElement graphElement)
+        {
+            return graphElement != null && (graphElement.capabilities & Capabilities.Deletable) != 0;
+        }
+
         private void OnElementsAddedToGroup(Group group, System.Collections.Generic.IEnumerable<GraphElement> elements)
         {
             if (_suppressGraphMutationCallbacks || _graph == null)
@@ -1415,20 +1468,19 @@ namespace DynamicDungeon.Editor.Windows
             return true;
         }
 
-        private static Color ResolveEdgeColour(Port fromPortView, Port toPortView, bool isCastEdge)
+        private static Color ResolveOutputEdgeColour(Port fromPortView)
+        {
+            return GenPortUtility.GetPortColour(fromPortView);
+        }
+
+        private static Color ResolveInputEdgeColour(Port fromPortView, Port toPortView, bool isCastEdge)
         {
             if (!isCastEdge)
             {
                 return GenPortUtility.GetPortColour(fromPortView);
             }
 
-            Color fromColour = GenPortUtility.GetPortColour(fromPortView);
-            Color toColour = GenPortUtility.GetPortColour(toPortView);
-            return new Color(
-                (fromColour.r + toColour.r) * 0.5f,
-                (fromColour.g + toColour.g) * 0.5f,
-                (fromColour.b + toColour.b) * 0.5f,
-                1.0f);
+            return GenPortUtility.GetPortColour(toPortView);
         }
 
         private void OpenExpandedPreview(string nodeId, Texture2D texture, string titleText)
