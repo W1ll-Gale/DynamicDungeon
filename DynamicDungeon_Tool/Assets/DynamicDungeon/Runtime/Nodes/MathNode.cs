@@ -21,6 +21,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string InputAPortName = "A";
         private const string InputBPortName = "B";
         private const string FallbackOutputPortName = "Output";
+        private const string PreferredOutputDisplayName = FallbackOutputPortName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -91,11 +92,12 @@ namespace DynamicDungeon.Runtime.Nodes
             _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) ? FallbackOutputPortName : outputChannelName;
             _operation = operation;
             _scalarB = scalarB;
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
                 new NodePortDefinition(InputAPortName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, true),
                 new NodePortDefinition(InputBPortName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, false),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float)
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
             };
 
             RefreshChannelDeclarations();

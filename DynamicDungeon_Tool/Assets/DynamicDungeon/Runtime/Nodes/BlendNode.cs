@@ -20,6 +20,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string InputBPortName = "B";
         private const string MaskPortName = "Mask";
         private const string FallbackOutputPortName = "Output";
+        private const string PreferredOutputDisplayName = FallbackOutputPortName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -86,12 +87,13 @@ namespace DynamicDungeon.Runtime.Nodes
             _inputBChannelName = inputBChannelName ?? string.Empty;
             _maskChannelName = maskChannelName ?? string.Empty;
             _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) ? FallbackOutputPortName : outputChannelName;
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
                 new NodePortDefinition(InputAPortName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, true),
                 new NodePortDefinition(InputBPortName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, true),
                 new NodePortDefinition(MaskPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, true),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float)
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
             };
 
             RefreshChannelDeclarations();

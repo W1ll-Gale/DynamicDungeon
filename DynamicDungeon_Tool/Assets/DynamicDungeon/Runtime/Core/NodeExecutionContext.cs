@@ -9,6 +9,7 @@ namespace DynamicDungeon.Runtime.Core
         private NumericBlackboard _numericBlackboard;
         private ManagedBlackboard _managedBlackboard;
 
+        public readonly long GlobalSeed;
         public readonly long LocalSeed;
         public readonly int Width;
         public readonly int Height;
@@ -30,7 +31,7 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
-        public NodeExecutionContext(NodeChannelBindings channelBindings, NumericBlackboard numericBlackboard, ManagedBlackboard managedBlackboard, long localSeed, int width, int height, JobHandle inputDependency)
+        public NodeExecutionContext(NodeChannelBindings channelBindings, NumericBlackboard numericBlackboard, ManagedBlackboard managedBlackboard, long globalSeed, long localSeed, int width, int height, JobHandle inputDependency)
         {
             if (!channelBindings.IsCreated)
             {
@@ -65,6 +66,7 @@ namespace DynamicDungeon.Runtime.Core
             _channelBindings = channelBindings;
             _numericBlackboard = numericBlackboard;
             _managedBlackboard = managedBlackboard;
+            GlobalSeed = globalSeed;
             LocalSeed = localSeed;
             Width = width;
             Height = height;

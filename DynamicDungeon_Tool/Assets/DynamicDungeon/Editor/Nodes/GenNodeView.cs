@@ -678,7 +678,7 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             string tooltipText = GenPortUtility.BuildPortTooltip(portDefinition);
-            Label portLabel = new Label(portDefinition.Name);
+            Label portLabel = new Label(portDefinition.DisplayName);
             portLabel.tooltip = tooltipText;
             portLabel.style.flexGrow = 1.0f;
             portLabel.style.flexShrink = 1.0f;

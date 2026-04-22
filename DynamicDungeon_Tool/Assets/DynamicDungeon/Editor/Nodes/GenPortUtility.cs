@@ -77,7 +77,7 @@ namespace DynamicDungeon.Editor.Nodes
         public static string BuildPortTooltip(NodePortDefinition portDefinition)
         {
             List<string> lines = new List<string>();
-            lines.Add(portDefinition.Name);
+            lines.Add(portDefinition.DisplayName);
 
             if (!string.IsNullOrWhiteSpace(portDefinition.Description))
             {

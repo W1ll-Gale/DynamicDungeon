@@ -21,6 +21,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string DefaultNodeName = "Threshold";
         private const string InputPortName = "Input";
         private const string FallbackOutputPortName = "Output";
+        private const string PreferredOutputDisplayName = FallbackOutputPortName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -87,10 +88,11 @@ namespace DynamicDungeon.Runtime.Nodes
             _inputChannelName = inputChannelName ?? string.Empty;
             _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) ? FallbackOutputPortName : outputChannelName;
             _threshold = math.clamp(threshold, 0.0f, 1.0f);
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
                 new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, true),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.BoolMask)
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.BoolMask, displayName: outputPortDisplayName)
             };
 
             RefreshChannelDeclarations();

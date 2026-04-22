@@ -10,6 +10,7 @@ namespace DynamicDungeon.Runtime.Core
         private readonly Dictionary<string, int> _jobIndexByNodeId;
         private readonly Dictionary<string, long> _localSeedsByNodeId;
         private readonly WorldData _allocatedWorld;
+        private readonly long _globalSeed;
         private Dictionary<string, float> _initialNumericBlackboardValues;
         private bool _isDisposed;
 
@@ -37,12 +38,21 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
-        private ExecutionPlan(List<NodeJobDescriptor> jobs, Dictionary<string, int> jobIndexByNodeId, Dictionary<string, long> localSeedsByNodeId, WorldData allocatedWorld)
+        public long GlobalSeed
+        {
+            get
+            {
+                return _globalSeed;
+            }
+        }
+
+        private ExecutionPlan(List<NodeJobDescriptor> jobs, Dictionary<string, int> jobIndexByNodeId, Dictionary<string, long> localSeedsByNodeId, WorldData allocatedWorld, long globalSeed)
         {
             _jobs = jobs ?? throw new ArgumentNullException(nameof(jobs));
             _jobIndexByNodeId = jobIndexByNodeId ?? throw new ArgumentNullException(nameof(jobIndexByNodeId));
             _localSeedsByNodeId = localSeedsByNodeId ?? throw new ArgumentNullException(nameof(localSeedsByNodeId));
             _allocatedWorld = allocatedWorld ?? throw new ArgumentNullException(nameof(allocatedWorld));
+            _globalSeed = globalSeed;
             _isDisposed = false;
         }
 
@@ -117,7 +127,7 @@ namespace DynamicDungeon.Runtime.Core
                     jobs.Add(new NodeJobDescriptor(node, copiedChannels, true));
                 }
 
-                ExecutionPlan plan = new ExecutionPlan(jobs, jobIndexByNodeId, localSeedsByNodeId, allocatedWorld);
+                ExecutionPlan plan = new ExecutionPlan(jobs, jobIndexByNodeId, localSeedsByNodeId, allocatedWorld, globalSeed);
                 if (initialBlackboardValues != null && initialBlackboardValues.Count > 0)
                 {
                     plan._initialNumericBlackboardValues = new Dictionary<string, float>(initialBlackboardValues.Count, StringComparer.Ordinal);

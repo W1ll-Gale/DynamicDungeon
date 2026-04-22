@@ -58,6 +58,34 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task TwoPerlinNodesWithSameVisibleOutputNameCompileAndExecuteThroughOutputPath()
+        {
+            GenGraph graph = CreateTwoPerlinMathOutputGraph();
+            try
+            {
+                GraphCompileResult compileResult = GraphCompiler.Compile(graph);
+
+                Assert.That(compileResult.IsSuccess, Is.True);
+                Assert.That(compileResult.Plan, Is.Not.Null);
+                Assert.That(compileResult.HasConnectedOutput, Is.True);
+                Assert.That(ContainsError(compileResult.Diagnostics, "is owned"), Is.False);
+
+                Executor executor = new Executor();
+                ExecutionResult executionResult = await executor.ExecuteAsync(compileResult.Plan, CancellationToken.None);
+
+                Assert.That(executionResult.IsSuccess, Is.True);
+                Assert.That(executionResult.ErrorMessage, Is.Null);
+                Assert.That(GetFloatChannel(executionResult.Snapshot, GraphPortNameUtility.CreateGeneratedOutputPortName("perlin-a", GraphPortNameUtility.LegacyGenericOutputDisplayName)), Is.Not.Null);
+                Assert.That(GetFloatChannel(executionResult.Snapshot, GraphPortNameUtility.CreateGeneratedOutputPortName("perlin-b", GraphPortNameUtility.LegacyGenericOutputDisplayName)), Is.Not.Null);
+                Assert.That(GetFloatChannel(executionResult.Snapshot, GraphPortNameUtility.CreateGeneratedOutputPortName("math-node", GraphPortNameUtility.LegacyGenericOutputDisplayName)), Is.Not.Null);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
         public void GraphWithMissingRequiredConnectionFailsWithErrorDiagnostics()
         {
             GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
@@ -276,12 +304,71 @@ namespace DynamicDungeon.Tests.Runtime
             return graph;
         }
 
+        private static GenGraph CreateTwoPerlinMathOutputGraph()
+        {
+            GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
+            graph.SchemaVersion = GraphSchemaVersion.Current;
+            graph.WorldWidth = 16;
+            graph.WorldHeight = 16;
+            graph.DefaultSeed = 98765L;
+            GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+
+            string firstPerlinOutput = GraphPortNameUtility.CreateGeneratedOutputPortName("perlin-a", GraphPortNameUtility.LegacyGenericOutputDisplayName);
+            string secondPerlinOutput = GraphPortNameUtility.CreateGeneratedOutputPortName("perlin-b", GraphPortNameUtility.LegacyGenericOutputDisplayName);
+            string mathOutput = GraphPortNameUtility.CreateGeneratedOutputPortName("math-node", GraphPortNameUtility.LegacyGenericOutputDisplayName);
+
+            GenNodeData firstPerlinNode = new GenNodeData("perlin-a", typeof(PerlinNoiseNode).FullName, "Perlin A", Vector2.zero);
+            firstPerlinNode.Ports.Add(new GenPortData(firstPerlinOutput, PortDirection.Output, ChannelType.Float, GraphPortNameUtility.LegacyGenericOutputDisplayName));
+            firstPerlinNode.Parameters.Add(new SerializedParameter("frequency", "0.05"));
+            firstPerlinNode.Parameters.Add(new SerializedParameter("amplitude", "1.0"));
+            firstPerlinNode.Parameters.Add(new SerializedParameter("offset", "0,0"));
+            firstPerlinNode.Parameters.Add(new SerializedParameter("octaves", "1"));
+            graph.Nodes.Add(firstPerlinNode);
+
+            GenNodeData secondPerlinNode = new GenNodeData("perlin-b", typeof(PerlinNoiseNode).FullName, "Perlin B", new Vector2(220.0f, 0.0f));
+            secondPerlinNode.Ports.Add(new GenPortData(secondPerlinOutput, PortDirection.Output, ChannelType.Float, GraphPortNameUtility.LegacyGenericOutputDisplayName));
+            secondPerlinNode.Parameters.Add(new SerializedParameter("frequency", "0.08"));
+            secondPerlinNode.Parameters.Add(new SerializedParameter("amplitude", "0.75"));
+            secondPerlinNode.Parameters.Add(new SerializedParameter("offset", "2,3"));
+            secondPerlinNode.Parameters.Add(new SerializedParameter("octaves", "2"));
+            graph.Nodes.Add(secondPerlinNode);
+
+            GenNodeData mathNode = new GenNodeData("math-node", typeof(MathNode).FullName, "Math", new Vector2(440.0f, 0.0f));
+            mathNode.Ports.Add(new GenPortData("A", PortDirection.Input, ChannelType.Float));
+            mathNode.Ports.Add(new GenPortData("B", PortDirection.Input, ChannelType.Float));
+            mathNode.Ports.Add(new GenPortData(mathOutput, PortDirection.Output, ChannelType.Float, GraphPortNameUtility.LegacyGenericOutputDisplayName));
+            mathNode.Parameters.Add(new SerializedParameter("operation", MathOperation.Add.ToString()));
+            mathNode.Parameters.Add(new SerializedParameter("scalarB", "0"));
+            graph.Nodes.Add(mathNode);
+
+            graph.Connections.Add(new GenConnectionData("perlin-a", firstPerlinOutput, "math-node", "A"));
+            graph.Connections.Add(new GenConnectionData("perlin-b", secondPerlinOutput, "math-node", "B"));
+            ConnectToOutput(graph, "math-node", mathOutput);
+            return graph;
+        }
+
         private static void DestroyImmediateIfNotNull(UnityEngine.Object unityObject)
         {
             if (unityObject != null)
             {
                 UnityEngine.Object.DestroyImmediate(unityObject);
             }
+        }
+
+        private static bool ContainsError(IReadOnlyList<GraphDiagnostic> diagnostics, string messageFragment)
+        {
+            int diagnosticIndex;
+            for (diagnosticIndex = 0; diagnosticIndex < diagnostics.Count; diagnosticIndex++)
+            {
+                GraphDiagnostic diagnostic = diagnostics[diagnosticIndex];
+                if (diagnostic.Severity == DiagnosticSeverity.Error &&
+                    diagnostic.Message.IndexOf(messageFragment, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static WorldSnapshot.BoolMaskChannelSnapshot GetBoolMaskChannel(WorldSnapshot snapshot, string channelName)

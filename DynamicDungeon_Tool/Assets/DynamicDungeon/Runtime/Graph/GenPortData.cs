@@ -7,6 +7,7 @@ namespace DynamicDungeon.Runtime.Graph
     public sealed class GenPortData
     {
         public string PortName = string.Empty;
+        public string DisplayName = string.Empty;
         public PortDirection Direction;
         public ChannelType Type;
 
@@ -14,9 +15,10 @@ namespace DynamicDungeon.Runtime.Graph
         {
         }
 
-        public GenPortData(string portName, PortDirection direction, ChannelType type)
+        public GenPortData(string portName, PortDirection direction, ChannelType type, string displayName = null)
         {
             PortName = portName ?? string.Empty;
+            DisplayName = string.IsNullOrWhiteSpace(displayName) ? PortName : displayName;
             Direction = direction;
             Type = type;
         }

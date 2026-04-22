@@ -36,6 +36,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string DefaultNodeName = "Bool Mask To Logical ID";
         private const string InputPortName = "Input";
         private const string DefaultOutputChannelName = "LogicalIds";
+        private const string PreferredOutputDisplayName = DefaultOutputChannelName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -106,10 +107,11 @@ namespace DynamicDungeon.Runtime.Nodes
             _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) ? DefaultOutputChannelName : outputChannelName;
             _trueLogicalId = trueLogicalId;
             _falseLogicalId = falseLogicalId;
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
                 new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, true),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Int)
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Int, displayName: outputPortDisplayName)
             };
 
             RefreshChannelDeclarations();

@@ -18,6 +18,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string DefaultNodeName = "Invert";
         private const string InputPortName = "Input";
         private const string FallbackOutputPortName = "Output";
+        private const string PreferredOutputDisplayName = FallbackOutputPortName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -82,10 +83,11 @@ namespace DynamicDungeon.Runtime.Nodes
             _inputChannelName = inputChannelName ?? string.Empty;
             _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) ? FallbackOutputPortName : outputChannelName;
             _inputType = inputType;
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
                 new NodePortDefinition(InputPortName, PortDirection.Input, _inputType, PortCapacity.Single, true),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, _inputType)
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, _inputType, displayName: outputPortDisplayName)
             };
 
             RefreshChannelDeclarations();

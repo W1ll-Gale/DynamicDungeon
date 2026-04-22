@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using NUnit.Framework;
 using UnityEngine;
@@ -133,6 +134,67 @@ namespace DynamicDungeon.Tests.Runtime
                 Assert.That(result.ErrorMessage, Is.Null);
                 Assert.That(graph.SchemaVersion, Is.EqualTo(GraphSchemaVersion.Current));
                 Assert.That(graph.name, Is.EqualTo("MigrationTestGraph"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
+        public void VersionTwoGraphMigrationRenamesDuplicateOutputPortsAndRewritesConnections()
+        {
+            GenGraph graph = CreateGraphWithVersion(2);
+            try
+            {
+                GenNodeData firstNode = new GenNodeData("first-node", "TestType", "First", Vector2.zero);
+                firstNode.Ports.Add(new GenPortData("Output", PortDirection.Output, ChannelType.Float));
+                graph.Nodes.Add(firstNode);
+
+                GenNodeData secondNode = new GenNodeData("second-node", "TestType", "Second", Vector2.zero);
+                secondNode.Ports.Add(new GenPortData("Output", PortDirection.Output, ChannelType.Float));
+                graph.Nodes.Add(secondNode);
+
+                GenNodeData consumerNode = new GenNodeData("consumer-node", "TestType", "Consumer", Vector2.zero);
+                consumerNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.Float));
+                graph.Nodes.Add(consumerNode);
+
+                graph.Connections.Add(new GenConnectionData("second-node", "Output", "consumer-node", "Input"));
+
+                MigrationResult result = GraphMigrationRunner.RunMigrations(graph, DefaultGraphMigrations.All);
+
+                Assert.That(result.Success, Is.True);
+                Assert.That(result.ToVersion, Is.EqualTo(GraphSchemaVersion.Current));
+                Assert.That(firstNode.Ports[0].PortName, Is.EqualTo("Output"));
+                Assert.That(firstNode.Ports[0].DisplayName, Is.EqualTo("Output"));
+
+                string expectedRenamedPort = GraphPortNameUtility.CreateGeneratedOutputPortName("second-node", "Output");
+                Assert.That(secondNode.Ports[0].PortName, Is.EqualTo(expectedRenamedPort));
+                Assert.That(secondNode.Ports[0].DisplayName, Is.EqualTo("Output"));
+                Assert.That(graph.Connections[0].FromPortName, Is.EqualTo(expectedRenamedPort));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
+        public void VersionTwoGraphMigrationLeavesUniqueOutputPortsUnchangedApartFromDisplayNameBackfill()
+        {
+            GenGraph graph = CreateGraphWithVersion(2);
+            try
+            {
+                GenNodeData firstNode = new GenNodeData("first-node", "TestType", "First", Vector2.zero);
+                firstNode.Ports.Add(new GenPortData("HeightMap", PortDirection.Output, ChannelType.Float));
+                graph.Nodes.Add(firstNode);
+
+                MigrationResult result = GraphMigrationRunner.RunMigrations(graph, DefaultGraphMigrations.All);
+
+                Assert.That(result.Success, Is.True);
+                Assert.That(result.ToVersion, Is.EqualTo(GraphSchemaVersion.Current));
+                Assert.That(firstNode.Ports[0].PortName, Is.EqualTo("HeightMap"));
+                Assert.That(firstNode.Ports[0].DisplayName, Is.EqualTo("HeightMap"));
             }
             finally
             {

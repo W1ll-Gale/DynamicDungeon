@@ -18,6 +18,7 @@ namespace DynamicDungeon.Runtime.Nodes
     {
         private const string DefaultNodeName = "Perlin Noise";
         private const int DefaultBatchSize = 64;
+        private const string PreferredOutputDisplayName = GraphPortNameUtility.LegacyGenericOutputDisplayName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -37,6 +38,8 @@ namespace DynamicDungeon.Runtime.Nodes
         [MinValue(1.0f)]
         [Description("Number of layered noise passes combined into the final result.")]
         private int _octaves;
+        [Description("Deterministically varies this node's result relative to the graph seed without changing the graph-wide seed.")]
+        private int _seedOffset;
 
         public IReadOnlyList<NodePortDefinition> Ports
         {
@@ -118,15 +121,23 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public PerlinNoiseNode(string nodeId, string outputChannelName, float frequency, float amplitude, Vector2 offset, int octaves = 1) : this(nodeId, DefaultNodeName, outputChannelName, frequency, amplitude, offset, octaves)
+        public int SeedOffset
+        {
+            get
+            {
+                return _seedOffset;
+            }
+        }
+
+        public PerlinNoiseNode(string nodeId, string outputChannelName, float frequency, float amplitude, Vector2 offset, int octaves = 1, int seedOffset = 0) : this(nodeId, DefaultNodeName, outputChannelName, frequency, amplitude, offset, octaves, seedOffset)
         {
         }
 
-        public PerlinNoiseNode(string nodeId, string nodeName, string outputChannelName) : this(nodeId, nodeName, outputChannelName, 0.05f, 1.0f, Vector2.zero, 1)
+        public PerlinNoiseNode(string nodeId, string nodeName, string outputChannelName) : this(nodeId, nodeName, outputChannelName, 0.05f, 1.0f, Vector2.zero, 1, 0)
         {
         }
 
-        public PerlinNoiseNode(string nodeId, string nodeName, string outputChannelName, float frequency, float amplitude, Vector2 offset, int octaves = 1)
+        public PerlinNoiseNode(string nodeId, string nodeName, string outputChannelName, float frequency, float amplitude, Vector2 offset, int octaves = 1, int seedOffset = 0)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -158,9 +169,10 @@ namespace DynamicDungeon.Runtime.Nodes
                 throw new ArgumentOutOfRangeException(nameof(octaves), "Octaves must be greater than zero.");
             }
 
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
-                new NodePortDefinition(outputChannelName, PortDirection.Output, ChannelType.Float)
+                new NodePortDefinition(outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
             };
 
             _channelDeclarations = new[]
@@ -175,6 +187,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _amplitude = amplitude;
             _offset = offset;
             _octaves = octaves;
+            _seedOffset = seedOffset;
         }
 
         public void ReceiveParameter(string name, string value)
@@ -224,6 +237,17 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     _octaves = math.max(1, parsedOctaves);
                 }
+
+                return;
+            }
+
+            if (string.Equals(name, "seedOffset", StringComparison.OrdinalIgnoreCase))
+            {
+                int parsedSeedOffset;
+                if (int.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedSeedOffset))
+                {
+                    _seedOffset = parsedSeedOffset;
+                }
             }
         }
 
@@ -237,23 +261,34 @@ namespace DynamicDungeon.Runtime.Nodes
                 Frequency = _frequency,
                 Amplitude = _amplitude,
                 Offset = new float2(_offset.x, _offset.y),
-                SeedOffset = CreateSeedOffset(context.LocalSeed),
+                SeedOffset = CreateSeedOffset(CombineSeed(context.GlobalSeed, _seedOffset)),
                 Octaves = _octaves
             };
 
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
         }
 
-        private static float2 CreateSeedOffset(long localSeed)
+        private static float2 CreateSeedOffset(long globalSeed)
         {
             unchecked
             {
-                uint seedLow = (uint)localSeed;
-                uint seedHigh = (uint)(localSeed >> 32);
+                uint seedLow = (uint)globalSeed;
+                uint seedHigh = (uint)(globalSeed >> 32);
 
                 float seedX = ((seedLow & 65535u) / 65535.0f) * 10000.0f;
                 float seedY = ((seedHigh & 65535u) / 65535.0f) * 10000.0f;
                 return new float2(seedX, seedY);
+            }
+        }
+
+        private static long CombineSeed(long globalSeed, int seedOffset)
+        {
+            unchecked
+            {
+                const long Prime = 1099511628211L;
+                long combinedSeed = (globalSeed * Prime) ^ seedOffset;
+                combinedSeed = (combinedSeed * Prime) ^ (seedOffset >> 16);
+                return combinedSeed;
             }
         }
 

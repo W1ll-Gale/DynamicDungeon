@@ -1426,7 +1426,7 @@ namespace DynamicDungeon.Editor.Windows
             for (portIndex = 0; portIndex < ports.Count; portIndex++)
             {
                 NodePortDefinition portDefinition = ports[portIndex];
-                nodeData.Ports.Add(new GenPortData(portDefinition.Name, portDefinition.Direction, portDefinition.Type));
+                nodeData.Ports.Add(new GenPortData(portDefinition.Name, portDefinition.Direction, portDefinition.Type, portDefinition.DisplayName));
             }
         }
 

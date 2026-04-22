@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
   m_Name: GenerationGraph
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
-  SchemaVersion: 2
+  SchemaVersion: 3
   WorldWidth: 128
   WorldHeight: 128
   DefaultSeed: 0
@@ -25,13 +25,91 @@ MonoBehaviour:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Output
-    Position: {x: 600, y: 0}
+    Position: {x: 827, y: -177}
     Ports:
     - PortName: LogicalIds
+      DisplayName: LogicalIds
       Direction: 0
       Type: 1
     Parameters: []
-  Connections: []
+  - NodeId: 95e3031b-8e14-41c6-94d3-574135ba6477
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
+    NodeName: Perlin Noise
+    Position: {x: -79, y: -343}
+    Ports:
+    - PortName: Output
+      DisplayName: Output
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: frequency
+      Value: 0.05
+    - Name: amplitude
+      Value: 1
+    - Name: offset
+      Value: 0,0
+    - Name: octaves
+      Value: 1
+    - Name: seedOffset
+      Value: 0
+  - NodeId: 3d62e7b9-5ea7-4480-83c4-b308eda351ca
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
+    NodeName: Perlin Noise
+    Position: {x: -117, y: -31}
+    Ports:
+    - PortName: Output__3d62e7b9-5ea7-4480-83c4-b308eda351ca
+      DisplayName: Output
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: frequency
+      Value: 0.05
+    - Name: amplitude
+      Value: 1
+    - Name: offset
+      Value: 0,0
+    - Name: octaves
+      Value: 1
+    - Name: seedOffset
+      Value: 0
+  - NodeId: 8a01949c-d25b-40a0-ae65-eb3ee8701e05
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Math
+    Position: {x: 396, y: -161}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Output__8a01949c-d25b-40a0-ae65-eb3ee8701e05
+      DisplayName: Output
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Divide
+    - Name: scalarB
+      Value: 0
+  Connections:
+  - FromNodeId: 95e3031b-8e14-41c6-94d3-574135ba6477
+    FromPortName: Output
+    ToNodeId: 8a01949c-d25b-40a0-ae65-eb3ee8701e05
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 8a01949c-d25b-40a0-ae65-eb3ee8701e05
+    FromPortName: Output__8a01949c-d25b-40a0-ae65-eb3ee8701e05
+    ToNodeId: graph-output-node
+    ToPortName: LogicalIds
+    CastMode: 2
+  - FromNodeId: 3d62e7b9-5ea7-4480-83c4-b308eda351ca
+    FromPortName: Output__3d62e7b9-5ea7-4480-83c4-b308eda351ca
+    ToNodeId: 8a01949c-d25b-40a0-ae65-eb3ee8701e05
+    ToPortName: B
+    CastMode: 0
   StickyNotes: []
   Groups: []
   ExposedProperties: []

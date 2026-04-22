@@ -54,6 +54,48 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task DifferentNodeIdsWithSameSeedAndParametersProduceByteIdenticalOutput()
+        {
+            Executor executor = new Executor();
+            PerlinNoiseNode firstNode = new PerlinNoiseNode("perlin-node-a", OutputChannelName, 0.1f, 1.0f, new Vector2(0.0f, 0.0f), 2);
+            PerlinNoiseNode secondNode = new PerlinNoiseNode("perlin-node-b", OutputChannelName, 0.1f, 1.0f, new Vector2(0.0f, 0.0f), 2);
+            ExecutionPlan firstPlan = ExecutionPlan.Build(new IGenNode[] { firstNode }, Width, Height, 111L);
+            ExecutionPlan secondPlan = ExecutionPlan.Build(new IGenNode[] { secondNode }, Width, Height, 111L);
+
+            ExecutionResult firstResult = await executor.ExecuteAsync(firstPlan, CancellationToken.None);
+            ExecutionResult secondResult = await executor.ExecuteAsync(secondPlan, CancellationToken.None);
+
+            Assert.That(firstResult.IsSuccess, Is.True);
+            Assert.That(secondResult.IsSuccess, Is.True);
+            Assert.That(firstResult.Snapshot, Is.Not.Null);
+            Assert.That(secondResult.Snapshot, Is.Not.Null);
+
+            AssertByteIdentical(firstResult.Snapshot.FloatChannels[0].Data, secondResult.Snapshot.FloatChannels[0].Data);
+        }
+
+        [Test]
+        public async Task DifferentSeedOffsetsProduceDifferentOutputWhileStayingDeterministic()
+        {
+            Executor executor = new Executor();
+            PerlinNoiseNode baseNode = new PerlinNoiseNode("perlin-node-a", OutputChannelName, 0.1f, 1.0f, new Vector2(0.0f, 0.0f), 2, 0);
+            PerlinNoiseNode variedNode = new PerlinNoiseNode("perlin-node-b", OutputChannelName, 0.1f, 1.0f, new Vector2(0.0f, 0.0f), 2, 17);
+            PerlinNoiseNode repeatedVariedNode = new PerlinNoiseNode("perlin-node-c", OutputChannelName, 0.1f, 1.0f, new Vector2(0.0f, 0.0f), 2, 17);
+            ExecutionPlan basePlan = ExecutionPlan.Build(new IGenNode[] { baseNode }, Width, Height, 111L);
+            ExecutionPlan variedPlan = ExecutionPlan.Build(new IGenNode[] { variedNode }, Width, Height, 111L);
+            ExecutionPlan repeatedVariedPlan = ExecutionPlan.Build(new IGenNode[] { repeatedVariedNode }, Width, Height, 111L);
+
+            ExecutionResult baseResult = await executor.ExecuteAsync(basePlan, CancellationToken.None);
+            ExecutionResult variedResult = await executor.ExecuteAsync(variedPlan, CancellationToken.None);
+            ExecutionResult repeatedVariedResult = await executor.ExecuteAsync(repeatedVariedPlan, CancellationToken.None);
+
+            Assert.That(baseResult.IsSuccess, Is.True);
+            Assert.That(variedResult.IsSuccess, Is.True);
+            Assert.That(repeatedVariedResult.IsSuccess, Is.True);
+            Assert.That(HasAnyByteDifference(baseResult.Snapshot.FloatChannels[0].Data, variedResult.Snapshot.FloatChannels[0].Data), Is.True);
+            AssertByteIdentical(variedResult.Snapshot.FloatChannels[0].Data, repeatedVariedResult.Snapshot.FloatChannels[0].Data);
+        }
+
+        [Test]
         public async Task OutputValuesStayWithinZeroToOneRange()
         {
             Executor executor = new Executor();

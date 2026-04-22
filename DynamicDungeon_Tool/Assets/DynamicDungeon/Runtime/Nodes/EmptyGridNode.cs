@@ -18,6 +18,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const int DefaultBatchSize = 64;
         private const string DefaultNodeName = "Empty Grid";
         private const string FallbackOutputPortName = "Output";
+        private const string PreferredOutputDisplayName = FallbackOutputPortName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -81,9 +82,10 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
             _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) ? FallbackOutputPortName : outputChannelName;
             _fillValue = fillValue;
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float)
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
             };
             _channelDeclarations = new[]
             {

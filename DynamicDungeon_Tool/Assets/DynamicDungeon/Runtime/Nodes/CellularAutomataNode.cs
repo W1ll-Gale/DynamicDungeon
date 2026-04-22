@@ -27,6 +27,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string DefaultNodeName = "Cellular Automata";
         private const string InputPortName = "Input";
         private const string FallbackOutputPortName = "Output";
+        private const string PreferredOutputDisplayName = FallbackOutputPortName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -111,10 +112,11 @@ namespace DynamicDungeon.Runtime.Nodes
             _iterations = math.max(0, iterations);
             _initialFillProbability = math.clamp(initialFillProbability, 0.0f, 1.0f);
             _inputMode = inputMode;
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
                 new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, false, "Optional mask used either as the starting cave state or as the region where caves are allowed to form, depending on Input Mode."),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.BoolMask, PortCapacity.Single, false, "The generated cave mask after the cellular automata passes are applied.")
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.BoolMask, PortCapacity.Single, false, "The generated cave mask after the cellular automata passes are applied.", outputPortDisplayName)
             };
 
             RefreshChannelDeclarations();

@@ -404,7 +404,7 @@ namespace DynamicDungeon.Editor.Utilities
                 }
 
                 object prototypeArgument;
-                if (TryGetPrototypeArgumentValue(parameter, out prototypeArgument))
+                if (TryGetPrototypeArgumentValue(constructor.DeclaringType, nodeId, parameter, out prototypeArgument))
                 {
                     arguments[parameterIndex] = prototypeArgument;
                     continue;
@@ -744,14 +744,14 @@ namespace DynamicDungeon.Editor.Utilities
             return false;
         }
 
-        private static bool TryGetPrototypeArgumentValue(ParameterInfo parameter, out object argumentValue)
+        private static bool TryGetPrototypeArgumentValue(Type nodeType, string nodeId, ParameterInfo parameter, out object argumentValue)
         {
             string parameterName = parameter.Name ?? string.Empty;
             Type parameterType = parameter.ParameterType;
 
             if (parameterType == typeof(string))
             {
-                argumentValue = CreatePrototypeStringValue(parameterName);
+                argumentValue = CreatePrototypeStringValue(nodeType, nodeId, parameterName);
                 return true;
             }
 
@@ -936,8 +936,16 @@ namespace DynamicDungeon.Editor.Utilities
             return 0;
         }
 
-        private static string CreatePrototypeStringValue(string parameterName)
+        private static string CreatePrototypeStringValue(Type nodeType, string nodeId, string parameterName)
         {
+            if (GetPreferredDirection(parameterName) == PortDirection.Output &&
+                (parameterName.EndsWith("ChannelName", StringComparison.OrdinalIgnoreCase) ||
+                 parameterName.EndsWith("PortName", StringComparison.OrdinalIgnoreCase)))
+            {
+                string defaultDisplayName = GraphPortNameUtility.GetPreferredOutputDisplayName(nodeType, parameterName);
+                return GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, defaultDisplayName);
+            }
+
             string desiredName = GetDesiredPortName(parameterName);
             if (string.IsNullOrEmpty(desiredName))
             {

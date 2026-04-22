@@ -7,7 +7,8 @@ namespace DynamicDungeon.Runtime.Graph
         private static readonly IGraphMigration[] _migrations =
         {
             new LegacySchemaBootstrapMigration(),
-            new EnsureOutputNodeGraphMigration()
+            new EnsureOutputNodeGraphMigration(),
+            new EnsureUniqueOutputPortNamesGraphMigration()
         };
 
         public static IReadOnlyList<IGraphMigration> All

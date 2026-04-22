@@ -57,6 +57,7 @@ namespace DynamicDungeon.Tests.Runtime
                     channelBindings,
                     numericBlackboard,
                     managedBlackboard,
+                    plan.GlobalSeed,
                     plan.GetLocalSeed(node.NodeId),
                     plan.AllocatedWorld.Width,
                     plan.AllocatedWorld.Height,

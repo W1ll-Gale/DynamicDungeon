@@ -127,23 +127,33 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
-        public void DuplicateChannelOwnershipProducesErrorDiagnostic()
+        public async Task DuplicateVisibleOutputNamesCompileAndExecuteWhenInternalNamesAreUnique()
         {
             GenGraph graph = CreateGraph();
             try
             {
-                AddIntFillNode(graph, "fill-a", "Fill A", SharedOutputChannelName, 1);
-                AddIntFillNode(graph, "fill-b", "Fill B", SharedOutputChannelName, 2);
+                string firstInternalOutputName = GraphPortNameUtility.CreateGeneratedOutputPortName("fill-a", GraphPortNameUtility.LegacyGenericOutputDisplayName);
+                string secondInternalOutputName = GraphPortNameUtility.CreateGeneratedOutputPortName("fill-b", GraphPortNameUtility.LegacyGenericOutputDisplayName);
+
+                AddIntFillNode(graph, "fill-a", "Fill A", firstInternalOutputName, 1, GraphPortNameUtility.LegacyGenericOutputDisplayName);
+                AddIntFillNode(graph, "fill-b", "Fill B", secondInternalOutputName, 2, GraphPortNameUtility.LegacyGenericOutputDisplayName);
                 AddMergeNode(graph, "merge-node", "Merge", MergeOutputChannelName);
-                graph.Connections.Add(new GenConnectionData("fill-a", SharedOutputChannelName, "merge-node", "Left"));
-                graph.Connections.Add(new GenConnectionData("fill-b", SharedOutputChannelName, "merge-node", "Right"));
+                graph.Connections.Add(new GenConnectionData("fill-a", firstInternalOutputName, "merge-node", "Left"));
+                graph.Connections.Add(new GenConnectionData("fill-b", secondInternalOutputName, "merge-node", "Right"));
                 ConnectToOutput(graph, "merge-node", MergeOutputChannelName);
 
-                GraphCompileResult result = GraphCompiler.Compile(graph);
+                GraphCompileResult compileResult = GraphCompiler.Compile(graph);
 
-                Assert.That(result.IsSuccess, Is.False);
-                Assert.That(result.Plan, Is.Null);
-                Assert.That(ContainsError(result.Diagnostics, "Channel '" + SharedOutputChannelName + "' is owned"), Is.True);
+                Assert.That(compileResult.IsSuccess, Is.True);
+                Assert.That(compileResult.Plan, Is.Not.Null);
+                Assert.That(ContainsError(compileResult.Diagnostics, "is owned"), Is.False);
+
+                Executor executor = new Executor();
+                ExecutionResult executionResult = await executor.ExecuteAsync(compileResult.Plan, CancellationToken.None);
+
+                Assert.That(executionResult.IsSuccess, Is.True);
+                Assert.That(GetIntChannel(executionResult.Snapshot, firstInternalOutputName), Is.Not.Null);
+                Assert.That(GetIntChannel(executionResult.Snapshot, secondInternalOutputName), Is.Not.Null);
             }
             finally
             {
@@ -223,10 +233,10 @@ namespace DynamicDungeon.Tests.Runtime
             graph.Nodes.Add(node);
         }
 
-        private static void AddIntFillNode(GenGraph graph, string nodeId, string nodeName, string outputChannelName, int fillValue)
+        private static void AddIntFillNode(GenGraph graph, string nodeId, string nodeName, string outputChannelName, int fillValue, string displayName = null)
         {
             GenNodeData node = new GenNodeData(nodeId, typeof(GraphCompilerIntFillNode).FullName, nodeName, Vector2.zero);
-            node.Ports.Add(new GenPortData(outputChannelName, PortDirection.Output, ChannelType.Int));
+            node.Ports.Add(new GenPortData(outputChannelName, PortDirection.Output, ChannelType.Int, displayName));
             node.Parameters.Add(new SerializedParameter("fillValue", fillValue.ToString(CultureInfo.InvariantCulture)));
             graph.Nodes.Add(node);
         }

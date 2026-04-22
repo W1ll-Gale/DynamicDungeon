@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
+using DynamicDungeon.Runtime.Graph;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -14,6 +15,7 @@ namespace DynamicDungeon.Runtime.Core
     {
         private const string DefaultNodeName = "Blackboard Reader";
         private const int DefaultBatchSize = 64;
+        private const string PreferredOutputDisplayName = GraphPortNameUtility.LegacyGenericOutputDisplayName;
 
         private readonly NodePortDefinition[] _ports;
         private readonly ChannelDeclaration[] _channelDeclarations;
@@ -90,9 +92,10 @@ namespace DynamicDungeon.Runtime.Core
                 throw new ArgumentException("Output channel name must be non-empty.", nameof(outputChannelName));
             }
 
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
-                new NodePortDefinition(outputChannelName, PortDirection.Output, ChannelType.Float)
+                new NodePortDefinition(outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
             };
 
             _channelDeclarations = new[]

@@ -205,6 +205,7 @@ namespace DynamicDungeon.Runtime.Core
                             channelBindings,
                             numericBlackboard,
                             managedBlackboard,
+                            plan.GlobalSeed,
                             plan.GetLocalSeed(job.Node.NodeId),
                             plan.AllocatedWorld.Width,
                             plan.AllocatedWorld.Height,
