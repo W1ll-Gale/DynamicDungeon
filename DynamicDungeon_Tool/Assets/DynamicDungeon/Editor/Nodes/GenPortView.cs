@@ -22,7 +22,7 @@ namespace DynamicDungeon.Editor.Nodes
         public GenPortView(NodePortDefinition portDefinition, IEdgeConnectorListener edgeConnectorListener) : base(
             Orientation.Horizontal,
             ToGraphViewDirection(portDefinition.Direction),
-            ToGraphViewCapacity(portDefinition.Capacity),
+            ToGraphViewCapacity(portDefinition.Direction, portDefinition.Capacity),
             typeof(float))
         {
             GenPortView currentPort = this;
@@ -109,8 +109,13 @@ namespace DynamicDungeon.Editor.Nodes
                 : UnityEditor.Experimental.GraphView.Direction.Output;
         }
 
-        private static Port.Capacity ToGraphViewCapacity(PortCapacity capacity)
+        private static Port.Capacity ToGraphViewCapacity(PortDirection direction, PortCapacity capacity)
         {
+            if (direction == PortDirection.Output)
+            {
+                return Port.Capacity.Multi;
+            }
+
             return capacity == PortCapacity.Multi ? Port.Capacity.Multi : Port.Capacity.Single;
         }
 

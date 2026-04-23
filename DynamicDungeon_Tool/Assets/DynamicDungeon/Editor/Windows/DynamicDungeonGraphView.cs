@@ -1237,6 +1237,30 @@ namespace DynamicDungeon.Editor.Windows
                     }
                 }
 
+                if (nodeIdsToRemove.Count > 0)
+                {
+                    List<GraphElement> connectedEdgesToRemove = new List<GraphElement>();
+
+                    int nodeIndex;
+                    for (nodeIndex = 0; nodeIndex < nodeIdsToRemove.Count; nodeIndex++)
+                    {
+                        string nodeId = nodeIdsToRemove[nodeIndex];
+                        GenNodeView nodeView;
+                        if (!_nodeViewsById.TryGetValue(nodeId, out nodeView) || nodeView == null)
+                        {
+                            continue;
+                        }
+
+                        CollectConnectedEdges(nodeView.inputContainer, connectedEdgesToRemove, graphViewChange.elementsToRemove);
+                        CollectConnectedEdges(nodeView.outputContainer, connectedEdgesToRemove, graphViewChange.elementsToRemove);
+                    }
+
+                    if (connectedEdgesToRemove.Count > 0)
+                    {
+                        graphViewChange.elementsToRemove.AddRange(connectedEdgesToRemove);
+                    }
+                }
+
                 for (elementIndex = 0; elementIndex < graphViewChange.elementsToRemove.Count; elementIndex++)
                 {
                     Edge edge = graphViewChange.elementsToRemove[elementIndex] as Edge;
@@ -1575,6 +1599,37 @@ namespace DynamicDungeon.Editor.Windows
             float xMax = Mathf.Max(first.xMax, second.xMax);
             float yMax = Mathf.Max(first.yMax, second.yMax);
             return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
+
+        private static void CollectConnectedEdges(
+            VisualElement portContainer,
+            ICollection<GraphElement> edgesToRemove,
+            ICollection<GraphElement> existingElementsToRemove)
+        {
+            if (portContainer == null)
+            {
+                return;
+            }
+
+            foreach (Port port in portContainer.Children().OfType<Port>())
+            {
+                if (port.connections == null)
+                {
+                    continue;
+                }
+
+                foreach (Edge edge in port.connections)
+                {
+                    if (edge == null ||
+                        edgesToRemove.Contains(edge) ||
+                        existingElementsToRemove.Contains(edge))
+                    {
+                        continue;
+                    }
+
+                    edgesToRemove.Add(edge);
+                }
+            }
         }
 
         private void OnElementsAddedToGroup(Group group, System.Collections.Generic.IEnumerable<GraphElement> elements)

@@ -193,74 +193,91 @@ namespace DynamicDungeon.Runtime.Nodes
             NativeArray<byte> output = context.GetBoolMaskChannel(_outputChannelName);
             NativeArray<byte> currentState = new NativeArray<byte>(output.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             NativeArray<byte> nextState = new NativeArray<byte>(output.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            int birthMask = ParseRuleMask(_birthRule);
-            int survivalMask = ParseRuleMask(_survivalRule);
-            bool hasInputMask = !string.IsNullOrWhiteSpace(_inputChannelName);
-            bool constrainToInputMask = hasInputMask && _inputMode == CellularAutomataInputMode.RandomFillInsideInputMask;
-            NativeArray<byte> inputMask = default(NativeArray<byte>);
-
-            JobHandle currentHandle;
-            if (hasInputMask)
+            try
             {
-                inputMask = context.GetBoolMaskChannel(_inputChannelName);
-            }
+                int birthMask = ParseRuleMask(_birthRule);
+                int survivalMask = ParseRuleMask(_survivalRule);
+                bool hasInputMask = !string.IsNullOrWhiteSpace(_inputChannelName);
+                bool constrainToInputMask = hasInputMask && _inputMode == CellularAutomataInputMode.RandomFillInsideInputMask;
+                NativeArray<byte> inputMask = default(NativeArray<byte>);
 
-            if (hasInputMask && _inputMode == CellularAutomataInputMode.UseInputAsInitialState)
-            {
-                CopyMaskJob copyInputJob = new CopyMaskJob
+                JobHandle currentHandle;
+                if (hasInputMask)
                 {
-                    Input = inputMask,
-                    Output = currentState
-                };
+                    inputMask = context.GetBoolMaskChannel(_inputChannelName);
+                }
 
-                currentHandle = copyInputJob.Schedule(currentState.Length, DefaultBatchSize, context.InputDependency);
-            }
-            else
-            {
-                InitialiseRandomMaskJob initialiseJob = new InitialiseRandomMaskJob
+                if (hasInputMask && _inputMode == CellularAutomataInputMode.UseInputAsInitialState)
                 {
-                    Output = currentState,
-                    FillProbability = _initialFillProbability,
-                    LocalSeed = context.LocalSeed,
-                    BoundaryMask = inputMask,
-                    ConstrainToBoundary = constrainToInputMask
-                };
+                    CopyMaskJob copyInputJob = new CopyMaskJob
+                    {
+                        Input = inputMask,
+                        Output = currentState
+                    };
 
-                currentHandle = initialiseJob.Schedule(currentState.Length, DefaultBatchSize, context.InputDependency);
-            }
+                    currentHandle = copyInputJob.Schedule(currentState.Length, DefaultBatchSize, context.InputDependency);
+                }
+                else
+                {
+                    InitialiseRandomMaskJob initialiseJob = new InitialiseRandomMaskJob
+                    {
+                        Output = currentState,
+                        FillProbability = _initialFillProbability,
+                        LocalSeed = context.LocalSeed,
+                        BoundaryMask = inputMask,
+                        ConstrainToBoundary = constrainToInputMask
+                    };
 
-            int iterationIndex;
-            for (iterationIndex = 0; iterationIndex < _iterations; iterationIndex++)
-            {
-                CellularAutomataIterationJob iterationJob = new CellularAutomataIterationJob
+                    currentHandle = initialiseJob.Schedule(currentState.Length, DefaultBatchSize, context.InputDependency);
+                }
+
+                int iterationIndex;
+                for (iterationIndex = 0; iterationIndex < _iterations; iterationIndex++)
+                {
+                    CellularAutomataIterationJob iterationJob = new CellularAutomataIterationJob
+                    {
+                        Input = currentState,
+                        Output = nextState,
+                        Width = context.Width,
+                        Height = context.Height,
+                        BirthMask = birthMask,
+                        SurvivalMask = survivalMask,
+                        BoundaryMask = inputMask,
+                        ConstrainToBoundary = constrainToInputMask
+                    };
+
+                    currentHandle = iterationJob.Schedule(currentState.Length, DefaultBatchSize, currentHandle);
+
+                    NativeArray<byte> temp = currentState;
+                    currentState = nextState;
+                    nextState = temp;
+                }
+
+                CopyMaskJob copyOutputJob = new CopyMaskJob
                 {
                     Input = currentState,
-                    Output = nextState,
-                    Width = context.Width,
-                    Height = context.Height,
-                    BirthMask = birthMask,
-                    SurvivalMask = survivalMask,
-                    BoundaryMask = inputMask,
-                    ConstrainToBoundary = constrainToInputMask
+                    Output = output
                 };
 
-                currentHandle = iterationJob.Schedule(currentState.Length, DefaultBatchSize, currentHandle);
-
-                NativeArray<byte> temp = currentState;
-                currentState = nextState;
-                nextState = temp;
+                JobHandle outputHandle = copyOutputJob.Schedule(output.Length, DefaultBatchSize, currentHandle);
+                JobHandle disposeCurrentHandle = currentState.Dispose(outputHandle);
+                JobHandle disposeNextHandle = nextState.Dispose(outputHandle);
+                return JobHandle.CombineDependencies(disposeCurrentHandle, disposeNextHandle);
             }
-
-            CopyMaskJob copyOutputJob = new CopyMaskJob
+            catch
             {
-                Input = currentState,
-                Output = output
-            };
+                if (currentState.IsCreated)
+                {
+                    currentState.Dispose();
+                }
 
-            JobHandle outputHandle = copyOutputJob.Schedule(output.Length, DefaultBatchSize, currentHandle);
-            JobHandle disposeCurrentHandle = currentState.Dispose(outputHandle);
-            JobHandle disposeNextHandle = nextState.Dispose(outputHandle);
-            return JobHandle.CombineDependencies(disposeCurrentHandle, disposeNextHandle);
+                if (nextState.IsCreated)
+                {
+                    nextState.Dispose();
+                }
+
+                throw;
+            }
         }
 
         private static int ParseRuleMask(string rule)
