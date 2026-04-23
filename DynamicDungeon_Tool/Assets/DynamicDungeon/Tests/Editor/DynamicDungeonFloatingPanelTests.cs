@@ -1,4 +1,5 @@
 using DynamicDungeon.Editor.Windows;
+using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using NUnit.Framework;
 using UnityEngine;
@@ -71,11 +72,13 @@ namespace DynamicDungeon.Tests.Editor
         public void BlackboardPanelMaintainsAddRenameReorderAndDeleteFlows()
         {
             int mutationCount = 0;
+            DynamicDungeonGraphView graphView = new DynamicDungeonGraphView();
             BlackboardPanel panel = new BlackboardPanel(() => mutationCount++);
             GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
 
             try
             {
+                graphView.Add(panel);
                 panel.SetGraph(graph);
                 panel.AddExposedPropertyForTesting();
                 panel.AddExposedPropertyForTesting();
@@ -83,13 +86,16 @@ namespace DynamicDungeon.Tests.Editor
                 Assert.That(graph.ExposedProperties.Count, Is.EqualTo(2));
 
                 ExposedProperty firstProperty = graph.ExposedProperties[0];
-                graph.Nodes.Add(new GenNodeData("node-a", "TestNode", "Node A", Vector2.zero));
-                graph.Nodes[0].Parameters.Add(new SerializedParameter("Property", firstProperty.PropertyName));
+                graphView.LoadGraph(graph);
+                graphView.CreateExposedPropertyNodeFromBlackboardForTesting(firstProperty.PropertyId, new Vector2(120.0f, 60.0f));
 
                 panel.RenamePropertyForTesting(firstProperty, "SeedStrength");
 
                 Assert.That(firstProperty.PropertyName, Is.EqualTo("SeedStrength"));
-                Assert.That(graph.Nodes[0].Parameters[0].Value, Is.EqualTo("SeedStrength"));
+                Assert.That(graph.Nodes[0].NodeName, Is.EqualTo("SeedStrength"));
+                Assert.That(
+                    ExposedPropertyNodeUtility.GetPropertyName(graph.Nodes[0]),
+                    Is.EqualTo("SeedStrength"));
 
                 string secondPropertyId = graph.ExposedProperties[1].PropertyId;
                 panel.MovePropertyForTesting(secondPropertyId, -1);
@@ -102,6 +108,7 @@ namespace DynamicDungeon.Tests.Editor
 
                 panel.DeletePropertyForTesting(usedPropertyId);
                 Assert.That(graph.ExposedProperties.Count, Is.EqualTo(1));
+                Assert.That(graph.Nodes.Count, Is.EqualTo(0));
                 Assert.That(mutationCount, Is.GreaterThanOrEqualTo(4));
             }
             finally

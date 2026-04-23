@@ -208,7 +208,7 @@ namespace DynamicDungeon.Editor.Inspectors
                     continue;
                 }
 
-                SerializedProperty overrideElement = FindOverrideSerializedProperty(exposedProp.PropertyName);
+                SerializedProperty overrideElement = FindOverrideSerializedProperty(exposedProp);
                 if (overrideElement == null)
                 {
                     continue;
@@ -249,19 +249,30 @@ namespace DynamicDungeon.Editor.Inspectors
             EndSection();
         }
 
-        private SerializedProperty FindOverrideSerializedProperty(string propertyName)
+        private SerializedProperty FindOverrideSerializedProperty(ExposedProperty exposedProperty)
         {
-            if (_propertyOverridesProperty == null)
+            if (_propertyOverridesProperty == null || exposedProperty == null)
             {
                 return null;
             }
+
+            string propertyId = exposedProperty.PropertyId ?? string.Empty;
 
             int index;
             for (index = 0; index < _propertyOverridesProperty.arraySize; index++)
             {
                 SerializedProperty element = _propertyOverridesProperty.GetArrayElementAtIndex(index);
+                SerializedProperty idProp = element.FindPropertyRelative("PropertyId");
                 SerializedProperty nameProp = element.FindPropertyRelative("PropertyName");
-                if (nameProp != null && string.Equals(nameProp.stringValue, propertyName, System.StringComparison.Ordinal))
+                if (idProp != null &&
+                    !string.IsNullOrWhiteSpace(propertyId) &&
+                    string.Equals(idProp.stringValue, propertyId, System.StringComparison.Ordinal))
+                {
+                    return element;
+                }
+
+                if (nameProp != null &&
+                    string.Equals(nameProp.stringValue, exposedProperty.PropertyName, System.StringComparison.Ordinal))
                 {
                     return element;
                 }

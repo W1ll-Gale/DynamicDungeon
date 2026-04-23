@@ -160,14 +160,17 @@ namespace DynamicDungeon.Runtime.Component
                     continue;
                 }
 
-                ExposedPropertyOverride existingOverride = FindOverrideByName(graphProperty.PropertyName);
+                ExposedPropertyOverride existingOverride = FindOverrideForProperty(graphProperty);
                 if (existingOverride != null)
                 {
+                    existingOverride.PropertyId = graphProperty.PropertyId ?? string.Empty;
+                    existingOverride.PropertyName = graphProperty.PropertyName ?? string.Empty;
                     reordered.Add(existingOverride);
                 }
                 else
                 {
                     ExposedPropertyOverride newOverride = new ExposedPropertyOverride();
+                    newOverride.PropertyId = graphProperty.PropertyId ?? string.Empty;
                     newOverride.PropertyName = graphProperty.PropertyName;
                     newOverride.OverrideValue = graphProperty.DefaultValue ?? "0";
                     reordered.Add(newOverride);
@@ -711,16 +714,19 @@ namespace DynamicDungeon.Runtime.Component
             for (overrideIndex = 0; overrideIndex < _propertyOverrides.Count; overrideIndex++)
             {
                 ExposedPropertyOverride propertyOverride = _propertyOverrides[overrideIndex];
-                if (propertyOverride == null || string.IsNullOrWhiteSpace(propertyOverride.PropertyName))
+                if (propertyOverride == null)
                 {
                     continue;
                 }
 
-                ExposedProperty graphProperty = _graph.GetExposedPropertyByName(propertyOverride.PropertyName);
+                ExposedProperty graphProperty = ResolveGraphProperty(propertyOverride);
                 if (graphProperty == null)
                 {
                     continue;
                 }
+
+                propertyOverride.PropertyId = graphProperty.PropertyId ?? string.Empty;
+                propertyOverride.PropertyName = graphProperty.PropertyName ?? string.Empty;
 
                 float floatValue = 0.0f;
                 bool parsed = false;
@@ -749,14 +755,58 @@ namespace DynamicDungeon.Runtime.Component
 
                 if (parsed)
                 {
-                    plan.SetInitialBlackboardValue(propertyOverride.PropertyName, floatValue);
+                    plan.SetInitialBlackboardValue(GetPropertyRuntimeKey(graphProperty), floatValue);
                 }
             }
         }
 
-        private ExposedPropertyOverride FindOverrideByName(string propertyName)
+        private ExposedPropertyOverride FindOverrideForProperty(ExposedProperty graphProperty)
         {
-            if (_propertyOverrides == null)
+            if (_propertyOverrides == null || graphProperty == null)
+            {
+                return null;
+            }
+
+            string propertyId = graphProperty.PropertyId ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(propertyId))
+            {
+                ExposedPropertyOverride overrideById = FindOverrideById(propertyId);
+                if (overrideById != null)
+                {
+                    return overrideById;
+                }
+            }
+
+            return FindOverrideByName(graphProperty.PropertyName);
+        }
+
+        private ExposedProperty ResolveGraphProperty(ExposedPropertyOverride propertyOverride)
+        {
+            if (_graph == null || propertyOverride == null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(propertyOverride.PropertyId))
+            {
+                ExposedProperty propertyById = _graph.GetExposedProperty(propertyOverride.PropertyId);
+                if (propertyById != null)
+                {
+                    return propertyById;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(propertyOverride.PropertyName))
+            {
+                return _graph.GetExposedPropertyByName(propertyOverride.PropertyName);
+            }
+
+            return null;
+        }
+
+        private ExposedPropertyOverride FindOverrideById(string propertyId)
+        {
+            if (_propertyOverrides == null || string.IsNullOrWhiteSpace(propertyId))
             {
                 return null;
             }
@@ -765,13 +815,47 @@ namespace DynamicDungeon.Runtime.Component
             for (overrideIndex = 0; overrideIndex < _propertyOverrides.Count; overrideIndex++)
             {
                 ExposedPropertyOverride propertyOverride = _propertyOverrides[overrideIndex];
-                if (propertyOverride != null && string.Equals(propertyOverride.PropertyName, propertyName, StringComparison.Ordinal))
+                if (propertyOverride != null &&
+                    string.Equals(propertyOverride.PropertyId, propertyId, StringComparison.Ordinal))
                 {
                     return propertyOverride;
                 }
             }
 
             return null;
+        }
+
+        private ExposedPropertyOverride FindOverrideByName(string propertyName)
+        {
+            if (_propertyOverrides == null || string.IsNullOrWhiteSpace(propertyName))
+            {
+                return null;
+            }
+
+            int overrideIndex;
+            for (overrideIndex = 0; overrideIndex < _propertyOverrides.Count; overrideIndex++)
+            {
+                ExposedPropertyOverride propertyOverride = _propertyOverrides[overrideIndex];
+                if (propertyOverride != null &&
+                    string.Equals(propertyOverride.PropertyName, propertyName, StringComparison.Ordinal))
+                {
+                    return propertyOverride;
+                }
+            }
+
+            return null;
+        }
+
+        private static string GetPropertyRuntimeKey(ExposedProperty property)
+        {
+            if (property == null)
+            {
+                return string.Empty;
+            }
+
+            return string.IsNullOrWhiteSpace(property.PropertyId)
+                ? (property.PropertyName ?? string.Empty)
+                : property.PropertyId;
         }
 
 #if UNITY_EDITOR

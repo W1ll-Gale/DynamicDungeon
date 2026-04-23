@@ -1,70 +1,122 @@
-using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using DynamicDungeon.Runtime.Component;
 using DynamicDungeon.Runtime.Core;
+using DynamicDungeon.Runtime.Graph;
 using NUnit.Framework;
-using UnityEngine.TestTools;
+using UnityEngine;
 
 namespace DynamicDungeon.Tests.Runtime
 {
     public sealed class BlackboardTests
     {
-        private const string BlackboardKeyName = "SurfaceHeight";
-        private const string OutputChannelName = "BlackboardOutput";
-        private const float WrittenValue = 0.625f;
-
         [Test]
-        public async Task WriterFollowedByReaderProducesExpectedChannelValues()
+        public async Task ExposedPropertyNodeReadsFloatDefaultIntoFloatChannel()
         {
-            Executor executor = new Executor();
-            BlackboardWriterNode writerNode = new BlackboardWriterNode("writer-node", BlackboardKeyName, WrittenValue);
-            BlackboardReaderNode readerNode = new BlackboardReaderNode("reader-node", BlackboardKeyName, OutputChannelName);
-            ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { writerNode, readerNode }, 4, 3, 123L);
+            const string propertyId = "surface-height-id";
+            const float expectedValue = 0.625f;
 
-            ExecutionResult result = await executor.ExecuteAsync(plan, CancellationToken.None);
+            Executor executor = new Executor();
+            ExposedPropertyNode propertyNode = new ExposedPropertyNode(
+                "reader-node",
+                "Surface Height",
+                propertyId,
+                "Surface Height",
+                ChannelType.Float);
+            Dictionary<string, float> initialValues = new Dictionary<string, float>
+            {
+                { propertyId, expectedValue }
+            };
+
+            ExecutionResult result = await executor.ExecuteAsync(
+                ExecutionPlan.Build(new IGenNode[] { propertyNode }, 4, 3, 123L, initialValues),
+                CancellationToken.None);
 
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.WasCancelled, Is.False);
-            Assert.That(result.ErrorMessage, Is.Null);
             Assert.That(result.Snapshot, Is.Not.Null);
             Assert.That(result.Snapshot.FloatChannels.Length, Is.EqualTo(1));
-            Assert.That(result.Snapshot.FloatChannels[0].Name, Is.EqualTo(OutputChannelName));
+            Assert.That(
+                result.Snapshot.FloatChannels[0].Name,
+                Is.EqualTo(ExposedPropertyNodeUtility.CreateOutputChannelName(propertyNode.NodeId)));
 
             float[] output = result.Snapshot.FloatChannels[0].Data;
             int index;
             for (index = 0; index < output.Length; index++)
             {
-                Assert.That(output[index], Is.EqualTo(WrittenValue));
+                Assert.That(output[index], Is.EqualTo(expectedValue));
             }
         }
 
         [Test]
-        public void MissingUpstreamBlackboardWriteThrowsClearBuildError()
+        public async Task ExposedPropertyNodeReadsIntDefaultIntoIntChannel()
         {
-            BlackboardReaderNode readerNode = new BlackboardReaderNode("reader-node", BlackboardKeyName, OutputChannelName);
+            const string propertyId = "iteration-count-id";
+            const int expectedValue = 7;
 
-            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => ExecutionPlan.Build(new IGenNode[] { readerNode }, 2, 2, 77L));
+            Executor executor = new Executor();
+            ExposedPropertyNode propertyNode = new ExposedPropertyNode(
+                "int-node",
+                "Iteration Count",
+                propertyId,
+                "Iteration Count",
+                ChannelType.Int);
+            Dictionary<string, float> initialValues = new Dictionary<string, float>
+            {
+                { propertyId, expectedValue }
+            };
 
-            Assert.That(exception, Is.Not.Null);
-            Assert.That(exception.Message, Does.Contain("Blackboard Reader"));
-            Assert.That(exception.Message, Does.Contain(BlackboardKeyName));
-            Assert.That(exception.Message, Does.Contain("declared a write"));
+            ExecutionResult result = await executor.ExecuteAsync(
+                ExecutionPlan.Build(new IGenNode[] { propertyNode }, 3, 2, 456L, initialValues),
+                CancellationToken.None);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Snapshot, Is.Not.Null);
+            Assert.That(result.Snapshot.IntChannels.Length, Is.EqualTo(1));
+            Assert.That(
+                result.Snapshot.IntChannels[0].Name,
+                Is.EqualTo(ExposedPropertyNodeUtility.CreateOutputChannelName(propertyNode.NodeId)));
+
+            int[] output = result.Snapshot.IntChannels[0].Data;
+            int index;
+            for (index = 0; index < output.Length; index++)
+            {
+                Assert.That(output[index], Is.EqualTo(expectedValue));
+            }
         }
 
         [Test]
-        public async Task NumericBlackboardDisposesCleanlyAtEndOfRun()
+        public void ReconcilePropertyOverridesKeepsOverrideBoundByPropertyIdAfterRename()
         {
-            Executor executor = new Executor();
-            BlackboardWriterNode writerNode = new BlackboardWriterNode("writer-node", BlackboardKeyName, WrittenValue);
-            BlackboardReaderNode readerNode = new BlackboardReaderNode("reader-node", BlackboardKeyName, OutputChannelName);
-            ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { writerNode, readerNode }, 3, 2, 456L);
+            GameObject gameObject = new GameObject("DungeonGeneratorTest");
+            GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
+            DungeonGeneratorComponent component = gameObject.AddComponent<DungeonGeneratorComponent>();
 
-            LogAssert.NoUnexpectedReceived();
-            ExecutionResult result = await executor.ExecuteAsync(plan, CancellationToken.None);
+            try
+            {
+                ExposedProperty property = graph.AddExposedProperty("Old Name", ChannelType.Float, "1");
+                component.Graph = graph;
+                component.PropertyOverrides.Add(
+                    new ExposedPropertyOverride
+                    {
+                        PropertyId = property.PropertyId,
+                        PropertyName = property.PropertyName,
+                        OverrideValue = "7.5"
+                    });
 
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.Throws<ObjectDisposedException>(() => plan.AllocatedWorld.GetFloatChannel(OutputChannelName));
-            LogAssert.NoUnexpectedReceived();
+                property.PropertyName = "New Name";
+                component.ReconcilePropertyOverrides();
+
+                Assert.That(component.PropertyOverrides.Count, Is.EqualTo(1));
+                Assert.That(component.PropertyOverrides[0].PropertyId, Is.EqualTo(property.PropertyId));
+                Assert.That(component.PropertyOverrides[0].PropertyName, Is.EqualTo("New Name"));
+                Assert.That(component.PropertyOverrides[0].OverrideValue, Is.EqualTo("7.5"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+                Object.DestroyImmediate(graph);
+            }
         }
     }
 }

@@ -16,12 +16,16 @@ namespace DynamicDungeon.Editor.Windows
         private const float FieldSpacing = 4.0f;
         private const string NoGraphText = "No graph loaded.";
         private const string AddPropertyDefaultName = "NewProperty";
+        internal const string PropertyDragDataKey = "DynamicDungeon.BlackboardPropertyId";
 
         private readonly Action _onGraphMutated;
 
         private GenGraph _graph;
         private string _pendingDeletePropertyId;
         private VisualElement _contentRoot;
+        private string _dragCandidatePropertyId;
+        private Vector2 _dragStartMousePosition;
+        private bool _isDraggingProperty;
 
         public BlackboardPanel(Action onGraphMutated)
         {
@@ -69,6 +73,11 @@ namespace DynamicDungeon.Editor.Windows
         internal void DeletePropertyForTesting(string propertyId)
         {
             OnDeletePropertyClicked(propertyId);
+        }
+
+        internal void ChangePropertyTypeForTesting(ExposedProperty property, ChannelType newType)
+        {
+            OnPropertyTypeChanged(property, newType);
         }
 
         private void RebuildContent()
@@ -120,6 +129,8 @@ namespace DynamicDungeon.Editor.Windows
             container.style.paddingTop = rowIndex > 0 ? 6.0f : 0.0f;
             container.style.marginBottom = 4.0f;
 
+            container.Add(BuildPropertyDragToken(property));
+
             VisualElement headerRow = new VisualElement();
             headerRow.style.flexDirection = FlexDirection.Row;
             headerRow.style.alignItems = Align.Center;
@@ -170,15 +181,12 @@ namespace DynamicDungeon.Editor.Windows
             typeField.style.marginRight = 4.0f;
             typeField.style.backgroundColor = PortColourRegistry.GetColour(property.Type);
             typeField.style.color = Color.white;
-            typeField.RegisterValueChangedCallback(evt =>
-            {
-                ChannelType newType = evt.newValue == "Int" ? ChannelType.Int : ChannelType.Float;
-                Undo.RecordObject(_graph, "Change Exposed Property Type");
-                property.Type = newType;
-                EditorUtility.SetDirty(_graph);
-                _onGraphMutated?.Invoke();
-                RebuildContent();
-            });
+            typeField.RegisterValueChangedCallback(
+                evt =>
+                {
+                    ChannelType newType = evt.newValue == "Int" ? ChannelType.Int : ChannelType.Float;
+                    OnPropertyTypeChanged(property, newType);
+                });
             headerRow.Add(typeField);
 
             Button deleteButton = new Button(() => OnDeletePropertyClicked(property.PropertyId));
@@ -214,6 +222,7 @@ namespace DynamicDungeon.Editor.Windows
                     Undo.RecordObject(_graph, "Change Exposed Property Default");
                     property.DefaultValue = evt.newValue.ToString("G", CultureInfo.InvariantCulture);
                     EditorUtility.SetDirty(_graph);
+                    RequestGraphPreviewRefresh();
                     _onGraphMutated?.Invoke();
                 });
                 valueRow.Add(floatField);
@@ -232,6 +241,7 @@ namespace DynamicDungeon.Editor.Windows
                     Undo.RecordObject(_graph, "Change Exposed Property Default");
                     property.DefaultValue = evt.newValue.ToString(CultureInfo.InvariantCulture);
                     EditorUtility.SetDirty(_graph);
+                    RequestGraphPreviewRefresh();
                     _onGraphMutated?.Invoke();
                 });
                 valueRow.Add(intField);
@@ -265,7 +275,7 @@ namespace DynamicDungeon.Editor.Windows
 
             if (string.Equals(_pendingDeletePropertyId, property.PropertyId, StringComparison.Ordinal))
             {
-                int usageCount = CountPropertyUsages(property.PropertyName);
+                int usageCount = CountPropertyUsages(property.PropertyId);
                 if (usageCount > 0)
                 {
                     Label warningLabel = new Label("Used by " + usageCount + " node(s) - click \u2715 again to confirm.");
@@ -286,11 +296,9 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
-            string oldName = property.PropertyName;
-
             Undo.RecordObject(_graph, "Rename Exposed Property");
             property.PropertyName = newName;
-            ReplaceParameterReferences(oldName, newName);
+            SynchroniseBoundPropertyNodes(property, false);
             EditorUtility.SetDirty(_graph);
             _onGraphMutated?.Invoke();
             RebuildContent();
@@ -309,7 +317,7 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
-            int usageCount = CountPropertyUsages(property.PropertyName);
+            int usageCount = CountPropertyUsages(property.PropertyId);
             bool isPendingDelete = string.Equals(_pendingDeletePropertyId, propertyId, StringComparison.Ordinal);
 
             if (usageCount > 0 && !isPendingDelete)
@@ -321,6 +329,7 @@ namespace DynamicDungeon.Editor.Windows
 
             _pendingDeletePropertyId = null;
             Undo.RecordObject(_graph, "Delete Exposed Property");
+            RemoveBoundPropertyNodes(propertyId);
             _graph.RemoveExposedProperty(propertyId);
             EditorUtility.SetDirty(_graph);
             _onGraphMutated?.Invoke();
@@ -342,6 +351,7 @@ namespace DynamicDungeon.Editor.Windows
             if (newProperty != null)
             {
                 _pendingDeletePropertyId = null;
+                RequestGraphPreviewRefresh();
                 RebuildContent();
 
                 VisualElement row = _contentRoot.Q<VisualElement>("BlackboardPropertyRow_" + newProperty.PropertyId);
@@ -391,9 +401,93 @@ namespace DynamicDungeon.Editor.Windows
             RebuildContent();
         }
 
-        private void ReplaceParameterReferences(string oldName, string newName)
+        private VisualElement BuildPropertyDragToken(ExposedProperty property)
         {
-            if (_graph == null || _graph.Nodes == null)
+            VisualElement dragToken = new VisualElement();
+            dragToken.name = "BlackboardPropertyDragToken";
+            dragToken.style.flexDirection = FlexDirection.Row;
+            dragToken.style.alignItems = Align.Center;
+            dragToken.style.justifyContent = Justify.SpaceBetween;
+            dragToken.style.paddingLeft = 8.0f;
+            dragToken.style.paddingRight = 8.0f;
+            dragToken.style.paddingTop = 4.0f;
+            dragToken.style.paddingBottom = 4.0f;
+            dragToken.style.marginBottom = 6.0f;
+            dragToken.style.borderTopLeftRadius = 4.0f;
+            dragToken.style.borderTopRightRadius = 4.0f;
+            dragToken.style.borderBottomLeftRadius = 4.0f;
+            dragToken.style.borderBottomRightRadius = 4.0f;
+            dragToken.style.backgroundColor = PortColourRegistry.GetColour(property.Type);
+            dragToken.tooltip = "Drag into the graph to create a property node.";
+
+            Label nameLabel = new Label(property.PropertyName ?? string.Empty);
+            nameLabel.style.color = Color.white;
+            nameLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            dragToken.Add(nameLabel);
+
+            Label typeLabel = new Label(property.Type.ToString());
+            typeLabel.style.color = Color.white;
+            typeLabel.style.opacity = 0.85f;
+            dragToken.Add(typeLabel);
+
+            dragToken.RegisterCallback<MouseDownEvent>(evt => OnPropertyDragMouseDown(evt, property.PropertyId));
+            dragToken.RegisterCallback<MouseMoveEvent>(evt => OnPropertyDragMouseMove(evt, property));
+            dragToken.RegisterCallback<MouseUpEvent>(OnPropertyDragMouseUp);
+            return dragToken;
+        }
+
+        private void OnPropertyDragMouseDown(MouseDownEvent mouseDownEvent, string propertyId)
+        {
+            if (mouseDownEvent == null || mouseDownEvent.button != 0 || string.IsNullOrWhiteSpace(propertyId))
+            {
+                return;
+            }
+
+            _dragCandidatePropertyId = propertyId;
+            _dragStartMousePosition = mouseDownEvent.mousePosition;
+            _isDraggingProperty = false;
+        }
+
+        private void OnPropertyDragMouseMove(MouseMoveEvent mouseMoveEvent, ExposedProperty property)
+        {
+            if (mouseMoveEvent == null ||
+                string.IsNullOrWhiteSpace(_dragCandidatePropertyId) ||
+                !string.Equals(_dragCandidatePropertyId, property?.PropertyId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (_isDraggingProperty)
+            {
+                return;
+            }
+
+            if ((mouseMoveEvent.mousePosition - _dragStartMousePosition).sqrMagnitude < 16.0f)
+            {
+                return;
+            }
+
+            DragAndDrop.PrepareStartDrag();
+            DragAndDrop.SetGenericData(PropertyDragDataKey, property.PropertyId);
+            DragAndDrop.StartDrag(string.IsNullOrWhiteSpace(property.PropertyName) ? "Property" : property.PropertyName);
+            _isDraggingProperty = true;
+            mouseMoveEvent.StopPropagation();
+        }
+
+        private void OnPropertyDragMouseUp(MouseUpEvent mouseUpEvent)
+        {
+            if (mouseUpEvent == null || mouseUpEvent.button != 0)
+            {
+                return;
+            }
+
+            _dragCandidatePropertyId = null;
+            _isDraggingProperty = false;
+        }
+
+        private void SynchroniseBoundPropertyNodes(ExposedProperty property, bool removeIncompatibleConnections)
+        {
+            if (_graph == null || _graph.Nodes == null || property == null)
             {
                 return;
             }
@@ -402,26 +496,92 @@ namespace DynamicDungeon.Editor.Windows
             for (nodeIndex = 0; nodeIndex < _graph.Nodes.Count; nodeIndex++)
             {
                 GenNodeData nodeData = _graph.Nodes[nodeIndex];
-                if (nodeData == null || nodeData.Parameters == null)
+                if (!ExposedPropertyNodeUtility.IsExposedPropertyNode(nodeData) ||
+                    !string.Equals(
+                        ExposedPropertyNodeUtility.GetPropertyId(nodeData),
+                        property.PropertyId,
+                        StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                int parameterIndex;
-                for (parameterIndex = 0; parameterIndex < nodeData.Parameters.Count; parameterIndex++)
+                ExposedPropertyNodeUtility.ConfigureNodeData(nodeData, property);
+                ReconcilePropertyNodeConnections(nodeData, property.Type, removeIncompatibleConnections);
+            }
+
+            ReloadGraphFromModel();
+        }
+
+        private void RemoveBoundPropertyNodes(string propertyId)
+        {
+            if (_graph == null || _graph.Nodes == null || string.IsNullOrWhiteSpace(propertyId))
+            {
+                return;
+            }
+
+            int nodeIndex;
+            for (nodeIndex = _graph.Nodes.Count - 1; nodeIndex >= 0; nodeIndex--)
+            {
+                GenNodeData nodeData = _graph.Nodes[nodeIndex];
+                if (ExposedPropertyNodeUtility.IsExposedPropertyNode(nodeData) &&
+                    string.Equals(
+                        ExposedPropertyNodeUtility.GetPropertyId(nodeData),
+                        propertyId,
+                        StringComparison.Ordinal))
                 {
-                    SerializedParameter parameter = nodeData.Parameters[parameterIndex];
-                    if (parameter != null && string.Equals(parameter.Value, oldName, StringComparison.Ordinal))
-                    {
-                        parameter.Value = newName;
-                    }
+                    _graph.RemoveNode(nodeData.NodeId);
                 }
+            }
+
+            ReloadGraphFromModel();
+        }
+
+        private void ReconcilePropertyNodeConnections(GenNodeData nodeData, ChannelType newType, bool removeIncompatibleConnections)
+        {
+            if (!removeIncompatibleConnections || _graph == null || _graph.Connections == null || nodeData == null)
+            {
+                return;
+            }
+
+            int connectionIndex;
+            for (connectionIndex = _graph.Connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+            {
+                GenConnectionData connection = _graph.Connections[connectionIndex];
+                if (connection == null ||
+                    !string.Equals(connection.FromNodeId, nodeData.NodeId, StringComparison.Ordinal) ||
+                    !string.Equals(connection.FromPortName, ExposedPropertyNodeUtility.OutputPortName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                GenNodeData targetNode = _graph.GetNode(connection.ToNodeId);
+                GenPortData targetPort = FindPort(targetNode, connection.ToPortName, PortDirection.Input);
+                if (targetPort == null)
+                {
+                    _graph.RemoveConnection(connection.FromNodeId, connection.FromPortName, connection.ToNodeId, connection.ToPortName);
+                    continue;
+                }
+
+                if (targetPort.Type == newType)
+                {
+                    connection.CastMode = CastMode.None;
+                    continue;
+                }
+
+                CastMode defaultCastMode;
+                if (CastRegistry.CanCast(newType, targetPort.Type, out defaultCastMode))
+                {
+                    connection.CastMode = defaultCastMode;
+                    continue;
+                }
+
+                _graph.RemoveConnection(connection.FromNodeId, connection.FromPortName, connection.ToNodeId, connection.ToPortName);
             }
         }
 
-        private int CountPropertyUsages(string propertyName)
+        private int CountPropertyUsages(string propertyId)
         {
-            if (_graph == null || _graph.Nodes == null || string.IsNullOrWhiteSpace(propertyName))
+            if (_graph == null || _graph.Nodes == null || string.IsNullOrWhiteSpace(propertyId))
             {
                 return 0;
             }
@@ -432,24 +592,89 @@ namespace DynamicDungeon.Editor.Windows
             for (nodeIndex = 0; nodeIndex < _graph.Nodes.Count; nodeIndex++)
             {
                 GenNodeData nodeData = _graph.Nodes[nodeIndex];
-                if (nodeData == null || nodeData.Parameters == null)
+                if (ExposedPropertyNodeUtility.IsExposedPropertyNode(nodeData) &&
+                    string.Equals(
+                        ExposedPropertyNodeUtility.GetPropertyId(nodeData),
+                        propertyId,
+                        StringComparison.Ordinal))
                 {
-                    continue;
-                }
-
-                int parameterIndex;
-                for (parameterIndex = 0; parameterIndex < nodeData.Parameters.Count; parameterIndex++)
-                {
-                    SerializedParameter parameter = nodeData.Parameters[parameterIndex];
-                    if (parameter != null && string.Equals(parameter.Value, propertyName, StringComparison.Ordinal))
-                    {
-                        count++;
-                        break;
-                    }
+                    count++;
                 }
             }
 
             return count;
+        }
+
+        private void OnPropertyTypeChanged(ExposedProperty property, ChannelType newType)
+        {
+            if (_graph == null || property == null || property.Type == newType)
+            {
+                return;
+            }
+
+            Undo.RecordObject(_graph, "Change Exposed Property Type");
+            property.Type = newType;
+            property.DefaultValue = ConvertDefaultValueForType(property.DefaultValue, newType);
+            SynchroniseBoundPropertyNodes(property, true);
+            EditorUtility.SetDirty(_graph);
+            _onGraphMutated?.Invoke();
+            RebuildContent();
+        }
+
+        private void ReloadGraphFromModel()
+        {
+            DynamicDungeonGraphView graphView = GetFirstAncestorOfType<DynamicDungeonGraphView>();
+            graphView?.ReloadGraphFromModel();
+        }
+
+        private void RequestGraphPreviewRefresh()
+        {
+            DynamicDungeonGraphView graphView = GetFirstAncestorOfType<DynamicDungeonGraphView>();
+            graphView?.RequestPreviewRefresh();
+        }
+
+        private static GenPortData FindPort(GenNodeData nodeData, string portName, PortDirection direction)
+        {
+            if (nodeData == null || nodeData.Ports == null)
+            {
+                return null;
+            }
+
+            int index;
+            for (index = 0; index < nodeData.Ports.Count; index++)
+            {
+                GenPortData port = nodeData.Ports[index];
+                if (port != null &&
+                    port.Direction == direction &&
+                    string.Equals(port.PortName, portName, StringComparison.Ordinal))
+                {
+                    return port;
+                }
+            }
+
+            return null;
+        }
+
+        private static string ConvertDefaultValueForType(string currentValue, ChannelType newType)
+        {
+            if (newType == ChannelType.Int)
+            {
+                float parsedFloat;
+                if (float.TryParse(currentValue, NumberStyles.Float, CultureInfo.InvariantCulture, out parsedFloat))
+                {
+                    return Mathf.RoundToInt(parsedFloat).ToString(CultureInfo.InvariantCulture);
+                }
+
+                return "0";
+            }
+
+            int parsedInt;
+            if (int.TryParse(currentValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedInt))
+            {
+                return parsedInt.ToString("G", CultureInfo.InvariantCulture);
+            }
+
+            return "0";
         }
     }
 }

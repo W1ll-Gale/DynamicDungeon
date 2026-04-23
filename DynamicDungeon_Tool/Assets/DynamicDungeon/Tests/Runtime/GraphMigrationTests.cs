@@ -202,6 +202,57 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        [Test]
+        public void VersionThreeGraphMigrationRewritesLegacyBlackboardNodesIntoExposedProperties()
+        {
+            GenGraph graph = CreateGraphWithVersion(3);
+            try
+            {
+                GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+
+                GenNodeData writerNode = new GenNodeData(
+                    "writer-node",
+                    "DynamicDungeon.Runtime.Core.BlackboardWriterNode",
+                    "Blackboard Writer",
+                    Vector2.zero);
+                writerNode.Parameters.Add(new SerializedParameter("key", "SurfaceHeight"));
+                writerNode.Parameters.Add(new SerializedParameter("value", "2.5"));
+                graph.Nodes.Add(writerNode);
+
+                GenNodeData readerNode = new GenNodeData(
+                    "reader-node",
+                    "DynamicDungeon.Runtime.Core.BlackboardReaderNode",
+                    "Blackboard Reader",
+                    Vector2.zero);
+                readerNode.Parameters.Add(new SerializedParameter("key", "SurfaceHeight"));
+                readerNode.Ports.Add(new GenPortData("LegacyOutput", PortDirection.Output, ChannelType.Float));
+                graph.Nodes.Add(readerNode);
+
+                MigrationResult result = GraphMigrationRunner.RunMigrations(graph, DefaultGraphMigrations.All);
+
+                Assert.That(result.Success, Is.True);
+                Assert.That(result.ToVersion, Is.EqualTo(GraphSchemaVersion.Current));
+                Assert.That(graph.GetNode("writer-node"), Is.Null);
+                Assert.That(graph.GetNode("reader-node"), Is.Not.Null);
+                Assert.That(graph.GetNode("reader-node").NodeTypeName, Is.EqualTo(ExposedPropertyNodeUtility.NodeTypeName));
+                Assert.That(graph.GetNode("reader-node").Ports[0].PortName, Is.EqualTo(ExposedPropertyNodeUtility.OutputPortName));
+
+                ExposedProperty property = graph.GetExposedPropertyByName("SurfaceHeight");
+                Assert.That(property, Is.Not.Null);
+                Assert.That(property.PropertyId, Is.Not.Empty);
+                Assert.That(property.DefaultValue, Is.EqualTo("2.5"));
+
+                GraphCompileResult compileResult = GraphCompiler.Compile(graph);
+                Assert.That(compileResult.IsSuccess, Is.True);
+                Assert.That(compileResult.Plan, Is.Not.Null);
+                compileResult.Plan.Dispose();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
         private static GenGraph CreateGraphWithVersion(int schemaVersion)
         {
             GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();

@@ -186,6 +186,37 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public void CompileSeedsInitialBlackboardValuesByPropertyId()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                ExposedProperty property = graph.AddExposedProperty("Seed Strength", ChannelType.Float, "4.5");
+
+                GraphCompileResult compileResult = GraphCompiler.Compile(graph);
+
+                Assert.That(compileResult.IsSuccess, Is.True);
+                Assert.That(compileResult.Plan, Is.Not.Null);
+                Assert.That(compileResult.Plan.InitialNumericBlackboardValues, Is.Not.Null);
+                Assert.That(
+                    compileResult.Plan.InitialNumericBlackboardValues.ContainsKey(property.PropertyId),
+                    Is.True);
+                Assert.That(
+                    compileResult.Plan.InitialNumericBlackboardValues.ContainsKey(property.PropertyName),
+                    Is.False);
+                Assert.That(
+                    compileResult.Plan.InitialNumericBlackboardValues[property.PropertyId],
+                    Is.EqualTo(4.5f));
+
+                compileResult.Plan.Dispose();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
         public async Task ValidTwoNodeGraphCompilesAndExecutesThroughExecutor()
         {
             GenGraph graph = CreateGraph();

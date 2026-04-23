@@ -54,6 +54,11 @@ namespace DynamicDungeon.Editor.Utilities
                         continue;
                     }
 
+                    if (Attribute.IsDefined(candidateType, typeof(HideInNodeSearchAttribute), false))
+                    {
+                        continue;
+                    }
+
                     discoveredTypes.Add(candidateType);
                 }
             }

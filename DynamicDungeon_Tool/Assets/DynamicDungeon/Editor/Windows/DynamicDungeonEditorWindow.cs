@@ -32,6 +32,7 @@ namespace DynamicDungeon.Editor.Windows
         private ToolbarToggle _settingsToggle;
         private ToolbarToggle _miniMapToggle;
         private ToolbarToggle _diagnosticsToggle;
+        private ToolbarButton _docsButton;
         private BreadcrumbBar _breadcrumbBar;
         private DynamicDungeonGraphView _graphView;
         private BlackboardWindow _blackboardWindow;
@@ -279,6 +280,12 @@ namespace DynamicDungeon.Editor.Windows
                 OnDiagnosticsToggleChanged);
             panelToggleGroup.Add(_diagnosticsToggle);
 
+            _docsButton = BuildIconButton(
+                LoadDocsIcon(),
+                "Documentation (coming later)",
+                OnDocsButtonClicked);
+            panelToggleGroup.Add(_docsButton);
+
             return toolbar;
         }
 
@@ -323,6 +330,40 @@ namespace DynamicDungeon.Editor.Windows
                 evt => ApplyPanelToggleVisualState(toggle, image, evt.newValue));
             toggle.RegisterValueChangedCallback(callback);
             return toggle;
+        }
+
+        private ToolbarButton BuildIconButton(Texture icon, string tooltip, System.Action clicked)
+        {
+            ToolbarButton button = new ToolbarButton(clicked);
+            button.text = string.Empty;
+            button.tooltip = tooltip;
+            button.style.width = 24.0f;
+            button.style.minWidth = 24.0f;
+            button.style.height = 20.0f;
+            button.style.justifyContent = Justify.Center;
+            button.style.alignItems = Align.Center;
+            button.style.paddingLeft = 0.0f;
+            button.style.paddingRight = 0.0f;
+            button.style.paddingTop = 0.0f;
+            button.style.paddingBottom = 0.0f;
+            button.style.marginLeft = 3.0f;
+            button.style.marginRight = 0.0f;
+            button.style.borderLeftWidth = 0.0f;
+            button.style.borderTopWidth = 0.0f;
+            button.style.borderRightWidth = 0.0f;
+            button.style.borderBottomWidth = 0.0f;
+            button.style.backgroundColor = Color.clear;
+            button.style.unityBackgroundImageTintColor = Color.clear;
+
+            Image image = new Image();
+            image.image = icon;
+            image.scaleMode = ScaleMode.ScaleToFit;
+            image.style.width = 16.0f;
+            image.style.height = 16.0f;
+            image.pickingMode = PickingMode.Ignore;
+            image.tintColor = new Color(0.72f, 0.72f, 0.72f, 1.0f);
+            button.Add(image);
+            return button;
         }
 
         private static void ApplyPanelToggleVisualState(ToolbarToggle toggle, Image image, bool isActive)
@@ -507,6 +548,10 @@ namespace DynamicDungeon.Editor.Windows
             _panelViewSettings.IsDiagnosticsVisible = changeEvent.newValue;
             ApplyPanelVisibility();
             SavePanelState();
+        }
+
+        private void OnDocsButtonClicked()
+        {
         }
 
         private void OnDiagnosticsUpdated(IReadOnlyList<GraphDiagnostic> diagnostics)
@@ -859,6 +904,17 @@ namespace DynamicDungeon.Editor.Windows
             if (icon == null)
             {
                 icon = EditorGUIUtility.IconContent("UnityEditor.ConsoleWindow").image as Texture2D;
+            }
+
+            return icon;
+        }
+
+        private static Texture2D LoadDocsIcon()
+        {
+            Texture2D icon = EditorGUIUtility.IconContent("_Help").image as Texture2D;
+            if (icon == null)
+            {
+                icon = EditorGUIUtility.IconContent("console.infoicon").image as Texture2D;
             }
 
             return icon;

@@ -440,6 +440,11 @@ namespace DynamicDungeon.Editor.Nodes
                     continue;
                 }
 
+                if (!GenNodeInstantiationUtility.IsEditableSerialisedParameter(_nodeInstance.GetType(), parameter.Name))
+                {
+                    continue;
+                }
+
                 string defaultValue;
                 if (!_defaultParameterValuesByName.TryGetValue(parameter.Name, out defaultValue))
                 {

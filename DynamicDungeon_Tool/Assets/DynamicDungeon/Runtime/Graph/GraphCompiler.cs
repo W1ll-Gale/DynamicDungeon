@@ -1221,12 +1221,13 @@ namespace DynamicDungeon.Runtime.Graph
             for (index = 0; index < exposedProperties.Count; index++)
             {
                 ExposedProperty property = exposedProperties[index];
-                if (property == null || string.IsNullOrWhiteSpace(property.PropertyName))
+                if (property == null)
                 {
                     continue;
                 }
 
-                if (initialValues.ContainsKey(property.PropertyName))
+                string runtimeKey = GetExposedPropertyRuntimeKey(property);
+                if (string.IsNullOrWhiteSpace(runtimeKey) || initialValues.ContainsKey(runtimeKey))
                 {
                     continue;
                 }
@@ -1249,10 +1250,22 @@ namespace DynamicDungeon.Runtime.Graph
                     }
                 }
 
-                initialValues[property.PropertyName] = floatValue;
+                initialValues[runtimeKey] = floatValue;
             }
 
             return initialValues.Count > 0 ? initialValues : null;
+        }
+
+        private static string GetExposedPropertyRuntimeKey(ExposedProperty property)
+        {
+            if (property == null)
+            {
+                return string.Empty;
+            }
+
+            return string.IsNullOrWhiteSpace(property.PropertyId)
+                ? (property.PropertyName ?? string.Empty)
+                : property.PropertyId;
         }
 
         private static bool HasErrors(IReadOnlyList<GraphDiagnostic> diagnostics)

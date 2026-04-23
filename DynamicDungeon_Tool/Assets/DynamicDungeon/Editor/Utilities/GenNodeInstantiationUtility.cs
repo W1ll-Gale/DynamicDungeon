@@ -811,6 +811,32 @@ namespace DynamicDungeon.Editor.Utilities
             return false;
         }
 
+        public static bool IsEditableSerialisedParameter(Type nodeType, string parameterName)
+        {
+            if (nodeType == null || string.IsNullOrWhiteSpace(parameterName))
+            {
+                return false;
+            }
+
+            ConstructorInfo[] constructors = nodeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+            int constructorIndex;
+            for (constructorIndex = 0; constructorIndex < constructors.Length; constructorIndex++)
+            {
+                ParameterInfo[] parameters = constructors[constructorIndex].GetParameters();
+                int parameterIndex;
+                for (parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
+                {
+                    ParameterInfo parameter = parameters[parameterIndex];
+                    if (string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return IsEditableSerialisedParameter(parameter);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         private static bool IsEditableSerialisedParameter(ParameterInfo parameter)
         {
             if (parameter == null)
@@ -828,6 +854,11 @@ namespace DynamicDungeon.Editor.Utilities
             if (parameterName.EndsWith("ChannelName", StringComparison.OrdinalIgnoreCase) ||
                 parameterName.EndsWith("PortName", StringComparison.OrdinalIgnoreCase) ||
                 parameterName.EndsWith("Type", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (Attribute.IsDefined(parameter, typeof(HideInNodeInspectorAttribute), false))
             {
                 return false;
             }

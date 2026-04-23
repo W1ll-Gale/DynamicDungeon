@@ -21,6 +21,7 @@ namespace DynamicDungeon.Editor.Windows
         private const float DefaultGroupHeight = 200.0f;
         private const float DefaultNoteWidth = 200.0f;
         private const float DefaultNoteHeight = 150.0f;
+        private const string BlackboardPropertyDragDataKey = BlackboardPanel.PropertyDragDataKey;
 
         private readonly GridBackground _gridBackground;
         private readonly Dictionary<string, GenNodeView> _nodeViewsById = new Dictionary<string, GenNodeView>();
@@ -114,6 +115,8 @@ namespace DynamicDungeon.Editor.Windows
             RegisterCallback<MouseDownEvent>(OnMouseDownCapture, TrickleDown.TrickleDown);
             RegisterCallback<ContextualMenuPopulateEvent>(OnGraphContextualMenuPopulate, TrickleDown.TrickleDown);
             RegisterCallback<KeyDownEvent>(OnKeyDown);
+            RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
+            RegisterCallback<DragPerformEvent>(OnDragPerform);
         }
 
         public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
@@ -412,6 +415,71 @@ namespace DynamicDungeon.Editor.Windows
             {
                 _generationOrchestrator.RequestPreviewRefresh();
             }
+        }
+
+        public void CreateExposedPropertyNodeFromBlackboard(string propertyId, Vector2 graphLocalPosition)
+        {
+            if (_graph == null || string.IsNullOrWhiteSpace(propertyId))
+            {
+                return;
+            }
+
+            ExposedProperty property = _graph.GetExposedProperty(propertyId);
+            if (property == null)
+            {
+                return;
+            }
+
+            Vector2 graphContentPosition = ConvertGraphLocalToContentPosition(graphLocalPosition);
+
+            Undo.RecordObject(_graph, "Add Exposed Property Node");
+            GenNodeData nodeData = _graph.AddNode(
+                ExposedPropertyNodeUtility.NodeTypeName,
+                property.PropertyName ?? string.Empty,
+                graphContentPosition);
+            ExposedPropertyNodeUtility.ConfigureNodeData(nodeData, property);
+
+            IGenNode nodeInstance;
+            string nodeInstanceErrorMessage;
+            if (!GenNodeInstantiationUtility.TryCreateNodeInstance(nodeData, out nodeInstance, out nodeInstanceErrorMessage))
+            {
+                _graph.RemoveNode(nodeData.NodeId);
+                EditorUtility.SetDirty(_graph);
+                Debug.LogError(
+                    "Failed to initialise exposed property node '" +
+                    (property.PropertyName ?? string.Empty) +
+                    "': " +
+                    nodeInstanceErrorMessage);
+                return;
+            }
+
+            PopulatePortData(nodeData, nodeInstance);
+            EditorUtility.SetDirty(_graph);
+            _afterMutation?.Invoke();
+
+            GenNodeView nodeView = CreateNodeView(nodeData, nodeInstance);
+            _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
+            AddElement(nodeView);
+            ClearSelection();
+            AddToSelection(nodeView);
+
+            _generationOrchestrator?.RequestPreviewRefresh();
+        }
+
+        public void ReloadGraphFromModel()
+        {
+            Vector3 scrollOffset;
+            float zoomScale;
+            GetViewportState(out scrollOffset, out zoomScale);
+
+            LoadGraph(_graph);
+            RestoreViewportState(scrollOffset, zoomScale);
+            _generationOrchestrator?.RequestPreviewRefresh();
+        }
+
+        public void RequestPreviewRefresh()
+        {
+            _generationOrchestrator?.RequestPreviewRefresh();
         }
 
         public void OpenNodeSearch(Vector2 graphLocalPosition)
@@ -2086,6 +2154,11 @@ namespace DynamicDungeon.Editor.Windows
             OpenExpandedPreview(nodeId, texture, titleText);
         }
 
+        internal void CreateExposedPropertyNodeFromBlackboardForTesting(string propertyId, Vector2 graphLocalPosition)
+        {
+            CreateExposedPropertyNodeFromBlackboard(propertyId, graphLocalPosition);
+        }
+
         internal void UpdateExpandedPreviewForCurrentNodeForTesting(string nodeId, Texture2D texture, string titleText)
         {
             UpdateExpandedPreviewForCurrentNode(nodeId, texture, titleText);
@@ -2170,6 +2243,37 @@ namespace DynamicDungeon.Editor.Windows
             _expandedPreviewPanOffset = newTopLeft - new Vector2(newBaseX, newBaseY);
 
             ApplyExpandedPreviewTransform();
+        }
+
+        private void OnDragUpdated(DragUpdatedEvent dragUpdatedEvent)
+        {
+            if (!HasBlackboardPropertyDrag())
+            {
+                return;
+            }
+
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+            dragUpdatedEvent.StopPropagation();
+        }
+
+        private void OnDragPerform(DragPerformEvent dragPerformEvent)
+        {
+            string propertyId = DragAndDrop.GetGenericData(BlackboardPropertyDragDataKey) as string;
+            if (string.IsNullOrWhiteSpace(propertyId))
+            {
+                return;
+            }
+
+            DragAndDrop.AcceptDrag();
+            CreateExposedPropertyNodeFromBlackboard(propertyId, dragPerformEvent.localMousePosition);
+            DragAndDrop.SetGenericData(BlackboardPropertyDragDataKey, null);
+            dragPerformEvent.StopPropagation();
+        }
+
+        private static bool HasBlackboardPropertyDrag()
+        {
+            return !string.IsNullOrWhiteSpace(
+                DragAndDrop.GetGenericData(BlackboardPropertyDragDataKey) as string);
         }
 
         private void EnsureExpandedPreviewDeferredFitScheduled()

@@ -40,6 +40,16 @@ namespace DynamicDungeon.Runtime.Core
         }
     }
 
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    public sealed class HideInNodeSearchAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    public sealed class HideInNodeInspectorAttribute : Attribute
+    {
+    }
+
     /// <summary>
     /// Marks an <see cref="IGenNode"/> implementation as a sub-graph wrapper.
     /// The editor uses this attribute to decide whether to display the

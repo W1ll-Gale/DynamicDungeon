@@ -8,7 +8,8 @@ namespace DynamicDungeon.Runtime.Graph
         {
             new LegacySchemaBootstrapMigration(),
             new EnsureOutputNodeGraphMigration(),
-            new EnsureUniqueOutputPortNamesGraphMigration()
+            new EnsureUniqueOutputPortNamesGraphMigration(),
+            new MigrateBlackboardNodesToExposedPropertiesGraphMigration()
         };
 
         public static IReadOnlyList<IGraphMigration> All
