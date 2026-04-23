@@ -1,5 +1,6 @@
 using System;
 using DynamicDungeon.Runtime.Graph;
+using DynamicDungeon.Editor.Windows;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -142,6 +143,23 @@ namespace DynamicDungeon.Editor.Nodes
 
         private void OnContextMenuPopulate(ContextualMenuPopulateEvent contextEvent)
         {
+            DynamicDungeonGraphView graphView = GetFirstAncestorOfType<DynamicDungeonGraphView>();
+
+            contextEvent.menu.AppendAction(
+                "Group Selection",
+                _ => graphView?.GroupSelection(),
+                _ => graphView != null && graphView.CanGroupSelection()
+                    ? DropdownMenuAction.Status.Normal
+                    : DropdownMenuAction.Status.Disabled);
+
+            contextEvent.menu.AppendAction(
+                "Ungroup Selection",
+                _ => graphView?.UngroupSelection(),
+                _ => graphView != null && graphView.CanUngroupSelection()
+                    ? DropdownMenuAction.Status.Normal
+                    : DropdownMenuAction.Status.Disabled);
+
+            contextEvent.menu.AppendSeparator();
             contextEvent.menu.AppendAction("Color/Default", _ => SetGroupColor(new Color(0.15f, 0.15f, 0.15f, 0.3f)));
             contextEvent.menu.AppendAction("Color/Red", _ => SetGroupColor(new Color(1.0f, 0.2f, 0.2f, 0.3f)));
             contextEvent.menu.AppendAction("Color/Green", _ => SetGroupColor(new Color(0.2f, 1.0f, 0.2f, 0.3f)));

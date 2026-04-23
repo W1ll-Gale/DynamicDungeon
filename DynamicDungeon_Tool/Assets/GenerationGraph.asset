@@ -55,7 +55,7 @@ MonoBehaviour:
   - NodeId: 3d62e7b9-5ea7-4480-83c4-b308eda351ca
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
     NodeName: Perlin Noise
-    Position: {x: -117, y: -31}
+    Position: {x: -117, y: -30}
     Ports:
     - PortName: Output__3d62e7b9-5ea7-4480-83c4-b308eda351ca
       DisplayName: Output
@@ -75,7 +75,7 @@ MonoBehaviour:
   - NodeId: 8a01949c-d25b-40a0-ae65-eb3ee8701e05
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Math
-    Position: {x: 396, y: -161}
+    Position: {x: 397, y: -166}
     Ports:
     - PortName: A
       DisplayName: A
@@ -91,7 +91,7 @@ MonoBehaviour:
       Type: 0
     Parameters:
     - Name: operation
-      Value: Divide
+      Value: Add
     - Name: scalarB
       Value: 0
   Connections:

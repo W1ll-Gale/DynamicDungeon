@@ -999,6 +999,14 @@ namespace DynamicDungeon.Editor.Windows
             contextEvent.menu.AppendAction("Add Node...", _ => OpenNodeSearch(localPosition));
             contextEvent.menu.AppendAction("Add Sticky Note", _ => CreateStickyNote(localPosition));
             contextEvent.menu.AppendAction("Add Group", _ => CreateGroup(localPosition));
+            contextEvent.menu.AppendAction(
+                "Group Selection",
+                _ => GroupSelection(),
+                _ => CanGroupSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            contextEvent.menu.AppendAction(
+                "Ungroup Selection",
+                _ => UngroupSelection(),
+                _ => CanUngroupSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
         }
 
         private void OnKeyDown(KeyDownEvent keyDownEvent)
@@ -1019,6 +1027,25 @@ namespace DynamicDungeon.Editor.Windows
                 }
 
                 OpenNodeSearch(localPosition);
+                keyDownEvent.StopImmediatePropagation();
+                return;
+            }
+
+            bool isGroupingShortcut = (keyDownEvent.ctrlKey || keyDownEvent.commandKey) && keyDownEvent.keyCode == KeyCode.G;
+            if (isGroupingShortcut)
+            {
+                if (keyDownEvent.shiftKey)
+                {
+                    if (CanUngroupSelection())
+                    {
+                        UngroupSelection();
+                    }
+                }
+                else if (CanGroupSelection())
+                {
+                    GroupSelection();
+                }
+
                 keyDownEvent.StopImmediatePropagation();
                 return;
             }
@@ -1304,6 +1331,250 @@ namespace DynamicDungeon.Editor.Windows
         private static bool CanDeleteGraphElement(GraphElement graphElement)
         {
             return graphElement != null && (graphElement.capabilities & Capabilities.Deletable) != 0;
+        }
+
+        public bool CanGroupSelection()
+        {
+            return GetSelectedNodeViews().Count > 0;
+        }
+
+        public bool CanUngroupSelection()
+        {
+            if (GetSelectedGroupViews().Count > 0)
+            {
+                return true;
+            }
+
+            foreach (GenNodeView nodeView in GetSelectedNodeViews())
+            {
+                if (GetContainingGroups(nodeView).Count > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool CanCollapseSelection()
+        {
+            foreach (GenNodeView nodeView in GetSelectedNodeViews())
+            {
+                if (!nodeView.IsCollapsed())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool CanExpandSelection()
+        {
+            foreach (GenNodeView nodeView in GetSelectedNodeViews())
+            {
+                if (nodeView.IsCollapsed())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void GroupSelection()
+        {
+            if (_graph == null)
+            {
+                return;
+            }
+
+            List<GenNodeView> selectedNodeViews = GetSelectedNodeViews();
+            if (selectedNodeViews.Count == 0)
+            {
+                return;
+            }
+
+            Undo.IncrementCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Group Selection");
+
+            Rect groupRect = CalculateGroupRect(selectedNodeViews);
+
+            Undo.RecordObject(_graph, "Group Selection");
+            GenGroupData groupData = _graph.AddGroup("Group", groupRect);
+            EditorUtility.SetDirty(_graph);
+
+            GroupView groupView = new GroupView(_graph, groupData, _afterMutation);
+            _groupViewsById[groupData.GroupId] = groupView;
+            AddElement(groupView);
+            groupView.AddElements(selectedNodeViews.Cast<GraphElement>().ToList());
+
+            ClearSelection();
+            AddToSelection(groupView);
+
+            _afterMutation?.Invoke();
+            Undo.CollapseUndoOperations(undoGroup);
+        }
+
+        public void CollapseSelection()
+        {
+            SetSelectionCollapsedState(true);
+        }
+
+        public void ExpandSelection()
+        {
+            SetSelectionCollapsedState(false);
+        }
+
+        public void UngroupSelection()
+        {
+            if (_graph == null)
+            {
+                return;
+            }
+
+            List<GroupView> selectedGroups = GetSelectedGroupViews();
+            List<GenNodeView> selectedNodeViews = GetSelectedNodeViews();
+            if (selectedGroups.Count == 0 && selectedNodeViews.Count == 0)
+            {
+                return;
+            }
+
+            Undo.IncrementCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Ungroup Selection");
+
+            if (selectedGroups.Count > 0)
+            {
+                foreach (GroupView groupView in selectedGroups)
+                {
+                    if (groupView == null)
+                    {
+                        continue;
+                    }
+
+                    List<GraphElement> containedElements = groupView.containedElements
+                        .OfType<GraphElement>()
+                        .ToList();
+                    if (containedElements.Count > 0)
+                    {
+                        groupView.RemoveElements(containedElements);
+                    }
+                }
+
+                DeleteElements(selectedGroups.Cast<GraphElement>().ToList());
+            }
+
+            if (selectedNodeViews.Count > 0)
+            {
+                foreach (GroupView groupView in _groupViewsById.Values.ToList())
+                {
+                    List<GraphElement> nodesToRemove = selectedNodeViews
+                        .Where(nodeView => groupView.ContainsElement(nodeView))
+                        .Cast<GraphElement>()
+                        .ToList();
+                    if (nodesToRemove.Count > 0)
+                    {
+                        groupView.RemoveElements(nodesToRemove);
+                    }
+                }
+            }
+
+            _afterMutation?.Invoke();
+            Undo.CollapseUndoOperations(undoGroup);
+        }
+
+        private List<GenNodeView> GetSelectedNodeViews()
+        {
+            List<GenNodeView> selectedNodeViews = new List<GenNodeView>();
+
+            foreach (ISelectable selectable in selection)
+            {
+                GenNodeView nodeView = selectable as GenNodeView;
+                if (nodeView != null && !selectedNodeViews.Contains(nodeView))
+                {
+                    selectedNodeViews.Add(nodeView);
+                }
+            }
+
+            return selectedNodeViews;
+        }
+
+        private List<GroupView> GetSelectedGroupViews()
+        {
+            List<GroupView> selectedGroups = new List<GroupView>();
+
+            foreach (ISelectable selectable in selection)
+            {
+                GroupView groupView = selectable as GroupView;
+                if (groupView != null && !selectedGroups.Contains(groupView))
+                {
+                    selectedGroups.Add(groupView);
+                }
+            }
+
+            return selectedGroups;
+        }
+
+        private List<GroupView> GetContainingGroups(GraphElement graphElement)
+        {
+            List<GroupView> containingGroups = new List<GroupView>();
+
+            foreach (GroupView groupView in _groupViewsById.Values)
+            {
+                if (groupView != null && groupView.ContainsElement(graphElement))
+                {
+                    containingGroups.Add(groupView);
+                }
+            }
+
+            return containingGroups;
+        }
+
+        private void SetSelectionCollapsedState(bool isCollapsed)
+        {
+            List<GenNodeView> selectedNodeViews = GetSelectedNodeViews();
+            if (selectedNodeViews.Count == 0)
+            {
+                return;
+            }
+
+            foreach (GenNodeView nodeView in selectedNodeViews)
+            {
+                nodeView.SetCollapsed(isCollapsed);
+            }
+        }
+
+        private static Rect CalculateGroupRect(IReadOnlyList<GenNodeView> nodeViews)
+        {
+            const float padding = 40.0f;
+
+            if (nodeViews == null || nodeViews.Count == 0)
+            {
+                return new Rect(0.0f, 0.0f, DefaultGroupWidth, DefaultGroupHeight);
+            }
+
+            Rect selectionBounds = nodeViews[0].GetPosition();
+            for (int nodeIndex = 1; nodeIndex < nodeViews.Count; nodeIndex++)
+            {
+                selectionBounds = UnionRect(selectionBounds, nodeViews[nodeIndex].GetPosition());
+            }
+
+            selectionBounds.xMin -= padding;
+            selectionBounds.yMin -= padding;
+            selectionBounds.xMax += padding;
+            selectionBounds.yMax += padding;
+            return selectionBounds;
+        }
+
+        private static Rect UnionRect(Rect first, Rect second)
+        {
+            float xMin = Mathf.Min(first.xMin, second.xMin);
+            float yMin = Mathf.Min(first.yMin, second.yMin);
+            float xMax = Mathf.Max(first.xMax, second.xMax);
+            float yMax = Mathf.Max(first.yMax, second.yMax);
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }
 
         private void OnElementsAddedToGroup(Group group, System.Collections.Generic.IEnumerable<GraphElement> elements)

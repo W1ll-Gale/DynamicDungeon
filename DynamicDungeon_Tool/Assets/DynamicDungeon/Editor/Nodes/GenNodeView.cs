@@ -35,6 +35,7 @@ namespace DynamicDungeon.Editor.Nodes
         private VisualElement _controlsContainer;
         private bool _lastExpandedState = true;
         private bool _suppressPositionSync;
+        private float _lastKnownExpandedWidth = DefaultNodeSize.x;
 
         public GenNodeData NodeData
         {
@@ -81,6 +82,7 @@ namespace DynamicDungeon.Editor.Nodes
             BuildContent();
             HookCollapseButton();
             HookNodeContextMenu();
+            RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
 
             RefreshPorts();
             RefreshExpandedState();
@@ -95,6 +97,15 @@ namespace DynamicDungeon.Editor.Nodes
         public override void SetPosition(Rect newPos)
         {
             base.SetPosition(newPos);
+
+            if (expanded)
+            {
+                float expandedWidth = resolvedStyle.width > 0.0f ? resolvedStyle.width : newPos.width;
+                if (expandedWidth > 0.0f)
+                {
+                    _lastKnownExpandedWidth = expandedWidth;
+                }
+            }
 
             if (_suppressPositionSync || _graph == null || _nodeData == null)
             {
@@ -115,6 +126,28 @@ namespace DynamicDungeon.Editor.Nodes
         public bool TryGetPort(string portName, out Port portView)
         {
             return _portsByName.TryGetValue(portName ?? string.Empty, out portView);
+        }
+
+        public bool IsCollapsed()
+        {
+            return !expanded;
+        }
+
+        public void SetCollapsed(bool isCollapsed)
+        {
+            bool targetExpandedState = !isCollapsed;
+            if (expanded == targetExpandedState)
+            {
+                return;
+            }
+
+            if (expanded)
+            {
+                CaptureExpandedWidthSnapshot();
+            }
+
+            expanded = targetExpandedState;
+            UpdateExpandedContentVisibility();
         }
 
         public void SetPreview(Texture2D texture)
@@ -197,6 +230,8 @@ namespace DynamicDungeon.Editor.Nodes
             this.AddManipulator(new ContextualMenuManipulator(
                 menuPopulateEvent =>
                 {
+                    DynamicDungeonGraphView graphView = GetFirstAncestorOfType<DynamicDungeonGraphView>();
+
                     if (_defaultParameterValuesByName.Count == 0)
                     {
                         menuPopulateEvent.menu.AppendAction(
@@ -212,65 +247,33 @@ namespace DynamicDungeon.Editor.Nodes
                     }
 
                     menuPopulateEvent.menu.AppendAction(
-                        "Remove from Group",
-                        _ => RemoveFromGroup(),
-                        _ => IsInAnyGroup() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                        "Group Selection",
+                        _ => graphView?.GroupSelection(),
+                        _ => graphView != null && graphView.CanGroupSelection()
+                            ? DropdownMenuAction.Status.Normal
+                            : DropdownMenuAction.Status.Disabled);
+
+                    menuPopulateEvent.menu.AppendAction(
+                        "Ungroup Selection",
+                        _ => graphView?.UngroupSelection(),
+                        _ => graphView != null && graphView.CanUngroupSelection()
+                            ? DropdownMenuAction.Status.Normal
+                            : DropdownMenuAction.Status.Disabled);
+
+                    menuPopulateEvent.menu.AppendAction(
+                        "Collapse Selection",
+                        _ => graphView?.CollapseSelection(),
+                        _ => graphView != null && graphView.CanCollapseSelection()
+                            ? DropdownMenuAction.Status.Normal
+                            : DropdownMenuAction.Status.Disabled);
+
+                    menuPopulateEvent.menu.AppendAction(
+                        "Expand Selection",
+                        _ => graphView?.ExpandSelection(),
+                        _ => graphView != null && graphView.CanExpandSelection()
+                            ? DropdownMenuAction.Status.Normal
+                            : DropdownMenuAction.Status.Disabled);
                 }));
-        }
-
-        private bool IsInAnyGroup()
-        {
-            GraphView graphView = GetFirstAncestorOfType<GraphView>();
-            if (graphView == null) return false;
-
-            bool inGroup = false;
-            graphView.Query<Group>().ForEach(group =>
-            {
-                if (group.ContainsElement(this))
-                {
-                    inGroup = true;
-                }
-            });
-
-            return inGroup;
-        }
-
-        private void RemoveFromGroup()
-        {
-            GraphView graphView = GetFirstAncestorOfType<GraphView>();
-            if (graphView == null) return;
-
-            System.Collections.Generic.List<GraphElement> selectedElements = new System.Collections.Generic.List<GraphElement>();
-            foreach (ISelectable selectable in graphView.selection)
-            {
-                GraphElement element = selectable as GraphElement;
-                if (element != null)
-                {
-                    selectedElements.Add(element);
-                }
-            }
-
-            if (!selectedElements.Contains(this))
-            {
-                selectedElements.Add(this);
-            }
-
-            graphView.Query<Group>().ForEach(group =>
-            {
-                System.Collections.Generic.List<GraphElement> elementsToRemove = new System.Collections.Generic.List<GraphElement>();
-                foreach (GraphElement element in selectedElements)
-                {
-                    if (group.ContainsElement(element))
-                    {
-                        elementsToRemove.Add(element);
-                    }
-                }
-
-                if (elementsToRemove.Count > 0)
-                {
-                    group.RemoveElements(elementsToRemove);
-                }
-            });
         }
 
         private void ApplyNodeTitleTooltip()
@@ -737,6 +740,11 @@ namespace DynamicDungeon.Editor.Nodes
                 return;
             }
 
+            if (expanded)
+            {
+                CaptureExpandedWidthSnapshot();
+            }
+
             expanded = !expanded;
             UpdateExpandedContentVisibility();
             mouseDownEvent.StopImmediatePropagation();
@@ -761,16 +769,88 @@ namespace DynamicDungeon.Editor.Nodes
                 _bodyContainer.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
             }
 
-            float targetWidth = expanded
-                ? DefaultNodeSize.x
-                : Mathf.Clamp(((title != null ? title.Length : 0) * 8.0f) + 56.0f, 96.0f, DefaultNodeSize.x);
-
             Rect currentPosition = GetPosition();
-            _suppressPositionSync = true;
-            base.SetPosition(new Rect(currentPosition.x, currentPosition.y, targetWidth, currentPosition.height));
-            _suppressPositionSync = false;
+            float currentWidth = GetBestAvailableWidth(currentPosition.width);
+            if (expanded)
+            {
+                if (currentWidth > 0.0f)
+                {
+                    _lastKnownExpandedWidth = currentWidth;
+                }
+
+                ClearPinnedWidth();
+            }
+            else
+            {
+                float collapsedWidth = _lastKnownExpandedWidth > 0.0f
+                    ? _lastKnownExpandedWidth
+                    : (currentWidth > 0.0f ? currentWidth : DefaultNodeSize.x);
+                ApplyPinnedWidth(collapsedWidth);
+
+                _suppressPositionSync = true;
+                base.SetPosition(new Rect(currentPosition.x, currentPosition.y, collapsedWidth, currentPosition.height));
+                _suppressPositionSync = false;
+            }
 
             RefreshExpandedState();
+        }
+
+        private void OnGeometryChanged(GeometryChangedEvent geometryChangedEvent)
+        {
+            if (!expanded)
+            {
+                return;
+            }
+
+            float geometryWidth = geometryChangedEvent.newRect.width;
+            if (geometryWidth > 0.0f)
+            {
+                _lastKnownExpandedWidth = geometryWidth;
+            }
+        }
+
+        private void ApplyPinnedWidth(float width)
+        {
+            float safeWidth = width > 0.0f ? width : DefaultNodeSize.x;
+            style.width = safeWidth;
+            style.minWidth = safeWidth;
+            style.maxWidth = safeWidth;
+        }
+
+        private void ClearPinnedWidth()
+        {
+            style.width = StyleKeyword.Null;
+            style.minWidth = DefaultNodeSize.x;
+            style.maxWidth = StyleKeyword.Null;
+        }
+
+        private void CaptureExpandedWidthSnapshot()
+        {
+            float width = GetBestAvailableWidth(GetPosition().width);
+            if (width > 0.0f)
+            {
+                _lastKnownExpandedWidth = width;
+            }
+        }
+
+        private float GetBestAvailableWidth(float fallbackWidth)
+        {
+            if (layout.width > 0.0f)
+            {
+                return layout.width;
+            }
+
+            if (resolvedStyle.width > 0.0f)
+            {
+                return resolvedStyle.width;
+            }
+
+            if (fallbackWidth > 0.0f)
+            {
+                return fallbackWidth;
+            }
+
+            return DefaultNodeSize.x;
         }
     }
 }
