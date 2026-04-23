@@ -38,6 +38,7 @@ namespace DynamicDungeon.Editor.Windows
         private GenGraph _graph;
         private GenerationOrchestrator _generationOrchestrator;
         private Action _afterMutation;
+        private Action _viewTransformChanged;
 
         // Callback fired when a sub-graph node's Enter button is activated.
         // Arguments: the nested GenGraph to navigate into, the label to show
@@ -77,6 +78,7 @@ namespace DynamicDungeon.Editor.Windows
             currentGraphView.AddManipulator(new SelectionDragger());
             currentGraphView.AddManipulator(new RectangleSelector());
             graphViewChanged = OnGraphViewChanged;
+            viewTransformChanged = OnViewTransformChanged;
 
             elementsAddedToGroup += OnElementsAddedToGroup;
             elementsRemovedFromGroup += OnElementsRemovedFromGroup;
@@ -147,6 +149,11 @@ namespace DynamicDungeon.Editor.Windows
         public void SetAfterMutationCallback(Action afterMutation)
         {
             _afterMutation = afterMutation;
+        }
+
+        public void SetViewTransformChangedCallback(Action viewTransformChanged)
+        {
+            _viewTransformChanged = viewTransformChanged;
         }
 
         /// <summary>
@@ -452,6 +459,11 @@ namespace DynamicDungeon.Editor.Windows
             GroupView groupView = new GroupView(_graph, groupData, _afterMutation);
             _groupViewsById[groupData.GroupId] = groupView;
             AddElement(groupView);
+        }
+
+        private void OnViewTransformChanged(GraphView graphView)
+        {
+            _viewTransformChanged?.Invoke();
         }
 
         private void BuildEdgeViews()

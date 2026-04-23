@@ -12,7 +12,7 @@ namespace DynamicDungeon.Editor.Windows
     public sealed class DynamicDungeonEditorWindow : EditorWindow
     {
         private const string IdleStatusText = "Idle";
-        private const string NoGraphTitle = "No Graph";
+        private const string WindowTitle = "Dynamic Dungeon Graph";
         private const float DiagnosticsPanelHeight = 120.0f;
         private const string AutoSavePrefsKey = "DynamicDungeon.AutoSave";
         private const string CanvasScrollXPrefsKey = "DynamicDungeon.EditorWindow.CanvasScrollX";
@@ -20,14 +20,23 @@ namespace DynamicDungeon.Editor.Windows
         private const string CanvasScrollZPrefsKey = "DynamicDungeon.EditorWindow.CanvasScrollZ";
         private const string CanvasZoomPrefsKey = "DynamicDungeon.EditorWindow.CanvasZoom";
         private const string CanvasViewportGraphGuidPrefsKey = "DynamicDungeon.EditorWindow.CanvasViewportGraphGuid";
+        private const string PanelViewSettingsPrefsKey = "DynamicDungeon.EditorWindow.PanelViewSettings";
+        private const string BlackboardLayoutPrefsKey = "DynamicDungeon.EditorWindow.BlackboardLayout";
+        private const string GraphSettingsLayoutPrefsKey = "DynamicDungeon.EditorWindow.GraphSettingsLayout";
+        private const string MiniMapLayoutPrefsKey = "DynamicDungeon.EditorWindow.MiniMapLayout";
 
         private ObjectField _graphField;
         private Label _statusLabel;
         private ToolbarToggle _autoSaveToggle;
+        private ToolbarToggle _blackboardToggle;
         private ToolbarToggle _settingsToggle;
+        private ToolbarToggle _miniMapToggle;
+        private ToolbarToggle _diagnosticsToggle;
         private BreadcrumbBar _breadcrumbBar;
         private DynamicDungeonGraphView _graphView;
-        private GraphSettingsPanel _settingsPanel;
+        private BlackboardWindow _blackboardWindow;
+        private GraphSettingsWindow _graphSettingsWindow;
+        private MiniMapWindow _miniMapWindow;
         private GenerationOrchestrator _generationOrchestrator;
         private DiagnosticsPanel _diagnosticsPanel;
         private bool _skipNextPreviewRefresh;
@@ -39,10 +48,24 @@ namespace DynamicDungeon.Editor.Windows
         private bool _isDiagnosticsPanelCollapsed;
 
         [SerializeField]
-        private bool _isSettingsPanelOpen;
-
-        [SerializeField]
         private float _diagnosticsPanelExpandedHeight = DiagnosticsPanelHeight;
+
+        private PanelViewSettings _panelViewSettings;
+        private FloatingWindowLayout _blackboardLayout;
+        private FloatingWindowLayout _graphSettingsLayout;
+        private FloatingWindowLayout _miniMapLayout;
+
+        [Serializable]
+        internal sealed class PanelViewSettings
+        {
+            public bool IsBlackboardVisible = true;
+            public bool IsGraphSettingsVisible = true;
+            public bool IsMiniMapVisible = true;
+            public bool IsDiagnosticsVisible = true;
+            public bool IsBlackboardCollapsed;
+            public bool IsGraphSettingsCollapsed;
+            public bool IsMiniMapCollapsed;
+        }
 
         private bool AutoSave
         {
@@ -88,29 +111,41 @@ namespace DynamicDungeon.Editor.Windows
 
         private void CreateGUI()
         {
+            LoadPanelState();
+
             rootVisualElement.Clear();
             rootVisualElement.style.flexDirection = FlexDirection.Column;
 
             Toolbar toolbar = BuildToolbar();
             rootVisualElement.Add(toolbar);
 
-            _breadcrumbBar = new BreadcrumbBar(OnBreadcrumbGraphChanged);
-            rootVisualElement.Add(_breadcrumbBar);
-
             VisualElement contentArea = new VisualElement();
             contentArea.style.flexDirection = FlexDirection.Row;
-            contentArea.style.flexGrow = 1;
+            contentArea.style.flexGrow = 1.0f;
             rootVisualElement.Add(contentArea);
 
             _graphView = new DynamicDungeonGraphView();
-            _graphView.style.flexGrow = 1;
+            _graphView.style.flexGrow = 1.0f;
+            _graphView.RegisterCallback<GeometryChangedEvent>(OnGraphViewGeometryChanged);
             contentArea.Add(_graphView);
 
-            _settingsPanel = new GraphSettingsPanel(
+            _blackboardWindow = new BlackboardWindow(_blackboardLayout, OnAfterGraphMutation);
+            _blackboardWindow.SetLayoutChangedCallback(SavePanelState);
+            _blackboardWindow.SetCollapsed(_panelViewSettings.IsBlackboardCollapsed);
+            _graphView.Add(_blackboardWindow);
+
+            _graphSettingsWindow = new GraphSettingsWindow(
+                _graphSettingsLayout,
                 () => _generationOrchestrator?.RequestPreviewRefresh(),
                 OnAfterGraphMutation);
-            _settingsPanel.style.display = _isSettingsPanelOpen ? DisplayStyle.Flex : DisplayStyle.None;
-            contentArea.Add(_settingsPanel);
+            _graphSettingsWindow.SetLayoutChangedCallback(SavePanelState);
+            _graphSettingsWindow.SetCollapsed(_panelViewSettings.IsGraphSettingsCollapsed);
+            _graphView.Add(_graphSettingsWindow);
+
+            _miniMapWindow = new MiniMapWindow(_miniMapLayout, _graphView);
+            _miniMapWindow.SetLayoutChangedCallback(SavePanelState);
+            _miniMapWindow.SetCollapsed(_panelViewSettings.IsMiniMapCollapsed);
+            _graphView.Add(_miniMapWindow);
 
             _diagnosticsPanel = BuildDiagnosticsPanel();
             rootVisualElement.Add(_diagnosticsPanel);
@@ -130,8 +165,12 @@ namespace DynamicDungeon.Editor.Windows
             {
                 _generationOrchestrator.SetGraph(null);
                 _diagnosticsPanel.SetGraphContext(_graphView, null);
+                _blackboardWindow.SetGraph(null);
+                _graphSettingsWindow.SetGraph(null);
             }
 
+            ApplyPanelVisibility();
+            ApplyPanelLayouts();
             SetStatus(IdleStatusText);
             RefreshWindowTitle();
         }
@@ -144,6 +183,7 @@ namespace DynamicDungeon.Editor.Windows
         private void OnDisable()
         {
             SaveViewportPreferences();
+            SavePanelState();
 
             if (_diagnosticsPanel != null)
             {
@@ -161,45 +201,136 @@ namespace DynamicDungeon.Editor.Windows
         private Toolbar BuildToolbar()
         {
             Toolbar toolbar = new Toolbar();
+            toolbar.style.height = 24.0f;
+            toolbar.style.minHeight = 24.0f;
+            toolbar.style.paddingLeft = 6.0f;
+            toolbar.style.paddingRight = 4.0f;
+            toolbar.style.paddingTop = 0.0f;
+            toolbar.style.paddingBottom = 0.0f;
+            toolbar.style.alignItems = Align.Center;
 
             _graphField = new ObjectField("Graph");
             _graphField.objectType = typeof(GenGraph);
             _graphField.allowSceneObjects = false;
-            _graphField.style.minWidth = 260.0f;
+            _graphField.label = string.Empty;
+            _graphField.style.minWidth = 220.0f;
+            _graphField.style.width = 220.0f;
+            _graphField.style.marginRight = 6.0f;
             _graphField.RegisterValueChangedCallback(OnGraphFieldValueChanged);
             toolbar.Add(_graphField);
 
             ToolbarButton generateButton = new ToolbarButton(GenerateGraph);
             generateButton.text = "Generate";
+            generateButton.style.marginRight = 2.0f;
             toolbar.Add(generateButton);
 
             ToolbarButton cancelButton = new ToolbarButton(CancelGeneration);
             cancelButton.text = "Cancel";
+            cancelButton.style.marginRight = 6.0f;
             toolbar.Add(cancelButton);
 
             _autoSaveToggle = new ToolbarToggle();
             _autoSaveToggle.text = "Auto Save";
             _autoSaveToggle.SetValueWithoutNotify(AutoSave);
             _autoSaveToggle.RegisterValueChangedCallback(OnAutoSaveToggleChanged);
+            _autoSaveToggle.style.marginRight = 8.0f;
             toolbar.Add(_autoSaveToggle);
 
             _statusLabel = new Label(IdleStatusText);
-            _statusLabel.style.marginLeft = 8.0f;
+            _statusLabel.style.fontSize = 11.0f;
+            _statusLabel.style.color = new Color(0.76f, 0.76f, 0.76f, 1.0f);
             _statusLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
             toolbar.Add(_statusLabel);
 
             VisualElement toolbarSpacer = new VisualElement();
-            toolbarSpacer.style.flexGrow = 1;
+            toolbarSpacer.style.flexGrow = 1.0f;
             toolbar.Add(toolbarSpacer);
 
-            _settingsToggle = new ToolbarToggle();
-            _settingsToggle.text = "Settings";
-            _settingsToggle.tooltip = "Toggle Graph Settings panel";
-            _settingsToggle.SetValueWithoutNotify(_isSettingsPanelOpen);
-            _settingsToggle.RegisterValueChangedCallback(OnSettingsToggleChanged);
-            toolbar.Add(_settingsToggle);
+            VisualElement panelToggleGroup = new VisualElement();
+            panelToggleGroup.style.flexDirection = FlexDirection.Row;
+            panelToggleGroup.style.alignItems = Align.Center;
+            toolbar.Add(panelToggleGroup);
+
+            _blackboardToggle = BuildPanelToggle(
+                LoadBlackboardIcon(),
+                "Toggle Blackboard window",
+                _panelViewSettings.IsBlackboardVisible,
+                OnBlackboardToggleChanged);
+            panelToggleGroup.Add(_blackboardToggle);
+
+            _settingsToggle = BuildPanelToggle(
+                LoadInspectorIcon(),
+                "Toggle Graph Settings window",
+                _panelViewSettings.IsGraphSettingsVisible,
+                OnSettingsToggleChanged);
+            panelToggleGroup.Add(_settingsToggle);
+
+            _miniMapToggle = BuildPanelToggle(
+                LoadMiniMapIcon(),
+                "Toggle MiniMap window",
+                _panelViewSettings.IsMiniMapVisible,
+                OnMiniMapToggleChanged);
+            panelToggleGroup.Add(_miniMapToggle);
+
+            _diagnosticsToggle = BuildPanelToggle(
+                LoadDiagnosticsIcon(),
+                "Toggle Diagnostics panel",
+                _panelViewSettings.IsDiagnosticsVisible,
+                OnDiagnosticsToggleChanged);
+            panelToggleGroup.Add(_diagnosticsToggle);
 
             return toolbar;
+        }
+
+        private ToolbarToggle BuildPanelToggle(Texture icon, string tooltip, bool initialValue, EventCallback<ChangeEvent<bool>> callback)
+        {
+            ToolbarToggle toggle = new ToolbarToggle();
+            toggle.text = string.Empty;
+            toggle.tooltip = tooltip;
+            toggle.style.width = 24.0f;
+            toggle.style.minWidth = 24.0f;
+            toggle.style.height = 20.0f;
+            toggle.style.justifyContent = Justify.Center;
+            toggle.style.alignItems = Align.Center;
+            toggle.style.paddingLeft = 0.0f;
+            toggle.style.paddingRight = 0.0f;
+            toggle.style.paddingTop = 0.0f;
+            toggle.style.paddingBottom = 0.0f;
+            toggle.style.marginLeft = 3.0f;
+            toggle.style.marginRight = 0.0f;
+            toggle.style.borderLeftWidth = 0.0f;
+            toggle.style.borderTopWidth = 0.0f;
+            toggle.style.borderRightWidth = 0.0f;
+            toggle.style.borderBottomWidth = 0.0f;
+            toggle.style.backgroundColor = Color.clear;
+            toggle.style.unityBackgroundImageTintColor = Color.clear;
+            toggle.style.borderTopLeftRadius = 0.0f;
+            toggle.style.borderTopRightRadius = 0.0f;
+            toggle.style.borderBottomLeftRadius = 0.0f;
+            toggle.style.borderBottomRightRadius = 0.0f;
+
+            Image image = new Image();
+            image.image = icon;
+            image.scaleMode = ScaleMode.ScaleToFit;
+            image.style.width = 16.0f;
+            image.style.height = 16.0f;
+            image.pickingMode = PickingMode.Ignore;
+            toggle.Add(image);
+
+            toggle.SetValueWithoutNotify(initialValue);
+            ApplyPanelToggleVisualState(toggle, image, initialValue);
+            toggle.RegisterValueChangedCallback(
+                evt => ApplyPanelToggleVisualState(toggle, image, evt.newValue));
+            toggle.RegisterValueChangedCallback(callback);
+            return toggle;
+        }
+
+        private static void ApplyPanelToggleVisualState(ToolbarToggle toggle, Image image, bool isActive)
+        {
+            toggle.style.opacity = isActive ? 1.0f : 0.65f;
+            image.tintColor = isActive
+                ? new Color(0.92f, 0.92f, 0.92f, 1.0f)
+                : new Color(0.72f, 0.72f, 0.72f, 1.0f);
         }
 
         private DiagnosticsPanel BuildDiagnosticsPanel()
@@ -248,23 +379,6 @@ namespace DynamicDungeon.Editor.Windows
                 _graphField.SetValueWithoutNotify(graph);
             }
 
-            // Reset the breadcrumb trail whenever a new top-level graph is picked
-            // from the ObjectField — navigation history for the previous graph is
-            // no longer meaningful.
-            if (_breadcrumbBar != null)
-            {
-                // Flush all entries by popping past index 0 (BreadcrumbBar.PopTo
-                // discards silently when depth is out of range), then Push the new
-                // root.  Push fires OnBreadcrumbGraphChanged which loads the canvas,
-                // so we return early to avoid a second load via LoadGraphInCanvas.
-                _breadcrumbBar.ResetTo(graph, graph != null ? graph.name : string.Empty);
-
-                if (graph != null)
-                {
-                    return;
-                }
-            }
-
             LoadGraphInCanvas(graph, Vector3.zero, 1.0f);
         }
 
@@ -290,15 +404,10 @@ namespace DynamicDungeon.Editor.Windows
             return true;
         }
 
-        /// <summary>
-        /// Reloads the canvas, orchestrator, and diagnostics panel for
-        /// <paramref name="graph"/> and restores the supplied viewport state.
-        /// This is the single point through which all graph-change events
-        /// (direct load, Push, PopTo) route their canvas updates.
-        /// </summary>
         private void LoadGraphInCanvas(GenGraph graph, Vector3 scrollOffset, float zoomScale)
         {
-            _settingsPanel?.SetGraph(graph);
+            _blackboardWindow?.SetGraph(graph);
+            _graphSettingsWindow?.SetGraph(graph);
 
             if (_generationOrchestrator != null)
             {
@@ -326,20 +435,13 @@ namespace DynamicDungeon.Editor.Windows
             if (_diagnosticsPanel != null)
             {
                 _diagnosticsPanel.SetGraphContext(_graphView, graph);
-                _diagnosticsPanel.Populate(System.Array.Empty<GraphDiagnostic>());
+                _diagnosticsPanel.Populate(Array.Empty<GraphDiagnostic>());
             }
 
             SetStatus(IdleStatusText);
             RefreshWindowTitle();
         }
 
-        // --- Sub-graph navigation ---
-
-        /// <summary>
-        /// Called by <see cref="DynamicDungeonGraphView"/> when a sub-graph node's
-        /// Enter action is triggered.  Captures the current viewport and delegates
-        /// to <see cref="BreadcrumbBar.Push"/>.
-        /// </summary>
         private void OnEnterSubGraph(GenGraph nestedGraph, string label)
         {
             if (nestedGraph == null || _breadcrumbBar == null || _graphView == null)
@@ -351,14 +453,9 @@ namespace DynamicDungeon.Editor.Windows
             float currentZoomScale;
             _graphView.GetViewportState(out currentScrollOffset, out currentZoomScale);
             _breadcrumbBar.SaveViewportState(currentScrollOffset, currentZoomScale);
-
-            // Push fires OnBreadcrumbGraphChanged which loads the canvas.
             _breadcrumbBar.Push(nestedGraph, label);
         }
 
-        /// <summary>
-        /// Called by <see cref="BreadcrumbBar"/> whenever the visible graph changes.
-        /// </summary>
         private void OnBreadcrumbGraphChanged(GenGraph graph, Vector3 scrollOffset, float zoomScale)
         {
             LoadGraphInCanvas(graph, scrollOffset, zoomScale);
@@ -384,13 +481,32 @@ namespace DynamicDungeon.Editor.Windows
             AutoSave = changeEvent.newValue;
         }
 
+        private void OnBlackboardToggleChanged(ChangeEvent<bool> changeEvent)
+        {
+            _panelViewSettings.IsBlackboardVisible = changeEvent.newValue;
+            ApplyPanelVisibility();
+            SavePanelState();
+        }
+
         private void OnSettingsToggleChanged(ChangeEvent<bool> changeEvent)
         {
-            _isSettingsPanelOpen = changeEvent.newValue;
-            if (_settingsPanel != null)
-            {
-                _settingsPanel.style.display = _isSettingsPanelOpen ? DisplayStyle.Flex : DisplayStyle.None;
-            }
+            _panelViewSettings.IsGraphSettingsVisible = changeEvent.newValue;
+            ApplyPanelVisibility();
+            SavePanelState();
+        }
+
+        private void OnMiniMapToggleChanged(ChangeEvent<bool> changeEvent)
+        {
+            _panelViewSettings.IsMiniMapVisible = changeEvent.newValue;
+            ApplyPanelVisibility();
+            SavePanelState();
+        }
+
+        private void OnDiagnosticsToggleChanged(ChangeEvent<bool> changeEvent)
+        {
+            _panelViewSettings.IsDiagnosticsVisible = changeEvent.newValue;
+            ApplyPanelVisibility();
+            SavePanelState();
         }
 
         private void OnDiagnosticsUpdated(IReadOnlyList<GraphDiagnostic> diagnostics)
@@ -410,8 +526,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private void RefreshWindowTitle()
         {
-            string graphName = _loadedGraph != null ? _loadedGraph.name : NoGraphTitle;
-            titleContent = new GUIContent(graphName);
+            titleContent = new GUIContent(WindowTitle);
         }
 
         private void RestoreGraphAfterReload()
@@ -503,6 +618,250 @@ namespace DynamicDungeon.Editor.Windows
             {
                 _statusLabel.text = statusText;
             }
+        }
+
+        private void OnGraphViewGeometryChanged(GeometryChangedEvent geometryChangedEvent)
+        {
+            ApplyPanelLayouts();
+        }
+
+        private void ApplyPanelVisibility()
+        {
+            _blackboardWindow?.SetVisible(_panelViewSettings.IsBlackboardVisible);
+            _graphSettingsWindow?.SetVisible(_panelViewSettings.IsGraphSettingsVisible);
+            _miniMapWindow?.SetVisible(_panelViewSettings.IsMiniMapVisible);
+            if (_diagnosticsPanel != null)
+            {
+                _diagnosticsPanel.style.display = _panelViewSettings.IsDiagnosticsVisible ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            if (_blackboardToggle != null)
+            {
+                _blackboardToggle.SetValueWithoutNotify(_panelViewSettings.IsBlackboardVisible);
+            }
+
+            if (_settingsToggle != null)
+            {
+                _settingsToggle.SetValueWithoutNotify(_panelViewSettings.IsGraphSettingsVisible);
+            }
+
+            if (_miniMapToggle != null)
+            {
+                _miniMapToggle.SetValueWithoutNotify(_panelViewSettings.IsMiniMapVisible);
+            }
+
+            if (_diagnosticsToggle != null)
+            {
+                _diagnosticsToggle.SetValueWithoutNotify(_panelViewSettings.IsDiagnosticsVisible);
+            }
+        }
+
+        private void ApplyPanelLayouts()
+        {
+            Rect graphViewRect = GetGraphViewRect();
+            if (graphViewRect.width <= 0.0f || graphViewRect.height <= 0.0f)
+            {
+                return;
+            }
+
+            _blackboardWindow?.UpdateParentRect(graphViewRect);
+            _graphSettingsWindow?.UpdateParentRect(graphViewRect);
+            _miniMapWindow?.UpdateParentRect(graphViewRect);
+        }
+
+        private Rect GetGraphViewRect()
+        {
+            if (_graphView == null)
+            {
+                return new Rect(0.0f, 0.0f, 0.0f, 0.0f);
+            }
+
+            return new Rect(0.0f, 0.0f, _graphView.layout.width, _graphView.layout.height);
+        }
+
+        private void LoadPanelState()
+        {
+            _panelViewSettings = LoadPanelViewSettings();
+            _blackboardLayout = LoadLayout(BlackboardLayoutPrefsKey, CreateDefaultBlackboardLayout());
+            _graphSettingsLayout = LoadLayout(GraphSettingsLayoutPrefsKey, CreateDefaultGraphSettingsLayout());
+            _miniMapLayout = LoadLayout(MiniMapLayoutPrefsKey, CreateDefaultMiniMapLayout());
+        }
+
+        private void SavePanelState()
+        {
+            Rect graphViewRect = GetGraphViewRect();
+            if (_blackboardWindow != null && graphViewRect.width > 0.0f && graphViewRect.height > 0.0f)
+            {
+                _blackboardWindow.CaptureCurrentLayout();
+                _panelViewSettings.IsBlackboardCollapsed = _blackboardWindow.IsCollapsedForTesting;
+            }
+
+            if (_graphSettingsWindow != null && graphViewRect.width > 0.0f && graphViewRect.height > 0.0f)
+            {
+                _graphSettingsWindow.CaptureCurrentLayout();
+                _panelViewSettings.IsGraphSettingsCollapsed = _graphSettingsWindow.IsCollapsedForTesting;
+            }
+
+            if (_miniMapWindow != null && graphViewRect.width > 0.0f && graphViewRect.height > 0.0f)
+            {
+                _miniMapWindow.CaptureCurrentLayout();
+                _panelViewSettings.IsMiniMapCollapsed = _miniMapWindow.IsCollapsedForTesting;
+            }
+
+            EditorUserSettings.SetConfigValue(
+                PanelViewSettingsPrefsKey,
+                JsonUtility.ToJson(_panelViewSettings ?? new PanelViewSettings()));
+            EditorUserSettings.SetConfigValue(
+                BlackboardLayoutPrefsKey,
+                JsonUtility.ToJson(_blackboardLayout ?? CreateDefaultBlackboardLayout()));
+            EditorUserSettings.SetConfigValue(
+                GraphSettingsLayoutPrefsKey,
+                JsonUtility.ToJson(_graphSettingsLayout ?? CreateDefaultGraphSettingsLayout()));
+            EditorUserSettings.SetConfigValue(
+                MiniMapLayoutPrefsKey,
+                JsonUtility.ToJson(_miniMapLayout ?? CreateDefaultMiniMapLayout()));
+        }
+
+        private static PanelViewSettings LoadPanelViewSettings()
+        {
+            string json = EditorUserSettings.GetConfigValue(PanelViewSettingsPrefsKey);
+            return string.IsNullOrWhiteSpace(json)
+                ? new PanelViewSettings()
+                : (JsonUtility.FromJson<PanelViewSettings>(json) ?? new PanelViewSettings());
+        }
+
+        private static FloatingWindowLayout LoadLayout(string prefsKey, FloatingWindowLayout defaultLayout)
+        {
+            string json = EditorUserSettings.GetConfigValue(prefsKey);
+            return string.IsNullOrWhiteSpace(json)
+                ? defaultLayout
+                : (JsonUtility.FromJson<FloatingWindowLayout>(json) ?? defaultLayout);
+        }
+
+        internal static PanelViewSettings LoadPanelViewSettingsForTesting()
+        {
+            return LoadPanelViewSettings();
+        }
+
+        internal static FloatingWindowLayout LoadBlackboardLayoutForTesting()
+        {
+            return LoadLayout(BlackboardLayoutPrefsKey, CreateDefaultBlackboardLayout());
+        }
+
+        internal static FloatingWindowLayout LoadGraphSettingsLayoutForTesting()
+        {
+            return LoadLayout(GraphSettingsLayoutPrefsKey, CreateDefaultGraphSettingsLayout());
+        }
+
+        internal static FloatingWindowLayout CreateDefaultBlackboardLayoutForTesting()
+        {
+            return CreateDefaultBlackboardLayout();
+        }
+
+        internal static FloatingWindowLayout CreateDefaultGraphSettingsLayoutForTesting()
+        {
+            return CreateDefaultGraphSettingsLayout();
+        }
+
+        internal static FloatingWindowLayout CreateDefaultMiniMapLayoutForTesting()
+        {
+            return CreateDefaultMiniMapLayout();
+        }
+
+        internal static void SavePanelViewSettingsForTesting(PanelViewSettings panelViewSettings)
+        {
+            EditorUserSettings.SetConfigValue(PanelViewSettingsPrefsKey, JsonUtility.ToJson(panelViewSettings));
+        }
+
+        internal static void SaveBlackboardLayoutForTesting(FloatingWindowLayout layout)
+        {
+            EditorUserSettings.SetConfigValue(BlackboardLayoutPrefsKey, JsonUtility.ToJson(layout));
+        }
+
+        internal static void SaveGraphSettingsLayoutForTesting(FloatingWindowLayout layout)
+        {
+            EditorUserSettings.SetConfigValue(GraphSettingsLayoutPrefsKey, JsonUtility.ToJson(layout));
+        }
+
+        internal static void SaveMiniMapLayoutForTesting(FloatingWindowLayout layout)
+        {
+            EditorUserSettings.SetConfigValue(MiniMapLayoutPrefsKey, JsonUtility.ToJson(layout));
+        }
+
+        private static FloatingWindowLayout CreateDefaultBlackboardLayout()
+        {
+            return new FloatingWindowLayout
+            {
+                DockToLeft = true,
+                DockToTop = true,
+                HorizontalOffset = 8.0f,
+                VerticalOffset = 8.0f,
+                Size = new Vector2(280.0f, 420.0f)
+            };
+        }
+
+        private static FloatingWindowLayout CreateDefaultGraphSettingsLayout()
+        {
+            return new FloatingWindowLayout
+            {
+                DockToLeft = false,
+                DockToTop = true,
+                HorizontalOffset = 8.0f,
+                VerticalOffset = 8.0f,
+                Size = new Vector2(310.0f, 420.0f)
+            };
+        }
+
+        private static FloatingWindowLayout CreateDefaultMiniMapLayout()
+        {
+            return new FloatingWindowLayout
+            {
+                DockToLeft = false,
+                DockToTop = false,
+                HorizontalOffset = 8.0f,
+                VerticalOffset = 8.0f,
+                Size = new Vector2(240.0f, 180.0f)
+            };
+        }
+
+        private static Texture2D LoadBlackboardIcon()
+        {
+            string suffix = (EditorGUIUtility.isProSkin ? "_dark" : string.Empty) +
+                (EditorGUIUtility.pixelsPerPoint >= 2.0f ? "@2x" : string.Empty);
+            Texture2D icon = Resources.Load<Texture2D>("Icons/blackboard" + suffix);
+            if (icon == null)
+            {
+                icon = EditorGUIUtility.IconContent("d_UnityEditor.SceneHierarchyWindow").image as Texture2D;
+            }
+
+            return icon;
+        }
+
+        private static Texture2D LoadInspectorIcon()
+        {
+            return EditorGUIUtility.IconContent("UnityEditor.InspectorWindow").image as Texture2D;
+        }
+
+        private static Texture2D LoadMiniMapIcon()
+        {
+            Texture2D icon = EditorGUIUtility.IconContent("d_ViewToolZoom").image as Texture2D;
+            if (icon == null)
+            {
+                icon = EditorGUIUtility.IconContent("ViewToolZoom").image as Texture2D;
+            }
+
+            return icon;
+        }
+
+        private static Texture2D LoadDiagnosticsIcon()
+        {
+            Texture2D icon = EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image as Texture2D;
+            if (icon == null)
+            {
+                icon = EditorGUIUtility.IconContent("UnityEditor.ConsoleWindow").image as Texture2D;
+            }
+
+            return icon;
         }
     }
 }
