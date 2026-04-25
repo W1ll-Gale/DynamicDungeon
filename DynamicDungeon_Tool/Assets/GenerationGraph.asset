@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Output
-    Position: {x: 612, y: 38}
+    Position: {x: 619.48, y: 38}
     Ports:
     - PortName: LogicalIds
       DisplayName: LogicalIds
@@ -73,7 +73,7 @@ MonoBehaviour:
   - NodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Math
-    Position: {x: 159, y: 38}
+    Position: {x: 254, y: -12.960003}
     Ports:
     - PortName: A
       DisplayName: A
@@ -91,23 +91,41 @@ MonoBehaviour:
     - Name: operation
       Value: Divide
     - Name: scalarB
-      Value: 0
+      Value: -0.03
+  - NodeId: e037882b-8517-4e76-ab20-d62e871070d3
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.EdgeDetectNode
+    NodeName: Edge Detect
+    Position: {x: 134, y: 343}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: Output__e037882b-8517-4e76-ab20-d62e871070d3
+      DisplayName: Output
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: tolerance
+      Value: 2.46
+    - Name: tolerancePercent
+      Value: 2
   Connections:
   - FromNodeId: 61c447b7-18c8-4475-8411-0ab55879445c
     FromPortName: Output__61c447b7-18c8-4475-8411-0ab55879445c
     ToNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
     ToPortName: A
     CastMode: 0
-  - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
-    FromPortName: Distance__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
-    ToNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
-    ToPortName: B
-    CastMode: 0
   - FromNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
     FromPortName: Output__3249a052-bf82-46ac-9508-e4b80e5ac782
     ToNodeId: graph-output-node
     ToPortName: LogicalIds
     CastMode: 2
+  - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    FromPortName: Distance__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    ToNodeId: e037882b-8517-4e76-ab20-d62e871070d3
+    ToPortName: Input
+    CastMode: 0
   StickyNotes: []
   Groups: []
   ExposedProperties: []
