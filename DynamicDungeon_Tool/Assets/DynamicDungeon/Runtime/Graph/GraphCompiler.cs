@@ -112,7 +112,7 @@ namespace DynamicDungeon.Runtime.Graph
 
             List<GenNodeData> nodeDataList = graph.Nodes ?? new List<GenNodeData>();
             List<GenConnectionData> connectionDataList = graph.Connections ?? new List<GenConnectionData>();
-            GenNodeData outputNodeData = FindOutputNodeData(nodeDataList, diagnostics);
+            GenNodeData outputNodeData = FindOutputNodeData(nodeDataList, diagnostics, !includeDisconnectedNodes);
 
             if (HasErrors(diagnostics))
             {
@@ -147,8 +147,9 @@ namespace DynamicDungeon.Runtime.Graph
             ConnectionValidationResult connectionValidation = ValidateConnections(reachableConnectionDataList, diagnostics, nodesById);
             ApplyInputConnectionBindings(compiledNodes, connectionValidation.Connections);
             bool hasConnectedOutput;
-            string outputChannelName = ResolveOutputChannelName(connectionValidation.Connections, outputNodeData.NodeId, out hasConnectedOutput);
-            ValidateRequiredInputs(compiledNodes, connectionValidation.IncomingCountsByPortKey, diagnostics, outputNodeData.NodeId, hasConnectedOutput);
+            string outputNodeId = outputNodeData != null ? outputNodeData.NodeId : string.Empty;
+            string outputChannelName = ResolveOutputChannelName(connectionValidation.Connections, outputNodeId, out hasConnectedOutput);
+            ValidateRequiredInputs(compiledNodes, connectionValidation.IncomingCountsByPortKey, diagnostics, outputNodeId, hasConnectedOutput);
             ValidateChannelOwnership(compiledNodes, diagnostics);
 
             List<CompiledNodeInfo> orderedNodes = TopologicallySort(compiledNodes, connectionValidation.Connections, diagnostics);
@@ -181,7 +182,7 @@ namespace DynamicDungeon.Runtime.Graph
             }
         }
 
-        private static GenNodeData FindOutputNodeData(IReadOnlyList<GenNodeData> nodeDataList, List<GraphDiagnostic> diagnostics)
+        private static GenNodeData FindOutputNodeData(IReadOnlyList<GenNodeData> nodeDataList, List<GraphDiagnostic> diagnostics, bool requireOutputNode)
         {
             GenNodeData outputNodeData = null;
 
@@ -203,7 +204,7 @@ namespace DynamicDungeon.Runtime.Graph
                 outputNodeData = nodeData;
             }
 
-            if (outputNodeData == null)
+            if (requireOutputNode && outputNodeData == null)
             {
                 diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Graph must contain an output node.", null, null));
             }

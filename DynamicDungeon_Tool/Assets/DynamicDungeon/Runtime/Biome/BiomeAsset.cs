@@ -118,11 +118,16 @@ namespace DynamicDungeon.Runtime.Biome
         {
             unchecked
             {
-                int hash = GetInstanceID();
-                hash = (hash * 486187739) + cellPosition.x;
-                hash = (hash * 16777619) ^ cellPosition.y;
+                uint hash = (uint)GetInstanceID();
+                hash ^= (uint)cellPosition.x * 374761393u;
+                hash = (hash << 17) | (hash >> 15);
+                hash ^= (uint)cellPosition.y * 668265263u;
+                hash *= 2246822519u;
+                hash ^= hash >> 15;
+                hash *= 3266489917u;
+                hash ^= hash >> 16;
 
-                uint unsignedHash = (uint)hash;
+                uint unsignedHash = hash;
                 return (float)(unsignedHash / 4294967296.0d) * totalWeight;
             }
         }

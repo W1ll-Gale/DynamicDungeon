@@ -135,7 +135,7 @@ namespace DynamicDungeon.Tests.Editor
                 List<TileEntry> matchedEntries = TilemapLayerDefinitionEditor.GetMatchedEntries(registry, new List<string> { "Walkable" });
 
                 Assert.That(matchedEntries.Count, Is.EqualTo(1));
-                Assert.That(matchedEntries[0].LogicalId, Is.EqualTo(LogicalTileId.Floor));
+                Assert.That((LogicalTileId)matchedEntries[0].LogicalId, Is.EqualTo(LogicalTileId.Floor));
             }
             finally
             {

@@ -253,7 +253,7 @@ namespace DynamicDungeon.Tests.Runtime
                 graph.Connections.Add(new GenConnectionData("perlin-node", "Noise", "threshold-node", "Input"));
                 graph.Connections.Add(new GenConnectionData("threshold-node", "Mask", "cellular-node", "Input"));
 
-                GraphCompileResult compileResult = GraphCompiler.Compile(graph);
+                GraphCompileResult compileResult = GraphCompiler.CompileForPreview(graph);
 
                 Assert.That(compileResult.IsSuccess, Is.True);
                 Assert.That(compileResult.Plan, Is.Not.Null);

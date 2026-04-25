@@ -12,10 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
   m_Name: Verification_CompileErrorGraph
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
-  SchemaVersion: 1
+  SchemaVersion: 4
   WorldWidth: 128
   WorldHeight: 128
   DefaultSeed: 12345
+  DefaultSeedMode: 0
+  MaxValidationRetries: 1
+  Biome: {fileID: 0}
+  TileSemanticRegistry: {fileID: 0}
+  PromoteBlackboardToParentScope: 0
   Nodes:
   - NodeId: threshold-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
@@ -23,12 +28,27 @@ MonoBehaviour:
     Position: {x: 0, y: 0}
     Ports:
     - PortName: Input
+      DisplayName: Input
       Direction: 0
       Type: 0
     - PortName: Mask
+      DisplayName: Mask
       Direction: 1
       Type: 2
     Parameters:
     - Name: threshold
       Value: 0.5
+  - NodeId: graph-output-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
+    NodeName: Output
+    Position: {x: 260, y: 0}
+    Ports:
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 0
+      Type: 1
+    Parameters: []
   Connections: []
+  StickyNotes: []
+  Groups: []
+  ExposedProperties: []

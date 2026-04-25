@@ -193,18 +193,24 @@ namespace DynamicDungeon.Runtime.Nodes
             NativeArray<byte> output = context.GetBoolMaskChannel(_outputChannelName);
             NativeArray<byte> currentState = new NativeArray<byte>(output.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             NativeArray<byte> nextState = new NativeArray<byte>(output.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            NativeArray<byte> scratchBoundaryMask = default(NativeArray<byte>);
             try
             {
                 int birthMask = ParseRuleMask(_birthRule);
                 int survivalMask = ParseRuleMask(_survivalRule);
                 bool hasInputMask = !string.IsNullOrWhiteSpace(_inputChannelName);
                 bool constrainToInputMask = hasInputMask && _inputMode == CellularAutomataInputMode.RandomFillInsideInputMask;
-                NativeArray<byte> inputMask = default(NativeArray<byte>);
+                NativeArray<byte> inputMask;
 
                 JobHandle currentHandle;
                 if (hasInputMask)
                 {
                     inputMask = context.GetBoolMaskChannel(_inputChannelName);
+                }
+                else
+                {
+                    scratchBoundaryMask = new NativeArray<byte>(output.Length, Allocator.TempJob, NativeArrayOptions.ClearMemory);
+                    inputMask = scratchBoundaryMask;
                 }
 
                 if (hasInputMask && _inputMode == CellularAutomataInputMode.UseInputAsInitialState)
@@ -262,7 +268,14 @@ namespace DynamicDungeon.Runtime.Nodes
                 JobHandle outputHandle = copyOutputJob.Schedule(output.Length, DefaultBatchSize, currentHandle);
                 JobHandle disposeCurrentHandle = currentState.Dispose(outputHandle);
                 JobHandle disposeNextHandle = nextState.Dispose(outputHandle);
-                return JobHandle.CombineDependencies(disposeCurrentHandle, disposeNextHandle);
+                JobHandle combinedHandle = JobHandle.CombineDependencies(disposeCurrentHandle, disposeNextHandle);
+                if (scratchBoundaryMask.IsCreated)
+                {
+                    JobHandle disposeScratchHandle = scratchBoundaryMask.Dispose(outputHandle);
+                    combinedHandle = JobHandle.CombineDependencies(combinedHandle, disposeScratchHandle);
+                }
+
+                return combinedHandle;
             }
             catch
             {
@@ -274,6 +287,11 @@ namespace DynamicDungeon.Runtime.Nodes
                 if (nextState.IsCreated)
                 {
                     nextState.Dispose();
+                }
+
+                if (scratchBoundaryMask.IsCreated)
+                {
+                    scratchBoundaryMask.Dispose();
                 }
 
                 throw;

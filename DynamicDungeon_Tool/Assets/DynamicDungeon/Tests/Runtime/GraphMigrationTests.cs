@@ -29,6 +29,8 @@ namespace DynamicDungeon.Tests.Runtime
         [Test]
         public void GraphAtVersionZeroMigratesToVersionOneCorrectly()
         {
+            SetCurrentSchemaVersionOverride(1);
+
             GenGraph graph = CreateGraphWithVersion(0);
             try
             {

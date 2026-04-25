@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
   m_Name: Verification_ValidGraph
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
-  SchemaVersion: 2
+  SchemaVersion: 4
   WorldWidth: 100
   WorldHeight: 100
   DefaultSeed: 12345
@@ -28,6 +28,7 @@ MonoBehaviour:
     Position: {x: -744.1, y: 4.0000267}
     Ports:
     - PortName: Noise
+      DisplayName: Noise
       Direction: 1
       Type: 0
     Parameters:
@@ -45,9 +46,11 @@ MonoBehaviour:
     Position: {x: 68.51504, y: 3.9999826}
     Ports:
     - PortName: Input
+      DisplayName: Input
       Direction: 0
       Type: 0
     - PortName: Mask
+      DisplayName: Mask
       Direction: 1
       Type: 2
     Parameters:
@@ -59,9 +62,11 @@ MonoBehaviour:
     Position: {x: 372, y: -44.00004}
     Ports:
     - PortName: Input
+      DisplayName: Input
       Direction: 0
       Type: 2
     - PortName: SmoothedMask
+      DisplayName: SmoothedMask
       Direction: 1
       Type: 2
     Parameters:
@@ -81,9 +86,11 @@ MonoBehaviour:
     Position: {x: 817.9319, y: -36.022686}
     Ports:
     - PortName: Input
+      DisplayName: Input
       Direction: 0
       Type: 2
     - PortName: LogicalIds
+      DisplayName: LogicalIds
       Direction: 1
       Type: 1
     Parameters:
@@ -97,9 +104,11 @@ MonoBehaviour:
     Position: {x: -260.51776, y: 31.999962}
     Ports:
     - PortName: Input
+      DisplayName: Input
       Direction: 0
       Type: 0
     - PortName: Output
+      DisplayName: Output
       Direction: 1
       Type: 0
     Parameters: []
@@ -109,6 +118,7 @@ MonoBehaviour:
     Position: {x: 1176, y: -36}
     Ports:
     - PortName: LogicalIds
+      DisplayName: LogicalIds
       Direction: 0
       Type: 1
     Parameters: []

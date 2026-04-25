@@ -2169,6 +2169,7 @@ namespace DynamicDungeon.Editor.Windows
             _expandedPreviewZoom = zoom;
             _expandedPreviewPanOffset = panOffset;
             _expandedPreviewNeedsFit = needsFit;
+            _expandedPreviewAutoFitUntilInteraction = needsFit;
         }
 
         internal bool IsExpandedPreviewVisibleForTesting
