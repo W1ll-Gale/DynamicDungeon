@@ -273,7 +273,8 @@ namespace DynamicDungeon.Runtime.Nodes
                 int2 cellOrigin = new int2((int)cellFloor.x, (int)cellFloor.y);
 
                 float minDist = float.MaxValue;
-                int2 nearestCell = int2.zero;
+                float minStableDist = float.MaxValue;
+                int2 nearestStableCell = int2.zero;
 
                 int dy;
                 for (dy = -1; dy <= 1; dy++)
@@ -282,12 +283,19 @@ namespace DynamicDungeon.Runtime.Nodes
                     for (dx = -1; dx <= 1; dx++)
                     {
                         int2 neighbour = new int2(cellOrigin.x + dx, cellOrigin.y + dy);
-                        float2 cellPoint = new float2(neighbour) + GetJitteredPoint(neighbour, LocalSeed);
-                        float dist = math.distance(samplePos, cellPoint);
-                        if (dist < minDist)
+                        float2 jitteredPoint = new float2(neighbour) + GetJitteredPoint(neighbour, LocalSeed);
+                        float jitteredDist = math.distance(samplePos, jitteredPoint);
+                        if (jitteredDist < minDist)
                         {
-                            minDist = dist;
-                            nearestCell = neighbour;
+                            minDist = jitteredDist;
+                        }
+
+                        float2 stablePoint = new float2(neighbour) + GetStablePoint(neighbour);
+                        float stableDist = math.distance(samplePos, stablePoint);
+                        if (stableDist < minStableDist)
+                        {
+                            minStableDist = stableDist;
+                            nearestStableCell = neighbour;
                         }
                     }
                 }
@@ -295,9 +303,9 @@ namespace DynamicDungeon.Runtime.Nodes
                 // Voronoi distance is normalised; sqrt(2) is the upper bound when jitter is in [0,1)^2.
                 DistanceOutput[index] = math.saturate(minDist / math.sqrt(2.0f));
 
-                // CellId is derived only from cell coordinates — no seed involvement — giving
-                // stable IDs that are consistent across different global seeds.
-                CellIdOutput[index] = StableCellHash(nearestCell);
+                // CellId comes from the nearest stable cell centre, so the same sampled position maps
+                // to the same cell across different seeds even though the distance jitter varies.
+                CellIdOutput[index] = StableCellHash(nearestStableCell);
             }
 
             // Jitter uses LocalSeed so the point positions vary with the graph seed.
@@ -315,6 +323,11 @@ namespace DynamicDungeon.Runtime.Nodes
                         (h & 0xFFFF) / 65535.0f,
                         (h2 & 0xFFFF) / 65535.0f);
                 }
+            }
+
+            private static float2 GetStablePoint(int2 cellCoord)
+            {
+                return new float2((float)cellCoord.x + 0.5f, (float)cellCoord.y + 0.5f);
             }
 
             // CellId hash uses only cell coordinates so IDs remain stable across different seeds.

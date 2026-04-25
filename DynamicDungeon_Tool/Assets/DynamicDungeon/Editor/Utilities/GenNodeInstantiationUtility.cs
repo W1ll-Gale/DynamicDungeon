@@ -5,6 +5,7 @@ using System.Reflection;
 using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
+using DynamicDungeon.Runtime.Nodes;
 using UnityEngine;
 
 namespace DynamicDungeon.Editor.Utilities
@@ -152,7 +153,7 @@ namespace DynamicDungeon.Editor.Utilities
             for (parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
             {
                 ParameterInfo parameter = parameters[parameterIndex];
-                if (!IsEditableSerialisedParameter(parameter))
+                if (!IsEditableSerialisedParameter(nodeType, parameter))
                 {
                     continue;
                 }
@@ -829,7 +830,7 @@ namespace DynamicDungeon.Editor.Utilities
                     ParameterInfo parameter = parameters[parameterIndex];
                     if (string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
                     {
-                        return IsEditableSerialisedParameter(parameter);
+                        return IsEditableSerialisedParameter(nodeType, parameter);
                     }
                 }
             }
@@ -837,7 +838,7 @@ namespace DynamicDungeon.Editor.Utilities
             return true;
         }
 
-        private static bool IsEditableSerialisedParameter(ParameterInfo parameter)
+        private static bool IsEditableSerialisedParameter(Type nodeType, ParameterInfo parameter)
         {
             if (parameter == null)
             {
@@ -852,8 +853,13 @@ namespace DynamicDungeon.Editor.Utilities
 
             string parameterName = parameter.Name ?? string.Empty;
             if (parameterName.EndsWith("ChannelName", StringComparison.OrdinalIgnoreCase) ||
-                parameterName.EndsWith("PortName", StringComparison.OrdinalIgnoreCase) ||
-                parameterName.EndsWith("Type", StringComparison.OrdinalIgnoreCase))
+                parameterName.EndsWith("PortName", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (parameterName.EndsWith("Type", StringComparison.OrdinalIgnoreCase) &&
+                !(nodeType == typeof(ConstantNode) && string.Equals(parameterName, "outputType", StringComparison.OrdinalIgnoreCase)))
             {
                 return false;
             }

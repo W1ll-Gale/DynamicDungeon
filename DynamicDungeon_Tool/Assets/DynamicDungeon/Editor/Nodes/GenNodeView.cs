@@ -494,7 +494,8 @@ namespace DynamicDungeon.Editor.Nodes
                 parameterReceiver.ReceiveParameter(parameterName, safeNewValue);
             }
 
-            if (string.Equals(parameterName, "algorithm", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(parameterName, "algorithm", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(parameterName, "outputType", StringComparison.OrdinalIgnoreCase))
             {
                 RebuildNodePorts();
                 PopulateControls();

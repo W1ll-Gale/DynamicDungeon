@@ -322,7 +322,7 @@ namespace DynamicDungeon.Runtime.Nodes
                 else if (Direction == GradientDirection.Radial)
                 {
                     float dist = math.distance(new float2(u, v), Centre);
-                    value = math.saturate(1.0f - (dist / RadialMaxDist));
+                    value = dist / RadialMaxDist;
                 }
                 else
                 {

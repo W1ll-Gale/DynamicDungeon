@@ -22,12 +22,14 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
-        private readonly NodePortDefinition[] _ports;
-        private readonly ChannelDeclaration[] _channelDeclarations;
+        private NodePortDefinition[] _ports;
+        private ChannelDeclaration[] _channelDeclarations;
         private readonly string _nodeId;
         private readonly string _nodeName;
         private readonly string _outputChannelName;
-        private readonly ChannelType _outputType;
+
+        [Description("Determines whether the node writes a float or integer channel.")]
+        private ChannelType _outputType;
 
         [Description("The constant float value written to every tile when Output Type is Float.")]
         private float _floatValue;
@@ -139,17 +141,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _outputType = outputType;
             _floatValue = floatValue;
             _intValue = intValue;
-
-            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, outputChannelName, PreferredOutputDisplayName);
-            _ports = new[]
-            {
-                new NodePortDefinition(outputChannelName, PortDirection.Output, outputType, displayName: outputPortDisplayName)
-            };
-
-            _channelDeclarations = new[]
-            {
-                new ChannelDeclaration(outputChannelName, outputType, true)
-            };
+            RefreshOutputDeclarations();
         }
 
         public void ReceiveParameter(string name, string value)
@@ -165,6 +157,32 @@ namespace DynamicDungeon.Runtime.Nodes
                 if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedFloat))
                 {
                     _floatValue = parsedFloat;
+                }
+
+                return;
+            }
+
+            if (string.Equals(name, "outputType", StringComparison.OrdinalIgnoreCase))
+            {
+                ChannelType parsedOutputType;
+                try
+                {
+                    parsedOutputType = (ChannelType)Enum.Parse(typeof(ChannelType), value, true);
+                }
+                catch
+                {
+                    return;
+                }
+
+                if (parsedOutputType != ChannelType.Float && parsedOutputType != ChannelType.Int)
+                {
+                    return;
+                }
+
+                if (_outputType != parsedOutputType)
+                {
+                    _outputType = parsedOutputType;
+                    RefreshOutputDeclarations();
                 }
 
                 return;
@@ -192,16 +210,28 @@ namespace DynamicDungeon.Runtime.Nodes
                 };
                 return floatJob.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
             }
-            else
+
+            NativeArray<int> intOutput = context.GetIntChannel(_outputChannelName);
+            IntFillJob intJob = new IntFillJob
             {
-                NativeArray<int> output = context.GetIntChannel(_outputChannelName);
-                IntFillJob intJob = new IntFillJob
-                {
-                    Output = output,
-                    Value = _intValue
-                };
-                return intJob.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
-            }
+                Output = intOutput,
+                Value = _intValue
+            };
+            return intJob.Schedule(intOutput.Length, DefaultBatchSize, context.InputDependency);
+        }
+
+        private void RefreshOutputDeclarations()
+        {
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, PreferredOutputDisplayName);
+            _ports = new[]
+            {
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, _outputType, displayName: outputPortDisplayName)
+            };
+
+            _channelDeclarations = new[]
+            {
+                new ChannelDeclaration(_outputChannelName, _outputType, true)
+            };
         }
 
         [BurstCompile]
