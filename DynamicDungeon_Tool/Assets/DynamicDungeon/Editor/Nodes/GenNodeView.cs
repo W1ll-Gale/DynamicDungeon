@@ -453,6 +453,12 @@ namespace DynamicDungeon.Editor.Nodes
 
                 VisualElement control = InlinedControlFactory.CreateControl(parameter, defaultValue, OnParameterValueChanged);
                 control.style.marginBottom = 4.0f;
+                IParameterVisibilityProvider visibilityProvider = _nodeInstance as IParameterVisibilityProvider;
+                if (visibilityProvider != null && !visibilityProvider.IsParameterVisible(parameter.Name))
+                {
+                    control.style.display = DisplayStyle.None;
+                }
+
                 _controlsContainer.Add(control);
             }
         }
@@ -481,6 +487,19 @@ namespace DynamicDungeon.Editor.Nodes
             Undo.RecordObject(_graph, "Modify parameter");
             targetParameter.Value = safeNewValue;
             EditorUtility.SetDirty(_graph);
+
+            IParameterReceiver parameterReceiver = _nodeInstance as IParameterReceiver;
+            if (parameterReceiver != null)
+            {
+                parameterReceiver.ReceiveParameter(parameterName, safeNewValue);
+            }
+
+            if (string.Equals(parameterName, "algorithm", StringComparison.OrdinalIgnoreCase))
+            {
+                RebuildNodePorts();
+                PopulateControls();
+            }
+
             _afterMutation?.Invoke();
 
             if (_generationOrchestrator != null)
@@ -533,6 +552,23 @@ namespace DynamicDungeon.Editor.Nodes
             Undo.RecordObject(_graph, "Reset node parameters");
             _nodeData.Parameters = defaultParameters;
             EditorUtility.SetDirty(_graph);
+
+            IParameterReceiver resetReceiver = _nodeInstance as IParameterReceiver;
+            if (resetReceiver != null)
+            {
+                int syncIndex;
+                for (syncIndex = 0; syncIndex < defaultParameters.Count; syncIndex++)
+                {
+                    SerializedParameter syncParam = defaultParameters[syncIndex];
+                    if (syncParam != null && !string.IsNullOrWhiteSpace(syncParam.Name))
+                    {
+                        resetReceiver.ReceiveParameter(syncParam.Name, syncParam.Value ?? string.Empty);
+                    }
+                }
+
+                RebuildNodePorts();
+            }
+
             _afterMutation?.Invoke();
             PopulateControls();
 
@@ -861,6 +897,85 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             return DefaultNodeSize.x;
+        }
+
+        private void RebuildNodePorts()
+        {
+            HashSet<string> oldPortNames = new HashSet<string>(_portsByName.Keys, StringComparer.Ordinal);
+
+            foreach (Port portView in _portsByName.Values)
+            {
+                List<Edge> connectedEdges = new List<Edge>(portView.connections);
+                int edgeIndex;
+                for (edgeIndex = 0; edgeIndex < connectedEdges.Count; edgeIndex++)
+                {
+                    Edge edge = connectedEdges[edgeIndex];
+                    if (edge.input != null)
+                    {
+                        edge.input.Disconnect(edge);
+                    }
+
+                    if (edge.output != null)
+                    {
+                        edge.output.Disconnect(edge);
+                    }
+
+                    edge.RemoveFromHierarchy();
+                }
+            }
+
+            inputContainer.Clear();
+            outputContainer.Clear();
+            _portsByName.Clear();
+
+            BuildPorts();
+            RefreshPorts();
+
+            HashSet<string> newPortNames = new HashSet<string>(_portsByName.Keys, StringComparer.Ordinal);
+            if (_graph != null && _nodeData != null)
+            {
+                RemoveStaleConnections(oldPortNames, newPortNames);
+            }
+        }
+
+        private void RemoveStaleConnections(HashSet<string> oldPortNames, HashSet<string> newPortNames)
+        {
+            if (_graph == null || _graph.Connections == null || _nodeData == null)
+            {
+                return;
+            }
+
+            string nodeId = _nodeData.NodeId;
+            bool anyRemoved = false;
+
+            int connectionIndex;
+            for (connectionIndex = _graph.Connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+            {
+                GenConnectionData connection = _graph.Connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                bool sourceStale = string.Equals(connection.FromNodeId, nodeId, StringComparison.Ordinal)
+                    && oldPortNames.Contains(connection.FromPortName)
+                    && !newPortNames.Contains(connection.FromPortName);
+
+                bool targetStale = string.Equals(connection.ToNodeId, nodeId, StringComparison.Ordinal)
+                    && oldPortNames.Contains(connection.ToPortName)
+                    && !newPortNames.Contains(connection.ToPortName);
+
+                if (sourceStale || targetStale)
+                {
+                    _graph.Connections.RemoveAt(connectionIndex);
+                    anyRemoved = true;
+                }
+            }
+
+            if (anyRemoved)
+            {
+                EditorUtility.SetDirty(_graph);
+            }
         }
     }
 }

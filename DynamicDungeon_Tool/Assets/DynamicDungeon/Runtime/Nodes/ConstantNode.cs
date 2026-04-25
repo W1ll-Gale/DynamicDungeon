@@ -205,7 +205,7 @@ namespace DynamicDungeon.Runtime.Nodes
         }
 
         [BurstCompile]
-        private struct FloatFillJob : IJobParallelFor
+        internal struct FloatFillJob : IJobParallelFor
         {
             public NativeArray<float> Output;
             public float Value;
@@ -217,7 +217,7 @@ namespace DynamicDungeon.Runtime.Nodes
         }
 
         [BurstCompile]
-        private struct IntFillJob : IJobParallelFor
+        internal struct IntFillJob : IJobParallelFor
         {
             public NativeArray<int> Output;
             public int Value;

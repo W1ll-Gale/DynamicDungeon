@@ -251,7 +251,7 @@ namespace DynamicDungeon.Runtime.Nodes
         }
 
         [BurstCompile]
-        private struct VoronoiJob : IJobParallelFor
+        internal struct VoronoiJob : IJobParallelFor
         {
             public NativeArray<float> DistanceOutput;
             public NativeArray<int> CellIdOutput;

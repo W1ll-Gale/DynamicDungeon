@@ -289,7 +289,7 @@ namespace DynamicDungeon.Runtime.Nodes
         }
 
         [BurstCompile]
-        private struct GradientJob : IJobParallelFor
+        internal struct GradientJob : IJobParallelFor
         {
             public NativeArray<float> Output;
             public int Width;

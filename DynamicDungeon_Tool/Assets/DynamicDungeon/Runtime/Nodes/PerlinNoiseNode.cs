@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Generators")]
+    [NodeCategory("Noise")]
     [NodeDisplayName("Perlin Noise")]
     [Description("Generates layered Perlin noise as a float map for terrain, masks, or other procedural inputs.")]
     public sealed class PerlinNoiseNode : IGenNode, IParameterReceiver
@@ -342,7 +342,7 @@ namespace DynamicDungeon.Runtime.Nodes
         }
 
         [BurstCompile]
-        private struct PerlinNoiseJob : IJobParallelFor
+        internal struct PerlinNoiseJob : IJobParallelFor
         {
             public NativeArray<float> Output;
             public int Width;

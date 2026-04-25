@@ -12,9 +12,9 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Noise")]
-    [NodeDisplayName("Unified Noise")]
+    [NodeDisplayName("Noise")]
     [Description("Single noise node covering all algorithms. Select the algorithm from the dropdown; relevant parameters are shown automatically.")]
-    public sealed class UnifiedNoiseNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IParameterVisibilityProvider
+    public sealed class NoiseNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IParameterVisibilityProvider
     {
         private const int DefaultBatchSize = 64;
         private const string OutputDisplayName = "Output";
@@ -153,7 +153,7 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public UnifiedNoiseNode(string nodeId, string nodeName)
+        public NoiseNode(string nodeId, string nodeName)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -184,6 +184,41 @@ namespace DynamicDungeon.Runtime.Nodes
             _angle = 45.0f;
             _floatValue = 0.0f;
             _intValue = 0;
+
+            RefreshPortsAndChannels();
+        }
+
+        public NoiseNode(
+            string nodeId,
+            string nodeName,
+            NoiseAlgorithm algorithm,
+            float frequency,
+            float amplitude,
+            Vector2 offset,
+            int octaves,
+            int seedOffset,
+            float lacunarity,
+            float persistence,
+            GradientDirection direction,
+            Vector2 centre,
+            float angle,
+            float floatValue,
+            int intValue)
+            : this(nodeId, nodeName)
+        {
+            _algorithm = algorithm;
+            _frequency = math.max(0.0f, frequency);
+            _amplitude = math.max(0.0f, amplitude);
+            _offset = offset;
+            _octaves = math.clamp(octaves, 1, MaxFractalOctaves);
+            _seedOffset = seedOffset;
+            _lacunarity = math.max(1.0f, lacunarity);
+            _persistence = math.clamp(persistence, 0.0f, 1.0f);
+            _direction = direction;
+            _centre = centre;
+            _angle = angle;
+            _floatValue = floatValue;
+            _intValue = intValue;
 
             RefreshPortsAndChannels();
         }
@@ -295,11 +330,9 @@ namespace DynamicDungeon.Runtime.Nodes
 
             if (string.Equals(name, "direction", StringComparison.OrdinalIgnoreCase))
             {
-                GradientDirection parsed;
                 try
                 {
-                    parsed = (GradientDirection)Enum.Parse(typeof(GradientDirection), value ?? string.Empty, true);
-                    _direction = parsed;
+                    _direction = (GradientDirection)Enum.Parse(typeof(GradientDirection), value ?? string.Empty, true);
                 }
                 catch
                 {
@@ -487,8 +520,15 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private JobHandle ScheduleFractal(NodeExecutionContext context)
         {
-            NativeArray<float> input = context.GetFloatChannel(_inputChannelName);
             NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
+
+            if (string.IsNullOrWhiteSpace(_inputChannelName))
+            {
+                ConstantNode.FloatFillJob zeroFill = new ConstantNode.FloatFillJob { Output = output, Value = 0.0f };
+                return zeroFill.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
+            }
+
+            NativeArray<float> input = context.GetFloatChannel(_inputChannelName);
             FractalNoiseNode.FractalNoiseJob job = new FractalNoiseNode.FractalNoiseJob
             {
                 Input = input,
