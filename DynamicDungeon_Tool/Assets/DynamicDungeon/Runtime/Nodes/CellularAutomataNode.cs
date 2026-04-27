@@ -33,8 +33,8 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private readonly string _nodeId;
         private readonly string _nodeName;
-        private readonly string _outputChannelName;
-        private readonly NodePortDefinition[] _ports;
+        private string _outputChannelName;
+        private NodePortDefinition[] _ports;
 
         private string _inputChannelName;
         [InspectorName("Birth On")]
@@ -106,20 +106,25 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeId = nodeId;
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
             _inputChannelName = inputChannelName ?? string.Empty;
-            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) ? FallbackOutputPortName : outputChannelName;
+            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, FallbackOutputPortName) : outputChannelName;
             _birthRule = birthRule ?? string.Empty;
             _survivalRule = survivalRule ?? string.Empty;
             _iterations = math.max(0, iterations);
             _initialFillProbability = math.clamp(initialFillProbability, 0.0f, 1.0f);
             _inputMode = inputMode;
-            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
+
+            RefreshPorts();
+            RefreshChannelDeclarations();
+        }
+
+        private void RefreshPorts()
+        {
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
                 new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, false, "Optional mask used either as the starting cave state or as the region where caves are allowed to form, depending on Input Mode."),
-                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.BoolMask, PortCapacity.Single, false, "The generated cave mask after the cellular automata passes are applied.", outputPortDisplayName)
+                new NodePortDefinition(FallbackOutputPortName, PortDirection.Output, ChannelType.BoolMask, PortCapacity.Single, false, "The generated cave mask after the cellular automata passes are applied.", outputPortDisplayName)
             };
-
-            RefreshChannelDeclarations();
         }
 
         public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
@@ -185,6 +190,15 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     _inputMode = parsedInputMode;
                 }
+
+                return;
+            }
+
+            if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
+            {
+                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, FallbackOutputPortName) : value;
+                RefreshPorts();
+                RefreshChannelDeclarations();
             }
         }
 

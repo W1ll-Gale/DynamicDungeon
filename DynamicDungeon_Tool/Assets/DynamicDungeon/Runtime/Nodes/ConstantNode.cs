@@ -26,7 +26,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private ChannelDeclaration[] _channelDeclarations;
         private readonly string _nodeId;
         private readonly string _nodeName;
-        private readonly string _outputChannelName;
+        private string _outputChannelName;
 
         [Description("Determines whether the node writes a float or integer channel.")]
         private ChannelType _outputType;
@@ -137,7 +137,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             _nodeId = nodeId;
             _nodeName = nodeName;
-            _outputChannelName = outputChannelName;
+            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, PreferredOutputDisplayName) : outputChannelName;
             _outputType = outputType;
             _floatValue = floatValue;
             _intValue = intValue;
@@ -195,6 +195,14 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     _intValue = parsedInt;
                 }
+
+                return;
+            }
+
+            if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
+            {
+                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, PreferredOutputDisplayName) : value;
+                RefreshOutputDeclarations();
             }
         }
 

@@ -29,8 +29,8 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private readonly string _nodeId;
         private readonly string _nodeName;
-        private readonly string _outputChannelName;
-        private readonly string _cellIdChannelName;
+        private string _outputChannelName;
+        private string _cellIdChannelName;
 
         private NodePortDefinition[] _ports;
         private ChannelDeclaration[] _channelDeclarations;
@@ -175,8 +175,8 @@ namespace DynamicDungeon.Runtime.Nodes
 
             _nodeId = nodeId;
             _nodeName = nodeName;
-            _outputChannelName = MakeOutputChannelName(nodeId);
-            _cellIdChannelName = MakeCellIdChannelName(nodeId);
+            _outputChannelName = GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, OutputDisplayName);
+            _cellIdChannelName = GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, CellIdDisplayName);
             _inputChannelName = string.Empty;
 
             _algorithm = NoiseAlgorithm.Perlin;
@@ -409,7 +409,6 @@ namespace DynamicDungeon.Runtime.Nodes
 
                 return;
             }
-
             if (string.Equals(name, "intValue", StringComparison.OrdinalIgnoreCase))
             {
                 int parsed;
@@ -417,6 +416,14 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     _intValue = parsed;
                 }
+
+                return;
+            }
+
+            if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
+            {
+                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, OutputDisplayName) : value;
+                RefreshPortsAndChannels();
             }
         }
 
@@ -673,11 +680,13 @@ namespace DynamicDungeon.Runtime.Nodes
                 portList.Add(new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, false));
             }
 
-            portList.Add(new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float, displayName: OutputDisplayName));
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, OutputDisplayName);
+            portList.Add(new NodePortDefinition(OutputDisplayName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName));
 
             if (_algorithm == NoiseAlgorithm.Voronoi)
             {
-                portList.Add(new NodePortDefinition(_cellIdChannelName, PortDirection.Output, ChannelType.Int, displayName: CellIdDisplayName));
+                string cellIdDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _cellIdChannelName, CellIdDisplayName);
+                portList.Add(new NodePortDefinition(CellIdDisplayName, PortDirection.Output, ChannelType.Int, displayName: cellIdDisplayName));
             }
 
             if (_algorithm == NoiseAlgorithm.Fractal && !string.IsNullOrWhiteSpace(_inputChannelName))

@@ -26,12 +26,12 @@ namespace DynamicDungeon.Runtime.Nodes
         private static string MakeDistanceChannelName(string nodeId) => DistanceDisplayName + "__" + nodeId;
         private static string MakeCellIdChannelName(string nodeId) => CellIdDisplayName + "__" + nodeId;
 
-        private readonly NodePortDefinition[] _ports;
-        private readonly ChannelDeclaration[] _channelDeclarations;
+        private NodePortDefinition[] _ports;
+        private ChannelDeclaration[] _channelDeclarations;
         private readonly string _nodeId;
         private readonly string _nodeName;
-        private readonly string _distanceChannelName;
-        private readonly string _cellIdChannelName;
+        private string _distanceChannelName;
+        private string _cellIdChannelName;
 
         [MinValue(0.0f)]
         [Description("Controls the scale of the Voronoi cells.")]
@@ -141,13 +141,23 @@ namespace DynamicDungeon.Runtime.Nodes
             _distanceChannelName = MakeDistanceChannelName(nodeId);
             _cellIdChannelName = MakeCellIdChannelName(nodeId);
 
+            RefreshPorts();
+            RefreshChannelDeclarations();
+        }
+
+        private void RefreshPorts()
+        {
+            string distanceDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _distanceChannelName, DistanceDisplayName);
+            string cellIdDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _cellIdChannelName, CellIdDisplayName);
             _ports = new[]
             {
-                new NodePortDefinition(_distanceChannelName, PortDirection.Output, ChannelType.Float, displayName: DistanceDisplayName),
-                new NodePortDefinition(_cellIdChannelName, PortDirection.Output, ChannelType.Int, displayName: CellIdDisplayName)
+                new NodePortDefinition(DistanceDisplayName, PortDirection.Output, ChannelType.Float, displayName: distanceDisplayName),
+                new NodePortDefinition(CellIdDisplayName, PortDirection.Output, ChannelType.Int, displayName: cellIdDisplayName)
             };
+        }
 
-            // Both channels are declared as owned (IsWrite = true) by this node.
+        private void RefreshChannelDeclarations()
+        {
             _channelDeclarations = new[]
             {
                 new ChannelDeclaration(_distanceChannelName, ChannelType.Float, true),
@@ -180,6 +190,15 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     _offset = parsedOffset;
                 }
+
+                return;
+            }
+
+            if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
+            {
+                _distanceChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? MakeDistanceChannelName(_nodeId) : value;
+                RefreshPorts();
+                RefreshChannelDeclarations();
             }
         }
 

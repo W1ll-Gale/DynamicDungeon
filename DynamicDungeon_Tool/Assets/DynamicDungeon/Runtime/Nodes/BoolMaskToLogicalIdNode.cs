@@ -42,8 +42,8 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private readonly string _nodeId;
         private readonly string _nodeName;
-        private readonly string _outputChannelName;
-        private readonly NodePortDefinition[] _ports;
+        private string _outputChannelName;
+        private NodePortDefinition[] _ports;
 
         private string _inputChannelName;
         [MinValue(0.0f)]
@@ -96,25 +96,25 @@ namespace DynamicDungeon.Runtime.Nodes
 
         public BoolMaskToLogicalIdNode(string nodeId, string nodeName, string inputChannelName, string outputChannelName, int trueLogicalId = 2, int falseLogicalId = 1)
         {
-            if (string.IsNullOrWhiteSpace(nodeId))
-            {
-                throw new ArgumentException("Node ID must be non-empty.", nameof(nodeId));
-            }
-
             _nodeId = nodeId;
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
             _inputChannelName = inputChannelName ?? string.Empty;
-            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) ? DefaultOutputChannelName : outputChannelName;
+            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, DefaultOutputChannelName, StringComparison.Ordinal) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, DefaultOutputChannelName) : outputChannelName;
             _trueLogicalId = trueLogicalId;
             _falseLogicalId = falseLogicalId;
-            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, _outputChannelName, PreferredOutputDisplayName);
+
+            RefreshPorts();
+            RefreshChannelDeclarations();
+        }
+
+        private void RefreshPorts()
+        {
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
                 new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, true),
                 new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Int, displayName: outputPortDisplayName)
             };
-
-            RefreshChannelDeclarations();
         }
 
         public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
@@ -154,6 +154,14 @@ namespace DynamicDungeon.Runtime.Nodes
             if (string.Equals(name, "falseLogicalId", StringComparison.OrdinalIgnoreCase))
             {
                 _falseLogicalId = parsedValue;
+                return;
+            }
+
+            if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
+            {
+                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, DefaultOutputChannelName, StringComparison.Ordinal) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, DefaultOutputChannelName) : value;
+                RefreshPorts();
+                RefreshChannelDeclarations();
             }
         }
 

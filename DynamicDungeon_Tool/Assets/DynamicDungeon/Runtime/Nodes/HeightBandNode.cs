@@ -1,24 +1,23 @@
 using System;
 using System.Collections.Generic;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
-using System.Globalization;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Generators")]
-    [NodeDisplayName("Empty Grid")]
-    [Description("Creates a fresh float grid and fills every cell with the same value.")]
-    public sealed class EmptyGridNode : IGenNode, IParameterReceiver
+    [NodeDisplayName("Height Band")]
+    [Description("Generates a vertical band mask. Outputs 1.0 inside the band, and 0.0 outside.")]
+    public sealed class HeightBandNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;
-        private const string DefaultNodeName = "Empty Grid";
+        private const string DefaultNodeName = "Height Band";
         private const string FallbackOutputPortName = "Output";
-        private const string PreferredOutputDisplayName = FallbackOutputPortName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -26,52 +25,24 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly string _nodeName;
         private string _outputChannelName;
         private NodePortDefinition[] _ports;
+
+        [Range(0f, 1f)]
+        [Description("The lower normalized bound of the band (0 is bottom).")]
+        private float _minHeight = 0.0f;
+
+        [Range(0f, 1f)]
+        [Description("The upper normalized bound of the band (1 is top).")]
+        private float _maxHeight = 1.0f;
+
         private ChannelDeclaration[] _channelDeclarations;
 
-        [Description("Value written into every cell of the generated grid.")]
-        private float _fillValue;
+        public IReadOnlyList<NodePortDefinition> Ports => _ports;
+        public IReadOnlyList<ChannelDeclaration> ChannelDeclarations => _channelDeclarations;
+        public IReadOnlyList<BlackboardKey> BlackboardDeclarations => _blackboardDeclarations;
+        public string NodeId => _nodeId;
+        public string NodeName => _nodeName;
 
-        public IReadOnlyList<NodePortDefinition> Ports
-        {
-            get
-            {
-                return _ports;
-            }
-        }
-
-        public IReadOnlyList<ChannelDeclaration> ChannelDeclarations
-        {
-            get
-            {
-                return _channelDeclarations;
-            }
-        }
-
-        public IReadOnlyList<BlackboardKey> BlackboardDeclarations
-        {
-            get
-            {
-                return _blackboardDeclarations;
-            }
-        }
-
-        public string NodeId
-        {
-            get
-            {
-                return _nodeId;
-            }
-        }
-
-        public string NodeName
-        {
-            get
-            {
-                return _nodeName;
-            }
-        }
-
-        public EmptyGridNode(string nodeId, string nodeName, string outputChannelName, float fillValue = 0.0f)
+        public HeightBandNode(string nodeId, string nodeName, string outputChannelName = "", float minHeight = 0f, float maxHeight = 1f)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -81,7 +52,8 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeId = nodeId;
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
             _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, FallbackOutputPortName) : outputChannelName;
-            _fillValue = fillValue;
+            _minHeight = minHeight;
+            _maxHeight = maxHeight;
 
             RefreshPorts();
             RefreshChannelDeclarations();
@@ -89,40 +61,29 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private void RefreshPorts()
         {
-            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, PreferredOutputDisplayName);
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, FallbackOutputPortName);
             _ports = new[]
             {
                 new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
             };
         }
 
-        private void RefreshChannelDeclarations()
+        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
         {
-            _channelDeclarations = new[]
-            {
-                new ChannelDeclaration(_outputChannelName, ChannelType.Float, true)
-            };
+            // No inputs
         }
 
         public void ReceiveParameter(string name, string value)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            if (string.Equals(name, "minHeight", StringComparison.OrdinalIgnoreCase))
             {
-                return;
+                float.TryParse(value, out _minHeight);
             }
-
-            if (string.Equals(name, "fillValue", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(name, "maxHeight", StringComparison.OrdinalIgnoreCase))
             {
-                float parsedFillValue;
-                if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedFillValue))
-                {
-                    _fillValue = parsedFillValue;
-                }
-
-                return;
+                float.TryParse(value, out _maxHeight);
             }
-
-            if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
             {
                 _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, FallbackOutputPortName) : value;
                 RefreshPorts();
@@ -133,24 +94,41 @@ namespace DynamicDungeon.Runtime.Nodes
         public JobHandle Schedule(NodeExecutionContext context)
         {
             NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
-            FillJob job = new FillJob
+
+            HeightBandJob job = new HeightBandJob
             {
                 Output = output,
-                FillValue = _fillValue
+                Width = context.Width,
+                Height = context.Height,
+                MinHeight = _minHeight,
+                MaxHeight = _maxHeight
             };
 
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
         }
 
+        private void RefreshChannelDeclarations()
+        {
+            _channelDeclarations = new[]
+            {
+                new ChannelDeclaration(_outputChannelName, ChannelType.Float, true)
+            };
+        }
+
         [BurstCompile]
-        private struct FillJob : IJobParallelFor
+        private struct HeightBandJob : IJobParallelFor
         {
             public NativeArray<float> Output;
-            public float FillValue;
+            public int Width;
+            public int Height;
+            public float MinHeight;
+            public float MaxHeight;
 
             public void Execute(int index)
             {
-                Output[index] = FillValue;
+                int y = index / Width;
+                float normalizedY = (float)y / Height;
+                Output[index] = (normalizedY >= MinHeight && normalizedY <= MaxHeight) ? 1.0f : 0.0f;
             }
         }
     }

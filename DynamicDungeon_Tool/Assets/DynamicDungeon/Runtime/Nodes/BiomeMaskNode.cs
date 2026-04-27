@@ -2,23 +2,25 @@ using System;
 using System.Collections.Generic;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using System.Globalization;
+using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Filter")]
-    [NodeDisplayName("Clamp")]
-    [Description("Clamps each float input value into a designer-defined range.")]
-    public sealed class ClampNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
+    [NodeCategory("Biome")]
+    [NodeDisplayName("Biome Mask")]
+    [Description("Extracts a single biome's presence from a biome channel into a float mask (1.0 if present, 0.0 if not).")]
+    public sealed class BiomeMaskNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IBiomeChannelNode
     {
         private const int DefaultBatchSize = 64;
-        private const string DefaultNodeName = "Clamp";
-        private const string InputPortName = "Input";
+        private const string DefaultNodeName = "Biome Mask";
+        private const string InputPortName = "Biome Channel";
         private const string FallbackOutputPortName = "Output";
         private const string PreferredOutputDisplayName = FallbackOutputPortName;
 
@@ -29,11 +31,13 @@ namespace DynamicDungeon.Runtime.Nodes
         private string _outputChannelName;
         private NodePortDefinition[] _ports;
 
-        private string _inputChannelName;
-        [Description("Minimum output value after clamping.")]
-        private float _min;
-        [Description("Maximum output value after clamping.")]
-        private float _max;
+        private string _inputBiomeChannelName;
+
+        [AssetGuidReference(typeof(BiomeAsset))]
+        [Description("Target biome asset to extract into the mask. Stored as an asset GUID in the graph.")]
+        private string _biome;
+
+        private int _resolvedBiomeIndex;
         private ChannelDeclaration[] _channelDeclarations;
 
         public IReadOnlyList<NodePortDefinition> Ports
@@ -76,7 +80,13 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public ClampNode(string nodeId, string nodeName, string inputChannelName, string outputChannelName, float min = 0.0f, float max = 1.0f)
+        public BiomeMaskNode(
+            string nodeId,
+            string nodeName,
+            string inputBiomeChannelName = "",
+            string outputChannelName = "",
+            string targetBiome = "",
+            string biome = "")
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -85,10 +95,11 @@ namespace DynamicDungeon.Runtime.Nodes
 
             _nodeId = nodeId;
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
-            _inputChannelName = inputChannelName ?? string.Empty;
+            _inputBiomeChannelName = inputBiomeChannelName ?? string.Empty;
             _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, FallbackOutputPortName) : outputChannelName;
-            _min = min;
-            _max = max;
+            _biome = string.IsNullOrWhiteSpace(biome) ? targetBiome : biome;
+            _biome = _biome ?? string.Empty;
+            _resolvedBiomeIndex = BiomeChannelUtility.UnassignedBiomeIndex;
 
             RefreshPorts();
             RefreshChannelDeclarations();
@@ -99,7 +110,7 @@ namespace DynamicDungeon.Runtime.Nodes
             string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
-                new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, true),
+                new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, false),
                 new NodePortDefinition(FallbackOutputPortName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
             };
         }
@@ -109,11 +120,11 @@ namespace DynamicDungeon.Runtime.Nodes
             string inputChannelName;
             if (inputConnections != null && inputConnections.TryGetValue(InputPortName, out inputChannelName))
             {
-                _inputChannelName = inputChannelName ?? string.Empty;
+                _inputBiomeChannelName = inputChannelName ?? string.Empty;
             }
             else
             {
-                _inputChannelName = string.Empty;
+                _inputBiomeChannelName = string.Empty;
             }
 
             RefreshChannelDeclarations();
@@ -126,25 +137,10 @@ namespace DynamicDungeon.Runtime.Nodes
                 return;
             }
 
-            if (string.Equals(name, "min", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(name, "targetBiome", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(name, "biome", StringComparison.OrdinalIgnoreCase))
             {
-                float parsedMin;
-                if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedMin))
-                {
-                    _min = parsedMin;
-                }
-
-                return;
-            }
-
-            if (string.Equals(name, "max", StringComparison.OrdinalIgnoreCase))
-            {
-                float parsedMax;
-                if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedMax))
-                {
-                    _max = parsedMax;
-                }
-
+                _biome = value ?? string.Empty;
                 return;
             }
 
@@ -156,16 +152,32 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
+        public bool ResolveBiomePalette(BiomeChannelPalette palette, out string errorMessage)
+        {
+            if (palette == null)
+            {
+                throw new ArgumentNullException(nameof(palette));
+            }
+
+            if (!palette.TryResolveIndex(_biome, out _resolvedBiomeIndex, out errorMessage))
+            {
+                errorMessage = "Biome Mask node '" + _nodeName + "' could not resolve its target biome: " + errorMessage;
+                return false;
+            }
+
+            return true;
+        }
+
         public JobHandle Schedule(NodeExecutionContext context)
         {
-            NativeArray<float> input = context.GetFloatChannel(_inputChannelName);
+            NativeArray<int> input = context.GetIntChannel(_inputBiomeChannelName);
             NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
-            ClampJob job = new ClampJob
+
+            BiomeMaskJob job = new BiomeMaskJob
             {
                 Input = input,
                 Output = output,
-                Min = math.min(_min, _max),
-                Max = math.max(_min, _max)
+                TargetBiomeIndex = _resolvedBiomeIndex
             };
 
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
@@ -173,11 +185,11 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private void RefreshChannelDeclarations()
         {
-            if (!string.IsNullOrWhiteSpace(_inputChannelName))
+            if (!string.IsNullOrWhiteSpace(_inputBiomeChannelName))
             {
                 _channelDeclarations = new[]
                 {
-                    new ChannelDeclaration(_inputChannelName, ChannelType.Float, false),
+                    new ChannelDeclaration(_inputBiomeChannelName, ChannelType.Int, false),
                     new ChannelDeclaration(_outputChannelName, ChannelType.Float, true)
                 };
                 return;
@@ -190,18 +202,17 @@ namespace DynamicDungeon.Runtime.Nodes
         }
 
         [BurstCompile]
-        private struct ClampJob : IJobParallelFor
+        private struct BiomeMaskJob : IJobParallelFor
         {
             [ReadOnly]
-            public NativeArray<float> Input;
+            public NativeArray<int> Input;
 
             public NativeArray<float> Output;
-            public float Min;
-            public float Max;
+            public int TargetBiomeIndex;
 
             public void Execute(int index)
             {
-                Output[index] = math.clamp(Input[index], Min, Max);
+                Output[index] = Input[index] == TargetBiomeIndex ? 1.0f : 0.0f;
             }
         }
     }

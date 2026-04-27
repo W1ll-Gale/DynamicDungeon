@@ -22,11 +22,11 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
-        private readonly NodePortDefinition[] _ports;
-        private readonly ChannelDeclaration[] _channelDeclarations;
+        private NodePortDefinition[] _ports;
+        private ChannelDeclaration[] _channelDeclarations;
         private readonly string _nodeId;
         private readonly string _nodeName;
-        private readonly string _outputChannelName;
+        private string _outputChannelName;
 
         [MinValue(0.0f)]
         [Description("Controls how quickly the noise pattern changes across the grid.")]
@@ -146,23 +146,32 @@ namespace DynamicDungeon.Runtime.Nodes
                 throw new ArgumentOutOfRangeException(nameof(amplitude), "Amplitude cannot be negative.");
             }
 
-            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, outputChannelName, PreferredOutputDisplayName);
-            _ports = new[]
-            {
-                new NodePortDefinition(outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
-            };
-
-            _channelDeclarations = new[]
-            {
-                new ChannelDeclaration(outputChannelName, ChannelType.Float, true)
-            };
-
             _nodeId = nodeId;
             _nodeName = nodeName;
-            _outputChannelName = outputChannelName;
+            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, PreferredOutputDisplayName) : outputChannelName;
             _frequency = frequency;
             _amplitude = amplitude;
             _offset = offset;
+
+            RefreshPorts();
+            RefreshChannelDeclarations();
+        }
+
+        private void RefreshPorts()
+        {
+            string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, PreferredOutputDisplayName);
+            _ports = new[]
+            {
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
+            };
+        }
+
+        private void RefreshChannelDeclarations()
+        {
+            _channelDeclarations = new[]
+            {
+                new ChannelDeclaration(_outputChannelName, ChannelType.Float, true)
+            };
         }
 
         public void ReceiveParameter(string name, string value)
@@ -201,6 +210,15 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     _offset = parsedOffset;
                 }
+
+                return;
+            }
+
+            if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
+            {
+                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, PreferredOutputDisplayName) : value;
+                RefreshPorts();
+                RefreshChannelDeclarations();
             }
         }
 
