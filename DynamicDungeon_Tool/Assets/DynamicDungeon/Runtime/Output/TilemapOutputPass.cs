@@ -45,6 +45,8 @@ namespace DynamicDungeon.Runtime.Output
             }
 
             WorldSnapshot.IntChannelSnapshot channelSnapshot = GetIntChannel(snapshot, intChannelName);
+            WorldSnapshot.IntChannelSnapshot biomeChannelSnapshot = TryGetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+            IReadOnlyList<BiomeAsset> biomeChannelBiomes = snapshot.BiomeChannelBiomes ?? Array.Empty<BiomeAsset>();
             TilemapLayerDefinition catchAllLayer = FindCatchAllLayer(layerDefinitions);
             int[] emptyTagIds = Array.Empty<int>();
 
@@ -61,8 +63,9 @@ namespace DynamicDungeon.Runtime.Output
                 int x = index % snapshot.Width;
                 int y = index / snapshot.Width;
                 Vector2Int cellPosition = new Vector2Int(x, y);
+                BiomeAsset resolvedBiome = ResolveBiome(biome, biomeChannelSnapshot, biomeChannelBiomes, index);
                 TileBase tile;
-                if (!biome.TryGetTile(logicalId, cellPosition, out tile))
+                if (resolvedBiome == null || !resolvedBiome.TryGetTile(logicalId, cellPosition, out tile))
                 {
                     continue;
                 }
@@ -81,6 +84,17 @@ namespace DynamicDungeon.Runtime.Output
 
         private static WorldSnapshot.IntChannelSnapshot GetIntChannel(WorldSnapshot snapshot, string intChannelName)
         {
+            WorldSnapshot.IntChannelSnapshot channelSnapshot = TryGetIntChannel(snapshot, intChannelName);
+            if (channelSnapshot != null)
+            {
+                return channelSnapshot;
+            }
+
+            throw new InvalidOperationException("WorldSnapshot does not contain int channel '" + intChannelName + "'.");
+        }
+
+        private static WorldSnapshot.IntChannelSnapshot TryGetIntChannel(WorldSnapshot snapshot, string intChannelName)
+        {
             int index;
             for (index = 0; index < snapshot.IntChannels.Length; index++)
             {
@@ -91,7 +105,7 @@ namespace DynamicDungeon.Runtime.Output
                 }
             }
 
-            throw new InvalidOperationException("WorldSnapshot does not contain int channel '" + intChannelName + "'.");
+            return null;
         }
 
         private static TilemapLayerDefinition FindCatchAllLayer(IReadOnlyList<TilemapLayerDefinition> layerDefinitions)
@@ -141,6 +155,30 @@ namespace DynamicDungeon.Runtime.Output
             }
 
             return catchAllLayer;
+        }
+
+        private static BiomeAsset ResolveBiome(
+            BiomeAsset fallbackBiome,
+            WorldSnapshot.IntChannelSnapshot biomeChannelSnapshot,
+            IReadOnlyList<BiomeAsset> biomeChannelBiomes,
+            int index)
+        {
+            if (biomeChannelSnapshot == null ||
+                biomeChannelSnapshot.Data == null ||
+                index < 0 ||
+                index >= biomeChannelSnapshot.Data.Length)
+            {
+                return fallbackBiome;
+            }
+
+            int biomeIndex = biomeChannelSnapshot.Data[index];
+            if (biomeIndex < 0 || biomeIndex >= biomeChannelBiomes.Count)
+            {
+                return fallbackBiome;
+            }
+
+            BiomeAsset resolvedBiome = biomeChannelBiomes[biomeIndex];
+            return resolvedBiome != null ? resolvedBiome : fallbackBiome;
         }
     }
 }

@@ -5,6 +5,7 @@ namespace DynamicDungeon.Runtime.Nodes
         X,
         Y,
         Radial,
-        Diagonal
+        Diagonal,
+        Data
     }
 }

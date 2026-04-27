@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using DynamicDungeon.Runtime.Biome;
 using Unity.Collections;
 
 namespace DynamicDungeon.Runtime.Core
@@ -30,6 +32,7 @@ namespace DynamicDungeon.Runtime.Core
         public int Width;
         public int Height;
         public int Seed;
+        public BiomeAsset[] BiomeChannelBiomes = Array.Empty<BiomeAsset>();
         public FloatChannelSnapshot[] FloatChannels = Array.Empty<FloatChannelSnapshot>();
         public IntChannelSnapshot[] IntChannels = Array.Empty<IntChannelSnapshot>();
         public BoolMaskChannelSnapshot[] BoolMaskChannels = Array.Empty<BoolMaskChannelSnapshot>();
@@ -52,7 +55,7 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
-        public static WorldSnapshot FromWorldData(WorldData data)
+        public static WorldSnapshot FromWorldData(WorldData data, IReadOnlyList<BiomeAsset> biomeChannelBiomes = null)
         {
             if (data == null)
             {
@@ -63,6 +66,7 @@ namespace DynamicDungeon.Runtime.Core
             snapshot.Width = data.Width;
             snapshot.Height = data.Height;
             snapshot.Seed = data.Seed;
+            snapshot.BiomeChannelBiomes = CopyBiomeChannelBiomes(biomeChannelBiomes);
             snapshot.FloatChannels = BuildFloatChannels(data);
             snapshot.IntChannels = BuildIntChannels(data);
             snapshot.BoolMaskChannels = BuildBoolMaskChannels(data);
@@ -255,6 +259,24 @@ namespace DynamicDungeon.Runtime.Core
             {
                 destination[index] = source[index];
             }
+        }
+
+        private static BiomeAsset[] CopyBiomeChannelBiomes(IReadOnlyList<BiomeAsset> biomeChannelBiomes)
+        {
+            if (biomeChannelBiomes == null || biomeChannelBiomes.Count == 0)
+            {
+                return Array.Empty<BiomeAsset>();
+            }
+
+            BiomeAsset[] copiedBiomes = new BiomeAsset[biomeChannelBiomes.Count];
+
+            int index;
+            for (index = 0; index < biomeChannelBiomes.Count; index++)
+            {
+                copiedBiomes[index] = biomeChannelBiomes[index];
+            }
+
+            return copiedBiomes;
         }
     }
 }

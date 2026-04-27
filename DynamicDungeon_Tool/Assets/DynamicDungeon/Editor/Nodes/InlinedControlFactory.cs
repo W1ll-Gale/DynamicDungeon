@@ -6,6 +6,7 @@ using System.Reflection;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -16,6 +17,7 @@ namespace DynamicDungeon.Editor.Nodes
         private sealed class ParameterMetadata
         {
             public Type ValueType;
+            public Type AssetType;
             public RangeAttribute RangeAttribute;
             public string TooltipText;
             public string DisplayName;
@@ -310,6 +312,12 @@ namespace DynamicDungeon.Editor.Nodes
                 return WrapControl(parameterName, field, metadata, defaultValue, onValueChanged);
             }
 
+            if (metadata != null && metadata.AssetType != null)
+            {
+                field = CreateAssetGuidReferenceControl(parameterName, labelText, parameterValue, metadata.AssetType, onValueChanged);
+                return WrapControl(parameterName, field, metadata, defaultValue, onValueChanged);
+            }
+
             bool parsedBoolean;
             if (bool.TryParse(parameterValue, out parsedBoolean))
             {
@@ -543,6 +551,21 @@ namespace DynamicDungeon.Editor.Nodes
             return vectorField;
         }
 
+        private static VisualElement CreateAssetGuidReferenceControl(string parameterName, string labelText, string parameterValue, Type assetType, Action<string, string> onValueChanged)
+        {
+            ObjectField objectField = new ObjectField(labelText);
+            objectField.objectType = assetType;
+            objectField.allowSceneObjects = false;
+            objectField.SetValueWithoutNotify(LoadAssetFromGuid(parameterValue, assetType));
+            objectField.RegisterValueChangedCallback(
+                changeEvent =>
+                {
+                    onValueChanged?.Invoke(parameterName, GetAssetGuid(changeEvent.newValue));
+                });
+
+            return objectField;
+        }
+
         private static VisualElement CreateTextControl(string parameterName, string labelText, string parameterValue, Action<string, string> onValueChanged)
         {
             TextField textField = new TextField(labelText);
@@ -715,6 +738,14 @@ namespace DynamicDungeon.Editor.Nodes
                 return;
             }
 
+            if (field is ObjectField objectField)
+            {
+                UnityEngine.Object asset = LoadAssetFromGuid(defaultValue, objectField.objectType);
+                objectField.SetValueWithoutNotify(asset);
+                onValueChanged?.Invoke(parameterName, GetAssetGuid(asset));
+                return;
+            }
+
             if (field is FloatField floatField)
             {
                 float parsedFloat;
@@ -789,6 +820,8 @@ namespace DynamicDungeon.Editor.Nodes
 
                 ParameterMetadata metadata = new ParameterMetadata();
                 metadata.ValueType = field.FieldType;
+                AssetGuidReferenceAttribute fieldAssetReference = field.GetCustomAttribute<AssetGuidReferenceAttribute>();
+                metadata.AssetType = fieldAssetReference != null ? fieldAssetReference.AssetType : null;
                 metadata.RangeAttribute = field.GetCustomAttribute<RangeAttribute>();
                 metadata.TooltipText = GetTooltipText(field);
                 metadata.DisplayName = GetDisplayName(field);
@@ -810,6 +843,8 @@ namespace DynamicDungeon.Editor.Nodes
 
                 ParameterMetadata metadata = new ParameterMetadata();
                 metadata.ValueType = property.PropertyType;
+                AssetGuidReferenceAttribute propertyAssetReference = property.GetCustomAttribute<AssetGuidReferenceAttribute>();
+                metadata.AssetType = propertyAssetReference != null ? propertyAssetReference.AssetType : null;
                 metadata.RangeAttribute = property.GetCustomAttribute<RangeAttribute>();
                 metadata.TooltipText = GetTooltipText(property);
                 metadata.DisplayName = GetDisplayName(property);
@@ -1052,6 +1087,38 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             return value ?? string.Empty;
+        }
+
+        private static UnityEngine.Object LoadAssetFromGuid(string assetGuid, Type assetType)
+        {
+            if (string.IsNullOrWhiteSpace(assetGuid) || assetType == null)
+            {
+                return null;
+            }
+
+            string assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return null;
+            }
+
+            return AssetDatabase.LoadAssetAtPath(assetPath, assetType);
+        }
+
+        private static string GetAssetGuid(UnityEngine.Object asset)
+        {
+            if (asset == null)
+            {
+                return string.Empty;
+            }
+
+            string assetPath = AssetDatabase.GetAssetPath(asset);
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return string.Empty;
+            }
+
+            return AssetDatabase.AssetPathToGUID(assetPath);
         }
 
         private static bool TryParseVector2Value(string value, out Vector2 parsedVector)

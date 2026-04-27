@@ -171,7 +171,7 @@ namespace DynamicDungeon.Runtime.Core
                 if (dirtyJobCount == 0)
                 {
                     progress?.Report(1.0f);
-                    return CreateSuccessResult(WorldSnapshot.FromWorldData(plan.AllocatedWorld));
+                    return CreateSuccessResult(WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes));
                 }
 
                 progress?.Report(0.0f);
@@ -235,7 +235,7 @@ namespace DynamicDungeon.Runtime.Core
                     progress?.Report((float)completedDirtyJobs / dirtyJobCount);
                 }
 
-                return CreateSuccessResult(WorldSnapshot.FromWorldData(plan.AllocatedWorld));
+                return CreateSuccessResult(WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes));
             }
             catch (Exception exception)
             {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DynamicDungeon.Runtime.Biome;
 using Unity.Collections;
 
 namespace DynamicDungeon.Runtime.Core
@@ -11,6 +12,7 @@ namespace DynamicDungeon.Runtime.Core
         private readonly Dictionary<string, long> _localSeedsByNodeId;
         private readonly WorldData _allocatedWorld;
         private readonly long _globalSeed;
+        private BiomeAsset[] _biomeChannelBiomes;
         private Dictionary<string, float> _initialNumericBlackboardValues;
         private bool _isDisposed;
 
@@ -43,6 +45,14 @@ namespace DynamicDungeon.Runtime.Core
             get
             {
                 return _globalSeed;
+            }
+        }
+
+        public IReadOnlyList<BiomeAsset> BiomeChannelBiomes
+        {
+            get
+            {
+                return _biomeChannelBiomes ?? Array.Empty<BiomeAsset>();
             }
         }
 
@@ -161,6 +171,25 @@ namespace DynamicDungeon.Runtime.Core
             }
 
             _initialNumericBlackboardValues[key] = value;
+        }
+
+        public void SetBiomeChannelBiomes(IReadOnlyList<BiomeAsset> biomeChannelBiomes)
+        {
+            ThrowIfDisposed();
+
+            if (biomeChannelBiomes == null || biomeChannelBiomes.Count == 0)
+            {
+                _biomeChannelBiomes = Array.Empty<BiomeAsset>();
+                return;
+            }
+
+            _biomeChannelBiomes = new BiomeAsset[biomeChannelBiomes.Count];
+
+            int index;
+            for (index = 0; index < biomeChannelBiomes.Count; index++)
+            {
+                _biomeChannelBiomes[index] = biomeChannelBiomes[index];
+            }
         }
 
         public long GetLocalSeed(string nodeId)
@@ -319,7 +348,19 @@ namespace DynamicDungeon.Runtime.Core
 
                 if (!added)
                 {
+                    if (declaration.Type == ChannelType.Int &&
+                        BiomeChannelUtility.IsBiomeChannel(declaration.ChannelName) &&
+                        allocatedWorld.HasIntChannel(declaration.ChannelName))
+                    {
+                        continue;
+                    }
+
                     throw new InvalidOperationException("Channel '" + declaration.ChannelName + "' is declared as owned output by more than one node, or conflicts with an existing channel type. Offending node: '" + node.NodeName + "'.");
+                }
+
+                if (declaration.Type == ChannelType.Int && BiomeChannelUtility.IsBiomeChannel(declaration.ChannelName))
+                {
+                    InitialiseBiomeChannel(allocatedWorld.GetIntChannel(declaration.ChannelName));
                 }
             }
         }
@@ -533,6 +574,15 @@ namespace DynamicDungeon.Runtime.Core
                     " but expected " +
                     expectedLength +
                     ".");
+            }
+        }
+
+        private static void InitialiseBiomeChannel(NativeArray<int> biomeChannel)
+        {
+            int index;
+            for (index = 0; index < biomeChannel.Length; index++)
+            {
+                biomeChannel[index] = BiomeChannelUtility.UnassignedBiomeIndex;
             }
         }
     }

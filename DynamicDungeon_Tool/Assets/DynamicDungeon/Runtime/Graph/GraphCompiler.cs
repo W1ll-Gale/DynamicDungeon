@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Core;
 using Unity.Burst;
 using Unity.Collections;
@@ -129,7 +130,7 @@ namespace DynamicDungeon.Runtime.Graph
             }
             else
             {
-                HashSet<string> reachableNodeIds = BuildReachableNodeIds(outputNodeData.NodeId, connectionDataList);
+                HashSet<string> reachableNodeIds = BuildReachableNodeIds(outputNodeData.NodeId, nodeDataList, connectionDataList);
                 reachableNodeDataList = FilterReachableNodes(nodeDataList, reachableNodeIds);
                 reachableConnectionDataList = FilterReachableConnections(connectionDataList, reachableNodeIds);
             }
@@ -160,6 +161,12 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             List<CompiledNodeInfo> allOrderedNodes = InsertImplicitCastNodes(orderedNodes, connectionValidation.Connections);
+            BiomeAsset[] biomeChannelBiomes = ResolveBiomeChannelPalette(allOrderedNodes, diagnostics);
+
+            if (HasErrors(diagnostics))
+            {
+                return new GraphCompileResult(false, diagnostics, null, outputChannelName, hasConnectedOutput);
+            }
 
             try
             {
@@ -173,6 +180,7 @@ namespace DynamicDungeon.Runtime.Graph
 
                 Dictionary<string, float> initialBlackboardValues = BuildExposedPropertyInitialValues(graph.ExposedProperties);
                 ExecutionPlan plan = ExecutionPlan.Build(orderedRuntimeNodes, graph.WorldWidth, graph.WorldHeight, graph.DefaultSeed, initialBlackboardValues);
+                plan.SetBiomeChannelBiomes(biomeChannelBiomes);
                 return new GraphCompileResult(true, diagnostics, plan, outputChannelName, hasConnectedOutput);
             }
             catch (Exception exception)
@@ -212,13 +220,19 @@ namespace DynamicDungeon.Runtime.Graph
             return outputNodeData;
         }
 
-        private static HashSet<string> BuildReachableNodeIds(string outputNodeId, IReadOnlyList<GenConnectionData> connectionDataList)
+        private static HashSet<string> BuildReachableNodeIds(string outputNodeId, IReadOnlyList<GenNodeData> nodeDataList, IReadOnlyList<GenConnectionData> connectionDataList)
         {
             HashSet<string> reachableNodeIds = new HashSet<string>(StringComparer.Ordinal);
             string resolvedOutputNodeId = outputNodeId ?? string.Empty;
             Queue<string> pendingNodeIds = new Queue<string>();
-            reachableNodeIds.Add(resolvedOutputNodeId);
-            pendingNodeIds.Enqueue(resolvedOutputNodeId);
+
+            if (!string.IsNullOrWhiteSpace(resolvedOutputNodeId))
+            {
+                reachableNodeIds.Add(resolvedOutputNodeId);
+                pendingNodeIds.Enqueue(resolvedOutputNodeId);
+            }
+
+            EnqueueBiomeChannelRoots(nodeDataList, reachableNodeIds, pendingNodeIds);
 
             while (pendingNodeIds.Count > 0)
             {
@@ -243,6 +257,24 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             return reachableNodeIds;
+        }
+
+        private static void EnqueueBiomeChannelRoots(IReadOnlyList<GenNodeData> nodeDataList, HashSet<string> reachableNodeIds, Queue<string> pendingNodeIds)
+        {
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < nodeDataList.Count; nodeIndex++)
+            {
+                GenNodeData nodeData = nodeDataList[nodeIndex];
+                if (nodeData == null || string.IsNullOrWhiteSpace(nodeData.NodeId) || !WritesBiomeChannel(nodeData.Ports))
+                {
+                    continue;
+                }
+
+                if (reachableNodeIds.Add(nodeData.NodeId))
+                {
+                    pendingNodeIds.Enqueue(nodeData.NodeId);
+                }
+            }
         }
 
         private static List<GenNodeData> FilterReachableNodes(IReadOnlyList<GenNodeData> nodeDataList, HashSet<string> reachableNodeIds)
@@ -628,6 +660,11 @@ namespace DynamicDungeon.Runtime.Graph
                         continue;
                     }
 
+                    if (declaration.Type == ChannelType.Int && BiomeChannelUtility.IsBiomeChannel(declaration.ChannelName))
+                    {
+                        continue;
+                    }
+
                     CompiledNodeInfo existingOwner;
                     if (ownersByChannelName.TryGetValue(declaration.ChannelName, out existingOwner))
                     {
@@ -661,6 +698,8 @@ namespace DynamicDungeon.Runtime.Graph
                 adjacency[connection.FromNode.Node.NodeId].Add(connection.ToNode);
             }
 
+            AddImplicitBiomeChannelOrdering(compiledNodes, adjacency);
+
             for (nodeIndex = 0; nodeIndex < compiledNodes.Count; nodeIndex++)
             {
                 CompiledNodeInfo compiledNode = compiledNodes[nodeIndex];
@@ -672,6 +711,97 @@ namespace DynamicDungeon.Runtime.Graph
 
             orderedNodes.Reverse();
             return orderedNodes;
+        }
+
+        private static void AddImplicitBiomeChannelOrdering(IReadOnlyList<CompiledNodeInfo> compiledNodes, Dictionary<string, List<CompiledNodeInfo>> adjacency)
+        {
+            CompiledNodeInfo previousBiomeWriter = null;
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < compiledNodes.Count; nodeIndex++)
+            {
+                CompiledNodeInfo compiledNode = compiledNodes[nodeIndex];
+                if (!WritesBiomeChannel(compiledNode.Node.ChannelDeclarations))
+                {
+                    continue;
+                }
+
+                if (previousBiomeWriter != null)
+                {
+                    adjacency[previousBiomeWriter.Node.NodeId].Add(compiledNode);
+                }
+
+                previousBiomeWriter = compiledNode;
+            }
+        }
+
+        private static BiomeAsset[] ResolveBiomeChannelPalette(IReadOnlyList<CompiledNodeInfo> orderedNodes, List<GraphDiagnostic> diagnostics)
+        {
+            BiomeChannelPalette palette = new BiomeChannelPalette();
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < orderedNodes.Count; nodeIndex++)
+            {
+                CompiledNodeInfo compiledNode = orderedNodes[nodeIndex];
+                IBiomeChannelNode biomeChannelNode = compiledNode.Node as IBiomeChannelNode;
+                if (biomeChannelNode == null)
+                {
+                    continue;
+                }
+
+                string errorMessage;
+                if (!biomeChannelNode.ResolveBiomePalette(palette, out errorMessage))
+                {
+                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, errorMessage, compiledNode.Node.NodeId, null));
+                }
+            }
+
+            return palette.ToArray();
+        }
+
+        private static bool WritesBiomeChannel(IReadOnlyList<GenPortData> ports)
+        {
+            if (ports == null)
+            {
+                return false;
+            }
+
+            int portIndex;
+            for (portIndex = 0; portIndex < ports.Count; portIndex++)
+            {
+                GenPortData port = ports[portIndex];
+                if (port != null &&
+                    port.Direction == PortDirection.Output &&
+                    port.Type == ChannelType.Int &&
+                    BiomeChannelUtility.IsBiomeChannel(port.PortName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool WritesBiomeChannel(IReadOnlyList<ChannelDeclaration> channelDeclarations)
+        {
+            if (channelDeclarations == null)
+            {
+                return false;
+            }
+
+            int declarationIndex;
+            for (declarationIndex = 0; declarationIndex < channelDeclarations.Count; declarationIndex++)
+            {
+                ChannelDeclaration declaration = channelDeclarations[declarationIndex];
+                if (declaration.IsWrite &&
+                    declaration.Type == ChannelType.Int &&
+                    BiomeChannelUtility.IsBiomeChannel(declaration.ChannelName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void DepthFirstVisit(CompiledNodeInfo compiledNode, IReadOnlyDictionary<string, List<CompiledNodeInfo>> adjacency, Dictionary<string, VisitState> visitStates, List<CompiledNodeInfo> orderedNodes, List<GraphDiagnostic> diagnostics)
