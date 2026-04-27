@@ -82,6 +82,14 @@ namespace DynamicDungeon.Runtime.Nodes
         [Description("Angle in degrees for Diagonal mode. 0 = left-to-right, 90 = bottom-to-top.")]
         private float _angle;
 
+        [MinValue(0.0001f)]
+        [Description("Controls how quickly the linear gradient reaches its maximum value. Higher values spread it further across the map.")]
+        private float _scale;
+
+        [MinValue(0.0001f)]
+        [Description("Controls how quickly the radial gradient reaches its maximum value from the centre. Higher values produce a larger radius.")]
+        private float _radius;
+
         // Constant
         [Description("The constant float value written to every tile.")]
         private float _floatValue;
@@ -182,6 +190,8 @@ namespace DynamicDungeon.Runtime.Nodes
             _direction = GradientDirection.X;
             _centre = new Vector2(0.5f, 0.5f);
             _angle = 45.0f;
+            _scale = 1.0f;
+            _radius = 1.0f;
             _floatValue = 0.0f;
             _intValue = 0;
 
@@ -202,6 +212,8 @@ namespace DynamicDungeon.Runtime.Nodes
             GradientDirection direction,
             Vector2 centre,
             float angle,
+            float scale,
+            float radius,
             float floatValue,
             int intValue)
             : this(nodeId, nodeName)
@@ -217,6 +229,8 @@ namespace DynamicDungeon.Runtime.Nodes
             _direction = direction;
             _centre = centre;
             _angle = angle;
+            _scale = math.max(0.0001f, scale);
+            _radius = math.max(0.0001f, radius);
             _floatValue = floatValue;
             _intValue = intValue;
 
@@ -363,6 +377,28 @@ namespace DynamicDungeon.Runtime.Nodes
                 return;
             }
 
+            if (string.Equals(name, "scale", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsed;
+                if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsed))
+                {
+                    _scale = math.max(0.0001f, parsed);
+                }
+
+                return;
+            }
+
+            if (string.Equals(name, "radius", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsed;
+                if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsed))
+                {
+                    _radius = math.max(0.0001f, parsed);
+                }
+
+                return;
+            }
+
             if (string.Equals(name, "floatValue", StringComparison.OrdinalIgnoreCase))
             {
                 float parsed;
@@ -437,9 +473,37 @@ namespace DynamicDungeon.Runtime.Nodes
                         || string.Equals(parameterName, "persistence", StringComparison.OrdinalIgnoreCase);
 
                 case NoiseAlgorithm.Gradient:
-                    return string.Equals(parameterName, "direction", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(parameterName, "centre", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(parameterName, "angle", StringComparison.OrdinalIgnoreCase);
+                    if (string.Equals(parameterName, "direction", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    if (string.Equals(parameterName, "scale", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _direction != GradientDirection.Radial;
+                    }
+
+                    if (string.Equals(parameterName, "radius", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _direction == GradientDirection.Radial;
+                    }
+
+                    if (string.Equals(parameterName, "amplitude", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    if (string.Equals(parameterName, "centre", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _direction == GradientDirection.Radial;
+                    }
+
+                    if (string.Equals(parameterName, "angle", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _direction == GradientDirection.Diagonal;
+                    }
+
+                    return false;
 
                 case NoiseAlgorithm.Constant:
                     return string.Equals(parameterName, "floatValue", StringComparison.OrdinalIgnoreCase)
@@ -580,7 +644,10 @@ namespace DynamicDungeon.Runtime.Nodes
                 RadialMaxDist = radialMaxDist,
                 DiagonalDir = diagonalDir,
                 DiagonalMin = diagonalMin,
-                DiagonalRange = diagonalRange
+                DiagonalRange = diagonalRange,
+                Scale = _scale,
+                Radius = _radius,
+                Amplitude = _amplitude
             };
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
         }
@@ -671,7 +738,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             if (trimmedValue.Length == 0)
             {
-                result = Vector2.zero;
+                result = new Vector2(0.5f, 0.5f);
                 return true;
             }
 
@@ -709,7 +776,7 @@ namespace DynamicDungeon.Runtime.Nodes
             {
             }
 
-            result = Vector2.zero;
+            result = new Vector2(0.5f, 0.5f);
             return false;
         }
     }

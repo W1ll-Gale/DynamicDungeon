@@ -41,7 +41,7 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
-        public async Task VoronoiGraphCompilationRetainsBothOwnedOutputChannels()
+        public void VoronoiGraphCompilationRetainsBothOwnedOutputChannels()
         {
             GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
 
@@ -86,7 +86,7 @@ namespace DynamicDungeon.Tests.Runtime
         public async Task GradientRadialModeIncreasesOutwardFromTheCentre()
         {
             Executor executor = new Executor();
-            GradientNoiseNode node = new GradientNoiseNode("gradient-node", "Gradient", "GradientOut", GradientDirection.Radial, new Vector2(0.5f, 0.5f), 45.0f);
+            GradientNoiseNode node = new GradientNoiseNode("gradient-node", "Gradient", "GradientOut", GradientDirection.Radial, new Vector2(0.5f, 0.5f), 45.0f, 1.0f, 1.0f, 1.0f);
             ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { node }, 3, 3, 0L);
 
             ExecutionResult result = await executor.ExecuteAsync(plan, CancellationToken.None);
@@ -102,6 +102,30 @@ namespace DynamicDungeon.Tests.Runtime
             Assert.That(topLeft, Is.EqualTo(1.0f).Within(0.0001f));
             Assert.That(bottomRight, Is.EqualTo(1.0f).Within(0.0001f));
             Assert.That(topLeft, Is.GreaterThan(centre));
+        }
+
+        [Test]
+        public async Task GradientScaleAndAmplitudeAffectOutputStrength()
+        {
+            Executor executor = new Executor();
+            GradientNoiseNode baseNode = new GradientNoiseNode("gradient-base", "Gradient", "GradientOut", GradientDirection.X, new Vector2(0.5f, 0.5f), 45.0f, 1.0f, 1.0f, 1.0f);
+            GradientNoiseNode scaledNode = new GradientNoiseNode("gradient-scaled", "Gradient", "GradientOut", GradientDirection.X, new Vector2(0.5f, 0.5f), 45.0f, 2.0f, 1.0f, 1.0f);
+            GradientNoiseNode strongerNode = new GradientNoiseNode("gradient-stronger", "Gradient", "GradientOut", GradientDirection.X, new Vector2(0.5f, 0.5f), 45.0f, 1.0f, 1.0f, 0.5f);
+
+            ExecutionResult baseResult = await executor.ExecuteAsync(ExecutionPlan.Build(new IGenNode[] { baseNode }, 5, 1, 0L), CancellationToken.None);
+            ExecutionResult scaledResult = await executor.ExecuteAsync(ExecutionPlan.Build(new IGenNode[] { scaledNode }, 5, 1, 0L), CancellationToken.None);
+            ExecutionResult strongerResult = await executor.ExecuteAsync(ExecutionPlan.Build(new IGenNode[] { strongerNode }, 5, 1, 0L), CancellationToken.None);
+
+            Assert.That(baseResult.IsSuccess, Is.True);
+            Assert.That(scaledResult.IsSuccess, Is.True);
+            Assert.That(strongerResult.IsSuccess, Is.True);
+
+            float[] baseValues = baseResult.Snapshot.FloatChannels[0].Data;
+            float[] scaledValues = scaledResult.Snapshot.FloatChannels[0].Data;
+            float[] strongerValues = strongerResult.Snapshot.FloatChannels[0].Data;
+
+            Assert.That(scaledValues[4], Is.LessThan(baseValues[4]));
+            Assert.That(strongerValues[4], Is.LessThan(baseValues[4]));
         }
 
         [Test]

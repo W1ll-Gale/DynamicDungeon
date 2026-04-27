@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Output
-    Position: {x: 795.19135, y: -82.99997}
+    Position: {x: 815.319, y: -106.72563}
     Ports:
     - PortName: LogicalIds
       DisplayName: LogicalIds
@@ -95,7 +95,7 @@ MonoBehaviour:
   - NodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
     NodeTypeName: DynamicDungeon.Runtime.Nodes.WeightedBlendNode
     NodeName: Weighted Blend
-    Position: {x: 193.13123, y: 132.14676}
+    Position: {x: 72.31857, y: 90.99998}
     Ports:
     - PortName: A
       DisplayName: A
@@ -117,7 +117,7 @@ MonoBehaviour:
   - NodeId: 0e3b018e-5349-4323-9da9-01d0c12b2bc4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NoiseNode
     NodeName: Noise
-    Position: {x: -463.01642, y: 330.44485}
+    Position: {x: -447.16257, y: 268}
     Ports:
     - PortName: Output__0e3b018e-5349-4323-9da9-01d0c12b2bc4
       DisplayName: Output
@@ -125,31 +125,35 @@ MonoBehaviour:
       Type: 0
     Parameters:
     - Name: algorithm
-      Value: Voronoi
+      Value: Gradient
     - Name: frequency
-      Value: 0.34
+      Value: 0.03
     - Name: amplitude
-      Value: 1.22
+      Value: 1.2
     - Name: offset
       Value: 0,0
     - Name: octaves
-      Value: 8
+      Value: 5
     - Name: seedOffset
       Value: 5
     - Name: lacunarity
-      Value: 1
+      Value: 2.58
     - Name: persistence
-      Value: 0
+      Value: 0.53
     - Name: direction
-      Value: Diagonal
+      Value: Radial
     - Name: centre
-      Value: 0,0
+      Value: 0.5,0.5
     - Name: angle
-      Value: 16.25
+      Value: 16.7
     - Name: floatValue
       Value: -0.63
     - Name: intValue
       Value: 0
+    - Name: scale
+      Value: 2
+    - Name: radius
+      Value: 1
   Connections:
   - FromNodeId: 61c447b7-18c8-4475-8411-0ab55879445c
     FromPortName: Output__61c447b7-18c8-4475-8411-0ab55879445c

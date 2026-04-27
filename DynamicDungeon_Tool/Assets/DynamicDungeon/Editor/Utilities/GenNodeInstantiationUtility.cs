@@ -351,7 +351,7 @@ namespace DynamicDungeon.Editor.Utilities
 
                 if (parameter.ParameterType == typeof(Vector2))
                 {
-                    arguments[parameterIndex] = Vector2.zero;
+                    arguments[parameterIndex] = CreatePrototypeVector2Value(parameter.Name ?? string.Empty);
                     continue;
                 }
 
@@ -794,7 +794,7 @@ namespace DynamicDungeon.Editor.Utilities
 
             if (parameterType == typeof(Vector2))
             {
-                argumentValue = Vector2.zero;
+                argumentValue = CreatePrototypeVector2Value(parameterName);
                 return true;
             }
 
@@ -948,6 +948,16 @@ namespace DynamicDungeon.Editor.Utilities
                 return 1.0f;
             }
 
+            if (parameterName.IndexOf("scale", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return 1.0f;
+            }
+
+            if (parameterName.IndexOf("radius", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return 1.0f;
+            }
+
             if (parameterName.IndexOf("threshold", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 parameterName.IndexOf("probability", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -971,6 +981,17 @@ namespace DynamicDungeon.Editor.Utilities
             }
 
             return 0;
+        }
+
+        private static Vector2 CreatePrototypeVector2Value(string parameterName)
+        {
+            if (parameterName.IndexOf("centre", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                parameterName.IndexOf("center", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return new Vector2(0.5f, 0.5f);
+            }
+
+            return Vector2.zero;
         }
 
         private static string CreatePrototypeStringValue(Type nodeType, string nodeId, string parameterName)

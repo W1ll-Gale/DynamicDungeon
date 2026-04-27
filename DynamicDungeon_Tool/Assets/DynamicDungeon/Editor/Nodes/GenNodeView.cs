@@ -13,6 +13,20 @@ namespace DynamicDungeon.Editor.Nodes
 {
     public class GenNodeView : Node
     {
+        private sealed class PreservedConnection
+        {
+            public readonly GenConnectionData ConnectionData;
+            public readonly Port CounterpartPort;
+            public readonly bool RebuiltPortIsOutput;
+
+            public PreservedConnection(GenConnectionData connectionData, Port counterpartPort, bool rebuiltPortIsOutput)
+            {
+                ConnectionData = connectionData;
+                CounterpartPort = counterpartPort;
+                RebuiltPortIsOutput = rebuiltPortIsOutput;
+            }
+        }
+
         private static readonly Vector2 DefaultNodeSize = new Vector2(240.0f, 180.0f);
         private static readonly Vector2 ThumbnailSize = new Vector2(120.0f, 80.0f);
 
@@ -495,6 +509,7 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             if (string.Equals(parameterName, "algorithm", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(parameterName, "direction", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(parameterName, "outputType", StringComparison.OrdinalIgnoreCase))
             {
                 RebuildNodePorts();
@@ -902,7 +917,9 @@ namespace DynamicDungeon.Editor.Nodes
 
         private void RebuildNodePorts()
         {
+            DynamicDungeonGraphView graphView = GetFirstAncestorOfType<DynamicDungeonGraphView>();
             HashSet<string> oldPortNames = new HashSet<string>(_portsByName.Keys, StringComparer.Ordinal);
+            List<PreservedConnection> preservedConnections = CapturePreservedConnections();
 
             foreach (Port portView in _portsByName.Values)
             {
@@ -936,7 +953,51 @@ namespace DynamicDungeon.Editor.Nodes
             if (_graph != null && _nodeData != null)
             {
                 RemoveStaleConnections(oldPortNames, newPortNames);
+                RestoreCompatibleConnections(preservedConnections, graphView);
             }
+        }
+
+        private List<PreservedConnection> CapturePreservedConnections()
+        {
+            List<PreservedConnection> preservedConnections = new List<PreservedConnection>();
+            HashSet<Edge> visitedEdges = new HashSet<Edge>();
+
+            foreach (KeyValuePair<string, Port> portPair in _portsByName)
+            {
+                Port portView = portPair.Value;
+                if (portView == null)
+                {
+                    continue;
+                }
+
+                List<Edge> connectedEdges = new List<Edge>(portView.connections);
+                int edgeIndex;
+                for (edgeIndex = 0; edgeIndex < connectedEdges.Count; edgeIndex++)
+                {
+                    Edge edge = connectedEdges[edgeIndex];
+                    if (edge == null || !visitedEdges.Add(edge))
+                    {
+                        continue;
+                    }
+
+                    GenConnectionData connectionData = CloneConnectionData(edge.userData as GenConnectionData);
+                    if (connectionData == null)
+                    {
+                        continue;
+                    }
+
+                    bool rebuiltPortIsOutput = ReferenceEquals(edge.output, portView);
+                    Port counterpartPort = rebuiltPortIsOutput ? edge.input : edge.output;
+                    if (counterpartPort == null)
+                    {
+                        continue;
+                    }
+
+                    preservedConnections.Add(new PreservedConnection(connectionData, counterpartPort, rebuiltPortIsOutput));
+                }
+            }
+
+            return preservedConnections;
         }
 
         private void RemoveStaleConnections(HashSet<string> oldPortNames, HashSet<string> newPortNames)
@@ -977,6 +1038,143 @@ namespace DynamicDungeon.Editor.Nodes
             {
                 EditorUtility.SetDirty(_graph);
             }
+        }
+
+        private void RestoreCompatibleConnections(IReadOnlyList<PreservedConnection> preservedConnections, DynamicDungeonGraphView graphView)
+        {
+            if (_graph == null || _graph.Connections == null || _nodeData == null || graphView == null)
+            {
+                return;
+            }
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < preservedConnections.Count; connectionIndex++)
+            {
+                PreservedConnection preservedConnection = preservedConnections[connectionIndex];
+                if (preservedConnection == null)
+                {
+                    continue;
+                }
+
+                string rebuiltPortName = preservedConnection.RebuiltPortIsOutput
+                    ? preservedConnection.ConnectionData.FromPortName
+                    : preservedConnection.ConnectionData.ToPortName;
+
+                Port rebuiltPort;
+                if (!_portsByName.TryGetValue(rebuiltPortName ?? string.Empty, out rebuiltPort))
+                {
+                    RemoveGraphConnection(preservedConnection.ConnectionData);
+                    continue;
+                }
+
+                Port outputPort = preservedConnection.RebuiltPortIsOutput ? rebuiltPort : preservedConnection.CounterpartPort;
+                Port inputPort = preservedConnection.RebuiltPortIsOutput ? preservedConnection.CounterpartPort : rebuiltPort;
+                if (outputPort == null || inputPort == null || !GenPortUtility.CanConnectTo(outputPort, inputPort))
+                {
+                    RemoveGraphConnection(preservedConnection.ConnectionData);
+                    continue;
+                }
+
+                CastMode castMode = CastMode.None;
+                if (GenPortUtility.RequiresCast(outputPort, inputPort))
+                {
+                    NodePortDefinition outputPortDefinition;
+                    NodePortDefinition inputPortDefinition;
+                    if (!GenPortUtility.TryGetPortDefinition(outputPort, out outputPortDefinition) ||
+                        !GenPortUtility.TryGetPortDefinition(inputPort, out inputPortDefinition) ||
+                        !CastRegistry.CanCast(outputPortDefinition.Type, inputPortDefinition.Type, out castMode))
+                    {
+                        RemoveGraphConnection(preservedConnection.ConnectionData);
+                        continue;
+                    }
+                }
+
+                GenConnectionData graphConnection = FindGraphConnection(preservedConnection.ConnectionData);
+                if (graphConnection == null)
+                {
+                    continue;
+                }
+
+                graphConnection.CastMode = castMode;
+
+                Edge edge = new Edge();
+                edge.output = outputPort;
+                edge.input = inputPort;
+
+                GenConnectionData edgeConnectionData = CloneConnectionData(graphConnection);
+                edgeConnectionData.CastMode = castMode;
+                edge.userData = edgeConnectionData;
+
+                Edge edgeView = graphView.NormaliseCreatedEdge(edge);
+                graphView.AddElement(edgeView);
+            }
+        }
+
+        private GenConnectionData FindGraphConnection(GenConnectionData candidate)
+        {
+            if (_graph == null || _graph.Connections == null || candidate == null)
+            {
+                return null;
+            }
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < _graph.Connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = _graph.Connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(connection.FromNodeId, candidate.FromNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.FromPortName, candidate.FromPortName, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToNodeId, candidate.ToNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToPortName, candidate.ToPortName, StringComparison.Ordinal))
+                {
+                    return connection;
+                }
+            }
+
+            return null;
+        }
+
+        private void RemoveGraphConnection(GenConnectionData candidate)
+        {
+            if (_graph == null || _graph.Connections == null || candidate == null)
+            {
+                return;
+            }
+
+            int connectionIndex;
+            for (connectionIndex = _graph.Connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+            {
+                GenConnectionData connection = _graph.Connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(connection.FromNodeId, candidate.FromNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.FromPortName, candidate.FromPortName, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToNodeId, candidate.ToNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToPortName, candidate.ToPortName, StringComparison.Ordinal))
+                {
+                    _graph.Connections.RemoveAt(connectionIndex);
+                    EditorUtility.SetDirty(_graph);
+                }
+            }
+        }
+
+        private static GenConnectionData CloneConnectionData(GenConnectionData source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            GenConnectionData clone = new GenConnectionData(source.FromNodeId, source.FromPortName, source.ToNodeId, source.ToPortName);
+            clone.CastMode = source.CastMode;
+            return clone;
         }
     }
 }

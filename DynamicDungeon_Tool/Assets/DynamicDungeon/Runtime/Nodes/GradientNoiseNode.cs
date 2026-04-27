@@ -15,7 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Noise")]
     [NodeDisplayName("Gradient")]
     [Description("Deterministic spatial gradient with no randomness. Direction selectable: X, Y, Radial, Diagonal. Output is always 0–1.")]
-    public sealed class GradientNoiseNode : IGenNode, IParameterReceiver
+    public sealed class GradientNoiseNode : IGenNode, IParameterReceiver, IParameterVisibilityProvider
     {
         private const string DefaultNodeName = "Gradient";
         private const int DefaultBatchSize = 64;
@@ -37,6 +37,18 @@ namespace DynamicDungeon.Runtime.Nodes
 
         [Description("Angle in degrees for Diagonal mode. 0 = left-to-right, 90 = bottom-to-top.")]
         private float _angle;
+
+        [MinValue(0.0001f)]
+        [Description("Controls how quickly the linear gradient reaches its maximum value. Higher values spread it further across the map.")]
+        private float _scale;
+
+        [MinValue(0.0001f)]
+        [Description("Controls how quickly the radial gradient reaches its maximum value from the centre. Higher values produce a larger radius.")]
+        private float _radius;
+
+        [MinValue(0.0f)]
+        [Description("Scales the strength of the gradient before the final 0–1 clamp.")]
+        private float _amplitude;
 
         public IReadOnlyList<NodePortDefinition> Ports
         {
@@ -110,11 +122,35 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public GradientNoiseNode(string nodeId, string nodeName, string outputChannelName) : this(nodeId, nodeName, outputChannelName, GradientDirection.X, new Vector2(0.5f, 0.5f), 45.0f)
+        public float Scale
+        {
+            get
+            {
+                return _scale;
+            }
+        }
+
+        public float Radius
+        {
+            get
+            {
+                return _radius;
+            }
+        }
+
+        public float Amplitude
+        {
+            get
+            {
+                return _amplitude;
+            }
+        }
+
+        public GradientNoiseNode(string nodeId, string nodeName, string outputChannelName) : this(nodeId, nodeName, outputChannelName, GradientDirection.X, new Vector2(0.5f, 0.5f), 45.0f, 1.0f, 1.0f, 1.0f)
         {
         }
 
-        public GradientNoiseNode(string nodeId, string nodeName, string outputChannelName, GradientDirection direction, Vector2 centre, float angle)
+        public GradientNoiseNode(string nodeId, string nodeName, string outputChannelName, GradientDirection direction, Vector2 centre, float angle, float scale = 1.0f, float radius = 1.0f, float amplitude = 1.0f)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -137,6 +173,9 @@ namespace DynamicDungeon.Runtime.Nodes
             _direction = direction;
             _centre = centre;
             _angle = angle;
+            _scale = math.max(0.0001f, scale);
+            _radius = math.max(0.0001f, radius);
+            _amplitude = math.max(0.0f, amplitude);
 
             string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(nodeId, outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
@@ -190,7 +229,75 @@ namespace DynamicDungeon.Runtime.Nodes
                 {
                     _angle = parsedAngle;
                 }
+
+                return;
             }
+
+            if (string.Equals(name, "scale", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsedScale;
+                if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedScale))
+                {
+                    _scale = math.max(0.0001f, parsedScale);
+                }
+
+                return;
+            }
+
+            if (string.Equals(name, "radius", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsedRadius;
+                if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedRadius))
+                {
+                    _radius = math.max(0.0001f, parsedRadius);
+                }
+
+                return;
+            }
+
+            if (string.Equals(name, "amplitude", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsedAmplitude;
+                if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedAmplitude))
+                {
+                    _amplitude = math.max(0.0f, parsedAmplitude);
+                }
+            }
+        }
+
+        public bool IsParameterVisible(string parameterName)
+        {
+            if (string.IsNullOrWhiteSpace(parameterName))
+            {
+                return true;
+            }
+
+            if (string.Equals(parameterName, "centre", StringComparison.OrdinalIgnoreCase))
+            {
+                return _direction == GradientDirection.Radial;
+            }
+
+            if (string.Equals(parameterName, "scale", StringComparison.OrdinalIgnoreCase))
+            {
+                return _direction != GradientDirection.Radial;
+            }
+
+            if (string.Equals(parameterName, "radius", StringComparison.OrdinalIgnoreCase))
+            {
+                return _direction == GradientDirection.Radial;
+            }
+
+            if (string.Equals(parameterName, "amplitude", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(parameterName, "angle", StringComparison.OrdinalIgnoreCase))
+            {
+                return _direction == GradientDirection.Diagonal;
+            }
+
+            return true;
         }
 
         public JobHandle Schedule(NodeExecutionContext context)
@@ -233,7 +340,10 @@ namespace DynamicDungeon.Runtime.Nodes
                 RadialMaxDist = radialMaxDist,
                 DiagonalDir = diagonalDir,
                 DiagonalMin = diagonalMin,
-                DiagonalRange = diagonalRange
+                DiagonalRange = diagonalRange,
+                Scale = _scale,
+                Radius = _radius,
+                Amplitude = _amplitude
             };
 
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
@@ -301,6 +411,9 @@ namespace DynamicDungeon.Runtime.Nodes
             public float2 DiagonalDir;
             public float DiagonalMin;
             public float DiagonalRange;
+            public float Scale;
+            public float Radius;
+            public float Amplitude;
 
             public void Execute(int index)
             {
@@ -330,7 +443,9 @@ namespace DynamicDungeon.Runtime.Nodes
                     value = (proj - DiagonalMin) / DiagonalRange;
                 }
 
-                Output[index] = math.saturate(value);
+                float extent = Direction == GradientDirection.Radial ? Radius : Scale;
+                float scaledValue = value / math.max(extent, 0.0001f);
+                Output[index] = math.saturate(scaledValue * Amplitude);
             }
         }
     }
