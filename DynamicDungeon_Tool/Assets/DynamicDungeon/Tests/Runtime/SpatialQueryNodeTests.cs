@@ -1,181 +1,257 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using DynamicDungeon.Runtime.Core;
-using DynamicDungeon.Runtime.Graph;
 using DynamicDungeon.Runtime.Nodes;
-using DynamicDungeon.Runtime.Semantic;
 using NUnit.Framework;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace DynamicDungeon.Tests.Runtime
 {
     public sealed class SpatialQueryNodeTests
     {
-        [TearDown]
-        public void TearDown()
-        {
-            ResetRegistryCache();
-        }
-
         [Test]
-        public async Task ContextualQueryNodeReturnsMatchingPointList()
+        public async Task ContextualQueryNodeReturnsExactlyExpectedPositionsForFloorWithEmptyTileAbove()
         {
-            FixedLogicalMapNode logicalMapNode = new FixedLogicalMapNode(
-                "logical-map",
-                "Logical Map",
-                "LogicalIds",
-                3,
-                3,
-                new[]
-                {
-                    2, 2, 2,
-                    2, 1, 2,
-                    2, 2, 2
-                });
+            int[] logicalIds =
+            {
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
 
-            string conditionsJson =
-                "{\"Entries\":[" +
-                "{\"Offset\":{\"x\":0,\"y\":0},\"MatchById\":true,\"LogicalId\":1,\"TagName\":\"\"}," +
-                "{\"Offset\":{\"x\":0,\"y\":-1},\"MatchById\":true,\"LogicalId\":2,\"TagName\":\"\"}," +
-                "{\"Offset\":{\"x\":0,\"y\":1},\"MatchById\":true,\"LogicalId\":2,\"TagName\":\"\"}," +
-                "{\"Offset\":{\"x\":-1,\"y\":0},\"MatchById\":true,\"LogicalId\":2,\"TagName\":\"\"}," +
-                "{\"Offset\":{\"x\":1,\"y\":0},\"MatchById\":true,\"LogicalId\":2,\"TagName\":\"\"}" +
-                "]}";
+            Vector2Int[] expectedPositions =
+            {
+                new Vector2Int(1, 1),
+                new Vector2Int(3, 2),
+                new Vector2Int(6, 3),
+                new Vector2Int(4, 5),
+                new Vector2Int(8, 6)
+            };
 
-            ContextualQueryNode queryNode = new ContextualQueryNode(
-                "contextual-query",
-                "Contextual Query",
-                "LogicalIds",
-                "Matches",
-                conditionsJson);
+            ContextualQueryNode queryNode = CreateContextualQueryNode(
+                CreateFloorWithEmptyAboveConditionsJson(),
+                "Matches");
 
-            WorldSnapshot snapshot = await ExecuteGraphAsync(new IGenNode[] { logicalMapNode, queryNode }, 3, 3);
+            WorldSnapshot snapshot = await ExecuteGraphAsync(logicalIds, 10, 10, queryNode);
             WorldSnapshot.PointListChannelSnapshot pointListChannel = GetPointListChannel(snapshot, "Matches");
 
             Assert.That(pointListChannel, Is.Not.Null);
-            Assert.That(pointListChannel.Data, Has.Length.EqualTo(1));
-            Assert.That(pointListChannel.Data[0], Is.EqualTo(new Vector2Int(1, 1)));
+            Assert.That(pointListChannel.Data, Has.Length.EqualTo(expectedPositions.Length));
+            CollectionAssert.AreEquivalent(expectedPositions, pointListChannel.Data);
         }
 
         [Test]
-        public async Task NeighbourhoodCheckNodeTagModeUsesResolvedRegistryTags()
+        public async Task ContextualQueryNodeReturnsEmptyPointListWhenPatternHasNoMatches()
         {
-            TileSemanticRegistry registry = ScriptableObject.CreateInstance<TileSemanticRegistry>();
-
-            try
+            int[] logicalIds =
             {
-                registry.AllTags.Add("Water");
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
 
-                TileEntry waterEntry = new TileEntry();
-                waterEntry.LogicalId = 7;
-                waterEntry.DisplayName = "Water";
-                waterEntry.Tags.Add("Water");
-                registry.Entries.Add(waterEntry);
+            string noMatchConditionsJson =
+                "{\"Entries\":[" +
+                "{\"Offset\":{\"x\":0,\"y\":0},\"MatchById\":true,\"LogicalId\":1,\"TagName\":\"\"}," +
+                "{\"Offset\":{\"x\":0,\"y\":-1},\"MatchById\":true,\"LogicalId\":2,\"TagName\":\"\"}" +
+                "]}";
 
-                SetRegistryCache(registry);
+            ContextualQueryNode queryNode = CreateContextualQueryNode(noMatchConditionsJson, "Matches");
 
-                FixedLogicalMapNode logicalMapNode = new FixedLogicalMapNode(
-                    "logical-map",
-                    "Logical Map",
-                    "LogicalIds",
-                    5,
-                    5,
-                    new[]
-                    {
-                        0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0,
-                        0, 0, 7, 0, 0,
-                        0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0
-                    });
+            WorldSnapshot snapshot = await ExecuteGraphAsync(logicalIds, 10, 10, queryNode);
+            WorldSnapshot.PointListChannelSnapshot pointListChannel = GetPointListChannel(snapshot, "Matches");
 
-                NeighbourhoodCheckNode checkNode = new NeighbourhoodCheckNode(
-                    "neighbourhood-check",
-                    "Neighbourhood Check",
-                    "LogicalIds",
-                    "NearbyWater",
-                    false,
-                    0,
-                    "Water",
-                    1,
-                    DistanceMode.Euclidean);
-
-                WorldSnapshot snapshot = await ExecuteGraphAsync(new IGenNode[] { logicalMapNode, checkNode }, 5, 5);
-                WorldSnapshot.BoolMaskChannelSnapshot boolMaskChannel = GetBoolMaskChannel(snapshot, "NearbyWater");
-
-                Assert.That(boolMaskChannel, Is.Not.Null);
-                AssertMaskValue(boolMaskChannel.Data, 5, 2, 2, true);
-                AssertMaskValue(boolMaskChannel.Data, 5, 2, 1, true);
-                AssertMaskValue(boolMaskChannel.Data, 5, 2, 3, true);
-                AssertMaskValue(boolMaskChannel.Data, 5, 1, 2, true);
-                AssertMaskValue(boolMaskChannel.Data, 5, 3, 2, true);
-                AssertMaskValue(boolMaskChannel.Data, 5, 1, 1, false);
-                AssertMaskValue(boolMaskChannel.Data, 5, 3, 1, false);
-                AssertMaskValue(boolMaskChannel.Data, 5, 1, 3, false);
-                AssertMaskValue(boolMaskChannel.Data, 5, 3, 3, false);
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(registry);
-            }
+            Assert.That(pointListChannel, Is.Not.Null);
+            Assert.That(pointListChannel.Data, Is.Empty);
         }
 
         [Test]
-        public async Task TagBasedSpatialQueryWritesWarningWhenRegistryIsUnavailable()
+        public async Task ContextualQueryNodeProducesDeterministicResultsAcrossRepeatedRuns()
         {
-            SetRegistryCache(null, true);
+            int[] logicalIds =
+            {
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
 
+            ContextualQueryNode firstQueryNode = CreateContextualQueryNode(
+                CreateFloorWithEmptyAboveConditionsJson(),
+                "Matches");
+            ContextualQueryNode secondQueryNode = CreateContextualQueryNode(
+                CreateFloorWithEmptyAboveConditionsJson(),
+                "Matches");
+            ContextualQueryNode thirdQueryNode = CreateContextualQueryNode(
+                CreateFloorWithEmptyAboveConditionsJson(),
+                "Matches");
+
+            Vector2Int[] firstRun = SortPointsStable((await ExecuteGraphAsync(logicalIds, 10, 10, firstQueryNode)).PointListChannels[0].Data);
+            Vector2Int[] secondRun = SortPointsStable((await ExecuteGraphAsync(logicalIds, 10, 10, secondQueryNode)).PointListChannels[0].Data);
+            Vector2Int[] thirdRun = SortPointsStable((await ExecuteGraphAsync(logicalIds, 10, 10, thirdQueryNode)).PointListChannels[0].Data);
+
+            Assert.That(secondRun, Is.EqualTo(firstRun));
+            Assert.That(thirdRun, Is.EqualTo(firstRun));
+        }
+
+        [Test]
+        public async Task NeighbourhoodCheckNodeChebyshevMarksAdjacentTileWithinRadiusOneAsTrue()
+        {
+            int[] logicalIds =
+            {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 7, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+
+            WorldSnapshot snapshot = await ExecuteNeighbourhoodCheckAsync(logicalIds, 5, 5, 7, 1, DistanceMode.Chebyshev);
+            WorldSnapshot.BoolMaskChannelSnapshot boolMaskChannel = GetBoolMaskChannel(snapshot, "Mask");
+
+            Assert.That(boolMaskChannel, Is.Not.Null);
+            AssertMaskValue(boolMaskChannel.Data, 5, 2, 1, true);
+        }
+
+        [Test]
+        public async Task NeighbourhoodCheckNodeChebyshevMarksTileWithoutNearbyMatchAsFalse()
+        {
+            int[] logicalIds =
+            {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 7, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+
+            WorldSnapshot snapshot = await ExecuteNeighbourhoodCheckAsync(logicalIds, 5, 5, 7, 1, DistanceMode.Chebyshev);
+            WorldSnapshot.BoolMaskChannelSnapshot boolMaskChannel = GetBoolMaskChannel(snapshot, "Mask");
+
+            Assert.That(boolMaskChannel, Is.Not.Null);
+            AssertMaskValue(boolMaskChannel.Data, 5, 0, 0, false);
+        }
+
+        [Test]
+        public async Task NeighbourhoodCheckNodeChebyshevMarksBoundaryTileAsTrue()
+        {
+            int[] logicalIds =
+            {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 7, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+
+            WorldSnapshot snapshot = await ExecuteNeighbourhoodCheckAsync(logicalIds, 5, 5, 7, 2, DistanceMode.Chebyshev);
+            WorldSnapshot.BoolMaskChannelSnapshot boolMaskChannel = GetBoolMaskChannel(snapshot, "Mask");
+
+            Assert.That(boolMaskChannel, Is.Not.Null);
+            AssertMaskValue(boolMaskChannel.Data, 5, 0, 2, true);
+        }
+
+        [Test]
+        public async Task NeighbourhoodCheckNodeEuclideanExcludesDiagonalTilesBeyondRadius()
+        {
+            int[] logicalIds =
+            {
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 7, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            };
+
+            WorldSnapshot snapshot = await ExecuteNeighbourhoodCheckAsync(logicalIds, 5, 5, 7, 1, DistanceMode.Euclidean);
+            WorldSnapshot.BoolMaskChannelSnapshot boolMaskChannel = GetBoolMaskChannel(snapshot, "Mask");
+
+            Assert.That(boolMaskChannel, Is.Not.Null);
+            AssertMaskValue(boolMaskChannel.Data, 5, 1, 1, false);
+            AssertMaskValue(boolMaskChannel.Data, 5, 3, 1, false);
+            AssertMaskValue(boolMaskChannel.Data, 5, 1, 3, false);
+            AssertMaskValue(boolMaskChannel.Data, 5, 3, 3, false);
+        }
+
+        private static ContextualQueryNode CreateContextualQueryNode(string conditionsJson, string outputChannelName)
+        {
+            return new ContextualQueryNode(
+                "contextual-query",
+                "Contextual Query",
+                "LogicalIds",
+                outputChannelName,
+                conditionsJson);
+        }
+
+        private static string CreateFloorWithEmptyAboveConditionsJson()
+        {
+            return
+                "{\"Entries\":[" +
+                "{\"Offset\":{\"x\":0,\"y\":0},\"MatchById\":true,\"LogicalId\":1,\"TagName\":\"\"}," +
+                "{\"Offset\":{\"x\":0,\"y\":-1},\"MatchById\":true,\"LogicalId\":0,\"TagName\":\"\"}" +
+                "]}";
+        }
+
+        private static async Task<WorldSnapshot> ExecuteNeighbourhoodCheckAsync(
+            int[] logicalIds,
+            int width,
+            int height,
+            int logicalId,
+            int radius,
+            DistanceMode distanceMode)
+        {
+            NeighbourhoodCheckNode node = new NeighbourhoodCheckNode(
+                "neighbourhood-check",
+                "Neighbourhood Check",
+                "LogicalIds",
+                "Mask",
+                true,
+                logicalId,
+                string.Empty,
+                radius,
+                distanceMode);
+
+            return await ExecuteGraphAsync(logicalIds, width, height, node);
+        }
+
+        private static async Task<WorldSnapshot> ExecuteGraphAsync(int[] logicalIds, int width, int height, IGenNode queryNode)
+        {
             FixedLogicalMapNode logicalMapNode = new FixedLogicalMapNode(
                 "logical-map",
                 "Logical Map",
                 "LogicalIds",
-                3,
-                3,
-                new[]
-                {
-                    7, 7, 7,
-                    7, 7, 7,
-                    7, 7, 7
-                });
+                width,
+                height,
+                logicalIds);
 
-            NeighbourhoodCheckNode checkNode = new NeighbourhoodCheckNode(
-                "neighbourhood-check",
-                "Neighbourhood Check",
-                "LogicalIds",
-                "NearbyWater",
-                false,
-                0,
-                "Water",
-                1,
-                DistanceMode.Chebyshev);
+            ExecutionResult result = await ExecuteGraphWithResultAsync(new IGenNode[] { logicalMapNode, queryNode }, width, height);
 
-            ExecutionResult result = await ExecuteGraphWithResultAsync(new IGenNode[] { logicalMapNode, checkNode }, 3, 3);
-
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Diagnostics, Is.Not.Null);
-            Assert.That(ContainsWarning(result.Diagnostics, "TileSemanticRegistry"), Is.True);
-
-            WorldSnapshot.BoolMaskChannelSnapshot boolMaskChannel = GetBoolMaskChannel(result.Snapshot, "NearbyWater");
-            Assert.That(boolMaskChannel, Is.Not.Null);
-
-            int index;
-            for (index = 0; index < boolMaskChannel.Data.Length; index++)
-            {
-                Assert.That(boolMaskChannel.Data[index], Is.EqualTo((byte)0));
-            }
-        }
-
-        private static async Task<WorldSnapshot> ExecuteGraphAsync(IReadOnlyList<IGenNode> nodes, int width, int height)
-        {
-            ExecutionResult result = await ExecuteGraphWithResultAsync(nodes, width, height);
-            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.IsSuccess, Is.True, result.ErrorMessage);
             Assert.That(result.Snapshot, Is.Not.Null);
             return result.Snapshot;
         }
@@ -225,38 +301,22 @@ namespace DynamicDungeon.Tests.Runtime
             Assert.That(data[index], Is.EqualTo(expected ? (byte)1 : (byte)0));
         }
 
-        private static bool ContainsWarning(IReadOnlyList<GraphDiagnostic> diagnostics, string messageFragment)
+        private static Vector2Int[] SortPointsStable(Vector2Int[] points)
         {
-            int index;
-            for (index = 0; index < diagnostics.Count; index++)
+            Vector2Int[] sortedPoints = points != null ? (Vector2Int[])points.Clone() : Array.Empty<Vector2Int>();
+            Array.Sort(sortedPoints, ComparePointsByRowMajorOrder);
+            return sortedPoints;
+        }
+
+        private static int ComparePointsByRowMajorOrder(Vector2Int left, Vector2Int right)
+        {
+            int yComparison = left.y.CompareTo(right.y);
+            if (yComparison != 0)
             {
-                GraphDiagnostic diagnostic = diagnostics[index];
-                if (diagnostic.Severity == DiagnosticSeverity.Warning &&
-                    diagnostic.Message != null &&
-                    diagnostic.Message.IndexOf(messageFragment, StringComparison.Ordinal) >= 0)
-                {
-                    return true;
-                }
+                return yComparison;
             }
 
-            return false;
-        }
-
-        private static void SetRegistryCache(TileSemanticRegistry registry, bool hasAttemptedLoad = true)
-        {
-            FieldInfo cachedRegistryField = typeof(TileSemanticRegistry).GetField("_cachedRegistry", BindingFlags.Static | BindingFlags.NonPublic);
-            FieldInfo hasAttemptedLoadField = typeof(TileSemanticRegistry).GetField("_hasAttemptedLoad", BindingFlags.Static | BindingFlags.NonPublic);
-
-            Assert.That(cachedRegistryField, Is.Not.Null);
-            Assert.That(hasAttemptedLoadField, Is.Not.Null);
-
-            cachedRegistryField.SetValue(null, registry);
-            hasAttemptedLoadField.SetValue(null, hasAttemptedLoad);
-        }
-
-        private static void ResetRegistryCache()
-        {
-            SetRegistryCache(null, false);
+            return left.x.CompareTo(right.x);
         }
 
         private sealed class FixedLogicalMapNode : IGenNode

@@ -191,7 +191,7 @@ namespace DynamicDungeon.Runtime.Nodes
             }
 
             NativeArray<JobCondition> conditions = new NativeArray<JobCondition>(_resolvedConditions.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            NativeParallelMultiHashMap<int, int> tagMatchLookup = default;
+            NativeParallelMultiHashMap<int, int> tagMatchLookup = new NativeParallelMultiHashMap<int, int>(1, Allocator.TempJob);
             bool hasTagConditions = false;
             int tagLookupEntryCount = 0;
 
@@ -215,7 +215,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             if (hasTagConditions)
             {
-                tagMatchLookup = new NativeParallelMultiHashMap<int, int>(math.max(1, tagLookupEntryCount), Allocator.TempJob);
+                tagMatchLookup.Capacity = math.max(1, tagLookupEntryCount);
 
                 for (conditionIndex = 0; conditionIndex < _resolvedConditions.Length; conditionIndex++)
                 {
@@ -245,13 +245,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             JobHandle jobHandle = job.Schedule(input.Length, DefaultBatchSize, context.InputDependency);
             JobHandle disposeConditionsHandle = conditions.Dispose(jobHandle);
-
-            if (tagMatchLookup.IsCreated)
-            {
-                return tagMatchLookup.Dispose(disposeConditionsHandle);
-            }
-
-            return disposeConditionsHandle;
+            return tagMatchLookup.Dispose(disposeConditionsHandle);
         }
 
         private void RefreshPorts()

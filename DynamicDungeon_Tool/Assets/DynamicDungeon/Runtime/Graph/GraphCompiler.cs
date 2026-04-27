@@ -132,7 +132,9 @@ namespace DynamicDungeon.Runtime.Graph
             }
             else
             {
-                HashSet<string> reachableNodeIds = BuildReachableNodeIds(outputNodeData.NodeId, nodeDataList, connectionDataList);
+                HashSet<string> reachableNodeIds = outputNodeData != null
+                    ? BuildReachableNodeIds(outputNodeData.NodeId, nodeDataList, connectionDataList)
+                    : BuildPreviewReachableNodeIds(nodeDataList, connectionDataList);
                 reachableNodeDataList = FilterReachableNodes(nodeDataList, reachableNodeIds);
                 reachableConnectionDataList = FilterReachableConnections(connectionDataList, reachableNodeIds);
             }
@@ -255,6 +257,39 @@ namespace DynamicDungeon.Runtime.Graph
                     {
                         pendingNodeIds.Enqueue(sourceNodeId);
                     }
+                }
+            }
+
+            return reachableNodeIds;
+        }
+
+        private static HashSet<string> BuildPreviewReachableNodeIds(IReadOnlyList<GenNodeData> nodeDataList, IReadOnlyList<GenConnectionData> connectionDataList)
+        {
+            HashSet<string> reachableNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            Queue<string> pendingNodeIds = new Queue<string>();
+
+            EnqueueBiomeChannelRoots(nodeDataList, reachableNodeIds, pendingNodeIds);
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < connectionDataList.Count; connectionIndex++)
+            {
+                GenConnectionData connectionData = connectionDataList[connectionIndex];
+                if (connectionData == null)
+                {
+                    continue;
+                }
+
+                string fromNodeId = connectionData.FromNodeId ?? string.Empty;
+                string toNodeId = connectionData.ToNodeId ?? string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(fromNodeId))
+                {
+                    reachableNodeIds.Add(fromNodeId);
+                }
+
+                if (!string.IsNullOrWhiteSpace(toNodeId))
+                {
+                    reachableNodeIds.Add(toNodeId);
                 }
             }
 
