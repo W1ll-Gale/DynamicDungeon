@@ -271,23 +271,21 @@ namespace DynamicDungeon.Runtime.Nodes
             public void Execute(int index)
             {
                 float controlValue = Control[index];
-                float selectedValue;
+                float selectedValue = InputA[index];
 
-                if (controlValue < ThresholdAB)
-                {
-                    selectedValue = InputA[index];
-                }
-                else if (controlValue < ThresholdBC)
+                if (controlValue >= ThresholdAB)
                 {
                     selectedValue = HasInputB ? InputB[index] : 0.0f;
                 }
-                else if (controlValue < ThresholdCD)
+
+                if (controlValue >= ThresholdBC && HasInputC)
                 {
-                    selectedValue = HasInputC ? InputC[index] : 0.0f;
+                    selectedValue = InputC[index];
                 }
-                else
+
+                if (controlValue >= ThresholdCD && HasInputD)
                 {
-                    selectedValue = HasInputD ? InputD[index] : 0.0f;
+                    selectedValue = InputD[index];
                 }
 
                 Output[index] = selectedValue;
