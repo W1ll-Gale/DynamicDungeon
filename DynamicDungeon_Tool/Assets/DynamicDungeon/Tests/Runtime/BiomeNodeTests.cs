@@ -23,6 +23,17 @@ namespace DynamicDungeon.Tests.Runtime
         private const string LogicalChannelName = "LogicalIds";
         private const string MaskChannelName = "OverrideMask";
         private const string TempAssetFolder = "Assets/DynamicDungeon/Tests/TempGenerated";
+        
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            if (AssetDatabase.IsValidFolder(TempAssetFolder))
+            {
+                AssetDatabase.DeleteAsset(TempAssetFolder);
+                AssetDatabase.SaveAssets();
+            }
+        }
+
 
         [Test]
         public async Task GraphCompileIncludesDisconnectedBiomeLayersAndProducesSharedBiomeChannel()

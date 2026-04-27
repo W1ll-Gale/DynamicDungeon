@@ -117,7 +117,7 @@ MonoBehaviour:
   - NodeId: 0e3b018e-5349-4323-9da9-01d0c12b2bc4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NoiseNode
     NodeName: Noise
-    Position: {x: -447.16257, y: 268}
+    Position: {x: -374.2625, y: 285}
     Ports:
     - PortName: Output__0e3b018e-5349-4323-9da9-01d0c12b2bc4
       DisplayName: Output
@@ -141,7 +141,7 @@ MonoBehaviour:
     - Name: persistence
       Value: 0.53
     - Name: direction
-      Value: Radial
+      Value: Y
     - Name: centre
       Value: 0.5,0.5
     - Name: angle
