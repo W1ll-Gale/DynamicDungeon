@@ -450,7 +450,10 @@ namespace DynamicDungeon.Editor.Windows
                 else if (!executionResult.IsSuccess || executionResult.Snapshot == null)
                 {
                     HideLoadingIndicators(FailedStatusText, true);
-                    ReportDiagnostics(CreateExecutionFailureDiagnostics(_activeCompileDiagnostics, executionResult.ErrorMessage));
+                    ReportDiagnostics(
+                        CreateExecutionFailureDiagnostics(
+                            CombineDiagnostics(_activeCompileDiagnostics, executionResult.Diagnostics),
+                            executionResult.ErrorMessage));
                 }
                 else
                 {
@@ -458,7 +461,7 @@ namespace DynamicDungeon.Editor.Windows
                     ProcessPendingPreviewUpdates();
                     UpdateNodePreviewsFromPlan(_cachedPlan);
                     HideLoadingIndicators(DoneStatusText, false);
-                    ReportDiagnostics(_activeCompileDiagnostics);
+                    ReportDiagnostics(CombineDiagnostics(_activeCompileDiagnostics, executionResult.Diagnostics));
                 }
             }
             catch (Exception exception)
@@ -809,6 +812,36 @@ namespace DynamicDungeon.Editor.Windows
             string safeMessage = string.IsNullOrWhiteSpace(errorMessage) ? "Generation failed." : errorMessage;
             diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, safeMessage, null, null));
             return diagnostics;
+        }
+
+        private static IReadOnlyList<GraphDiagnostic> CombineDiagnostics(IReadOnlyList<GraphDiagnostic> first, IReadOnlyList<GraphDiagnostic> second)
+        {
+            IReadOnlyList<GraphDiagnostic> safeFirst = first ?? Array.Empty<GraphDiagnostic>();
+            IReadOnlyList<GraphDiagnostic> safeSecond = second ?? Array.Empty<GraphDiagnostic>();
+
+            if (safeFirst.Count == 0)
+            {
+                return safeSecond;
+            }
+
+            if (safeSecond.Count == 0)
+            {
+                return safeFirst;
+            }
+
+            List<GraphDiagnostic> combined = new List<GraphDiagnostic>(safeFirst.Count + safeSecond.Count);
+            int index;
+            for (index = 0; index < safeFirst.Count; index++)
+            {
+                combined.Add(safeFirst[index]);
+            }
+
+            for (index = 0; index < safeSecond.Count; index++)
+            {
+                combined.Add(safeSecond[index]);
+            }
+
+            return combined;
         }
 
         private static Texture2D CreatePreviewTexture(PreviewUpdateData previewUpdate)

@@ -537,7 +537,8 @@ namespace DynamicDungeon.Editor.Nodes
 
             if (string.Equals(parameterName, "algorithm", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(parameterName, "direction", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(parameterName, "outputType", StringComparison.OrdinalIgnoreCase))
+                string.Equals(parameterName, "outputType", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(parameterName, "matchById", StringComparison.OrdinalIgnoreCase))
             {
                 RebuildNodePorts();
                 PopulateControls();

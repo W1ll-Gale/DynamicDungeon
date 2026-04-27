@@ -299,15 +299,77 @@ namespace DynamicDungeon.Editor.Utilities
             PopupWindow.Show(rect, new SearchableTagPopup(listProperty, allTags, rect.width + 40.0f));
         }
 
+        public static void ShowLogicalIdPopup(Rect rect, int currentLogicalId, TileSemanticRegistry registry, Action<int> onSelect)
+        {
+            List<TileEntry> entries = registry != null ? registry.Entries : null;
+            if (entries == null || entries.Count == 0)
+            {
+                PopupWindow.Show(rect, new SearchableOptionPopup(new List<SearchOption>(), "No registry entries available", rect.width + 40.0f));
+                return;
+            }
+
+            List<TileEntry> sortedEntries = new List<TileEntry>(entries);
+            sortedEntries.Sort(CompareEntriesByLogicalId);
+            List<SearchOption> options = new List<SearchOption>();
+
+            int index;
+            for (index = 0; index < sortedEntries.Count; index++)
+            {
+                TileEntry entry = sortedEntries[index];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                int logicalId = entry.LogicalId;
+                string itemLabel = BuildLogicalIdLabel((ushort)logicalId, registry);
+                string searchText = itemLabel + " " + GetSafeSearchTags(entry);
+                bool isSelected = currentLogicalId == logicalId;
+                options.Add(new SearchOption(itemLabel, searchText, isSelected, () => onSelect?.Invoke(logicalId)));
+            }
+
+            PopupWindow.Show(rect, new SearchableOptionPopup(options, "No matching registry entries", rect.width + 40.0f));
+        }
+
+        public static void ShowTagPopup(Rect rect, string currentTag, TileSemanticRegistry registry, Action<string> onSelect)
+        {
+            List<string> allTags = registry != null ? registry.AllTags : null;
+            if (allTags == null || allTags.Count == 0)
+            {
+                PopupWindow.Show(rect, new SearchableOptionPopup(new List<SearchOption>(), "No tags available", rect.width + 40.0f));
+                return;
+            }
+
+            List<string> sortedTags = new List<string>(allTags);
+            sortedTags.Sort(StringComparer.OrdinalIgnoreCase);
+            List<SearchOption> options = new List<SearchOption>();
+
+            int index;
+            for (index = 0; index < sortedTags.Count; index++)
+            {
+                string tag = sortedTags[index];
+                if (string.IsNullOrWhiteSpace(tag))
+                {
+                    continue;
+                }
+
+                bool isSelected = string.Equals(currentTag ?? string.Empty, tag, StringComparison.OrdinalIgnoreCase);
+                string displayName = "#" + tag;
+                options.Add(new SearchOption(displayName, tag, isSelected, () => onSelect?.Invoke(tag)));
+            }
+
+            PopupWindow.Show(rect, new SearchableOptionPopup(options, "No matching tags", rect.width + 40.0f));
+        }
+
         internal static string BuildLogicalIdLabel(ushort logicalId, TileSemanticRegistry registry)
         {
             if (registry != null && registry.TryGetEntry(logicalId, out TileEntry entry) && entry != null)
             {
                 string displayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? "Unnamed" : entry.DisplayName;
-                return logicalId + ": " + displayName;
+                return displayName + " (" + logicalId + ")";
             }
 
-            return logicalId + ": Missing";
+            return logicalId.ToString();
         }
 
         internal static bool ContainsString(SerializedProperty listProperty, string value)

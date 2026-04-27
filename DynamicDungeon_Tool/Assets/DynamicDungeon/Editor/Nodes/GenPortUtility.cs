@@ -130,6 +130,8 @@ namespace DynamicDungeon.Editor.Nodes
                     return "Integer values";
                 case ChannelType.BoolMask:
                     return "Boolean mask";
+                case ChannelType.PointList:
+                    return "Point list";
                 default:
                     return Enum.GetName(typeof(ChannelType), channelType) ?? channelType.ToString();
             }

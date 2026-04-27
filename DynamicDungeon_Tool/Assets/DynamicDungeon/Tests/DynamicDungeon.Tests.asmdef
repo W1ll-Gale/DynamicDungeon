@@ -4,8 +4,10 @@
     "references": [
         "DynamicDungeon.Editor",
         "DynamicDungeon.Runtime",
+        "Unity.Burst",
         "Unity.Collections",
         "Unity.Jobs",
+        "Unity.Mathematics",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -1,6 +1,7 @@
 using DynamicDungeon.Runtime.Core;
 using NUnit.Framework;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine.TestTools;
 
 namespace DynamicDungeon.Tests.Runtime
@@ -18,10 +19,12 @@ namespace DynamicDungeon.Tests.Runtime
                 Assert.That(sourceWorld.TryAddFloatChannel("HeightMap"), Is.True);
                 Assert.That(sourceWorld.TryAddIntChannel("BiomeLayer"), Is.True);
                 Assert.That(sourceWorld.TryAddBoolMaskChannel("CavesMask"), Is.True);
+                Assert.That(sourceWorld.TryAddPointListChannel("QueryPoints"), Is.True);
 
                 NativeArray<float> floatChannel = sourceWorld.GetFloatChannel("HeightMap");
                 NativeArray<int> intChannel = sourceWorld.GetIntChannel("BiomeLayer");
                 NativeArray<byte> boolMaskChannel = sourceWorld.GetBoolMaskChannel("CavesMask");
+                NativeList<int2> pointListChannel = sourceWorld.GetPointListChannel("QueryPoints");
 
                 int index;
                 for (index = 0; index < sourceWorld.TileCount; index++)
@@ -30,6 +33,10 @@ namespace DynamicDungeon.Tests.Runtime
                     intChannel[index] = (index * 7) - 3;
                     boolMaskChannel[index] = (byte)(index % 2);
                 }
+
+                pointListChannel.Add(new int2(0, 0));
+                pointListChannel.Add(new int2(2, 1));
+                pointListChannel.Add(new int2(3, 2));
 
                 WorldSnapshot snapshot = WorldSnapshot.FromWorldData(sourceWorld);
                 hydratedWorld = snapshot.ToWorldData(Allocator.Persistent);
@@ -41,6 +48,7 @@ namespace DynamicDungeon.Tests.Runtime
                 AssertByteIdentical(sourceWorld.GetFloatChannel("HeightMap"), hydratedWorld.GetFloatChannel("HeightMap"));
                 AssertByteIdentical(sourceWorld.GetIntChannel("BiomeLayer"), hydratedWorld.GetIntChannel("BiomeLayer"));
                 AssertByteIdentical(sourceWorld.GetBoolMaskChannel("CavesMask"), hydratedWorld.GetBoolMaskChannel("CavesMask"));
+                AssertPointListsEqual(sourceWorld.GetPointListChannel("QueryPoints"), hydratedWorld.GetPointListChannel("QueryPoints"));
             }
             finally
             {
@@ -60,6 +68,7 @@ namespace DynamicDungeon.Tests.Runtime
             worldData.TryAddFloatChannel("FloatChannel");
             worldData.TryAddIntChannel("IntChannel");
             worldData.TryAddBoolMaskChannel("MaskChannel");
+            worldData.TryAddPointListChannel("PointChannel");
 
             LogAssert.NoUnexpectedReceived();
             Assert.DoesNotThrow(() => worldData.Dispose());
@@ -75,10 +84,12 @@ namespace DynamicDungeon.Tests.Runtime
                 NativeArray<float> missingFloatChannel = worldData.GetFloatChannel("MissingFloat");
                 NativeArray<int> missingIntChannel = worldData.GetIntChannel("MissingInt");
                 NativeArray<byte> missingBoolMaskChannel = worldData.GetBoolMaskChannel("MissingMask");
+                NativeList<int2> missingPointListChannel = worldData.GetPointListChannel("MissingPoints");
 
                 Assert.That(missingFloatChannel.IsCreated, Is.False);
                 Assert.That(missingIntChannel.IsCreated, Is.False);
                 Assert.That(missingBoolMaskChannel.IsCreated, Is.False);
+                Assert.That(missingPointListChannel.IsCreated, Is.False);
             }
         }
 
@@ -107,6 +118,17 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         private static void AssertByteIdentical(NativeArray<byte> expected, NativeArray<byte> actual)
+        {
+            Assert.That(actual.Length, Is.EqualTo(expected.Length));
+
+            int index;
+            for (index = 0; index < expected.Length; index++)
+            {
+                Assert.That(actual[index], Is.EqualTo(expected[index]));
+            }
+        }
+
+        private static void AssertPointListsEqual(NativeList<int2> expected, NativeList<int2> actual)
         {
             Assert.That(actual.Length, Is.EqualTo(expected.Length));
 

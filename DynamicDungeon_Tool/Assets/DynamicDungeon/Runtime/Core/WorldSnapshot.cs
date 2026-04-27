@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using DynamicDungeon.Runtime.Biome;
 using Unity.Collections;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Core
 {
@@ -29,6 +31,13 @@ namespace DynamicDungeon.Runtime.Core
             public byte[] Data = Array.Empty<byte>();
         }
 
+        [Serializable]
+        public sealed class PointListChannelSnapshot
+        {
+            public string Name = string.Empty;
+            public Vector2Int[] Data = Array.Empty<Vector2Int>();
+        }
+
         public int Width;
         public int Height;
         public int Seed;
@@ -36,6 +45,7 @@ namespace DynamicDungeon.Runtime.Core
         public FloatChannelSnapshot[] FloatChannels = Array.Empty<FloatChannelSnapshot>();
         public IntChannelSnapshot[] IntChannels = Array.Empty<IntChannelSnapshot>();
         public BoolMaskChannelSnapshot[] BoolMaskChannels = Array.Empty<BoolMaskChannelSnapshot>();
+        public PointListChannelSnapshot[] PointListChannels = Array.Empty<PointListChannelSnapshot>();
 
         public WorldData ToWorldData(Allocator allocator)
         {
@@ -46,6 +56,7 @@ namespace DynamicDungeon.Runtime.Core
                 CopyFloatChannels(worldData, FloatChannels);
                 CopyIntChannels(worldData, IntChannels);
                 CopyBoolMaskChannels(worldData, BoolMaskChannels);
+                CopyPointListChannels(worldData, PointListChannels);
                 return worldData;
             }
             catch
@@ -70,6 +81,7 @@ namespace DynamicDungeon.Runtime.Core
             snapshot.FloatChannels = BuildFloatChannels(data);
             snapshot.IntChannels = BuildIntChannels(data);
             snapshot.BoolMaskChannels = BuildBoolMaskChannels(data);
+            snapshot.PointListChannels = BuildPointListChannels(data);
             return snapshot;
         }
 
@@ -157,6 +169,34 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
+        private static PointListChannelSnapshot[] BuildPointListChannels(WorldData data)
+        {
+            NativeKeyValueArrays<FixedString128Bytes, NativeList<int2>> channelPairs = data.GetPointListChannelPairs(Allocator.TempJob);
+            try
+            {
+                PointListChannelSnapshot[] snapshots = new PointListChannelSnapshot[channelPairs.Length];
+                int index;
+                for (index = 0; index < channelPairs.Length; index++)
+                {
+                    NativeList<int2> channelData = channelPairs.Values[index];
+                    Vector2Int[] managedData = new Vector2Int[channelData.Length];
+                    CopyToManagedArray(channelData, managedData);
+
+                    PointListChannelSnapshot channelSnapshot = new PointListChannelSnapshot();
+                    channelSnapshot.Name = channelPairs.Keys[index].ToString();
+                    channelSnapshot.Data = managedData;
+                    snapshots[index] = channelSnapshot;
+                }
+
+                Array.Sort(snapshots, ComparePointListChannels);
+                return snapshots;
+            }
+            finally
+            {
+                channelPairs.Dispose();
+            }
+        }
+
         private static int CompareFloatChannels(FloatChannelSnapshot left, FloatChannelSnapshot right)
         {
             return string.CompareOrdinal(left.Name, right.Name);
@@ -168,6 +208,11 @@ namespace DynamicDungeon.Runtime.Core
         }
 
         private static int CompareBoolMaskChannels(BoolMaskChannelSnapshot left, BoolMaskChannelSnapshot right)
+        {
+            return string.CompareOrdinal(left.Name, right.Name);
+        }
+
+        private static int ComparePointListChannels(PointListChannelSnapshot left, PointListChannelSnapshot right)
         {
             return string.CompareOrdinal(left.Name, right.Name);
         }
@@ -226,6 +271,35 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
+        private static void CopyPointListChannels(WorldData worldData, PointListChannelSnapshot[] channelSnapshots)
+        {
+            int index;
+            for (index = 0; index < channelSnapshots.Length; index++)
+            {
+                PointListChannelSnapshot channelSnapshot = channelSnapshots[index];
+
+                if (!worldData.TryAddPointListChannel(channelSnapshot.Name))
+                {
+                    throw new InvalidOperationException("Could not add point list channel '" + channelSnapshot.Name + "'.");
+                }
+
+                NativeList<int2> targetChannel = worldData.GetPointListChannel(channelSnapshot.Name);
+                targetChannel.Clear();
+
+                if (targetChannel.Capacity < channelSnapshot.Data.Length)
+                {
+                    targetChannel.Capacity = channelSnapshot.Data.Length;
+                }
+
+                int pointIndex;
+                for (pointIndex = 0; pointIndex < channelSnapshot.Data.Length; pointIndex++)
+                {
+                    Vector2Int point = channelSnapshot.Data[pointIndex];
+                    targetChannel.Add(new int2(point.x, point.y));
+                }
+            }
+        }
+
         private static void ValidateChannelDataLength(string channelName, int actualLength, int expectedLength)
         {
             if (actualLength != expectedLength)
@@ -258,6 +332,16 @@ namespace DynamicDungeon.Runtime.Core
             for (index = 0; index < source.Length; index++)
             {
                 destination[index] = source[index];
+            }
+        }
+
+        private static void CopyToManagedArray(NativeList<int2> source, Vector2Int[] destination)
+        {
+            int index;
+            for (index = 0; index < source.Length; index++)
+            {
+                int2 point = source[index];
+                destination[index] = new Vector2Int(point.x, point.y);
             }
         }
 

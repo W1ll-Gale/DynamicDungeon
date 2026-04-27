@@ -583,6 +583,29 @@ namespace DynamicDungeon.Runtime.Component
             }
         }
 
+        private void LogExecutionDiagnostics(IReadOnlyList<GraphDiagnostic> diagnostics)
+        {
+            if (diagnostics == null || diagnostics.Count == 0)
+            {
+                return;
+            }
+
+            int diagnosticIndex;
+            for (diagnosticIndex = 0; diagnosticIndex < diagnostics.Count; diagnosticIndex++)
+            {
+                GraphDiagnostic diagnostic = diagnostics[diagnosticIndex];
+
+                if (diagnostic.Severity == DiagnosticSeverity.Error)
+                {
+                    Debug.LogError(BuildDiagnosticMessage(diagnostic), this);
+                }
+                else if (diagnostic.Severity == DiagnosticSeverity.Warning)
+                {
+                    Debug.LogWarning(BuildDiagnosticMessage(diagnostic), this);
+                }
+            }
+        }
+
         private WorldSnapshot ExecuteGenerationSynchronously(long seed, out string outputChannelName, out bool hasConnectedOutput)
         {
             outputChannelName = string.Empty;
@@ -604,6 +627,8 @@ namespace DynamicDungeon.Runtime.Component
             {
                 throw new InvalidOperationException("Generation cancelled.");
             }
+
+            LogExecutionDiagnostics(executionResult.Diagnostics);
 
             if (!executionResult.IsSuccess || executionResult.Snapshot == null)
             {

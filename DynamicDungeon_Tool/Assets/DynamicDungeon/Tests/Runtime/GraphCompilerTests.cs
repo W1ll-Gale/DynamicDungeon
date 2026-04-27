@@ -186,6 +186,39 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public void CompileForPreviewIgnoresDisconnectedInvalidBranchWhenOutputPathIsValid()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                AddIntFillNode(graph, "fill-node", "Fill", SharedOutputChannelName, DefaultFillValue);
+
+                GenNodeData disconnectedQueryNode = new GenNodeData(
+                    "contextual-query",
+                    typeof(ContextualQueryNode).FullName,
+                    "Contextual Query",
+                    Vector2.zero);
+                disconnectedQueryNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.Int));
+                disconnectedQueryNode.Ports.Add(new GenPortData("Matches", PortDirection.Output, ChannelType.PointList));
+                graph.Nodes.Add(disconnectedQueryNode);
+
+                ConnectToOutput(graph, "fill-node", SharedOutputChannelName);
+
+                GraphCompileResult result = GraphCompiler.CompileForPreview(graph);
+
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Plan, Is.Not.Null);
+                Assert.That(ContainsError(result.Diagnostics, "Required input port 'Input'"), Is.False);
+
+                result.Plan.Dispose();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
         public void CompileSeedsInitialBlackboardValuesByPropertyId()
         {
             GenGraph graph = CreateGraph();

@@ -293,6 +293,18 @@ namespace DynamicDungeon.Editor.Nodes
             ParameterMetadata metadata = ResolveMetadata(_currentNodeType, parameterName);
             string labelText = ResolveDisplayName(parameterName, metadata);
             VisualElement field;
+            CustomParameterControlContext customControlContext = new CustomParameterControlContext(
+                _currentNodeType,
+                parameterName,
+                labelText,
+                parameterValue,
+                defaultValue,
+                onValueChanged);
+
+            if (CustomParameterControlRegistry.TryCreateControl(customControlContext, out field))
+            {
+                return WrapControl(parameterName, field, metadata, defaultValue, onValueChanged);
+            }
 
             if (metadata != null && metadata.UseNeighbourCountRuleEditor)
             {
@@ -625,6 +637,13 @@ namespace DynamicDungeon.Editor.Nodes
                 return;
             }
 
+            if (field is ICustomParameterValueControl customParameterValueControl)
+            {
+                customParameterValueControl.SetValueWithoutNotify(defaultValue);
+                onValueChanged?.Invoke(parameterName, defaultValue ?? string.Empty);
+                return;
+            }
+
             if (field is DropdownField dropdownField)
             {
                 string valueToApply = defaultValue;
@@ -941,6 +960,8 @@ namespace DynamicDungeon.Editor.Nodes
             {
                 label.tooltip = tooltipText;
             }
+
+            field.tooltip = tooltipText;
         }
 
         private static string GetTooltipText(MemberInfo memberInfo)

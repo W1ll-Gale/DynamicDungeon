@@ -1,5 +1,6 @@
 using System;
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace DynamicDungeon.Runtime.Core
 {
@@ -8,6 +9,7 @@ namespace DynamicDungeon.Runtime.Core
         private NativeParallelHashMap<FixedString128Bytes, NativeArray<float>> _floatChannels;
         private NativeParallelHashMap<FixedString128Bytes, NativeArray<int>> _intChannels;
         private NativeParallelHashMap<FixedString128Bytes, NativeArray<byte>> _boolMaskChannels;
+        private NativeParallelHashMap<FixedString128Bytes, NativeList<int2>> _pointListChannels;
 
         public NodeChannelBindings(int capacity, Allocator allocator)
         {
@@ -26,13 +28,14 @@ namespace DynamicDungeon.Runtime.Core
             _floatChannels = new NativeParallelHashMap<FixedString128Bytes, NativeArray<float>>(resolvedCapacity, allocator);
             _intChannels = new NativeParallelHashMap<FixedString128Bytes, NativeArray<int>>(resolvedCapacity, allocator);
             _boolMaskChannels = new NativeParallelHashMap<FixedString128Bytes, NativeArray<byte>>(resolvedCapacity, allocator);
+            _pointListChannels = new NativeParallelHashMap<FixedString128Bytes, NativeList<int2>>(resolvedCapacity, allocator);
         }
 
         public bool IsCreated
         {
             get
             {
-                return _floatChannels.IsCreated && _intChannels.IsCreated && _boolMaskChannels.IsCreated;
+                return _floatChannels.IsCreated && _intChannels.IsCreated && _boolMaskChannels.IsCreated && _pointListChannels.IsCreated;
             }
         }
 
@@ -78,6 +81,20 @@ namespace DynamicDungeon.Runtime.Core
             UpsertBoolMaskChannel(key, channelData);
         }
 
+        public void BindPointListChannel(string channelName, NativeList<int2> channelData)
+        {
+            ThrowIfNotCreated();
+
+            if (!channelData.IsCreated)
+            {
+                throw new ArgumentException("Channel data must be created before binding.", nameof(channelData));
+            }
+
+            FixedString128Bytes key = CreateChannelKey(channelName);
+            ThrowIfConflictingTypeBindingExists(key, ChannelType.PointList);
+            UpsertPointListChannel(key, channelData);
+        }
+
         public NativeArray<float> GetFloatChannel(string channelName)
         {
             ThrowIfNotCreated();
@@ -120,6 +137,20 @@ namespace DynamicDungeon.Runtime.Core
             throw new InvalidOperationException("No bool mask channel binding exists for '" + channelName + "'.");
         }
 
+        public NativeList<int2> GetPointListChannel(string channelName)
+        {
+            ThrowIfNotCreated();
+
+            FixedString128Bytes key = CreateChannelKey(channelName);
+            NativeList<int2> channelData;
+            if (_pointListChannels.TryGetValue(key, out channelData))
+            {
+                return channelData;
+            }
+
+            throw new InvalidOperationException("No point list channel binding exists for '" + channelName + "'.");
+        }
+
         public void Dispose()
         {
             if (_floatChannels.IsCreated)
@@ -137,9 +168,15 @@ namespace DynamicDungeon.Runtime.Core
                 _boolMaskChannels.Dispose();
             }
 
+            if (_pointListChannels.IsCreated)
+            {
+                _pointListChannels.Dispose();
+            }
+
             _floatChannels = default;
             _intChannels = default;
             _boolMaskChannels = default;
+            _pointListChannels = default;
         }
 
         private static FixedString128Bytes CreateChannelKey(string channelName)
@@ -157,6 +194,7 @@ namespace DynamicDungeon.Runtime.Core
             bool hasFloatBinding = _floatChannels.ContainsKey(key);
             bool hasIntBinding = _intChannels.ContainsKey(key);
             bool hasBoolMaskBinding = _boolMaskChannels.ContainsKey(key);
+            bool hasPointListBinding = _pointListChannels.ContainsKey(key);
 
             if (expectedType != ChannelType.Float && hasFloatBinding)
             {
@@ -171,6 +209,11 @@ namespace DynamicDungeon.Runtime.Core
             if (expectedType != ChannelType.BoolMask && hasBoolMaskBinding)
             {
                 throw new InvalidOperationException("Channel binding '" + key + "' is already registered as a bool mask channel.");
+            }
+
+            if (expectedType != ChannelType.PointList && hasPointListBinding)
+            {
+                throw new InvalidOperationException("Channel binding '" + key + "' is already registered as a point list channel.");
             }
         }
 
@@ -210,6 +253,16 @@ namespace DynamicDungeon.Runtime.Core
             }
 
             _boolMaskChannels.Add(key, channelData);
+        }
+
+        private void UpsertPointListChannel(FixedString128Bytes key, NativeList<int2> channelData)
+        {
+            if (_pointListChannels.ContainsKey(key))
+            {
+                _pointListChannels.Remove(key);
+            }
+
+            _pointListChannels.Add(key, channelData);
         }
     }
 }

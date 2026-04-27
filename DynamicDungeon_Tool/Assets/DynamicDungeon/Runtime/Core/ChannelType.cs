@@ -4,6 +4,7 @@ namespace DynamicDungeon.Runtime.Core
     {
         Float,
         Int,
-        BoolMask
+        BoolMask,
+        PointList
     }
 }

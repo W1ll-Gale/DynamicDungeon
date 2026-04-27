@@ -1,5 +1,6 @@
 using System;
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace DynamicDungeon.Runtime.Core
 {
@@ -10,6 +11,7 @@ namespace DynamicDungeon.Runtime.Core
         private NativeParallelHashMap<FixedString128Bytes, NativeArray<float>> _floatChannels;
         private NativeParallelHashMap<FixedString128Bytes, NativeArray<int>> _intChannels;
         private NativeParallelHashMap<FixedString128Bytes, NativeArray<byte>> _boolMaskChannels;
+        private NativeParallelHashMap<FixedString128Bytes, NativeList<int2>> _pointListChannels;
         private Allocator _channelAllocator;
         private bool _isDisposed;
 
@@ -56,6 +58,7 @@ namespace DynamicDungeon.Runtime.Core
             _floatChannels = new NativeParallelHashMap<FixedString128Bytes, NativeArray<float>>(DefaultMapCapacity, channelAllocator);
             _intChannels = new NativeParallelHashMap<FixedString128Bytes, NativeArray<int>>(DefaultMapCapacity, channelAllocator);
             _boolMaskChannels = new NativeParallelHashMap<FixedString128Bytes, NativeArray<byte>>(DefaultMapCapacity, channelAllocator);
+            _pointListChannels = new NativeParallelHashMap<FixedString128Bytes, NativeList<int2>>(DefaultMapCapacity, channelAllocator);
             _isDisposed = false;
         }
 
@@ -64,7 +67,7 @@ namespace DynamicDungeon.Runtime.Core
             ThrowIfDisposed();
 
             FixedString128Bytes key = CreateChannelKey(channelName);
-            return _floatChannels.ContainsKey(key) || _intChannels.ContainsKey(key) || _boolMaskChannels.ContainsKey(key);
+            return _floatChannels.ContainsKey(key) || _intChannels.ContainsKey(key) || _boolMaskChannels.ContainsKey(key) || _pointListChannels.ContainsKey(key);
         }
 
         public bool HasFloatChannel(string channelName)
@@ -89,6 +92,14 @@ namespace DynamicDungeon.Runtime.Core
 
             FixedString128Bytes key = CreateChannelKey(channelName);
             return _boolMaskChannels.ContainsKey(key);
+        }
+
+        public bool HasPointListChannel(string channelName)
+        {
+            ThrowIfDisposed();
+
+            FixedString128Bytes key = CreateChannelKey(channelName);
+            return _pointListChannels.ContainsKey(key);
         }
 
         public bool TryAddFloatChannel(string channelName)
@@ -133,6 +144,21 @@ namespace DynamicDungeon.Runtime.Core
             return _boolMaskChannels.TryAdd(key, channelData);
         }
 
+        public bool TryAddPointListChannel(string channelName)
+        {
+            ThrowIfDisposed();
+
+            FixedString128Bytes key = CreateChannelKey(channelName);
+            if (HasAnyChannel(key))
+            {
+                return false;
+            }
+
+            int initialCapacity = TileCount > 0 ? TileCount : 1;
+            NativeList<int2> channelData = new NativeList<int2>(initialCapacity, _channelAllocator);
+            return _pointListChannels.TryAdd(key, channelData);
+        }
+
         public NativeArray<float> GetFloatChannel(string channelName)
         {
             ThrowIfDisposed();
@@ -175,6 +201,20 @@ namespace DynamicDungeon.Runtime.Core
             return default;
         }
 
+        public NativeList<int2> GetPointListChannel(string channelName)
+        {
+            ThrowIfDisposed();
+
+            FixedString128Bytes key = CreateChannelKey(channelName);
+            NativeList<int2> channelData;
+            if (_pointListChannels.TryGetValue(key, out channelData))
+            {
+                return channelData;
+            }
+
+            return default;
+        }
+
         public bool TryGetFloatChannel(string channelName, out NativeArray<float> channelData)
         {
             ThrowIfDisposed();
@@ -199,6 +239,14 @@ namespace DynamicDungeon.Runtime.Core
             return _boolMaskChannels.TryGetValue(key, out channelData);
         }
 
+        public bool TryGetPointListChannel(string channelName, out NativeList<int2> channelData)
+        {
+            ThrowIfDisposed();
+
+            FixedString128Bytes key = CreateChannelKey(channelName);
+            return _pointListChannels.TryGetValue(key, out channelData);
+        }
+
         public void Dispose()
         {
             if (_isDisposed)
@@ -209,6 +257,7 @@ namespace DynamicDungeon.Runtime.Core
             DisposeChannelMap(_floatChannels);
             DisposeChannelMap(_intChannels);
             DisposeChannelMap(_boolMaskChannels);
+            DisposePointListChannelMap(_pointListChannels);
 
             if (_floatChannels.IsCreated)
             {
@@ -225,9 +274,15 @@ namespace DynamicDungeon.Runtime.Core
                 _boolMaskChannels.Dispose();
             }
 
+            if (_pointListChannels.IsCreated)
+            {
+                _pointListChannels.Dispose();
+            }
+
             _floatChannels = default;
             _intChannels = default;
             _boolMaskChannels = default;
+            _pointListChannels = default;
             _channelAllocator = Allocator.None;
             _isDisposed = true;
         }
@@ -248,6 +303,12 @@ namespace DynamicDungeon.Runtime.Core
         {
             ThrowIfDisposed();
             return _boolMaskChannels.GetKeyValueArrays(allocator);
+        }
+
+        internal NativeKeyValueArrays<FixedString128Bytes, NativeList<int2>> GetPointListChannelPairs(Allocator allocator)
+        {
+            ThrowIfDisposed();
+            return _pointListChannels.GetKeyValueArrays(allocator);
         }
 
         private static FixedString128Bytes CreateChannelKey(string channelName)
@@ -288,9 +349,35 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
+        private static void DisposePointListChannelMap(NativeParallelHashMap<FixedString128Bytes, NativeList<int2>> channelMap)
+        {
+            if (!channelMap.IsCreated)
+            {
+                return;
+            }
+
+            NativeKeyValueArrays<FixedString128Bytes, NativeList<int2>> channelPairs = channelMap.GetKeyValueArrays(Allocator.TempJob);
+            try
+            {
+                int index;
+                for (index = 0; index < channelPairs.Length; index++)
+                {
+                    NativeList<int2> channelData = channelPairs.Values[index];
+                    if (channelData.IsCreated)
+                    {
+                        channelData.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                channelPairs.Dispose();
+            }
+        }
+
         private bool HasAnyChannel(FixedString128Bytes key)
         {
-            return _floatChannels.ContainsKey(key) || _intChannels.ContainsKey(key) || _boolMaskChannels.ContainsKey(key);
+            return _floatChannels.ContainsKey(key) || _intChannels.ContainsKey(key) || _boolMaskChannels.ContainsKey(key) || _pointListChannels.ContainsKey(key);
         }
 
         private void ThrowIfDisposed()

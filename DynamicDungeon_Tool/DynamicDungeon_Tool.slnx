@@ -1,6 +1,6 @@
 ﻿<Solution>
   <Project Path="DynamicDungeon.Runtime.csproj" />
-  <Project Path="DynamicDungeon.Editor.csproj" />
   <Project Path="DynamicDungeon.Tests.csproj" />
+  <Project Path="DynamicDungeon.Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
 </Solution>

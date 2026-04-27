@@ -292,6 +292,7 @@ namespace DynamicDungeon.Runtime.Core
             RestoreFloatChannels(snapshot.FloatChannels);
             RestoreIntChannels(snapshot.IntChannels);
             RestoreBoolMaskChannels(snapshot.BoolMaskChannels);
+            RestorePointListChannels(snapshot.PointListChannels);
         }
 
         public void Dispose()
@@ -339,12 +340,15 @@ namespace DynamicDungeon.Runtime.Core
                     case ChannelType.Int:
                         added = allocatedWorld.TryAddIntChannel(declaration.ChannelName);
                         break;
-                    case ChannelType.BoolMask:
-                        added = allocatedWorld.TryAddBoolMaskChannel(declaration.ChannelName);
-                        break;
-                    default:
-                        throw new InvalidOperationException("Unsupported channel type '" + declaration.Type + "'.");
-                }
+                case ChannelType.BoolMask:
+                    added = allocatedWorld.TryAddBoolMaskChannel(declaration.ChannelName);
+                    break;
+                case ChannelType.PointList:
+                    added = allocatedWorld.TryAddPointListChannel(declaration.ChannelName);
+                    break;
+                default:
+                    throw new InvalidOperationException("Unsupported channel type '" + declaration.Type + "'.");
+            }
 
                 if (!added)
                 {
@@ -487,6 +491,9 @@ namespace DynamicDungeon.Runtime.Core
                 case ChannelType.BoolMask:
                     hasCorrectType = allocatedWorld.HasBoolMaskChannel(declaration.ChannelName);
                     break;
+                case ChannelType.PointList:
+                    hasCorrectType = allocatedWorld.HasPointListChannel(declaration.ChannelName);
+                    break;
                 default:
                     throw new InvalidOperationException("Unsupported channel type '" + declaration.Type + "'.");
             }
@@ -559,6 +566,36 @@ namespace DynamicDungeon.Runtime.Core
                 ValidateSnapshotChannelLength(channelSnapshot.Name, channelSnapshot.Data.Length, _allocatedWorld.TileCount);
                 NativeArray<byte> targetChannel = _allocatedWorld.GetBoolMaskChannel(channelSnapshot.Name);
                 NativeArray<byte>.Copy(channelSnapshot.Data, targetChannel, channelSnapshot.Data.Length);
+            }
+        }
+
+        private void RestorePointListChannels(IReadOnlyList<WorldSnapshot.PointListChannelSnapshot> channelSnapshots)
+        {
+            IReadOnlyList<WorldSnapshot.PointListChannelSnapshot> safeChannelSnapshots = channelSnapshots ?? Array.Empty<WorldSnapshot.PointListChannelSnapshot>();
+
+            int index;
+            for (index = 0; index < safeChannelSnapshots.Count; index++)
+            {
+                WorldSnapshot.PointListChannelSnapshot channelSnapshot = safeChannelSnapshots[index];
+                if (channelSnapshot == null || !_allocatedWorld.HasPointListChannel(channelSnapshot.Name))
+                {
+                    continue;
+                }
+
+                NativeList<Unity.Mathematics.int2> targetChannel = _allocatedWorld.GetPointListChannel(channelSnapshot.Name);
+                targetChannel.Clear();
+
+                if (targetChannel.Capacity < channelSnapshot.Data.Length)
+                {
+                    targetChannel.Capacity = channelSnapshot.Data.Length;
+                }
+
+                int pointIndex;
+                for (pointIndex = 0; pointIndex < channelSnapshot.Data.Length; pointIndex++)
+                {
+                    UnityEngine.Vector2Int point = channelSnapshot.Data[pointIndex];
+                    targetChannel.Add(new Unity.Mathematics.int2(point.x, point.y));
+                }
             }
         }
 

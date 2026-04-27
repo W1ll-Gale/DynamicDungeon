@@ -85,15 +85,15 @@ namespace DynamicDungeon.Runtime.Graph
 
         public static GraphCompileResult Compile(GenGraph graph)
         {
-            return CompileInternal(graph, false);
+            return CompileInternal(graph, true, false);
         }
 
         public static GraphCompileResult CompileForPreview(GenGraph graph)
         {
-            return CompileInternal(graph, true);
+            return CompileInternal(graph, false, false);
         }
 
-        private static GraphCompileResult CompileInternal(GenGraph graph, bool includeDisconnectedNodes)
+        private static GraphCompileResult CompileInternal(GenGraph graph, bool requireOutputNode, bool includeDisconnectedNodes)
         {
             List<GraphDiagnostic> diagnostics = new List<GraphDiagnostic>();
 
@@ -115,7 +115,7 @@ namespace DynamicDungeon.Runtime.Graph
 
             List<GenNodeData> nodeDataList = graph.Nodes ?? new List<GenNodeData>();
             List<GenConnectionData> connectionDataList = graph.Connections ?? new List<GenConnectionData>();
-            GenNodeData outputNodeData = FindOutputNodeData(nodeDataList, diagnostics, !includeDisconnectedNodes);
+            GenNodeData outputNodeData = FindOutputNodeData(nodeDataList, diagnostics, requireOutputNode);
 
             if (HasErrors(diagnostics))
             {

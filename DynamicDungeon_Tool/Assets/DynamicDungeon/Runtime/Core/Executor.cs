@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using DynamicDungeon.Runtime.Graph;
 using Unity.Collections;
 using Unity.Jobs;
 
@@ -60,6 +61,9 @@ namespace DynamicDungeon.Runtime.Core
                     case ChannelType.BoolMask:
                         bindings.BindBoolMaskChannel(declaration.ChannelName, worldData.GetBoolMaskChannel(declaration.ChannelName));
                         break;
+                    case ChannelType.PointList:
+                        bindings.BindPointListChannel(declaration.ChannelName, worldData.GetPointListChannel(declaration.ChannelName));
+                        break;
                     default:
                         bindings.Dispose();
                         throw new InvalidOperationException("Unsupported channel type '" + declaration.Type + "'.");
@@ -107,19 +111,19 @@ namespace DynamicDungeon.Runtime.Core
             return dirtyJobCount;
         }
 
-        private static ExecutionResult CreateCancelledResult()
+        private static ExecutionResult CreateCancelledResult(IReadOnlyList<GraphDiagnostic> diagnostics = null)
         {
-            return new ExecutionResult(false, null, null, true);
+            return new ExecutionResult(false, null, null, true, diagnostics);
         }
 
-        private static ExecutionResult CreateFailureResult(Exception exception)
+        private static ExecutionResult CreateFailureResult(Exception exception, IReadOnlyList<GraphDiagnostic> diagnostics = null)
         {
-            return new ExecutionResult(false, exception.Message, null, false);
+            return new ExecutionResult(false, exception.Message, null, false, diagnostics);
         }
 
-        private static ExecutionResult CreateSuccessResult(WorldSnapshot snapshot)
+        private static ExecutionResult CreateSuccessResult(WorldSnapshot snapshot, IReadOnlyList<GraphDiagnostic> diagnostics = null)
         {
-            return new ExecutionResult(true, null, snapshot, false);
+            return new ExecutionResult(true, null, snapshot, false, diagnostics);
         }
 
         private static ExecutionResult ExecuteInternal(
@@ -171,7 +175,9 @@ namespace DynamicDungeon.Runtime.Core
                 if (dirtyJobCount == 0)
                 {
                     progress?.Report(1.0f);
-                    return CreateSuccessResult(WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes));
+                    return CreateSuccessResult(
+                        WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes),
+                        ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
                 }
 
                 progress?.Report(0.0f);
@@ -192,7 +198,7 @@ namespace DynamicDungeon.Runtime.Core
                             combinedHandle.Complete();
                         }
 
-                        return CreateCancelledResult();
+                        return CreateCancelledResult(ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
                     }
 
                     NodeChannelBindings channelBindings = default;
@@ -235,7 +241,9 @@ namespace DynamicDungeon.Runtime.Core
                     progress?.Report((float)completedDirtyJobs / dirtyJobCount);
                 }
 
-                return CreateSuccessResult(WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes));
+                return CreateSuccessResult(
+                    WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes),
+                    ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
             }
             catch (Exception exception)
             {
@@ -244,7 +252,7 @@ namespace DynamicDungeon.Runtime.Core
                     combinedHandle.Complete();
                 }
 
-                return CreateFailureResult(exception);
+                return CreateFailureResult(exception, ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
             }
             finally
             {

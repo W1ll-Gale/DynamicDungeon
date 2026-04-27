@@ -87,5 +87,10 @@ namespace DynamicDungeon.Runtime.Core
         {
             return _channelBindings.GetBoolMaskChannel(name);
         }
+
+        public Unity.Collections.NativeList<Unity.Mathematics.int2> GetPointListChannel(string name)
+        {
+            return _channelBindings.GetPointListChannel(name);
+        }
     }
 }
