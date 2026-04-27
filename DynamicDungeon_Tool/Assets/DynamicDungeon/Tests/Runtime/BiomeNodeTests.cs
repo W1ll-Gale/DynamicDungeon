@@ -34,6 +34,374 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        [Test]
+        public async Task BiomeLayerNodeYWritesExpectedBiomeIndexWithinRangeAndLeavesOtherTilesUnchanged()
+        {
+            string reservedBiomePath = null;
+            string targetBiomePath = null;
+
+            try
+            {
+                reservedBiomePath = CreateBiomeAsset("BiomeLayerReserved");
+                targetBiomePath = CreateBiomeAsset("BiomeLayerTarget");
+
+                string reservedBiomeGuid = AssetDatabase.AssetPathToGUID(reservedBiomePath);
+                string targetBiomeGuid = AssetDatabase.AssetPathToGUID(targetBiomePath);
+
+                BiomeLayerNode layerNode = new BiomeLayerNode(
+                    "biome-layer-y",
+                    "Biome Layer Y",
+                    axis: GradientDirection.Y,
+                    rangeMin: 0.25f,
+                    rangeMax: 0.75f,
+                    biome: targetBiomeGuid);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(reservedBiomeGuid);
+                ResolveBiomePalette(layerNode, palette);
+
+                int expectedBiomeIndex = GetResolvedBiomeIndex(palette, targetBiomeGuid);
+                Assert.That(expectedBiomeIndex, Is.EqualTo(1));
+
+                WorldSnapshot snapshot = await ExecuteNodesAsync(
+                    new IGenNode[] { layerNode },
+                    3,
+                    5,
+                    4401L,
+                    palette.Biomes,
+                    CreateInitialBiomeSnapshot(3, 5, 0));
+
+                WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(biomeChannel, Is.Not.Null);
+                AssertRowValues(biomeChannel.Data, 3, 0, 0);
+                AssertRowValues(biomeChannel.Data, 3, 1, expectedBiomeIndex);
+                AssertRowValues(biomeChannel.Data, 3, 2, expectedBiomeIndex);
+                AssertRowValues(biomeChannel.Data, 3, 3, expectedBiomeIndex);
+                AssertRowValues(biomeChannel.Data, 3, 4, 0);
+            }
+            finally
+            {
+                DeleteAssetIfExists(reservedBiomePath);
+                DeleteAssetIfExists(targetBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeLayerNodeYStackedLayersWriteSeparateRangesWithoutOverwritingEachOther()
+        {
+            string reservedBiomePath = null;
+            string lowerBiomePath = null;
+            string upperBiomePath = null;
+
+            try
+            {
+                reservedBiomePath = CreateBiomeAsset("BiomeLayerStackReserved");
+                lowerBiomePath = CreateBiomeAsset("BiomeLayerLower");
+                upperBiomePath = CreateBiomeAsset("BiomeLayerUpper");
+
+                string reservedBiomeGuid = AssetDatabase.AssetPathToGUID(reservedBiomePath);
+                string lowerBiomeGuid = AssetDatabase.AssetPathToGUID(lowerBiomePath);
+                string upperBiomeGuid = AssetDatabase.AssetPathToGUID(upperBiomePath);
+
+                BiomeLayerNode lowerLayerNode = new BiomeLayerNode(
+                    "biome-layer-lower",
+                    "Biome Layer Lower",
+                    axis: GradientDirection.Y,
+                    rangeMin: 0.0f,
+                    rangeMax: 0.25f,
+                    biome: lowerBiomeGuid);
+
+                BiomeLayerNode upperLayerNode = new BiomeLayerNode(
+                    "biome-layer-upper",
+                    "Biome Layer Upper",
+                    axis: GradientDirection.Y,
+                    rangeMin: 0.75f,
+                    rangeMax: 1.0f,
+                    biome: upperBiomeGuid);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(reservedBiomeGuid);
+                ResolveBiomePalette(lowerLayerNode, palette);
+                ResolveBiomePalette(upperLayerNode, palette);
+
+                int lowerBiomeIndex = GetResolvedBiomeIndex(palette, lowerBiomeGuid);
+                int upperBiomeIndex = GetResolvedBiomeIndex(palette, upperBiomeGuid);
+
+                Assert.That(lowerBiomeIndex, Is.EqualTo(1));
+                Assert.That(upperBiomeIndex, Is.EqualTo(2));
+
+                WorldSnapshot snapshot = await ExecuteNodesAsync(
+                    new IGenNode[] { lowerLayerNode, upperLayerNode },
+                    2,
+                    5,
+                    4402L,
+                    palette.Biomes,
+                    CreateInitialBiomeSnapshot(2, 5, 0));
+
+                WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(biomeChannel, Is.Not.Null);
+                AssertRowValues(biomeChannel.Data, 2, 0, lowerBiomeIndex);
+                AssertRowValues(biomeChannel.Data, 2, 1, lowerBiomeIndex);
+                AssertRowValues(biomeChannel.Data, 2, 2, 0);
+                AssertRowValues(biomeChannel.Data, 2, 3, upperBiomeIndex);
+                AssertRowValues(biomeChannel.Data, 2, 4, upperBiomeIndex);
+            }
+            finally
+            {
+                DeleteAssetIfExists(reservedBiomePath);
+                DeleteAssetIfExists(lowerBiomePath);
+                DeleteAssetIfExists(upperBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeOverrideNodeOverridesAllMaskedTilesWhenProbabilityIsOne()
+        {
+            string reservedBiomePath = null;
+            string overrideBiomePath = null;
+
+            try
+            {
+                reservedBiomePath = CreateBiomeAsset("BiomeOverrideReserved");
+                overrideBiomePath = CreateBiomeAsset("BiomeOverrideTarget");
+
+                string reservedBiomeGuid = AssetDatabase.AssetPathToGUID(reservedBiomePath);
+                string overrideBiomeGuid = AssetDatabase.AssetPathToGUID(overrideBiomePath);
+
+                BiomeTestMaskNode maskNode = new BiomeTestMaskNode("mask-probability-one", "Mask Probability One", MaskChannelName);
+                BiomeOverrideNode overrideNode = new BiomeOverrideNode(
+                    "override-probability-one",
+                    "Override Probability One",
+                    inputMaskChannelName: MaskChannelName,
+                    overrideBiome: overrideBiomeGuid,
+                    blendEdgeWidth: 0.0f,
+                    probability: 1.0f);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(reservedBiomeGuid);
+                ResolveBiomePalette(overrideNode, palette);
+
+                int overrideBiomeIndex = GetResolvedBiomeIndex(palette, overrideBiomeGuid);
+                Assert.That(overrideBiomeIndex, Is.EqualTo(1));
+
+                WorldSnapshot snapshot = await ExecuteNodesAsync(
+                    new IGenNode[] { maskNode, overrideNode },
+                    5,
+                    5,
+                    4403L,
+                    palette.Biomes,
+                    CreateInitialBiomeSnapshot(5, 5, 0));
+
+                WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(biomeChannel, Is.Not.Null);
+                AssertMaskedOverrideValues(biomeChannel.Data, 5, 5, overrideBiomeIndex, 0);
+            }
+            finally
+            {
+                DeleteAssetIfExists(reservedBiomePath);
+                DeleteAssetIfExists(overrideBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeOverrideNodeLeavesMaskedTilesUnchangedWhenProbabilityIsZero()
+        {
+            string reservedBiomePath = null;
+            string overrideBiomePath = null;
+
+            try
+            {
+                reservedBiomePath = CreateBiomeAsset("BiomeOverrideZeroReserved");
+                overrideBiomePath = CreateBiomeAsset("BiomeOverrideZeroTarget");
+
+                string reservedBiomeGuid = AssetDatabase.AssetPathToGUID(reservedBiomePath);
+                string overrideBiomeGuid = AssetDatabase.AssetPathToGUID(overrideBiomePath);
+
+                BiomeTestMaskNode maskNode = new BiomeTestMaskNode("mask-probability-zero", "Mask Probability Zero", MaskChannelName);
+                BiomeOverrideNode overrideNode = new BiomeOverrideNode(
+                    "override-probability-zero",
+                    "Override Probability Zero",
+                    inputMaskChannelName: MaskChannelName,
+                    overrideBiome: overrideBiomeGuid,
+                    blendEdgeWidth: 0.0f,
+                    probability: 0.0f);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(reservedBiomeGuid);
+                ResolveBiomePalette(overrideNode, palette);
+
+                WorldSnapshot snapshot = await ExecuteNodesAsync(
+                    new IGenNode[] { maskNode, overrideNode },
+                    5,
+                    5,
+                    4404L,
+                    palette.Biomes,
+                    CreateInitialBiomeSnapshot(5, 5, 0));
+
+                WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(biomeChannel, Is.Not.Null);
+                CollectionAssert.AreEqual(new int[25], biomeChannel.Data);
+            }
+            finally
+            {
+                DeleteAssetIfExists(reservedBiomePath);
+                DeleteAssetIfExists(overrideBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeOverrideNodeProducesDeterministicOutputAcrossRunsWithTheSameLocalSeed()
+        {
+            string reservedBiomePath = null;
+            string overrideBiomePath = null;
+            ExecutionPlan firstPlan = null;
+            ExecutionPlan secondPlan = null;
+
+            try
+            {
+                reservedBiomePath = CreateBiomeAsset("BiomeOverrideDeterministicReserved");
+                overrideBiomePath = CreateBiomeAsset("BiomeOverrideDeterministicTarget");
+
+                string reservedBiomeGuid = AssetDatabase.AssetPathToGUID(reservedBiomePath);
+                string overrideBiomeGuid = AssetDatabase.AssetPathToGUID(overrideBiomePath);
+
+                BiomeTestMaskNode firstMaskNode = new BiomeTestMaskNode("mask-deterministic", "Mask Deterministic", MaskChannelName);
+                BiomeOverrideNode firstOverrideNode = new BiomeOverrideNode(
+                    "override-deterministic",
+                    "Override Deterministic",
+                    inputMaskChannelName: MaskChannelName,
+                    overrideBiome: overrideBiomeGuid,
+                    blendEdgeWidth: 0.0f,
+                    probability: 0.5f);
+
+                BiomeTestMaskNode secondMaskNode = new BiomeTestMaskNode("mask-deterministic", "Mask Deterministic", MaskChannelName);
+                BiomeOverrideNode secondOverrideNode = new BiomeOverrideNode(
+                    "override-deterministic",
+                    "Override Deterministic",
+                    inputMaskChannelName: MaskChannelName,
+                    overrideBiome: overrideBiomeGuid,
+                    blendEdgeWidth: 0.0f,
+                    probability: 0.5f);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(reservedBiomeGuid);
+                ResolveBiomePalette(firstOverrideNode, palette);
+                ResolveBiomePalette(secondOverrideNode, palette);
+
+                firstPlan = ExecutionPlan.Build(new IGenNode[] { firstMaskNode, firstOverrideNode }, 5, 5, 4405L);
+                secondPlan = ExecutionPlan.Build(new IGenNode[] { secondMaskNode, secondOverrideNode }, 5, 5, 4405L);
+
+                firstPlan.SetBiomeChannelBiomes(palette.Biomes);
+                secondPlan.SetBiomeChannelBiomes(palette.Biomes);
+                firstPlan.RestoreWorldSnapshot(CreateInitialBiomeSnapshot(5, 5, 0));
+                secondPlan.RestoreWorldSnapshot(CreateInitialBiomeSnapshot(5, 5, 0));
+
+                long firstLocalSeed = firstPlan.GetLocalSeed("override-deterministic");
+                long secondLocalSeed = secondPlan.GetLocalSeed("override-deterministic");
+
+                Assert.That(firstLocalSeed, Is.EqualTo(secondLocalSeed));
+
+                Executor executor = new Executor();
+                ExecutionResult firstResult = await executor.ExecuteAsync(firstPlan, CancellationToken.None);
+                ExecutionResult secondResult = await executor.ExecuteAsync(secondPlan, CancellationToken.None);
+
+                Assert.That(firstResult.IsSuccess, Is.True);
+                Assert.That(secondResult.IsSuccess, Is.True);
+
+                WorldSnapshot.IntChannelSnapshot firstBiomeChannel = GetIntChannel(firstResult.Snapshot, BiomeChannelUtility.ChannelName);
+                WorldSnapshot.IntChannelSnapshot secondBiomeChannel = GetIntChannel(secondResult.Snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(firstBiomeChannel, Is.Not.Null);
+                Assert.That(secondBiomeChannel, Is.Not.Null);
+                CollectionAssert.AreEqual(firstBiomeChannel.Data, secondBiomeChannel.Data);
+            }
+            finally
+            {
+                if (firstPlan != null)
+                {
+                    firstPlan.Dispose();
+                }
+
+                if (secondPlan != null)
+                {
+                    secondPlan.Dispose();
+                }
+
+                DeleteAssetIfExists(reservedBiomePath);
+                DeleteAssetIfExists(overrideBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeSelectorNodeRangeModeWritesResolvedBiomeIndicesAndLeavesGapTilesUnchanged()
+        {
+            string reservedBiomePath = null;
+            string lowerBiomePath = null;
+            string upperBiomePath = null;
+
+            try
+            {
+                reservedBiomePath = CreateBiomeAsset("BiomeSelectorRangeReserved");
+                lowerBiomePath = CreateBiomeAsset("BiomeSelectorRangeLower");
+                upperBiomePath = CreateBiomeAsset("BiomeSelectorRangeUpper");
+
+                string reservedBiomeGuid = AssetDatabase.AssetPathToGUID(reservedBiomePath);
+                string lowerBiomeGuid = AssetDatabase.AssetPathToGUID(lowerBiomePath);
+                string upperBiomeGuid = AssetDatabase.AssetPathToGUID(upperBiomePath);
+
+                BiomeFloatSourceNode inputNode = new BiomeFloatSourceNode(
+                    "selector-range-input",
+                    "RangeInput",
+                    new[]
+                    {
+                        0.1f,
+                        0.3f,
+                        0.5f,
+                        0.9f
+                    });
+
+                string rangeEntries =
+                    "{\"Entries\":[" +
+                    "{\"Biome\":\"" + lowerBiomeGuid + "\",\"RangeMin\":0.0,\"RangeMax\":0.2}," +
+                    "{\"Biome\":\"" + upperBiomeGuid + "\",\"RangeMin\":0.4,\"RangeMax\":0.6}" +
+                    "]}";
+
+                BiomeSelectorNode selectorNode = new BiomeSelectorNode(
+                    "selector-range",
+                    "Selector Range",
+                    inputChannelName: "RangeInput",
+                    mode: BiomeSelectorMode.Range,
+                    rangeEntries: rangeEntries);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(reservedBiomeGuid);
+                ResolveBiomePalette(selectorNode, palette);
+
+                int lowerBiomeIndex = GetResolvedBiomeIndex(palette, lowerBiomeGuid);
+                int upperBiomeIndex = GetResolvedBiomeIndex(palette, upperBiomeGuid);
+
+                Assert.That(lowerBiomeIndex, Is.EqualTo(1));
+                Assert.That(upperBiomeIndex, Is.EqualTo(2));
+
+                WorldSnapshot snapshot = await ExecuteNodesAsync(
+                    new IGenNode[] { inputNode, selectorNode },
+                    4,
+                    1,
+                    4406L,
+                    palette.Biomes,
+                    CreateInitialBiomeSnapshot(4, 1, 0));
+
+                WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(biomeChannel, Is.Not.Null);
+                CollectionAssert.AreEqual(new[] { lowerBiomeIndex, 0, upperBiomeIndex, 0 }, biomeChannel.Data);
+            }
+            finally
+            {
+                DeleteAssetIfExists(reservedBiomePath);
+                DeleteAssetIfExists(lowerBiomePath);
+                DeleteAssetIfExists(upperBiomePath);
+            }
+        }
+
 
         [Test]
         public async Task GraphCompileIncludesDisconnectedBiomeLayersAndProducesSharedBiomeChannel()
@@ -364,6 +732,118 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        private static BiomeChannelPalette CreatePaletteWithReservedZeroIndex(string reservedBiomeGuid)
+        {
+            BiomeChannelPalette palette = new BiomeChannelPalette();
+            int reservedBiomeIndex;
+            string errorMessage;
+
+            Assert.That(palette.TryResolveIndex(reservedBiomeGuid, out reservedBiomeIndex, out errorMessage), Is.True, errorMessage);
+            Assert.That(reservedBiomeIndex, Is.EqualTo(0));
+            return palette;
+        }
+
+        private static void ResolveBiomePalette(IBiomeChannelNode node, BiomeChannelPalette palette)
+        {
+            string errorMessage;
+            Assert.That(node.ResolveBiomePalette(palette, out errorMessage), Is.True, errorMessage);
+        }
+
+        private static int GetResolvedBiomeIndex(BiomeChannelPalette palette, string biomeGuid)
+        {
+            int biomeIndex;
+            string errorMessage;
+
+            Assert.That(palette.TryResolveIndex(biomeGuid, out biomeIndex, out errorMessage), Is.True, errorMessage);
+            return biomeIndex;
+        }
+
+        private static WorldSnapshot CreateInitialBiomeSnapshot(int width, int height, int initialBiomeIndex)
+        {
+            int[] biomeData = new int[width * height];
+            if (initialBiomeIndex != 0)
+            {
+                int index;
+                for (index = 0; index < biomeData.Length; index++)
+                {
+                    biomeData[index] = initialBiomeIndex;
+                }
+            }
+
+            return new WorldSnapshot
+            {
+                Width = width,
+                Height = height,
+                IntChannels = new[]
+                {
+                    new WorldSnapshot.IntChannelSnapshot
+                    {
+                        Name = BiomeChannelUtility.ChannelName,
+                        Data = biomeData
+                    }
+                }
+            };
+        }
+
+        private static async Task<WorldSnapshot> ExecuteNodesAsync(
+            IReadOnlyList<IGenNode> nodes,
+            int width,
+            int height,
+            long seed,
+            IReadOnlyList<BiomeAsset> biomeChannelBiomes,
+            WorldSnapshot initialSnapshot)
+        {
+            ExecutionPlan plan = ExecutionPlan.Build(nodes, width, height, seed);
+
+            if (biomeChannelBiomes != null)
+            {
+                plan.SetBiomeChannelBiomes(biomeChannelBiomes);
+            }
+
+            if (initialSnapshot != null)
+            {
+                plan.RestoreWorldSnapshot(initialSnapshot);
+            }
+
+            Executor executor = new Executor();
+            ExecutionResult result = await executor.ExecuteAsync(plan, CancellationToken.None);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.ErrorMessage, Is.Null);
+            Assert.That(result.Snapshot, Is.Not.Null);
+            return result.Snapshot;
+        }
+
+        private static void AssertRowValues(int[] biomeData, int width, int row, int expectedValue)
+        {
+            int x;
+            for (x = 0; x < width; x++)
+            {
+                int index = x + (row * width);
+                Assert.That(biomeData[index], Is.EqualTo(expectedValue));
+            }
+        }
+
+        private static void AssertMaskedOverrideValues(int[] biomeData, int width, int height, int maskedValue, int unmaskedValue)
+        {
+            int y;
+            for (y = 0; y < height; y++)
+            {
+                int x;
+                for (x = 0; x < width; x++)
+                {
+                    int index = x + (y * width);
+                    int expectedValue = IsBiomeTestMaskTile(x, y, width, height) ? maskedValue : unmaskedValue;
+                    Assert.That(biomeData[index], Is.EqualTo(expectedValue));
+                }
+            }
+        }
+
+        private static bool IsBiomeTestMaskTile(int x, int y, int width, int height)
+        {
+            return x >= 1 && x <= width - 2 && y >= 1 && y <= height - 2;
+        }
+
         private static WorldSnapshot.IntChannelSnapshot GetIntChannel(WorldSnapshot snapshot, string channelName)
         {
             int channelIndex;
@@ -504,6 +984,85 @@ namespace DynamicDungeon.Tests.Runtime
                 bool inside = x >= 1 && x <= Width - 2 && y >= 1 && y <= Height - 2;
                 Output[index] = inside ? (byte)1 : (byte)0;
             }
+        }
+    }
+
+    internal sealed class BiomeFloatSourceNode : IGenNode
+    {
+        private readonly NodePortDefinition[] _ports;
+        private readonly ChannelDeclaration[] _channelDeclarations;
+        private readonly string _nodeId;
+        private readonly string _nodeName;
+        private readonly string _outputChannelName;
+        private readonly float[] _values;
+
+        public IReadOnlyList<NodePortDefinition> Ports
+        {
+            get
+            {
+                return _ports;
+            }
+        }
+
+        public IReadOnlyList<ChannelDeclaration> ChannelDeclarations
+        {
+            get
+            {
+                return _channelDeclarations;
+            }
+        }
+
+        public IReadOnlyList<BlackboardKey> BlackboardDeclarations
+        {
+            get
+            {
+                return Array.Empty<BlackboardKey>();
+            }
+        }
+
+        public string NodeId
+        {
+            get
+            {
+                return _nodeId;
+            }
+        }
+
+        public string NodeName
+        {
+            get
+            {
+                return _nodeName;
+            }
+        }
+
+        public BiomeFloatSourceNode(string nodeId, string outputChannelName, float[] values)
+        {
+            _nodeId = nodeId;
+            _nodeName = nodeId;
+            _outputChannelName = outputChannelName;
+            _values = values ?? Array.Empty<float>();
+            _ports = new[]
+            {
+                new NodePortDefinition(outputChannelName, PortDirection.Output, ChannelType.Float)
+            };
+            _channelDeclarations = new[]
+            {
+                new ChannelDeclaration(outputChannelName, ChannelType.Float, true)
+            };
+        }
+
+        public JobHandle Schedule(NodeExecutionContext context)
+        {
+            NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
+
+            int index;
+            for (index = 0; index < output.Length; index++)
+            {
+                output[index] = _values[index];
+            }
+
+            return context.InputDependency;
         }
     }
 }

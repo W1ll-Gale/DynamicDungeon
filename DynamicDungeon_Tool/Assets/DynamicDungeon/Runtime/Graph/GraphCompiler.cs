@@ -32,15 +32,17 @@ namespace DynamicDungeon.Runtime.Graph
         {
             public readonly CompiledNodeInfo FromNode;
             public readonly NodePortDefinition FromPort;
+            public readonly string SourceChannelName;
             public readonly CompiledNodeInfo ToNode;
             public readonly NodePortDefinition ToPort;
             public readonly CastMode CastMode;
             public readonly string CastChannelName;
 
-            public ValidatedConnection(CompiledNodeInfo fromNode, NodePortDefinition fromPort, CompiledNodeInfo toNode, NodePortDefinition toPort, CastMode castMode, string castChannelName)
+            public ValidatedConnection(CompiledNodeInfo fromNode, NodePortDefinition fromPort, string sourceChannelName, CompiledNodeInfo toNode, NodePortDefinition toPort, CastMode castMode, string castChannelName)
             {
                 FromNode = fromNode;
                 FromPort = fromPort;
+                SourceChannelName = sourceChannelName;
                 ToNode = toNode;
                 ToPort = toPort;
                 CastMode = castMode;
@@ -434,9 +436,31 @@ namespace DynamicDungeon.Runtime.Graph
                 }
 
                 portsByName.Add(port.Name, port);
+                AddPortAlias(portsByName, port.DisplayName, port);
+
+                if (port.Direction == PortDirection.Output)
+                {
+                    AddPortAlias(portsByName, GraphPortNameUtility.CreateGeneratedOutputPortName(nodeInstance.NodeId, port.DisplayName), port);
+                    AddPortAlias(portsByName, GraphPortNameUtility.CreateGeneratedOutputPortName(nodeInstance.NodeId, port.Name), port);
+                }
             }
 
             return portsByName;
+        }
+
+        private static void AddPortAlias(Dictionary<string, NodePortDefinition> portsByName, string alias, NodePortDefinition port)
+        {
+            if (string.IsNullOrWhiteSpace(alias))
+            {
+                return;
+            }
+
+            if (portsByName.ContainsKey(alias))
+            {
+                return;
+            }
+
+            portsByName.Add(alias, port);
         }
 
         private static ConnectionValidationResult ValidateConnections(IReadOnlyList<GenConnectionData> connectionDataList, List<GraphDiagnostic> diagnostics, IReadOnlyDictionary<string, CompiledNodeInfo> nodesById)
@@ -532,8 +556,9 @@ namespace DynamicDungeon.Runtime.Graph
                     implicitCastIndex++;
                 }
 
+                string sourceChannelName = ResolveSourceChannelName(fromNode, fromPort);
                 incomingCountsByPortKey[targetPortKey] = existingIncomingCount + 1;
-                validatedConnections.Add(new ValidatedConnection(fromNode, fromPort, toNode, toPort, castMode, castChannelName));
+                validatedConnections.Add(new ValidatedConnection(fromNode, fromPort, sourceChannelName, toNode, toPort, castMode, castChannelName));
             }
 
             return new ConnectionValidationResult(validatedConnections, incomingCountsByPortKey);
@@ -560,7 +585,7 @@ namespace DynamicDungeon.Runtime.Graph
                     // For same-type connections it reads directly from the source port's channel.
                     string sourceChannelName = (connection.CastMode != CastMode.None)
                         ? connection.CastChannelName
-                        : connection.FromPort.Name;
+                        : connection.SourceChannelName;
                     nodeConnections.Add(connection.ToPort.Name, sourceChannelName);
                 }
             }
@@ -1418,6 +1443,28 @@ namespace DynamicDungeon.Runtime.Graph
             return (nodeId ?? string.Empty) + "::" + (portName ?? string.Empty);
         }
 
+        private static string ResolveSourceChannelName(CompiledNodeInfo fromNode, NodePortDefinition fromPort)
+        {
+            IReadOnlyList<ChannelDeclaration> channelDeclarations = fromNode.Node.ChannelDeclarations;
+
+            int declarationIndex;
+            for (declarationIndex = 0; declarationIndex < channelDeclarations.Count; declarationIndex++)
+            {
+                ChannelDeclaration declaration = channelDeclarations[declarationIndex];
+                if (!declaration.IsWrite || declaration.Type != fromPort.Type)
+                {
+                    continue;
+                }
+
+                if (GraphPortNameUtility.PortMatchesName(fromNode.Node.NodeId, fromPort, declaration.ChannelName))
+                {
+                    return declaration.ChannelName;
+                }
+            }
+
+            return fromPort.Name;
+        }
+
         private static List<CompiledNodeInfo> InsertImplicitCastNodes(List<CompiledNodeInfo> sortedNodes, IReadOnlyList<ValidatedConnection> validatedConnections)
         {
             Dictionary<string, List<ImplicitCastNode>> castNodesBeforeNode = new Dictionary<string, List<ImplicitCastNode>>(StringComparer.Ordinal);
@@ -1433,7 +1480,7 @@ namespace DynamicDungeon.Runtime.Graph
 
                 ImplicitCastNode castNode = new ImplicitCastNode(
                     connection.CastChannelName,
-                    connection.FromPort.Name,
+                    connection.SourceChannelName,
                     connection.FromPort.Type,
                     connection.CastChannelName,
                     connection.ToPort.Type,

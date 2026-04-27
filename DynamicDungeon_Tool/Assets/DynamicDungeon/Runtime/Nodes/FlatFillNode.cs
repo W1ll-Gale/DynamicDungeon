@@ -15,6 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     public sealed class FlatFillNode : IGenNode, IParameterReceiver
     {
         private const string DefaultNodeName = "Flat Fill";
+        private const string LegacyFlatOutputChannelName = "FlatOutput";
         private const string FallbackOutputPortName = "Output";
         private const int DefaultBatchSize = 64;
         private const string PreferredOutputDisplayName = FallbackOutputPortName;
@@ -77,11 +78,16 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public FlatFillNode(string nodeId, float fillValue) : this(nodeId, DefaultNodeName, fillValue)
+        public FlatFillNode(string nodeId, float fillValue) : this(nodeId, DefaultNodeName, LegacyFlatOutputChannelName, fillValue)
         {
         }
 
         public FlatFillNode(string nodeId, string nodeName, float fillValue)
+            : this(nodeId, nodeName, string.Empty, fillValue)
+        {
+        }
+
+        private FlatFillNode(string nodeId, string nodeName, string outputChannelName, float fillValue)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -96,7 +102,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeId = nodeId;
             _nodeName = nodeName;
             _fillValue = fillValue;
-            _outputChannelName = GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, FallbackOutputPortName);
+            _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, outputChannelName, FallbackOutputPortName);
 
             RefreshPorts();
             RefreshChannelDeclarations();
@@ -107,7 +113,7 @@ namespace DynamicDungeon.Runtime.Nodes
             string outputPortDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _outputChannelName, PreferredOutputDisplayName);
             _ports = new[]
             {
-                new NodePortDefinition(FallbackOutputPortName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Float, displayName: outputPortDisplayName)
             };
         }
 
@@ -123,7 +129,7 @@ namespace DynamicDungeon.Runtime.Nodes
         {
             if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
             {
-                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, FallbackOutputPortName) : value;
+                _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(_nodeId, value, FallbackOutputPortName);
                 RefreshPorts();
                 RefreshChannelDeclarations();
             }

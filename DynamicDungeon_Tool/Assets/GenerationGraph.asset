@@ -185,6 +185,21 @@ MonoBehaviour:
     ToNodeId: graph-output-node
     ToPortName: LogicalIds
     CastMode: 1
+  - FromNodeId: 0e3b018e-5349-4323-9da9-01d0c12b2bc4
+    FromPortName: Output
+    ToNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    FromPortName: Distance
+    ToNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
+    FromPortName: Output
+    ToNodeId: graph-output-node
+    ToPortName: LogicalIds
+    CastMode: 1
   StickyNotes: []
   Groups: []
   ExposedProperties: []

@@ -19,6 +19,16 @@ namespace DynamicDungeon.Runtime.Graph
             return safeDisplayName + "__" + nodeId;
         }
 
+        public static string ResolveOwnedOutputChannelName(string nodeId, string requestedChannelName, string defaultDisplayName)
+        {
+            if (string.IsNullOrWhiteSpace(requestedChannelName))
+            {
+                return CreateGeneratedOutputPortName(nodeId, defaultDisplayName);
+            }
+
+            return requestedChannelName.Trim();
+        }
+
         public static string GetPreferredOutputDisplayName(Type nodeType, string parameterName)
         {
             if (nodeType == typeof(BoolMaskToLogicalIdNode))
@@ -46,6 +56,35 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             return string.IsNullOrWhiteSpace(safeOutputChannelName) ? normalPreferredDisplayName : safeOutputChannelName;
+        }
+
+        public static bool PortMatchesName(string nodeId, NodePortDefinition portDefinition, string candidatePortName)
+        {
+            string safeCandidatePortName = candidatePortName ?? string.Empty;
+            if (safeCandidatePortName.Length == 0)
+            {
+                return false;
+            }
+
+            if (string.Equals(portDefinition.Name, safeCandidatePortName, StringComparison.Ordinal) ||
+                string.Equals(portDefinition.DisplayName, safeCandidatePortName, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (portDefinition.Direction != PortDirection.Output)
+            {
+                return false;
+            }
+
+            string generatedNameFromDisplayName = CreateGeneratedOutputPortName(nodeId, portDefinition.DisplayName);
+            if (string.Equals(generatedNameFromDisplayName, safeCandidatePortName, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            string generatedNameFromPortName = CreateGeneratedOutputPortName(nodeId, portDefinition.Name);
+            return string.Equals(generatedNameFromPortName, safeCandidatePortName, StringComparison.Ordinal);
         }
 
         private static bool IsNamedOutput(string outputChannelName, string nodeId, string displayName)

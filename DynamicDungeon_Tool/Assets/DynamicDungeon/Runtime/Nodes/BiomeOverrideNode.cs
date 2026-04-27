@@ -179,17 +179,15 @@ namespace DynamicDungeon.Runtime.Nodes
 
             if (_blendEdgeWidth <= 0.0f)
             {
-                BiomeOverrideApplyJob applyJob = new BiomeOverrideApplyJob
+                BiomeOverrideSimpleApplyJob applyJob = new BiomeOverrideSimpleApplyJob
                 {
                     Width = context.Width,
                     Height = context.Height,
                     LocalSeed = context.LocalSeed,
                     BiomeIndex = _resolvedBiomeIndex,
                     Probability = _probability,
-                    BlendEdgeWidth = 0.0f,
                     BiomeChannel = biomeChannel,
-                    Mask = mask,
-                    Distances = default
+                    Mask = mask
                 };
 
                 return applyJob.Schedule(biomeChannel.Length, DefaultBatchSize, context.InputDependency);
@@ -382,6 +380,44 @@ namespace DynamicDungeon.Runtime.Nodes
                         Distances[index] = best;
                     }
                 }
+            }
+        }
+
+        [BurstCompile]
+        private struct BiomeOverrideSimpleApplyJob : IJobParallelFor
+        {
+            public int Width;
+            public int Height;
+            public long LocalSeed;
+            public int BiomeIndex;
+            public float Probability;
+
+            public NativeArray<int> BiomeChannel;
+
+            [Unity.Collections.ReadOnly]
+            public NativeArray<byte> Mask;
+
+            public void Execute(int index)
+            {
+                if (Mask[index] == 0 || Probability <= 0.0f)
+                {
+                    return;
+                }
+
+                int x = index % Width;
+                int y = index / Width;
+                if (HashToUnitFloat(LocalSeed, x, y) <= Probability)
+                {
+                    BiomeChannel[index] = BiomeIndex;
+                }
+            }
+
+            private static float HashToUnitFloat(long localSeed, int x, int y)
+            {
+                uint seedLow = unchecked((uint)localSeed);
+                uint seedHigh = unchecked((uint)(localSeed >> 32));
+                uint hash = math.hash(new uint4((uint)x, (uint)y, seedLow, seedHigh));
+                return (float)(hash / 4294967296.0d);
             }
         }
 

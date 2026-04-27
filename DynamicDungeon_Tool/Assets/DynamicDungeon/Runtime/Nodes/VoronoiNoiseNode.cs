@@ -151,8 +151,8 @@ namespace DynamicDungeon.Runtime.Nodes
             string cellIdDisplayName = GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _cellIdChannelName, CellIdDisplayName);
             _ports = new[]
             {
-                new NodePortDefinition(DistanceDisplayName, PortDirection.Output, ChannelType.Float, displayName: distanceDisplayName),
-                new NodePortDefinition(CellIdDisplayName, PortDirection.Output, ChannelType.Int, displayName: cellIdDisplayName)
+                new NodePortDefinition(_distanceChannelName, PortDirection.Output, ChannelType.Float, displayName: distanceDisplayName),
+                new NodePortDefinition(_cellIdChannelName, PortDirection.Output, ChannelType.Int, displayName: cellIdDisplayName)
             };
         }
 
@@ -196,7 +196,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
             {
-                _distanceChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? MakeDistanceChannelName(_nodeId) : value;
+                _distanceChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(_nodeId, value, DistanceDisplayName);
                 RefreshPorts();
                 RefreshChannelDeclarations();
             }

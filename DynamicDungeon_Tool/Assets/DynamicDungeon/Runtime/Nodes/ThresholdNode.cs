@@ -86,7 +86,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeId = nodeId;
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
             _inputChannelName = inputChannelName ?? string.Empty;
-            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, FallbackOutputPortName) : outputChannelName;
+            _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, outputChannelName, FallbackOutputPortName);
             _threshold = math.clamp(threshold, 0.0f, 1.0f);
 
             RefreshPorts();
@@ -99,7 +99,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _ports = new[]
             {
                 new NodePortDefinition(InputPortName, PortDirection.Input, ChannelType.Float, PortCapacity.Single, true),
-                new NodePortDefinition(FallbackOutputPortName, PortDirection.Output, ChannelType.BoolMask, displayName: outputPortDisplayName)
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.BoolMask, displayName: outputPortDisplayName)
             };
         }
 
@@ -138,7 +138,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
             {
-                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, FallbackOutputPortName) : value;
+                _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(_nodeId, value, FallbackOutputPortName);
                 RefreshPorts();
                 RefreshChannelDeclarations();
             }

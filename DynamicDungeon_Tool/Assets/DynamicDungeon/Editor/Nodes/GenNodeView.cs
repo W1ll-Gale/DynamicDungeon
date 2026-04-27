@@ -139,7 +139,34 @@ namespace DynamicDungeon.Editor.Nodes
 
         public bool TryGetPort(string portName, out Port portView)
         {
-            return _portsByName.TryGetValue(portName ?? string.Empty, out portView);
+            if (_portsByName.TryGetValue(portName ?? string.Empty, out portView))
+            {
+                return true;
+            }
+
+            foreach (KeyValuePair<string, Port> portPair in _portsByName)
+            {
+                Port candidatePort = portPair.Value;
+                if (candidatePort == null)
+                {
+                    continue;
+                }
+
+                NodePortDefinition portDefinition;
+                if (!GenPortUtility.TryGetPortDefinition(candidatePort, out portDefinition))
+                {
+                    continue;
+                }
+
+                if (GraphPortNameUtility.PortMatchesName(_nodeData != null ? _nodeData.NodeId : string.Empty, portDefinition, portName))
+                {
+                    portView = candidatePort;
+                    return true;
+                }
+            }
+
+            portView = null;
+            return false;
         }
 
         public bool IsCollapsed()
@@ -1061,7 +1088,7 @@ namespace DynamicDungeon.Editor.Nodes
                     : preservedConnection.ConnectionData.ToPortName;
 
                 Port rebuiltPort;
-                if (!_portsByName.TryGetValue(rebuiltPortName ?? string.Empty, out rebuiltPort))
+                if (!TryGetPort(rebuiltPortName, out rebuiltPort))
                 {
                     RemoveGraphConnection(preservedConnection.ConnectionData);
                     continue;
