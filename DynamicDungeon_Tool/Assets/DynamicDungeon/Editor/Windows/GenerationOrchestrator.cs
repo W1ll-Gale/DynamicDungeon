@@ -6,6 +6,7 @@ using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -50,7 +51,8 @@ namespace DynamicDungeon.Editor.Windows
             None,
             Float,
             Int,
-            BoolMask
+            BoolMask,
+            PointList
         }
 
         private sealed class PreviewUpdateData
@@ -63,6 +65,7 @@ namespace DynamicDungeon.Editor.Windows
             public float[] FloatChannel;
             public int[] IntChannel;
             public byte[] BoolMaskChannel;
+            public int2[] PointListChannel;
         }
 
         public bool IsGenerating
@@ -792,6 +795,18 @@ namespace DynamicDungeon.Editor.Windows
                     previewUpdate.BoolMaskChannel = new byte[boolMaskChannel.Length];
                     CopyNativeArray(boolMaskChannel, previewUpdate.BoolMaskChannel);
                     return previewUpdate;
+                case ChannelType.PointList:
+                    NativeList<int2> pointListChannel = worldData.GetPointListChannel(primaryOutput.ChannelName);
+                    if (!pointListChannel.IsCreated)
+                    {
+                        previewUpdate.ChannelType = PreviewChannelType.None;
+                        return previewUpdate;
+                    }
+
+                    previewUpdate.ChannelType = PreviewChannelType.PointList;
+                    previewUpdate.PointListChannel = new int2[pointListChannel.Length];
+                    CopyNativeList(pointListChannel, previewUpdate.PointListChannel);
+                    return previewUpdate;
                 default:
                     previewUpdate.ChannelType = PreviewChannelType.None;
                     return previewUpdate;
@@ -859,6 +874,8 @@ namespace DynamicDungeon.Editor.Windows
                     return NodePreviewRenderer.RenderIntChannel(previewUpdate.IntChannel, previewUpdate.Width, previewUpdate.Height);
                 case PreviewChannelType.BoolMask:
                     return NodePreviewRenderer.RenderBoolMaskChannel(previewUpdate.BoolMaskChannel, previewUpdate.Width, previewUpdate.Height);
+                case PreviewChannelType.PointList:
+                    return NodePreviewRenderer.RenderPointListChannel(previewUpdate.PointListChannel, previewUpdate.Width, previewUpdate.Height);
                 default:
                     return null;
             }
@@ -882,6 +899,11 @@ namespace DynamicDungeon.Editor.Windows
                     NativeArray<byte> boolMaskChannel = worldData.GetBoolMaskChannel(outputDeclaration.ChannelName);
                     return boolMaskChannel.IsCreated
                         ? NodePreviewRenderer.RenderBoolMaskChannel(boolMaskChannel, worldData.Width, worldData.Height)
+                        : null;
+                case ChannelType.PointList:
+                    NativeList<int2> pointListChannel = worldData.GetPointListChannel(outputDeclaration.ChannelName);
+                    return pointListChannel.IsCreated
+                        ? NodePreviewRenderer.RenderPointListChannel(pointListChannel, worldData.Width, worldData.Height)
                         : null;
                 default:
                     return null;
@@ -922,7 +944,8 @@ namespace DynamicDungeon.Editor.Windows
         {
             return channelType == ChannelType.Float ||
                    channelType == ChannelType.Int ||
-                   channelType == ChannelType.BoolMask;
+                   channelType == ChannelType.BoolMask ||
+                   channelType == ChannelType.PointList;
         }
 
         private static void CopyNativeArray(NativeArray<float> source, float[] destination)
@@ -944,6 +967,15 @@ namespace DynamicDungeon.Editor.Windows
         }
 
         private static void CopyNativeArray(NativeArray<byte> source, byte[] destination)
+        {
+            int index;
+            for (index = 0; index < source.Length; index++)
+            {
+                destination[index] = source[index];
+            }
+        }
+
+        private static void CopyNativeList(NativeList<int2> source, int2[] destination)
         {
             int index;
             for (index = 0; index < source.Length; index++)

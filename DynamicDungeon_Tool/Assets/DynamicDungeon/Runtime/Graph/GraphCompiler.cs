@@ -132,8 +132,8 @@ namespace DynamicDungeon.Runtime.Graph
             }
             else
             {
-                HashSet<string> reachableNodeIds = outputNodeData != null
-                    ? BuildReachableNodeIds(outputNodeData.NodeId, nodeDataList, connectionDataList)
+                HashSet<string> reachableNodeIds = requireOutputNode
+                    ? BuildReachableNodeIds(outputNodeData != null ? outputNodeData.NodeId : string.Empty, nodeDataList, connectionDataList)
                     : BuildPreviewReachableNodeIds(nodeDataList, connectionDataList);
                 reachableNodeDataList = FilterReachableNodes(nodeDataList, reachableNodeIds);
                 reachableConnectionDataList = FilterReachableConnections(connectionDataList, reachableNodeIds);

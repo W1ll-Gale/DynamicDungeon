@@ -3,6 +3,8 @@
     "rootNamespace": "DynamicDungeon.Editor",
     "references": [
         "DynamicDungeon.Runtime",
+        "Unity.Collections",
+        "Unity.Mathematics",
         "Unity.2D.Tilemap.Extras"
     ],
     "includePlatforms": [

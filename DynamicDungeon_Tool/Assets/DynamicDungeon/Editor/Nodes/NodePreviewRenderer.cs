@@ -1,11 +1,15 @@
 using System;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DynamicDungeon.Editor.Nodes
 {
     public static class NodePreviewRenderer
     {
+        private static readonly Color32 PointListBackgroundColour = new Color32(24, 24, 24, byte.MaxValue);
+        private static readonly Color32 PointListPointColour = new Color32(217, 51, 128, byte.MaxValue);
+
         public static Texture2D RenderFloatChannel(float[] channel, int width, int height)
         {
             if (channel == null)
@@ -115,6 +119,41 @@ namespace DynamicDungeon.Editor.Nodes
             return CreateTexture(width, height, pixels);
         }
 
+        public static Texture2D RenderPointListChannel(int2[] points, int width, int height)
+        {
+            if (points == null)
+            {
+                return null;
+            }
+
+            ValidateDimensions(width, height);
+
+            Color32[] pixels = CreateFilledPixelArray(width * height, PointListBackgroundColour);
+
+            int index;
+            for (index = 0; index < points.Length; index++)
+            {
+                PlotPoint(points[index], width, height, pixels);
+            }
+
+            return CreateTexture(width, height, pixels);
+        }
+
+        public static Texture2D RenderPointListChannel(NativeList<int2> points, int width, int height)
+        {
+            ValidateDimensions(width, height);
+
+            Color32[] pixels = CreateFilledPixelArray(width * height, PointListBackgroundColour);
+
+            int index;
+            for (index = 0; index < points.Length; index++)
+            {
+                PlotPoint(points[index], width, height, pixels);
+            }
+
+            return CreateTexture(width, height, pixels);
+        }
+
         private static Texture2D CreateTexture(int width, int height, Color32[] pixels)
         {
             Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -148,15 +187,7 @@ namespace DynamicDungeon.Editor.Nodes
 
         private static void ValidateChannel(int channelLength, int width, int height)
         {
-            if (width <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(width), "Preview width must be greater than zero.");
-            }
-
-            if (height <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(height), "Preview height must be greater than zero.");
-            }
+            ValidateDimensions(width, height);
 
             int expectedLength = width * height;
             if (channelLength != expectedLength)
@@ -170,6 +201,43 @@ namespace DynamicDungeon.Editor.Nodes
                     height +
                     ".");
             }
+        }
+
+        private static void ValidateDimensions(int width, int height)
+        {
+            if (width <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(width), "Preview width must be greater than zero.");
+            }
+
+            if (height <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(height), "Preview height must be greater than zero.");
+            }
+        }
+
+        private static Color32[] CreateFilledPixelArray(int length, Color32 colour)
+        {
+            Color32[] pixels = new Color32[length];
+
+            int index;
+            for (index = 0; index < pixels.Length; index++)
+            {
+                pixels[index] = colour;
+            }
+
+            return pixels;
+        }
+
+        private static void PlotPoint(int2 point, int width, int height, Color32[] pixels)
+        {
+            if (point.x < 0 || point.x >= width || point.y < 0 || point.y >= height)
+            {
+                return;
+            }
+
+            int pixelIndex = (point.y * width) + point.x;
+            pixels[pixelIndex] = PointListPointColour;
         }
     }
 }

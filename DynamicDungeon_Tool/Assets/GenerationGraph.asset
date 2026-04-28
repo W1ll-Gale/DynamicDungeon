@@ -45,7 +45,7 @@ MonoBehaviour:
     - Name: frequency
       Value: 0.05
     - Name: amplitude
-      Value: 1
+      Value: 2.12
     - Name: offset
       Value: 0,0
     - Name: octaves
@@ -154,12 +154,31 @@ MonoBehaviour:
       Value: 2
     - Name: radius
       Value: 1
+  - NodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Cellular Automata
+    Position: {x: 201.77684, y: -606.49994}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: Output__58eba4d1-20f0-4b58-a24b-1181ce8479b8
+      DisplayName: Output
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+    - Name: survivalRule
+      Value: 45678
+    - Name: iterations
+      Value: 1
+    - Name: initialFillProbability
+      Value: 0.359
+    - Name: inputMode
+      Value: UseInputAsInitialState
   Connections:
-  - FromNodeId: 61c447b7-18c8-4475-8411-0ab55879445c
-    FromPortName: Output__61c447b7-18c8-4475-8411-0ab55879445c
-    ToNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
-    ToPortName: A
-    CastMode: 0
   - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
     FromPortName: Distance__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
     ToNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
@@ -170,21 +189,16 @@ MonoBehaviour:
     ToNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
     ToPortName: B
     CastMode: 0
-  - FromNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
-    FromPortName: Output__3249a052-bf82-46ac-9508-e4b80e5ac782
-    ToNodeId: graph-output-node
-    ToPortName: LogicalIds
-    CastMode: 1
-  - FromNodeId: 61c447b7-18c8-4475-8411-0ab55879445c
-    FromPortName: Output__61c447b7-18c8-4475-8411-0ab55879445c
-    ToNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
-    ToPortName: Weight
-    CastMode: 0
   - FromNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
     FromPortName: Output__38a5b9c4-6e4f-4af5-94e5-bae1875d2628
     ToNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
     ToPortName: B
     CastMode: 0
+  - FromNodeId: 61c447b7-18c8-4475-8411-0ab55879445c
+    FromPortName: Output__61c447b7-18c8-4475-8411-0ab55879445c
+    ToNodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    ToPortName: Input
+    CastMode: 3
   StickyNotes: []
   Groups: []
   ExposedProperties: []

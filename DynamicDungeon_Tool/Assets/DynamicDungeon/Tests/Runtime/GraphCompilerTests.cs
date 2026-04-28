@@ -219,6 +219,59 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public void CompileForPreviewIncludesConnectedDeadEndBranchEvenWhenOutputNodeExists()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                AddIntFillNode(graph, "fill-node", "Fill", SharedOutputChannelName, DefaultFillValue);
+                AddIntFillNode(graph, "dead-end-source", "Dead End Source", "DeadEndSource", 9);
+                AddCopyNode(graph, "dead-end-copy", "Dead End Copy", "DeadEndSource", "DeadEndOutput");
+
+                graph.Connections.Add(new GenConnectionData("dead-end-source", "DeadEndSource", "dead-end-copy", "DeadEndSource"));
+                ConnectToOutput(graph, "fill-node", SharedOutputChannelName);
+
+                GraphCompileResult result = GraphCompiler.CompileForPreview(graph);
+
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Plan, Is.Not.Null);
+                Assert.That(result.Plan.AllocatedWorld.HasIntChannel("DeadEndSource"), Is.True);
+                Assert.That(result.Plan.AllocatedWorld.HasIntChannel("DeadEndOutput"), Is.True);
+
+                result.Plan.Dispose();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
+        public void CompileForPreviewReportsErrorsOnConnectedInvalidDeadEndBranch()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                AddIntFillNode(graph, "fill-node", "Fill", SharedOutputChannelName, DefaultFillValue);
+                AddCopyNode(graph, "invalid-copy", "Invalid Copy", "MissingInput", "UnusedOutput");
+                AddCopyNode(graph, "downstream-copy", "Downstream Copy", "UnusedOutput", "DownstreamOutput");
+
+                graph.Connections.Add(new GenConnectionData("invalid-copy", "UnusedOutput", "downstream-copy", "UnusedOutput"));
+                ConnectToOutput(graph, "fill-node", SharedOutputChannelName);
+
+                GraphCompileResult result = GraphCompiler.CompileForPreview(graph);
+
+                Assert.That(result.IsSuccess, Is.False);
+                Assert.That(result.Plan, Is.Null);
+                Assert.That(ContainsError(result.Diagnostics, "Required input port 'MissingInput'"), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
         public void CompileSeedsInitialBlackboardValuesByPropertyId()
         {
             GenGraph graph = CreateGraph();
