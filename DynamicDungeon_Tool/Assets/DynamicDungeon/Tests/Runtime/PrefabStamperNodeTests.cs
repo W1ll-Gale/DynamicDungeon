@@ -26,6 +26,7 @@ namespace DynamicDungeon.Tests.Runtime
         private const string LogicalIdsChannelName = GraphOutputUtility.OutputInputPortName;
         private const string PointsChannelName = "Points";
         private const string TempAssetFolder = "Assets/DynamicDungeon/Tests/TempGenerated";
+        private static readonly int VoidLogicalId = LogicalTileId.Void;
 
         [OneTimeTearDown]
         public void OneTimeTearDown()
@@ -235,7 +236,7 @@ namespace DynamicDungeon.Tests.Runtime
 
             int[] output = GetIntChannelData(snapshot, LogicalIdsChannelName);
 
-            Assert.That(output[ToIndex(2, 2, 5)], Is.EqualTo(LogicalTileId.Void));
+            Assert.That(output[ToIndex(2, 2, 5)], Is.EqualTo(VoidLogicalId));
             Assert.That(output[ToIndex(3, 2, 5)], Is.EqualTo(3));
             Assert.That(output[ToIndex(1, 2, 5)], Is.EqualTo(3));
             Assert.That(output[ToIndex(2, 3, 5)], Is.EqualTo(3));
@@ -343,8 +344,8 @@ namespace DynamicDungeon.Tests.Runtime
                 maxOverlapTiles: 0);
 
             int[] output = GetIntChannelData(snapshot, LogicalIdsChannelName);
-            Assert.That(output[ToIndex(0, 0, 3)], Is.EqualTo(LogicalTileId.Void));
-            Assert.That(output[ToIndex(1, 0, 3)], Is.EqualTo(LogicalTileId.Void));
+            Assert.That(output[ToIndex(0, 0, 3)], Is.EqualTo(VoidLogicalId));
+            Assert.That(output[ToIndex(1, 0, 3)], Is.EqualTo(VoidLogicalId));
             Assert.That(GetPlacementData(snapshot).Length, Is.EqualTo(1));
         }
 

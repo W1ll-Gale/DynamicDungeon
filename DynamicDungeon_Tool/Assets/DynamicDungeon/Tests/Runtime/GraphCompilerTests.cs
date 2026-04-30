@@ -247,6 +247,32 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public void CompileForPreviewIncludesDisconnectedStandaloneNoiseNode()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                string noiseNodeId = "surface-noise";
+                string outputChannelName = GraphPortNameUtility.CreateGeneratedOutputPortName(noiseNodeId, "Output");
+                GenNodeData noiseNode = new GenNodeData(noiseNodeId, typeof(SurfaceNoiseNode).FullName, "Surface Noise", Vector2.zero);
+                noiseNode.Ports.Add(new GenPortData(outputChannelName, PortDirection.Output, ChannelType.Float, "Output"));
+                graph.Nodes.Add(noiseNode);
+
+                GraphCompileResult result = GraphCompiler.CompileForPreview(graph);
+
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Plan, Is.Not.Null);
+                Assert.That(result.Plan.AllocatedWorld.HasFloatChannel(outputChannelName), Is.True);
+
+                result.Plan.Dispose();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
         public void CompileForPreviewReportsErrorsOnConnectedInvalidDeadEndBranch()
         {
             GenGraph graph = CreateGraph();

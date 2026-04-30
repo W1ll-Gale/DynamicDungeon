@@ -529,11 +529,16 @@ namespace DynamicDungeon.Editor.Nodes
             targetParameter.Value = safeNewValue;
             EditorUtility.SetDirty(_graph);
 
+            IParameterVisibilityProvider visibilityProvider = _nodeInstance as IParameterVisibilityProvider;
+            Dictionary<string, bool> previousVisibilityByParameter = CaptureParameterVisibility(visibilityProvider);
+
             IParameterReceiver parameterReceiver = _nodeInstance as IParameterReceiver;
             if (parameterReceiver != null)
             {
                 parameterReceiver.ReceiveParameter(parameterName, safeNewValue);
             }
+
+            bool parameterVisibilityChanged = HasParameterVisibilityChanged(visibilityProvider, previousVisibilityByParameter);
 
             if (string.Equals(parameterName, "algorithm", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(parameterName, "direction", StringComparison.OrdinalIgnoreCase) ||
@@ -543,7 +548,7 @@ namespace DynamicDungeon.Editor.Nodes
                 RebuildNodePorts();
                 PopulateControls();
             }
-            else if (_nodeInstance is IParameterVisibilityProvider)
+            else if (parameterVisibilityChanged)
             {
                 PopulateControls();
             }
@@ -554,6 +559,50 @@ namespace DynamicDungeon.Editor.Nodes
             {
                 _generationOrchestrator.RequestPreviewRefresh();
             }
+        }
+
+        private Dictionary<string, bool> CaptureParameterVisibility(IParameterVisibilityProvider visibilityProvider)
+        {
+            if (visibilityProvider == null || _nodeData == null || _nodeData.Parameters == null)
+            {
+                return null;
+            }
+
+            Dictionary<string, bool> visibilityByParameter = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+            int parameterIndex;
+            for (parameterIndex = 0; parameterIndex < _nodeData.Parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = _nodeData.Parameters[parameterIndex];
+                if (parameter == null || string.IsNullOrWhiteSpace(parameter.Name) || visibilityByParameter.ContainsKey(parameter.Name))
+                {
+                    continue;
+                }
+
+                visibilityByParameter[parameter.Name] = visibilityProvider.IsParameterVisible(parameter.Name);
+            }
+
+            return visibilityByParameter;
+        }
+
+        private static bool HasParameterVisibilityChanged(
+            IParameterVisibilityProvider visibilityProvider,
+            IReadOnlyDictionary<string, bool> previousVisibilityByParameter)
+        {
+            if (visibilityProvider == null || previousVisibilityByParameter == null)
+            {
+                return false;
+            }
+
+            foreach (KeyValuePair<string, bool> visibilityPair in previousVisibilityByParameter)
+            {
+                if (visibilityProvider.IsParameterVisible(visibilityPair.Key) != visibilityPair.Value)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void ResetNodeParametersToDefaults()

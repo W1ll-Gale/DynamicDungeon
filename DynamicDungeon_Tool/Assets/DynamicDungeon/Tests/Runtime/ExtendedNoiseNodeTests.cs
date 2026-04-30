@@ -129,6 +129,72 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task UnifiedNoiseHorizontal1DModeProducesStableColumnsAcrossRows()
+        {
+            NoiseNode node = new NoiseNode("noise-node", "Noise");
+            node.ReceiveParameter("algorithm", "Perlin");
+            node.ReceiveParameter("frequency", "0.2");
+            node.ReceiveParameter("amplitude", "1");
+            node.ReceiveParameter("offset", "0,0");
+            node.ReceiveParameter("octaves", "2");
+            node.ReceiveParameter("samplingMode", "Horizontal1D");
+
+            Executor executor = new Executor();
+            ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { node }, 5, 4, 123L);
+            ExecutionResult result = await executor.ExecuteAsync(plan, CancellationToken.None);
+
+            Assert.That(result.IsSuccess, Is.True);
+
+            float[] values = result.Snapshot.FloatChannels[0].Data;
+            int x;
+            for (x = 0; x < 5; x++)
+            {
+                float expected = values[x];
+                Assert.That(values[(1 * 5) + x], Is.EqualTo(expected).Within(0.0001f));
+                Assert.That(values[(2 * 5) + x], Is.EqualTo(expected).Within(0.0001f));
+                Assert.That(values[(3 * 5) + x], Is.EqualTo(expected).Within(0.0001f));
+            }
+        }
+
+        [Test]
+        public async Task UnifiedNoiseVertical1DModeProducesWarpedBandsAcrossColumns()
+        {
+            NoiseNode node = new NoiseNode("noise-node", "Noise");
+            node.ReceiveParameter("algorithm", "Simplex");
+            node.ReceiveParameter("frequency", "0.34");
+            node.ReceiveParameter("amplitude", "1");
+            node.ReceiveParameter("offset", "0,0");
+            node.ReceiveParameter("samplingMode", "Vertical1D");
+
+            Executor executor = new Executor();
+            ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { node }, 8, 6, 321L);
+            ExecutionResult result = await executor.ExecuteAsync(plan, CancellationToken.None);
+
+            Assert.That(result.IsSuccess, Is.True);
+
+            float[] values = result.Snapshot.FloatChannels[0].Data;
+            bool foundVariationAcrossRow = false;
+
+            int y;
+            for (y = 0; y < 6 && !foundVariationAcrossRow; y++)
+            {
+                float rowStart = values[y * 8];
+
+                int x;
+                for (x = 1; x < 8; x++)
+                {
+                    if (!Mathf.Approximately(rowStart, values[(y * 8) + x]))
+                    {
+                        foundVariationAcrossRow = true;
+                        break;
+                    }
+                }
+            }
+
+            Assert.That(foundVariationAcrossRow, Is.True);
+        }
+
+        [Test]
         public async Task ConstantNodeSwitchesOutputTypeViaParameters()
         {
             ConstantNode node = new ConstantNode("constant-node", "Constant", "ConstantOut");

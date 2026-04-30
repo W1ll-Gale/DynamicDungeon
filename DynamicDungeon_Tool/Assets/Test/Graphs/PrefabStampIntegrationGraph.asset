@@ -72,10 +72,12 @@ MonoBehaviour:
       Value: 0
     - Name: intValue
       Value: 0
+    - Name: samplingMode
+      Value: TwoDimensional
   - NodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
     NodeName: Cave Noise
-    Position: {x: -1246.668, y: -563.45465}
+    Position: {x: -1405.897, y: -560.99994}
     Ports:
     - PortName: Output__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
       DisplayName: Output
@@ -83,7 +85,7 @@ MonoBehaviour:
       Type: 0
     Parameters:
     - Name: frequency
-      Value: 0.055
+      Value: 0.06
     - Name: amplitude
       Value: 1
     - Name: offset
@@ -132,6 +134,8 @@ MonoBehaviour:
       Value: 1
     - Name: radius
       Value: 1
+    - Name: samplingMode
+      Value: TwoDimensional
   - NodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Cave Threshold
@@ -211,7 +215,7 @@ MonoBehaviour:
     - Name: maxAttempts
       Value: 30
     - Name: pointCount
-      Value: 13
+      Value: 7
   - NodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Marker Stamp
@@ -239,9 +243,9 @@ MonoBehaviour:
     - Name: mirrorX
       Value: false
     - Name: mirrorY
-      Value: true
+      Value: false
     - Name: allowRotation
-      Value: true
+      Value: false
     - Name: maxOverlapTiles
       Value: 1
   - NodeId: a7347b7a-2352-4630-b419-97af62177939
@@ -286,11 +290,6 @@ MonoBehaviour:
     CastMode: 0
   - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
     FromPortName: Output__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
-    ToNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
-    ToPortName: Input
-    CastMode: 0
-  - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
-    FromPortName: Output__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
     ToNodeId: a7347b7a-2352-4630-b419-97af62177939
     ToPortName: Weight 2
     CastMode: 0
@@ -328,6 +327,11 @@ MonoBehaviour:
     FromPortName: LogicalIds
     ToNodeId: graph-output-node
     ToPortName: LogicalIds
+    CastMode: 0
+  - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    FromPortName: Output__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    ToNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
+    ToPortName: Input
     CastMode: 0
   StickyNotes: []
   Groups: []

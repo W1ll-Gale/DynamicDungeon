@@ -54,6 +54,10 @@ namespace DynamicDungeon.Runtime.Nodes
         [Description("Offsets the sampled position in X and Y.")]
         private Vector2 _offset;
 
+        // Perlin / Simplex
+        [Description("Controls whether the noise is sampled across both axes or along a single axis only.")]
+        private NoiseSamplingMode _samplingMode;
+
         // Perlin / Fractal
         [Range(1, MaxFractalOctaves)]
         [Description("Number of noise layers stacked together.")]
@@ -183,6 +187,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _frequency = 0.05f;
             _amplitude = 1.0f;
             _offset = Vector2.zero;
+            _samplingMode = NoiseSamplingMode.TwoDimensional;
             _octaves = 4;
             _seedOffset = 0;
             _lacunarity = 2.0f;
@@ -205,6 +210,7 @@ namespace DynamicDungeon.Runtime.Nodes
             float frequency,
             float amplitude,
             Vector2 offset,
+            NoiseSamplingMode samplingMode,
             int octaves,
             int seedOffset,
             float lacunarity,
@@ -222,6 +228,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _frequency = math.max(0.0f, frequency);
             _amplitude = math.max(0.0f, amplitude);
             _offset = offset;
+            _samplingMode = samplingMode;
             _octaves = math.clamp(octaves, 1, MaxFractalOctaves);
             _seedOffset = seedOffset;
             _lacunarity = math.max(1.0f, lacunarity);
@@ -293,6 +300,17 @@ namespace DynamicDungeon.Runtime.Nodes
                 if (TryParseVector2(value, out parsed))
                 {
                     _offset = parsed;
+                }
+
+                return;
+            }
+
+            if (string.Equals(name, "samplingMode", StringComparison.OrdinalIgnoreCase))
+            {
+                NoiseSamplingMode parsed;
+                if (Enum.TryParse(value ?? string.Empty, true, out parsed))
+                {
+                    _samplingMode = parsed;
                 }
 
                 return;
@@ -462,13 +480,15 @@ namespace DynamicDungeon.Runtime.Nodes
                     return string.Equals(parameterName, "frequency", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(parameterName, "amplitude", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(parameterName, "offset", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(parameterName, "samplingMode", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(parameterName, "octaves", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(parameterName, "seedOffset", StringComparison.OrdinalIgnoreCase);
 
                 case NoiseAlgorithm.Simplex:
                     return string.Equals(parameterName, "frequency", StringComparison.OrdinalIgnoreCase)
                         || string.Equals(parameterName, "amplitude", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(parameterName, "offset", StringComparison.OrdinalIgnoreCase);
+                        || string.Equals(parameterName, "offset", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(parameterName, "samplingMode", StringComparison.OrdinalIgnoreCase);
 
                 case NoiseAlgorithm.Voronoi:
                     return string.Equals(parameterName, "frequency", StringComparison.OrdinalIgnoreCase)
@@ -545,7 +565,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private JobHandle SchedulePerlin(NodeExecutionContext context)
         {
             NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
-            PerlinNoiseNode.PerlinNoiseJob job = new PerlinNoiseNode.PerlinNoiseJob
+            PerlinNoiseSamplingJob job = new PerlinNoiseSamplingJob
             {
                 Output = output,
                 Width = context.Width,
@@ -553,7 +573,8 @@ namespace DynamicDungeon.Runtime.Nodes
                 Amplitude = _amplitude,
                 Offset = new float2(_offset.x, _offset.y),
                 SeedOffset = CreatePerlinSeedOffset(CombinePerlinSeed(context.GlobalSeed, _seedOffset)),
-                Octaves = _octaves
+                Octaves = _octaves,
+                SamplingMode = _samplingMode
             };
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
         }
@@ -561,14 +582,15 @@ namespace DynamicDungeon.Runtime.Nodes
         private JobHandle ScheduleSimplex(NodeExecutionContext context)
         {
             NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
-            SimplexNoiseNode.SimplexNoiseJob job = new SimplexNoiseNode.SimplexNoiseJob
+            SimplexNoiseSamplingJob job = new SimplexNoiseSamplingJob
             {
                 Output = output,
                 Width = context.Width,
                 Frequency = _frequency,
                 Amplitude = _amplitude,
                 Offset = new float2(_offset.x, _offset.y),
-                SeedOffset = CreateSimplexSeedOffset(context.LocalSeed)
+                SeedOffset = CreateSimplexSeedOffset(context.LocalSeed),
+                SamplingMode = _samplingMode
             };
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
         }
@@ -787,6 +809,147 @@ namespace DynamicDungeon.Runtime.Nodes
 
             result = new Vector2(0.5f, 0.5f);
             return false;
+        }
+
+        [Unity.Burst.BurstCompile]
+        private struct PerlinNoiseSamplingJob : IJobParallelFor
+        {
+            public NativeArray<float> Output;
+            public int Width;
+            public float Frequency;
+            public float Amplitude;
+            public float2 Offset;
+            public float2 SeedOffset;
+            public int Octaves;
+            public NoiseSamplingMode SamplingMode;
+
+            public void Execute(int index)
+            {
+                int x = index % Width;
+                int y = index / Width;
+
+                float octaveFrequency = 1.0f;
+                float octaveWeight = 1.0f;
+                float accumulatedValue = 0.0f;
+                float accumulatedWeight = 0.0f;
+
+                int octaveIndex;
+                for (octaveIndex = 0; octaveIndex < Octaves; octaveIndex++)
+                {
+                    float2 samplePosition = CreateSamplePosition(x, y, octaveFrequency);
+                    float octaveNoise = noise.cnoise(samplePosition);
+                    float normalisedNoise = math.saturate((octaveNoise * 0.5f) + 0.5f);
+
+                    accumulatedValue += normalisedNoise * octaveWeight;
+                    accumulatedWeight += octaveWeight;
+                    octaveFrequency *= 2.0f;
+                    octaveWeight *= 0.5f;
+                }
+
+                float averagedNoise = accumulatedWeight > 0.0f ? accumulatedValue / accumulatedWeight : 0.0f;
+                Output[index] = math.saturate(averagedNoise * Amplitude);
+            }
+
+            private float2 CreateSamplePosition(int x, int y, float octaveFrequency)
+            {
+                float sampleX = (((float)x + Offset.x) * Frequency * octaveFrequency) + SeedOffset.x;
+                float sampleY = (((float)y + Offset.y) * Frequency * octaveFrequency) + SeedOffset.y;
+
+                if (SamplingMode == NoiseSamplingMode.Horizontal1D)
+                {
+                    return new float2(sampleX, Offset.y + SeedOffset.y);
+                }
+
+                if (SamplingMode == NoiseSamplingMode.Vertical1D)
+                {
+                    return CreateVerticalBandSamplePosition(sampleX, sampleY);
+                }
+
+                return new float2(sampleX, sampleY);
+            }
+
+            private float2 CreateVerticalBandSamplePosition(float sampleX, float sampleY)
+            {
+                float warp = CreateVerticalAxisWarp(sampleX);
+                float detail = CreateVerticalAxisDetail(sampleX);
+                return new float2((sampleX * 0.2f) + detail, sampleY + warp);
+            }
+
+            private float CreateVerticalAxisWarp(float sampleX)
+            {
+                float warpSampleX = (sampleX * 0.6f) + 37.0f;
+                float warpSampleY = SeedOffset.x + 19.0f;
+                return noise.cnoise(new float2(warpSampleX, warpSampleY)) * 1.5f;
+            }
+
+            private float CreateVerticalAxisDetail(float sampleX)
+            {
+                float detailSampleX = (sampleX * 0.15f) - 11.0f;
+                float detailSampleY = SeedOffset.y - 23.0f;
+                return noise.cnoise(new float2(detailSampleX, detailSampleY)) * 0.3f;
+            }
+        }
+
+        [Unity.Burst.BurstCompile]
+        private struct SimplexNoiseSamplingJob : IJobParallelFor
+        {
+            public NativeArray<float> Output;
+            public int Width;
+            public float Frequency;
+            public float Amplitude;
+            public float2 Offset;
+            public float2 SeedOffset;
+            public NoiseSamplingMode SamplingMode;
+
+            public void Execute(int index)
+            {
+                int x = index % Width;
+                int y = index / Width;
+
+                float2 samplePosition = CreateSamplePosition(x, y);
+                float rawNoise = noise.snoise(samplePosition);
+                float normalisedNoise = math.saturate((rawNoise * 0.5f) + 0.5f);
+                Output[index] = math.saturate(normalisedNoise * Amplitude);
+            }
+
+            private float2 CreateSamplePosition(int x, int y)
+            {
+                float sampleX = (((float)x + Offset.x) * Frequency) + SeedOffset.x;
+                float sampleY = (((float)y + Offset.y) * Frequency) + SeedOffset.y;
+
+                if (SamplingMode == NoiseSamplingMode.Horizontal1D)
+                {
+                    return new float2(sampleX, Offset.y + SeedOffset.y);
+                }
+
+                if (SamplingMode == NoiseSamplingMode.Vertical1D)
+                {
+                    return CreateVerticalBandSamplePosition(sampleX, sampleY);
+                }
+
+                return new float2(sampleX, sampleY);
+            }
+
+            private float2 CreateVerticalBandSamplePosition(float sampleX, float sampleY)
+            {
+                float warp = CreateVerticalAxisWarp(sampleX);
+                float detail = CreateVerticalAxisDetail(sampleX);
+                return new float2((sampleX * 0.2f) + detail, sampleY + warp);
+            }
+
+            private float CreateVerticalAxisWarp(float sampleX)
+            {
+                float warpSampleX = (sampleX * 0.6f) + 37.0f;
+                float warpSampleY = SeedOffset.x + 19.0f;
+                return noise.snoise(new float2(warpSampleX, warpSampleY)) * 1.5f;
+            }
+
+            private float CreateVerticalAxisDetail(float sampleX)
+            {
+                float detailSampleX = (sampleX * 0.15f) - 11.0f;
+                float detailSampleY = SeedOffset.y - 23.0f;
+                return noise.snoise(new float2(detailSampleX, detailSampleY)) * 0.3f;
+            }
         }
     }
 }

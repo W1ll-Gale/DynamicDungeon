@@ -272,6 +272,7 @@ namespace DynamicDungeon.Runtime.Graph
             Queue<string> pendingNodeIds = new Queue<string>();
 
             EnqueueSharedChannelRoots(nodeDataList, reachableNodeIds, pendingNodeIds);
+            EnqueueStandalonePreviewRoots(nodeDataList, reachableNodeIds);
 
             int connectionIndex;
             for (connectionIndex = 0; connectionIndex < connectionDataList.Count; connectionIndex++)
@@ -299,6 +300,23 @@ namespace DynamicDungeon.Runtime.Graph
             return reachableNodeIds;
         }
 
+        private static void EnqueueStandalonePreviewRoots(IReadOnlyList<GenNodeData> nodeDataList, HashSet<string> reachableNodeIds)
+        {
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < nodeDataList.Count; nodeIndex++)
+            {
+                GenNodeData nodeData = nodeDataList[nodeIndex];
+                if (nodeData == null ||
+                    string.IsNullOrWhiteSpace(nodeData.NodeId) ||
+                    HasAnyInputPorts(nodeData.Ports))
+                {
+                    continue;
+                }
+
+                reachableNodeIds.Add(nodeData.NodeId);
+            }
+        }
+
         private static void EnqueueSharedChannelRoots(IReadOnlyList<GenNodeData> nodeDataList, HashSet<string> reachableNodeIds, Queue<string> pendingNodeIds)
         {
             int nodeIndex;
@@ -317,6 +335,26 @@ namespace DynamicDungeon.Runtime.Graph
                     pendingNodeIds.Enqueue(nodeData.NodeId);
                 }
             }
+        }
+
+        private static bool HasAnyInputPorts(IReadOnlyList<GenPortData> ports)
+        {
+            if (ports == null)
+            {
+                return false;
+            }
+
+            int portIndex;
+            for (portIndex = 0; portIndex < ports.Count; portIndex++)
+            {
+                GenPortData port = ports[portIndex];
+                if (port != null && port.Direction == PortDirection.Input)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static List<GenNodeData> FilterReachableNodes(IReadOnlyList<GenNodeData> nodeDataList, HashSet<string> reachableNodeIds)

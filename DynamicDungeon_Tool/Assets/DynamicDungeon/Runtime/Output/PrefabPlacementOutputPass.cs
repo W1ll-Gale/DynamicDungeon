@@ -60,7 +60,7 @@ namespace DynamicDungeon.Runtime.Output
                     tilemapOffset.z);
                 Quaternion rotation = Quaternion.Euler(0.0f, 0.0f, placement.RotationQuarterTurns * 90.0f);
                 Vector3 mirrorScale = new Vector3(placement.MirrorX ? -1.0f : 1.0f, placement.MirrorY ? -1.0f : 1.0f, 1.0f);
-                Vector3 anchorOffset = rotation * Vector3.Scale(template.AnchorOffset, mirrorScale);
+                Vector3 anchorOffset = template.AnchorOffset;
                 Vector3 worldPosition = grid.CellToWorld(cell) + anchorOffset;
 
                 writer.WritePrefab(prefab, worldPosition, rotation, mirrorScale);

@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Editor.Windows;
 using DynamicDungeon.Runtime.Core;
@@ -9,6 +10,7 @@ using DynamicDungeon.Runtime.Nodes;
 using NUnit.Framework;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DynamicDungeon.Tests.Editor
 {
@@ -115,6 +117,7 @@ namespace DynamicDungeon.Tests.Editor
             Assert.That(node.IsParameterVisible("scale"), Is.True);
             Assert.That(node.IsParameterVisible("radius"), Is.False);
             Assert.That(node.IsParameterVisible("amplitude"), Is.True);
+            Assert.That(node.IsParameterVisible("samplingMode"), Is.False);
 
             node.ReceiveParameter("direction", "Radial");
             Assert.That(node.IsParameterVisible("centre"), Is.True);
@@ -127,6 +130,68 @@ namespace DynamicDungeon.Tests.Editor
             Assert.That(node.IsParameterVisible("angle"), Is.True);
             Assert.That(node.IsParameterVisible("scale"), Is.True);
             Assert.That(node.IsParameterVisible("radius"), Is.False);
+        }
+
+        [Test]
+        public void UnifiedNoiseNodeShowsSamplingModeOnlyForPerlinAndSimplex()
+        {
+            NoiseNode node = new NoiseNode("noise-node", "Noise");
+
+            Assert.That(node.IsParameterVisible("samplingMode"), Is.True);
+
+            node.ReceiveParameter("algorithm", "Simplex");
+            Assert.That(node.IsParameterVisible("samplingMode"), Is.True);
+
+            node.ReceiveParameter("algorithm", "Voronoi");
+            Assert.That(node.IsParameterVisible("samplingMode"), Is.False);
+        }
+
+        [Test]
+        public void UnifiedNoiseNodeNonVisibilityParameterChangesDoNotRebuildControls()
+        {
+            DynamicDungeonGraphView graphView = new DynamicDungeonGraphView();
+            GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
+
+            try
+            {
+                string noiseNodeId = "noise-node";
+                string outputPortName = GraphPortNameUtility.CreateGeneratedOutputPortName(noiseNodeId, "Output");
+                GenNodeData noiseNode = new GenNodeData(noiseNodeId, typeof(NoiseNode).FullName, "Noise", Vector2.zero);
+                noiseNode.Ports.Add(new GenPortData(outputPortName, PortDirection.Output, ChannelType.Float, "Output"));
+
+                List<SerializedParameter> defaultParameters = GenNodeInstantiationUtility.CreateDefaultParameters(noiseNode, typeof(NoiseNode));
+                int parameterIndex;
+                for (parameterIndex = 0; parameterIndex < defaultParameters.Count; parameterIndex++)
+                {
+                    noiseNode.Parameters.Add(defaultParameters[parameterIndex]);
+                }
+
+                graph.Nodes.Add(noiseNode);
+                graphView.LoadGraph(graph);
+
+                GenNodeView noiseNodeView = FindNodeView(graphView, noiseNodeId);
+                Assert.That(noiseNodeView, Is.Not.Null);
+
+                FieldInfo controlsField = typeof(GenNodeView).GetField("_controlsContainer", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(controlsField, Is.Not.Null);
+
+                VisualElement controlsContainer = controlsField.GetValue(noiseNodeView) as VisualElement;
+                Assert.That(controlsContainer, Is.Not.Null);
+                Assert.That(controlsContainer.childCount, Is.GreaterThan(1));
+
+                VisualElement frequencyControlBefore = controlsContainer.Children().ElementAt(1);
+
+                MethodInfo parameterChangeMethod = typeof(GenNodeView).GetMethod("OnParameterValueChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(parameterChangeMethod, Is.Not.Null);
+                parameterChangeMethod.Invoke(noiseNodeView, new object[] { "frequency", "0.2" });
+
+                VisualElement frequencyControlAfter = controlsContainer.Children().ElementAt(1);
+                Assert.That(ReferenceEquals(frequencyControlBefore, frequencyControlAfter), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(graph);
+            }
         }
 
         [Test]
