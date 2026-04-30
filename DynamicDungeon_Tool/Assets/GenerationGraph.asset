@@ -43,9 +43,9 @@ MonoBehaviour:
       Type: 0
     Parameters:
     - Name: frequency
-      Value: 0.05
+      Value: 0.03
     - Name: amplitude
-      Value: 2.12
+      Value: 0.89
     - Name: offset
       Value: 0,0
     - Name: octaves
@@ -95,7 +95,7 @@ MonoBehaviour:
   - NodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
     NodeTypeName: DynamicDungeon.Runtime.Nodes.WeightedBlendNode
     NodeName: Weighted Blend
-    Position: {x: 72.31857, y: 90.99998}
+    Position: {x: 92.75703, y: 142.84048}
     Ports:
     - PortName: A
       DisplayName: A
@@ -157,7 +157,7 @@ MonoBehaviour:
   - NodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Cellular Automata
-    Position: {x: 201.77684, y: -606.49994}
+    Position: {x: 117.55002, y: -612.95013}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -173,11 +173,89 @@ MonoBehaviour:
     - Name: survivalRule
       Value: 45678
     - Name: iterations
-      Value: 1
+      Value: 0
     - Name: initialFillProbability
-      Value: 0.359
+      Value: 0.716
     - Name: inputMode
       Value: UseInputAsInitialState
+  - NodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
+    NodeName: Poisson Disc Sampler
+    Position: {x: 663, y: -806.36}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: Points__ab95549a-e359-4eab-9b70-5c6664e3225f
+      DisplayName: Points
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: minDistance
+      Value: 10
+    - Name: maxAttempts
+      Value: 30
+    - Name: pointCount
+      Value: 0
+  - NodeId: a7347b7a-2352-4630-b419-97af62177939
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Cluster
+    Position: {x: 977, y: -457.6}
+    Ports:
+    - PortName: Seeds
+      DisplayName: Seeds
+      Direction: 0
+      Type: 3
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: Output__a7347b7a-2352-4630-b419-97af62177939
+      DisplayName: Output
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 14
+    - Name: iterations
+      Value: 35
+    - Name: initialSpreadProbability
+      Value: 1
+    - Name: falloff
+      Value: 0.89
+    - Name: minClusterSeparation
+      Value: 22
+  - NodeId: 3ab354e8-3a28-48cb-8b2d-356682910c4f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Vein
+    Position: {x: 1102, y: -942}
+    Ports:
+    - PortName: Seeds
+      DisplayName: Seeds
+      Direction: 0
+      Type: 3
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: Output__3ab354e8-3a28-48cb-8b2d-356682910c4f
+      DisplayName: Output
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 25
+    - Name: veinLengthMin
+      Value: 14
+    - Name: veinLengthMax
+      Value: 20
+    - Name: wanderProbability
+      Value: 0.68
+    - Name: forkProbability
+      Value: 0.26
+    - Name: forkAngleRange
+      Value: 30.9
   Connections:
   - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
     FromPortName: Distance__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
@@ -199,6 +277,36 @@ MonoBehaviour:
     ToNodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
     ToPortName: Input
     CastMode: 3
+  - FromNodeId: 61c447b7-18c8-4475-8411-0ab55879445c
+    FromPortName: Output__61c447b7-18c8-4475-8411-0ab55879445c
+    ToNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 61c447b7-18c8-4475-8411-0ab55879445c
+    FromPortName: Output__61c447b7-18c8-4475-8411-0ab55879445c
+    ToNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    ToPortName: Weight
+    CastMode: 0
+  - FromNodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    FromPortName: Output__58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    ToNodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
+    FromPortName: Output__3249a052-bf82-46ac-9508-e4b80e5ac782
+    ToNodeId: graph-output-node
+    ToPortName: LogicalIds
+    CastMode: 1
+  - FromNodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    FromPortName: Output__58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    ToNodeId: a7347b7a-2352-4630-b419-97af62177939
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
+    FromPortName: Points__ab95549a-e359-4eab-9b70-5c6664e3225f
+    ToNodeId: 3ab354e8-3a28-48cb-8b2d-356682910c4f
+    ToPortName: Seeds
+    CastMode: 0
   StickyNotes: []
   Groups: []
   ExposedProperties: []
