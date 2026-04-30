@@ -91,7 +91,7 @@ namespace DynamicDungeon.Editor
             }
 
             graph.SchemaVersion = GraphSchemaVersion.Current;
-            GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+            GraphOutputUtility.EnsureSingleOutputNode(graph);
         }
     }
 }

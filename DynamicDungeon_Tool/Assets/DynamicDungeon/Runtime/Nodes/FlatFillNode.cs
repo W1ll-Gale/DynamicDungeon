@@ -9,13 +9,12 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Generators")]
+    [NodeCategory("Generator")]
     [NodeDisplayName("Flat Fill")]
     [Description("Outputs a flat float map where every cell uses the same fill value.")]
     public sealed class FlatFillNode : IGenNode, IParameterReceiver
     {
         private const string DefaultNodeName = "Flat Fill";
-        private const string LegacyFlatOutputChannelName = "FlatOutput";
         private const string FallbackOutputPortName = "Output";
         private const int DefaultBatchSize = 64;
         private const string PreferredOutputDisplayName = FallbackOutputPortName;
@@ -78,7 +77,7 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public FlatFillNode(string nodeId, float fillValue) : this(nodeId, DefaultNodeName, LegacyFlatOutputChannelName, fillValue)
+        public FlatFillNode(string nodeId, float fillValue) : this(nodeId, DefaultNodeName, string.Empty, fillValue)
         {
         }
 

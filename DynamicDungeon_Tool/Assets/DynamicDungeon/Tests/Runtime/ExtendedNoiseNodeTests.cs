@@ -51,7 +51,7 @@ namespace DynamicDungeon.Tests.Runtime
                 graph.WorldWidth = 8;
                 graph.WorldHeight = 6;
                 graph.DefaultSeed = 1234L;
-                GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+                GraphOutputUtility.EnsureSingleOutputNode(graph);
 
                 string nodeId = "voronoi-node";
                 string distancePortName = "Distance__" + nodeId;

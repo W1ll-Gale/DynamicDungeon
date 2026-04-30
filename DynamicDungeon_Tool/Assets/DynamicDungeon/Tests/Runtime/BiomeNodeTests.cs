@@ -422,7 +422,7 @@ namespace DynamicDungeon.Tests.Runtime
                 graph.WorldWidth = 3;
                 graph.WorldHeight = 3;
                 graph.DefaultSeed = 77L;
-                GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+                GraphOutputUtility.EnsureSingleOutputNode(graph);
 
                 AddIntFillNode(graph, "logical-fill", "Logical Fill", LogicalChannelName, (int)LogicalTileId.Floor);
                 ConnectToOutput(graph, "logical-fill", LogicalChannelName);

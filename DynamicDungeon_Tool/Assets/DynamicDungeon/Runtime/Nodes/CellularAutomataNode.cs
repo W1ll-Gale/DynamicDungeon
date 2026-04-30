@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Filters")]
+    [NodeCategory("Filter")]
     [NodeDisplayName("Cellular Automata")]
     [Description("Smooths or grows cave-like masks by repeatedly applying cellular automata rules.")]
     public sealed class CellularAutomataNode : IGenNode, IInputConnectionReceiver, IParameterReceiver

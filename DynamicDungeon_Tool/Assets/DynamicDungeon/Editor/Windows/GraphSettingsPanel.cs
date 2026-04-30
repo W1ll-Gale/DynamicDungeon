@@ -201,45 +201,29 @@ namespace DynamicDungeon.Editor.Windows
             schemaLabel.style.fontSize = 10.0f;
             schemaRow.Add(schemaLabel);
 
-            if (hasMismatch)
-            {
-                Label warningLabel = new Label("!");
-                warningLabel.style.color = new Color(1.0f, 0.85f, 0.0f, 1.0f);
-                warningLabel.style.marginRight = 4.0f;
-                schemaRow.Add(warningLabel);
-
-                Button migrateButton = new Button(RunMigration);
-                migrateButton.text = "Migrate Now";
-                migrateButton.style.height = 18.0f;
-                migrateButton.style.fontSize = 10.0f;
-                schemaRow.Add(migrateButton);
-            }
+            Label statusLabel = new Label(hasMismatch ? GetSchemaStatusText(graphVersion, currentVersion) : "Current");
+            statusLabel.style.fontSize = 10.0f;
+            statusLabel.style.color = hasMismatch
+                ? new Color(1.0f, 0.75f, 0.25f, 1.0f)
+                : new Color(0.62f, 0.82f, 0.62f, 1.0f);
+            schemaRow.Add(statusLabel);
 
             _contentRoot.Add(schemaRow);
         }
 
-        private void RunMigration()
+        private static string GetSchemaStatusText(int graphVersion, int currentVersion)
         {
-            if (_graph == null)
+            if (graphVersion < currentVersion)
             {
-                return;
+                return "Legacy graph unsupported";
             }
 
-            bool changed;
-            string errorMessage;
-            if (GraphOutputUtility.TryUpgradeToCurrentSchema(_graph, out changed, out errorMessage))
+            if (graphVersion > currentVersion)
             {
-                if (changed)
-                {
-                    EditorUtility.SetDirty(_graph);
-                    _onGraphMutated?.Invoke();
-                }
-
-                RebuildContent();
-                return;
+                return "Newer graph unsupported";
             }
 
-            Debug.LogError("Graph migration failed: " + errorMessage);
+            return "Current";
         }
 
         private static void ConfigureField<T>(BaseField<T> field)

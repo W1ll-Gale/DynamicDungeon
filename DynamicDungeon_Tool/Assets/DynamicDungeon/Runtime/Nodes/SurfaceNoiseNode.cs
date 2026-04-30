@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Generators")]
+    [NodeCategory("Generator")]
     [NodeDisplayName("Surface 1D Noise")]
     [Description("Generates a vertical surface mask using 1D perlin noise applied horizontally. Outputs 1.0 below the surface and 0.0 above.")]
     public sealed class SurfaceNoiseNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
@@ -59,7 +59,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             _nodeId = nodeId;
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
-            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, FallbackOutputPortName) : outputChannelName;
+            _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, outputChannelName, FallbackOutputPortName);
             
             _baseHeight = baseHeight;
             _amplitude = amplitude;
@@ -96,7 +96,7 @@ namespace DynamicDungeon.Runtime.Nodes
                 float.TryParse(value, out _seedOffset);
             else if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
             {
-                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, FallbackOutputPortName) : value;
+                _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(_nodeId, value, FallbackOutputPortName);
                 RefreshPorts();
                 RefreshChannelDeclarations();
             }

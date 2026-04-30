@@ -449,7 +449,7 @@ namespace DynamicDungeon.Tests.Runtime
             graph.WorldWidth = 4;
             graph.WorldHeight = 3;
             graph.DefaultSeed = 12345L;
-            GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+            GraphOutputUtility.EnsureSingleOutputNode(graph);
             return graph;
         }
 

@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Generators")]
+    [NodeCategory("Generator")]
     [NodeDisplayName("Height Band")]
     [Description("Generates a vertical band mask. Outputs 1.0 inside the band, and 0.0 outside.")]
     public sealed class HeightBandNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
@@ -51,7 +51,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             _nodeId = nodeId;
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
-            _outputChannelName = string.IsNullOrWhiteSpace(outputChannelName) || string.Equals(outputChannelName, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(nodeId, FallbackOutputPortName) : outputChannelName;
+            _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, outputChannelName, FallbackOutputPortName);
             _minHeight = minHeight;
             _maxHeight = maxHeight;
 
@@ -85,7 +85,7 @@ namespace DynamicDungeon.Runtime.Nodes
             }
             else if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
             {
-                _outputChannelName = string.IsNullOrWhiteSpace(value) || string.Equals(value, GraphPortNameUtility.LegacyGenericOutputDisplayName, StringComparison.Ordinal) ? GraphPortNameUtility.CreateGeneratedOutputPortName(_nodeId, FallbackOutputPortName) : value;
+                _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(_nodeId, value, FallbackOutputPortName);
                 RefreshPorts();
                 RefreshChannelDeclarations();
             }

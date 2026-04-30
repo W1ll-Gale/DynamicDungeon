@@ -104,6 +104,13 @@ namespace DynamicDungeon.Runtime.Graph
                 return new GraphCompileResult(false, diagnostics, null, string.Empty, false);
             }
 
+            string schemaErrorMessage;
+            if (!GraphOutputUtility.TryValidateCurrentSchema(graph, out schemaErrorMessage))
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, schemaErrorMessage, null, null));
+                return new GraphCompileResult(false, diagnostics, null, string.Empty, false);
+            }
+
             if (graph.WorldWidth <= 0)
             {
                 diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Graph world width must be greater than zero.", null, null));

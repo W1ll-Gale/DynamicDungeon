@@ -96,7 +96,7 @@ namespace DynamicDungeon.Tests.Runtime
 
             try
             {
-                GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+                GraphOutputUtility.EnsureSingleOutputNode(graph);
 
                 GenNodeData logicalIdNode = new GenNodeData("logical-id-node", typeof(BoolMaskToLogicalIdNode).FullName, "Mask To Logical IDs", Vector2.zero);
                 logicalIdNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.BoolMask));
@@ -111,38 +111,6 @@ namespace DynamicDungeon.Tests.Runtime
                 Assert.That(compileResult.IsSuccess, Is.False);
                 Assert.That(compileResult.Plan, Is.Null);
                 Assert.That(CountDiagnostics(compileResult.Diagnostics, DiagnosticSeverity.Error), Is.GreaterThan(0));
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(graph);
-            }
-        }
-
-        [Test]
-        public void VersionZeroGraphMigratesToCurrentSchemaBeforeCompilation()
-        {
-            GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
-            graph.SchemaVersion = 0;
-            graph.WorldWidth = 8;
-            graph.WorldHeight = 8;
-            graph.DefaultSeed = 97531L;
-
-            try
-            {
-                MigrationResult migrationResult = GraphMigrationRunner.RunMigrations(graph, DefaultGraphMigrations.All);
-                GraphCompileResult compileResult = GraphCompiler.Compile(graph);
-
-                Assert.That(migrationResult.Success, Is.True);
-                Assert.That(migrationResult.FromVersion, Is.EqualTo(0));
-                Assert.That(migrationResult.ToVersion, Is.EqualTo(GraphSchemaVersion.Current));
-                Assert.That(graph.SchemaVersion, Is.EqualTo(GraphSchemaVersion.Current));
-                Assert.That(GraphOutputUtility.FindOutputNode(graph), Is.Not.Null);
-                Assert.That(compileResult.IsSuccess, Is.True);
-                Assert.That(compileResult.Plan, Is.Not.Null);
-                Assert.That(compileResult.HasConnectedOutput, Is.False);
-                Assert.That(compileResult.OutputChannelName, Is.Empty);
-
-                compileResult.Plan.Dispose();
             }
             finally
             {
@@ -265,7 +233,7 @@ namespace DynamicDungeon.Tests.Runtime
             graph.WorldWidth = 32;
             graph.WorldHeight = 32;
             graph.DefaultSeed = 123456L;
-            GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+            GraphOutputUtility.EnsureSingleOutputNode(graph);
 
             GenNodeData perlinNode = new GenNodeData("perlin-node", typeof(PerlinNoiseNode).FullName, "Perlin", Vector2.zero);
             perlinNode.Ports.Add(new GenPortData("Noise", PortDirection.Output, ChannelType.Float));
@@ -311,7 +279,7 @@ namespace DynamicDungeon.Tests.Runtime
             graph.WorldWidth = 16;
             graph.WorldHeight = 16;
             graph.DefaultSeed = 98765L;
-            GraphOutputUtility.EnsureSingleOutputNode(graph, false);
+            GraphOutputUtility.EnsureSingleOutputNode(graph);
 
             string firstPerlinOutput = GraphPortNameUtility.CreateGeneratedOutputPortName("perlin-a", GraphPortNameUtility.LegacyGenericOutputDisplayName);
             string secondPerlinOutput = GraphPortNameUtility.CreateGeneratedOutputPortName("perlin-b", GraphPortNameUtility.LegacyGenericOutputDisplayName);

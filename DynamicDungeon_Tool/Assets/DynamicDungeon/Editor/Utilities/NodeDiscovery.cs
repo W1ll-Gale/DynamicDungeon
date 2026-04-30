@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
-using System.Reflection;
 using DynamicDungeon.Runtime.Core;
 using UnityEditor;
 
@@ -10,6 +9,7 @@ namespace DynamicDungeon.Editor.Utilities
     [InitializeOnLoad]
     public static class NodeDiscovery
     {
+        private const string RuntimeNodeNamespace = "DynamicDungeon.Runtime.Nodes";
         private static IReadOnlyList<Type> _cachedNodeTypes;
 
         static NodeDiscovery()
@@ -25,42 +25,18 @@ namespace DynamicDungeon.Editor.Utilities
             }
 
             List<Type> discoveredTypes = new List<Type>();
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            TypeCache.TypeCollection candidateTypes = TypeCache.GetTypesDerivedFrom<IGenNode>();
 
-            int assemblyIndex;
-            for (assemblyIndex = 0; assemblyIndex < assemblies.Length; assemblyIndex++)
+            int typeIndex;
+            for (typeIndex = 0; typeIndex < candidateTypes.Count; typeIndex++)
             {
-                Type[] types;
-                try
+                Type candidateType = candidateTypes[typeIndex];
+                if (!IsDiscoverableNodeType(candidateType))
                 {
-                    types = assemblies[assemblyIndex].GetTypes();
-                }
-                catch (ReflectionTypeLoadException exception)
-                {
-                    types = exception.Types;
+                    continue;
                 }
 
-                int typeIndex;
-                for (typeIndex = 0; typeIndex < types.Length; typeIndex++)
-                {
-                    Type candidateType = types[typeIndex];
-                    if (candidateType == null || candidateType.IsAbstract)
-                    {
-                        continue;
-                    }
-
-                    if (!typeof(IGenNode).IsAssignableFrom(candidateType))
-                    {
-                        continue;
-                    }
-
-                    if (Attribute.IsDefined(candidateType, typeof(HideInNodeSearchAttribute), false))
-                    {
-                        continue;
-                    }
-
-                    discoveredTypes.Add(candidateType);
-                }
+                discoveredTypes.Add(candidateType);
             }
 
             discoveredTypes.Sort(CompareNodeTypes);
@@ -109,6 +85,29 @@ namespace DynamicDungeon.Editor.Utilities
         public static void ClearCache()
         {
             _cachedNodeTypes = null;
+        }
+
+        private static bool IsDiscoverableNodeType(Type candidateType)
+        {
+            if (candidateType == null ||
+                candidateType.IsAbstract ||
+                candidateType.IsNested ||
+                !candidateType.IsPublic)
+            {
+                return false;
+            }
+
+            if (!typeof(IGenNode).IsAssignableFrom(candidateType))
+            {
+                return false;
+            }
+
+            if (!string.Equals(candidateType.Namespace, RuntimeNodeNamespace, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return !Attribute.IsDefined(candidateType, typeof(HideInNodeSearchAttribute), false);
         }
 
         private static int CompareNodeTypes(Type left, Type right)

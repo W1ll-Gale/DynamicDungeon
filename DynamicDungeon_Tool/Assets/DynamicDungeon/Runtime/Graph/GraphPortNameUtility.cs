@@ -50,11 +50,6 @@ namespace DynamicDungeon.Runtime.Graph
                 return normalPreferredDisplayName;
             }
 
-            if (IsNamedOutput(safeOutputChannelName, nodeId, LegacyGenericOutputDisplayName))
-            {
-                return LegacyGenericOutputDisplayName;
-            }
-
             return string.IsNullOrWhiteSpace(safeOutputChannelName) ? normalPreferredDisplayName : safeOutputChannelName;
         }
 

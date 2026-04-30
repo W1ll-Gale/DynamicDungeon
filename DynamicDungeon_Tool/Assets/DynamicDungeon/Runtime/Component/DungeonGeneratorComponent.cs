@@ -518,21 +518,13 @@ namespace DynamicDungeon.Runtime.Component
                 return false;
             }
 
-            bool graphChanged;
-            string migrationErrorMessage;
-            if (!GraphOutputUtility.TryUpgradeToCurrentSchema(_graph, out graphChanged, out migrationErrorMessage))
+            string schemaErrorMessage;
+            if (!GraphOutputUtility.TryValidateCurrentSchema(_graph, out schemaErrorMessage))
             {
-                Debug.LogError("Graph upgrade failed: " + migrationErrorMessage, this);
-                errorMessage = migrationErrorMessage ?? GraphCompilationFailedMessage;
+                Debug.LogError("Graph schema validation failed: " + schemaErrorMessage, this);
+                errorMessage = schemaErrorMessage ?? GraphCompilationFailedMessage;
                 return false;
             }
-
-#if UNITY_EDITOR
-            if (graphChanged)
-            {
-                EditorUtility.SetDirty(_graph);
-            }
-#endif
 
             long originalSeed = _graph.DefaultSeed;
 

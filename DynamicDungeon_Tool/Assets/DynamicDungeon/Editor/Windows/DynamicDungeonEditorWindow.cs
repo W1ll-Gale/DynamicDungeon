@@ -444,21 +444,11 @@ namespace DynamicDungeon.Editor.Windows
 
         private bool TryPrepareGraphForEditing(GenGraph graph)
         {
-            bool changed;
             string errorMessage;
-            if (!GraphOutputUtility.TryUpgradeToCurrentSchema(graph, out changed, out errorMessage))
+            if (!GraphOutputUtility.TryValidateCurrentSchema(graph, out errorMessage))
             {
-                Debug.LogError("Failed to upgrade graph '" + graph.name + "': " + errorMessage);
+                Debug.LogError("Failed to load graph '" + graph.name + "': " + errorMessage);
                 return false;
-            }
-
-            if (changed)
-            {
-                EditorUtility.SetDirty(graph);
-                if (AutoSave)
-                {
-                    AssetDatabase.SaveAssets();
-                }
             }
 
             return true;

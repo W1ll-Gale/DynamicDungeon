@@ -9,7 +9,7 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Filters")]
+    [NodeCategory("Filter")]
     [NodeDisplayName("Invert")]
     [Description("Inverts an input channel, flipping floats, ints, or bool mask values cell by cell.")]
     public sealed class InvertNode : IGenNode, IInputConnectionReceiver, IParameterReceiver

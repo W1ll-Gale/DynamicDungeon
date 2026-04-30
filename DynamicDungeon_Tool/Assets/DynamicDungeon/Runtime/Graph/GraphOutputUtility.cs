@@ -10,7 +10,6 @@ namespace DynamicDungeon.Runtime.Graph
     {
         public const string OutputNodeDisplayName = "Output";
         public const string OutputInputPortName = "LogicalIds";
-        public const string LegacyOutputPortName = "LogicalIds";
 
         public static string OutputNodeTypeName
         {
@@ -77,7 +76,7 @@ namespace DynamicDungeon.Runtime.Graph
             return count;
         }
 
-        public static GenNodeData EnsureSingleOutputNode(GenGraph graph, bool tryAutoConnectLegacyOutput)
+        public static GenNodeData EnsureSingleOutputNode(GenGraph graph)
         {
             if (graph == null)
             {
@@ -135,28 +134,11 @@ namespace DynamicDungeon.Runtime.Graph
 
             ResetOutputNodePorts(outputNode);
 
-            if (tryAutoConnectLegacyOutput && !HasIncomingConnection(graph, outputNode.NodeId, OutputInputPortName))
-            {
-                string sourceNodeId;
-                string sourcePortName;
-                if (TryFindLegacyOutputCandidate(graph, outputNode.NodeId, out sourceNodeId, out sourcePortName))
-                {
-                    graph.AddConnection(sourceNodeId, sourcePortName, outputNode.NodeId, OutputInputPortName);
-
-                    GenNodeData sourceNode = graph.GetNode(sourceNodeId);
-                    if (sourceNode != null && outputNode.Position == Vector2.zero)
-                    {
-                        outputNode.Position = sourceNode.Position + new Vector2(260.0f, 0.0f);
-                    }
-                }
-            }
-
             return outputNode;
         }
 
-        public static bool TryUpgradeToCurrentSchema(GenGraph graph, out bool changed, out string errorMessage)
+        public static bool TryValidateCurrentSchema(GenGraph graph, out string errorMessage)
         {
-            changed = false;
             errorMessage = null;
 
             if (graph == null)
@@ -165,14 +147,18 @@ namespace DynamicDungeon.Runtime.Graph
                 return false;
             }
 
-            MigrationResult migrationResult = GraphMigrationRunner.RunMigrations(graph, DefaultGraphMigrations.All);
-            if (!migrationResult.Success)
+            if (graph.SchemaVersion < GraphSchemaVersion.Current)
             {
-                errorMessage = migrationResult.ErrorMessage;
+                errorMessage = "Graph schema v" + graph.SchemaVersion + " is no longer supported. This editor only supports schema v" + GraphSchemaVersion.Current + " graphs.";
                 return false;
             }
 
-            changed = migrationResult.FromVersion != migrationResult.ToVersion;
+            if (graph.SchemaVersion > GraphSchemaVersion.Current)
+            {
+                errorMessage = "Graph schema v" + graph.SchemaVersion + " is newer than the supported schema v" + GraphSchemaVersion.Current + ".";
+                return false;
+            }
+
             return true;
         }
 
@@ -232,98 +218,6 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             return foundNode ? new Vector2(maxX + 260.0f, y) : new Vector2(600.0f, 0.0f);
-        }
-
-        private static bool HasIncomingConnection(GenGraph graph, string nodeId, string portName)
-        {
-            int connectionIndex;
-            for (connectionIndex = 0; connectionIndex < graph.Connections.Count; connectionIndex++)
-            {
-                GenConnectionData connectionData = graph.Connections[connectionIndex];
-                if (connectionData == null)
-                {
-                    continue;
-                }
-
-                if (string.Equals(connectionData.ToNodeId, nodeId, StringComparison.Ordinal) &&
-                    string.Equals(connectionData.ToPortName, portName, StringComparison.Ordinal))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool TryFindLegacyOutputCandidate(GenGraph graph, string outputNodeId, out string sourceNodeId, out string sourcePortName)
-        {
-            sourceNodeId = null;
-            sourcePortName = null;
-
-            int candidateCount = 0;
-
-            int nodeIndex;
-            for (nodeIndex = 0; nodeIndex < graph.Nodes.Count; nodeIndex++)
-            {
-                GenNodeData nodeData = graph.Nodes[nodeIndex];
-                if (nodeData == null || IsOutputNode(nodeData) || nodeData.Ports == null)
-                {
-                    continue;
-                }
-
-                int portIndex;
-                for (portIndex = 0; portIndex < nodeData.Ports.Count; portIndex++)
-                {
-                    GenPortData portData = nodeData.Ports[portIndex];
-                    if (portData == null ||
-                        portData.Direction != PortDirection.Output ||
-                        portData.Type != ChannelType.Int ||
-                        !string.Equals(portData.PortName, LegacyOutputPortName, StringComparison.Ordinal) ||
-                        HasOutgoingConnection(graph, nodeData.NodeId, portData.PortName, outputNodeId))
-                    {
-                        continue;
-                    }
-
-                    sourceNodeId = nodeData.NodeId;
-                    sourcePortName = portData.PortName;
-                    candidateCount++;
-                }
-            }
-
-            if (candidateCount == 1)
-            {
-                return true;
-            }
-
-            sourceNodeId = null;
-            sourcePortName = null;
-            return false;
-        }
-
-        private static bool HasOutgoingConnection(GenGraph graph, string nodeId, string portName, string outputNodeId)
-        {
-            int connectionIndex;
-            for (connectionIndex = 0; connectionIndex < graph.Connections.Count; connectionIndex++)
-            {
-                GenConnectionData connectionData = graph.Connections[connectionIndex];
-                if (connectionData == null)
-                {
-                    continue;
-                }
-
-                if (!string.Equals(connectionData.FromNodeId, nodeId, StringComparison.Ordinal) ||
-                    !string.Equals(connectionData.FromPortName, portName, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (!string.Equals(connectionData.ToNodeId, outputNodeId, StringComparison.Ordinal))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private static void RemoveDuplicateOutputNodes(GenGraph graph, string primaryOutputNodeId, IReadOnlyList<string> duplicateOutputNodeIds)
