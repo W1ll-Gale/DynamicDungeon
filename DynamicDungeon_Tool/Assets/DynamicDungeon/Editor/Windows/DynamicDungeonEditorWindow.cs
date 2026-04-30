@@ -97,6 +97,25 @@ namespace DynamicDungeon.Editor.Windows
             window.LoadGraph(graph);
         }
 
+        public static void RequestPreviewRefreshForAllOpenWindows()
+        {
+            DynamicDungeonEditorWindow[] windows = Resources.FindObjectsOfTypeAll<DynamicDungeonEditorWindow>();
+            if (windows == null)
+            {
+                return;
+            }
+
+            int index;
+            for (index = 0; index < windows.Length; index++)
+            {
+                DynamicDungeonEditorWindow window = windows[index];
+                if (window != null)
+                {
+                    window.RequestPreviewRefresh();
+                }
+            }
+        }
+
         [OnOpenAsset]
         public static bool TryOpenGraphAsset(int instanceId, int line)
         {
@@ -608,6 +627,14 @@ namespace DynamicDungeon.Editor.Windows
         }
 
         private void RequestPreviewRefreshAfterReload()
+        {
+            if (_generationOrchestrator != null && _loadedGraph != null)
+            {
+                _generationOrchestrator.RequestPreviewRefresh();
+            }
+        }
+
+        private void RequestPreviewRefresh()
         {
             if (_generationOrchestrator != null && _loadedGraph != null)
             {

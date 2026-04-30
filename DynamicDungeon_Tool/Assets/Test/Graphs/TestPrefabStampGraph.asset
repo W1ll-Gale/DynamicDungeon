@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
-  m_Name: GenerationGraph
+  m_Name: TestPrefabStampGraph
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
   SchemaVersion: 4
   WorldWidth: 128
   WorldHeight: 128
   DefaultSeed: 0
-  DefaultSeedMode: 0
+  DefaultSeedMode: 1
   MaxValidationRetries: 1
   Biome: {fileID: 0}
   TileSemanticRegistry: {fileID: 0}
@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Output
-    Position: {x: 815.319, y: -106.72563}
+    Position: {x: 1272.0001, y: -67.00001}
     Ports:
     - PortName: LogicalIds
       DisplayName: LogicalIds
@@ -181,7 +181,7 @@ MonoBehaviour:
   - NodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
     NodeName: Poisson Disc Sampler
-    Position: {x: 663, y: -806.36}
+    Position: {x: 611.5875, y: -870.0002}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -197,11 +197,11 @@ MonoBehaviour:
     - Name: maxAttempts
       Value: 30
     - Name: pointCount
-      Value: 0
+      Value: 13
   - NodeId: a7347b7a-2352-4630-b419-97af62177939
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Cluster
-    Position: {x: 977, y: -457.6}
+    Position: {x: 769.87256, y: -558.22}
     Ports:
     - PortName: Seeds
       DisplayName: Seeds
@@ -229,7 +229,7 @@ MonoBehaviour:
   - NodeId: 3ab354e8-3a28-48cb-8b2d-356682910c4f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Vein
-    Position: {x: 1102, y: -942}
+    Position: {x: 1083.485, y: -1085.6235}
     Ports:
     - PortName: Seeds
       DisplayName: Seeds
@@ -256,6 +256,38 @@ MonoBehaviour:
       Value: 0.26
     - Name: forkAngleRange
       Value: 30.9
+  - NodeId: 40c581ff-613d-44b1-a329-326abf561b47
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Prefab Stamper
+    Position: {x: 1096.46, y: -591.7598}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: prefab
+      Value: d8c03eedf838c6141a94c6e88a830ce8
+    - Name: footprintMode
+      Value: CarveInterior
+    - Name: interiorLogicalId
+      Value: 1
+    - Name: outlineLogicalId
+      Value: 2
+    - Name: blendMode
+      Value: Overwrite
+    - Name: mirrorX
+      Value: false
+    - Name: mirrorY
+      Value: false
+    - Name: allowRotation
+      Value: false
+    - Name: maxOverlapTiles
+      Value: 0
   Connections:
   - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
     FromPortName: Distance__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
@@ -292,11 +324,6 @@ MonoBehaviour:
     ToNodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
     ToPortName: Mask
     CastMode: 0
-  - FromNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
-    FromPortName: Output__3249a052-bf82-46ac-9508-e4b80e5ac782
-    ToNodeId: graph-output-node
-    ToPortName: LogicalIds
-    CastMode: 1
   - FromNodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
     FromPortName: Output__58eba4d1-20f0-4b58-a24b-1181ce8479b8
     ToNodeId: a7347b7a-2352-4630-b419-97af62177939
@@ -307,6 +334,16 @@ MonoBehaviour:
     ToNodeId: 3ab354e8-3a28-48cb-8b2d-356682910c4f
     ToPortName: Seeds
     CastMode: 0
+  - FromNodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
+    FromPortName: Points__ab95549a-e359-4eab-9b70-5c6664e3225f
+    ToNodeId: 40c581ff-613d-44b1-a329-326abf561b47
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
+    FromPortName: Output__3249a052-bf82-46ac-9508-e4b80e5ac782
+    ToNodeId: graph-output-node
+    ToPortName: LogicalIds
+    CastMode: 1
   StickyNotes: []
   Groups: []
   ExposedProperties: []

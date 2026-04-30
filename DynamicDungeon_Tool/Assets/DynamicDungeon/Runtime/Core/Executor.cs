@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using DynamicDungeon.Runtime.Graph;
+using DynamicDungeon.Runtime.Placement;
 using Unity.Collections;
 using Unity.Jobs;
 
@@ -63,6 +64,9 @@ namespace DynamicDungeon.Runtime.Core
                         break;
                     case ChannelType.PointList:
                         bindings.BindPointListChannel(declaration.ChannelName, worldData.GetPointListChannel(declaration.ChannelName));
+                        break;
+                    case ChannelType.PrefabPlacementList:
+                        bindings.BindPrefabPlacementListChannel(declaration.ChannelName, worldData.GetPrefabPlacementListChannel(declaration.ChannelName));
                         break;
                     default:
                         bindings.Dispose();
@@ -176,7 +180,7 @@ namespace DynamicDungeon.Runtime.Core
                 {
                     progress?.Report(1.0f);
                     return CreateSuccessResult(
-                        WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes),
+                        WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes, plan.PrefabPlacementPrefabs, plan.PrefabPlacementTemplates),
                         ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
                 }
 
@@ -242,7 +246,7 @@ namespace DynamicDungeon.Runtime.Core
                 }
 
                 return CreateSuccessResult(
-                    WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes),
+                    WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes, plan.PrefabPlacementPrefabs, plan.PrefabPlacementTemplates),
                     ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
             }
             catch (Exception exception)

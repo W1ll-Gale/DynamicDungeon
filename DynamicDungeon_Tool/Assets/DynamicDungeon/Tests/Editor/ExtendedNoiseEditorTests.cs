@@ -130,6 +130,35 @@ namespace DynamicDungeon.Tests.Editor
         }
 
         [Test]
+        public void PrefabStamperNodeShowsOnlyRelevantFootprintParameters()
+        {
+            PrefabStamperNode node = new PrefabStamperNode("prefab-stamper", "Prefab Stamper");
+
+            Assert.That(node.IsParameterVisible("interiorLogicalId"), Is.False);
+            Assert.That(node.IsParameterVisible("outlineLogicalId"), Is.False);
+            Assert.That(node.IsParameterVisible("blendMode"), Is.False);
+            Assert.That(node.IsParameterVisible("maxOverlapTiles"), Is.True);
+
+            node.ReceiveParameter("footprintMode", "FillInterior");
+            Assert.That(node.IsParameterVisible("interiorLogicalId"), Is.True);
+            Assert.That(node.IsParameterVisible("outlineLogicalId"), Is.False);
+            Assert.That(node.IsParameterVisible("blendMode"), Is.True);
+            Assert.That(node.IsParameterVisible("maxOverlapTiles"), Is.True);
+
+            node.ReceiveParameter("footprintMode", "OutlineAndCarve");
+            Assert.That(node.IsParameterVisible("interiorLogicalId"), Is.False);
+            Assert.That(node.IsParameterVisible("outlineLogicalId"), Is.True);
+            Assert.That(node.IsParameterVisible("blendMode"), Is.True);
+            Assert.That(node.IsParameterVisible("maxOverlapTiles"), Is.False);
+
+            node.ReceiveParameter("footprintMode", "CarveInterior");
+            Assert.That(node.IsParameterVisible("interiorLogicalId"), Is.False);
+            Assert.That(node.IsParameterVisible("outlineLogicalId"), Is.False);
+            Assert.That(node.IsParameterVisible("blendMode"), Is.False);
+            Assert.That(node.IsParameterVisible("maxOverlapTiles"), Is.False);
+        }
+
+        [Test]
         public void GradientDefaultsUseMapCentreRatherThanBottomLeft()
         {
             GenNodeData gradientNodeData = new GenNodeData("gradient-node", typeof(GradientNoiseNode).FullName, "Gradient", Vector2.zero);

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Core;
+using DynamicDungeon.Runtime.Placement;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -166,6 +167,7 @@ namespace DynamicDungeon.Runtime.Graph
 
             List<CompiledNodeInfo> allOrderedNodes = InsertImplicitCastNodes(orderedNodes, connectionValidation.Connections);
             BiomeAsset[] biomeChannelBiomes = ResolveBiomeChannelPalette(allOrderedNodes, diagnostics);
+            PrefabStampPalette prefabPlacementPalette = ResolvePrefabPlacementPalette(allOrderedNodes, diagnostics);
 
             if (HasErrors(diagnostics))
             {
@@ -185,6 +187,7 @@ namespace DynamicDungeon.Runtime.Graph
                 Dictionary<string, float> initialBlackboardValues = BuildExposedPropertyInitialValues(graph.ExposedProperties);
                 ExecutionPlan plan = ExecutionPlan.Build(orderedRuntimeNodes, graph.WorldWidth, graph.WorldHeight, graph.DefaultSeed, initialBlackboardValues);
                 plan.SetBiomeChannelBiomes(biomeChannelBiomes);
+                plan.SetPrefabPlacementPalette(prefabPlacementPalette.Prefabs, prefabPlacementPalette.Templates);
                 return new GraphCompileResult(true, diagnostics, plan, outputChannelName, hasConnectedOutput);
             }
             catch (Exception exception)
@@ -236,7 +239,7 @@ namespace DynamicDungeon.Runtime.Graph
                 pendingNodeIds.Enqueue(resolvedOutputNodeId);
             }
 
-            EnqueueBiomeChannelRoots(nodeDataList, reachableNodeIds, pendingNodeIds);
+            EnqueueSharedChannelRoots(nodeDataList, reachableNodeIds, pendingNodeIds);
 
             while (pendingNodeIds.Count > 0)
             {
@@ -268,7 +271,7 @@ namespace DynamicDungeon.Runtime.Graph
             HashSet<string> reachableNodeIds = new HashSet<string>(StringComparer.Ordinal);
             Queue<string> pendingNodeIds = new Queue<string>();
 
-            EnqueueBiomeChannelRoots(nodeDataList, reachableNodeIds, pendingNodeIds);
+            EnqueueSharedChannelRoots(nodeDataList, reachableNodeIds, pendingNodeIds);
 
             int connectionIndex;
             for (connectionIndex = 0; connectionIndex < connectionDataList.Count; connectionIndex++)
@@ -296,13 +299,15 @@ namespace DynamicDungeon.Runtime.Graph
             return reachableNodeIds;
         }
 
-        private static void EnqueueBiomeChannelRoots(IReadOnlyList<GenNodeData> nodeDataList, HashSet<string> reachableNodeIds, Queue<string> pendingNodeIds)
+        private static void EnqueueSharedChannelRoots(IReadOnlyList<GenNodeData> nodeDataList, HashSet<string> reachableNodeIds, Queue<string> pendingNodeIds)
         {
             int nodeIndex;
             for (nodeIndex = 0; nodeIndex < nodeDataList.Count; nodeIndex++)
             {
                 GenNodeData nodeData = nodeDataList[nodeIndex];
-                if (nodeData == null || string.IsNullOrWhiteSpace(nodeData.NodeId) || !WritesBiomeChannel(nodeData.Ports))
+                if (nodeData == null ||
+                    string.IsNullOrWhiteSpace(nodeData.NodeId) ||
+                    (!WritesBiomeChannel(nodeData.Ports) && !WritesLogicalIdChannel(nodeData.Ports)))
                 {
                     continue;
                 }
@@ -694,7 +699,9 @@ namespace DynamicDungeon.Runtime.Graph
                 }
 
                 hasConnectedOutput = true;
-                return connection.FromPort.Name;
+                return connection.CastMode == CastMode.None
+                    ? connection.SourceChannelName
+                    : connection.CastChannelName;
             }
 
             hasConnectedOutput = false;
@@ -720,7 +727,7 @@ namespace DynamicDungeon.Runtime.Graph
                         continue;
                     }
 
-                    if (declaration.Type == ChannelType.Int && BiomeChannelUtility.IsBiomeChannel(declaration.ChannelName))
+                    if (IsSharedChannel(declaration.Type, declaration.ChannelName))
                     {
                         continue;
                     }
@@ -759,6 +766,8 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             AddImplicitBiomeChannelOrdering(compiledNodes, adjacency);
+            AddImplicitLogicalIdChannelOrdering(compiledNodes, adjacency);
+            AddImplicitPrefabPlacementChannelOrdering(compiledNodes, adjacency);
 
             for (nodeIndex = 0; nodeIndex < compiledNodes.Count; nodeIndex++)
             {
@@ -795,6 +804,50 @@ namespace DynamicDungeon.Runtime.Graph
             }
         }
 
+        private static void AddImplicitLogicalIdChannelOrdering(IReadOnlyList<CompiledNodeInfo> compiledNodes, Dictionary<string, List<CompiledNodeInfo>> adjacency)
+        {
+            CompiledNodeInfo previousLogicalIdWriter = null;
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < compiledNodes.Count; nodeIndex++)
+            {
+                CompiledNodeInfo compiledNode = compiledNodes[nodeIndex];
+                if (!WritesLogicalIdChannel(compiledNode.Node.ChannelDeclarations))
+                {
+                    continue;
+                }
+
+                if (previousLogicalIdWriter != null)
+                {
+                    adjacency[previousLogicalIdWriter.Node.NodeId].Add(compiledNode);
+                }
+
+                previousLogicalIdWriter = compiledNode;
+            }
+        }
+
+        private static void AddImplicitPrefabPlacementChannelOrdering(IReadOnlyList<CompiledNodeInfo> compiledNodes, Dictionary<string, List<CompiledNodeInfo>> adjacency)
+        {
+            CompiledNodeInfo previousPlacementWriter = null;
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < compiledNodes.Count; nodeIndex++)
+            {
+                CompiledNodeInfo compiledNode = compiledNodes[nodeIndex];
+                if (!WritesPrefabPlacementChannel(compiledNode.Node.ChannelDeclarations))
+                {
+                    continue;
+                }
+
+                if (previousPlacementWriter != null)
+                {
+                    adjacency[previousPlacementWriter.Node.NodeId].Add(compiledNode);
+                }
+
+                previousPlacementWriter = compiledNode;
+            }
+        }
+
         private static BiomeAsset[] ResolveBiomeChannelPalette(IReadOnlyList<CompiledNodeInfo> orderedNodes, List<GraphDiagnostic> diagnostics)
         {
             BiomeChannelPalette palette = new BiomeChannelPalette();
@@ -817,6 +870,30 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             return palette.ToArray();
+        }
+
+        private static PrefabStampPalette ResolvePrefabPlacementPalette(IReadOnlyList<CompiledNodeInfo> orderedNodes, List<GraphDiagnostic> diagnostics)
+        {
+            PrefabStampPalette palette = new PrefabStampPalette();
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < orderedNodes.Count; nodeIndex++)
+            {
+                CompiledNodeInfo compiledNode = orderedNodes[nodeIndex];
+                IPrefabPlacementNode prefabPlacementNode = compiledNode.Node as IPrefabPlacementNode;
+                if (prefabPlacementNode == null)
+                {
+                    continue;
+                }
+
+                string errorMessage;
+                if (!prefabPlacementNode.ResolvePrefabPalette(palette, out errorMessage))
+                {
+                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, errorMessage, compiledNode.Node.NodeId, null));
+                }
+            }
+
+            return palette;
         }
 
         private static bool WritesBiomeChannel(IReadOnlyList<GenPortData> ports)
@@ -859,6 +936,89 @@ namespace DynamicDungeon.Runtime.Graph
                 {
                     return true;
                 }
+            }
+
+            return false;
+        }
+
+        private static bool WritesLogicalIdChannel(IReadOnlyList<GenPortData> ports)
+        {
+            if (ports == null)
+            {
+                return false;
+            }
+
+            int portIndex;
+            for (portIndex = 0; portIndex < ports.Count; portIndex++)
+            {
+                GenPortData port = ports[portIndex];
+                if (port != null &&
+                    port.Direction == PortDirection.Output &&
+                    port.Type == ChannelType.Int &&
+                    string.Equals(port.PortName, GraphOutputUtility.OutputInputPortName, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool WritesLogicalIdChannel(IReadOnlyList<ChannelDeclaration> channelDeclarations)
+        {
+            if (channelDeclarations == null)
+            {
+                return false;
+            }
+
+            int declarationIndex;
+            for (declarationIndex = 0; declarationIndex < channelDeclarations.Count; declarationIndex++)
+            {
+                ChannelDeclaration declaration = channelDeclarations[declarationIndex];
+                if (declaration.IsWrite &&
+                    declaration.Type == ChannelType.Int &&
+                    string.Equals(declaration.ChannelName, GraphOutputUtility.OutputInputPortName, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool WritesPrefabPlacementChannel(IReadOnlyList<ChannelDeclaration> channelDeclarations)
+        {
+            if (channelDeclarations == null)
+            {
+                return false;
+            }
+
+            int declarationIndex;
+            for (declarationIndex = 0; declarationIndex < channelDeclarations.Count; declarationIndex++)
+            {
+                ChannelDeclaration declaration = channelDeclarations[declarationIndex];
+                if (declaration.IsWrite &&
+                    declaration.Type == ChannelType.PrefabPlacementList &&
+                    string.Equals(declaration.ChannelName, PrefabPlacementChannelUtility.ChannelName, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsSharedChannel(ChannelType channelType, string channelName)
+        {
+            if (channelType == ChannelType.Int)
+            {
+                return BiomeChannelUtility.IsBiomeChannel(channelName) ||
+                       string.Equals(channelName, GraphOutputUtility.OutputInputPortName, StringComparison.Ordinal);
+            }
+
+            if (channelType == ChannelType.PrefabPlacementList)
+            {
+                return string.Equals(channelName, PrefabPlacementChannelUtility.ChannelName, StringComparison.Ordinal);
             }
 
             return false;

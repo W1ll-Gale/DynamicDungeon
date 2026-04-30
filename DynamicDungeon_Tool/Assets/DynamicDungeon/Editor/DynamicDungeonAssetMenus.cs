@@ -1,8 +1,10 @@
 using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Graph;
+using DynamicDungeon.Runtime.Placement;
 using DynamicDungeon.Runtime.Semantic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace DynamicDungeon.Editor
 {
@@ -53,6 +55,48 @@ namespace DynamicDungeon.Editor
         public static void CreateTilemapLayerDefinition()
         {
             DynamicDungeonEditorAssetUtility.CreateAssetInSelectedFolder<TilemapLayerDefinition>("TilemapLayerDefinition.asset");
+        }
+
+        [MenuItem(MenuRoot + "Stampable Prefab")]
+        public static void CreateStampablePrefab()
+        {
+            string folderPath = DynamicDungeonEditorAssetUtility.GetSelectedFolderPath();
+            string prefabPath = AssetDatabase.GenerateUniqueAssetPath((folderPath + "/StampablePrefab.prefab").Replace("\\", "/"));
+
+            GameObject root = new GameObject("StampablePrefab");
+            try
+            {
+                PrefabStampAuthoring authoring = root.AddComponent<PrefabStampAuthoring>();
+
+                GameObject gridObject = new GameObject("FootprintGrid");
+                gridObject.transform.SetParent(root.transform, false);
+                gridObject.AddComponent<Grid>();
+
+                GameObject tilemapObject = new GameObject("FootprintTilemap");
+                tilemapObject.transform.SetParent(gridObject.transform, false);
+                Tilemap tilemap = tilemapObject.AddComponent<Tilemap>();
+                tilemapObject.AddComponent<TilemapRenderer>();
+
+                SerializedObject authoringObject = new SerializedObject(authoring);
+                SerializedProperty footprintTilemapProperty = authoringObject.FindProperty("_footprintTilemap");
+                if (footprintTilemapProperty != null)
+                {
+                    footprintTilemapProperty.objectReferenceValue = tilemap;
+                    authoringObject.ApplyModifiedPropertiesWithoutUndo();
+                }
+
+                GameObject prefabAsset = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+                AssetDatabase.SaveAssets();
+
+                if (prefabAsset != null)
+                {
+                    ProjectWindowUtil.ShowCreatedAsset(prefabAsset);
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
         }
     }
 }

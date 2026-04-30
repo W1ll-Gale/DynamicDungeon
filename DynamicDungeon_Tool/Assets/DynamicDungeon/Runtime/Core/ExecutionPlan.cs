@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using DynamicDungeon.Runtime.Biome;
+using DynamicDungeon.Runtime.Graph;
+using DynamicDungeon.Runtime.Placement;
 using Unity.Collections;
+using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Core
 {
@@ -13,6 +16,8 @@ namespace DynamicDungeon.Runtime.Core
         private readonly WorldData _allocatedWorld;
         private readonly long _globalSeed;
         private BiomeAsset[] _biomeChannelBiomes;
+        private GameObject[] _prefabPlacementPrefabs;
+        private PrefabStampTemplate[] _prefabPlacementTemplates;
         private Dictionary<string, float> _initialNumericBlackboardValues;
         private bool _isDisposed;
 
@@ -53,6 +58,22 @@ namespace DynamicDungeon.Runtime.Core
             get
             {
                 return _biomeChannelBiomes ?? Array.Empty<BiomeAsset>();
+            }
+        }
+
+        public IReadOnlyList<GameObject> PrefabPlacementPrefabs
+        {
+            get
+            {
+                return _prefabPlacementPrefabs ?? Array.Empty<GameObject>();
+            }
+        }
+
+        public IReadOnlyList<PrefabStampTemplate> PrefabPlacementTemplates
+        {
+            get
+            {
+                return _prefabPlacementTemplates ?? Array.Empty<PrefabStampTemplate>();
             }
         }
 
@@ -192,6 +213,35 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
+        public void SetPrefabPlacementPalette(IReadOnlyList<GameObject> prefabs, IReadOnlyList<PrefabStampTemplate> templates)
+        {
+            ThrowIfDisposed();
+
+            int prefabCount = prefabs != null ? prefabs.Count : 0;
+            int templateCount = templates != null ? templates.Count : 0;
+            if (prefabCount != templateCount)
+            {
+                throw new ArgumentException("Prefab placement palette counts must match.");
+            }
+
+            if (prefabCount == 0)
+            {
+                _prefabPlacementPrefabs = Array.Empty<GameObject>();
+                _prefabPlacementTemplates = Array.Empty<PrefabStampTemplate>();
+                return;
+            }
+
+            _prefabPlacementPrefabs = new GameObject[prefabCount];
+            _prefabPlacementTemplates = new PrefabStampTemplate[prefabCount];
+
+            int index;
+            for (index = 0; index < prefabCount; index++)
+            {
+                _prefabPlacementPrefabs[index] = prefabs[index];
+                _prefabPlacementTemplates[index] = templates[index];
+            }
+        }
+
         public long GetLocalSeed(string nodeId)
         {
             ThrowIfDisposed();
@@ -293,6 +343,8 @@ namespace DynamicDungeon.Runtime.Core
             RestoreIntChannels(snapshot.IntChannels);
             RestoreBoolMaskChannels(snapshot.BoolMaskChannels);
             RestorePointListChannels(snapshot.PointListChannels);
+            RestorePrefabPlacementChannels(snapshot.PrefabPlacementChannels);
+            SetPrefabPlacementPalette(snapshot.PrefabPlacementPrefabs, snapshot.PrefabPlacementTemplates);
         }
 
         public void Dispose()
@@ -340,21 +392,23 @@ namespace DynamicDungeon.Runtime.Core
                     case ChannelType.Int:
                         added = allocatedWorld.TryAddIntChannel(declaration.ChannelName);
                         break;
-                case ChannelType.BoolMask:
-                    added = allocatedWorld.TryAddBoolMaskChannel(declaration.ChannelName);
-                    break;
-                case ChannelType.PointList:
-                    added = allocatedWorld.TryAddPointListChannel(declaration.ChannelName);
-                    break;
-                default:
-                    throw new InvalidOperationException("Unsupported channel type '" + declaration.Type + "'.");
-            }
+                    case ChannelType.BoolMask:
+                        added = allocatedWorld.TryAddBoolMaskChannel(declaration.ChannelName);
+                        break;
+                    case ChannelType.PointList:
+                        added = allocatedWorld.TryAddPointListChannel(declaration.ChannelName);
+                        break;
+                    case ChannelType.PrefabPlacementList:
+                        added = allocatedWorld.TryAddPrefabPlacementListChannel(declaration.ChannelName);
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unsupported channel type '" + declaration.Type + "'.");
+                }
 
                 if (!added)
                 {
-                    if (declaration.Type == ChannelType.Int &&
-                        BiomeChannelUtility.IsBiomeChannel(declaration.ChannelName) &&
-                        allocatedWorld.HasIntChannel(declaration.ChannelName))
+                    if (IsSharedChannel(declaration.Type, declaration.ChannelName) &&
+                        HasSharedChannel(allocatedWorld, declaration.Type, declaration.ChannelName))
                     {
                         continue;
                     }
@@ -468,6 +522,12 @@ namespace DynamicDungeon.Runtime.Core
                     continue;
                 }
 
+                if (!allocatedWorld.HasChannel(declaration.ChannelName) &&
+                    CanReadFromOwnSharedChannel(channels, declaration))
+                {
+                    continue;
+                }
+
                 if (!allocatedWorld.HasChannel(declaration.ChannelName))
                 {
                     throw new InvalidOperationException("Node '" + node.NodeName + "' reads channel '" + declaration.ChannelName + "' before any upstream node has allocated it.");
@@ -493,6 +553,9 @@ namespace DynamicDungeon.Runtime.Core
                     break;
                 case ChannelType.PointList:
                     hasCorrectType = allocatedWorld.HasPointListChannel(declaration.ChannelName);
+                    break;
+                case ChannelType.PrefabPlacementList:
+                    hasCorrectType = allocatedWorld.HasPrefabPlacementListChannel(declaration.ChannelName);
                     break;
                 default:
                     throw new InvalidOperationException("Unsupported channel type '" + declaration.Type + "'.");
@@ -599,6 +662,35 @@ namespace DynamicDungeon.Runtime.Core
             }
         }
 
+        private void RestorePrefabPlacementChannels(IReadOnlyList<WorldSnapshot.PrefabPlacementListChannelSnapshot> channelSnapshots)
+        {
+            IReadOnlyList<WorldSnapshot.PrefabPlacementListChannelSnapshot> safeChannelSnapshots = channelSnapshots ?? Array.Empty<WorldSnapshot.PrefabPlacementListChannelSnapshot>();
+
+            int index;
+            for (index = 0; index < safeChannelSnapshots.Count; index++)
+            {
+                WorldSnapshot.PrefabPlacementListChannelSnapshot channelSnapshot = safeChannelSnapshots[index];
+                if (channelSnapshot == null || !_allocatedWorld.HasPrefabPlacementListChannel(channelSnapshot.Name))
+                {
+                    continue;
+                }
+
+                NativeList<PrefabPlacementRecord> targetChannel = _allocatedWorld.GetPrefabPlacementListChannel(channelSnapshot.Name);
+                targetChannel.Clear();
+
+                if (targetChannel.Capacity < channelSnapshot.Data.Length)
+                {
+                    targetChannel.Capacity = channelSnapshot.Data.Length;
+                }
+
+                int placementIndex;
+                for (placementIndex = 0; placementIndex < channelSnapshot.Data.Length; placementIndex++)
+                {
+                    targetChannel.Add(channelSnapshot.Data[placementIndex]);
+                }
+            }
+        }
+
         private static void ValidateSnapshotChannelLength(string channelName, int actualLength, int expectedLength)
         {
             if (actualLength != expectedLength)
@@ -620,6 +712,57 @@ namespace DynamicDungeon.Runtime.Core
             for (index = 0; index < biomeChannel.Length; index++)
             {
                 biomeChannel[index] = BiomeChannelUtility.UnassignedBiomeIndex;
+            }
+        }
+
+        private static bool IsSharedChannel(ChannelType channelType, string channelName)
+        {
+            if (channelType == ChannelType.Int)
+            {
+                return BiomeChannelUtility.IsBiomeChannel(channelName) ||
+                       string.Equals(channelName, GraphOutputUtility.OutputInputPortName, StringComparison.Ordinal);
+            }
+
+            if (channelType == ChannelType.PrefabPlacementList)
+            {
+                return string.Equals(channelName, PrefabPlacementChannelUtility.ChannelName, StringComparison.Ordinal);
+            }
+
+            return false;
+        }
+
+        private static bool CanReadFromOwnSharedChannel(IReadOnlyList<ChannelDeclaration> channels, ChannelDeclaration readDeclaration)
+        {
+            if (!IsSharedChannel(readDeclaration.Type, readDeclaration.ChannelName))
+            {
+                return false;
+            }
+
+            int index;
+            for (index = 0; index < channels.Count; index++)
+            {
+                ChannelDeclaration declaration = channels[index];
+                if (declaration.IsWrite &&
+                    declaration.Type == readDeclaration.Type &&
+                    string.Equals(declaration.ChannelName, readDeclaration.ChannelName, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasSharedChannel(WorldData allocatedWorld, ChannelType channelType, string channelName)
+        {
+            switch (channelType)
+            {
+                case ChannelType.Int:
+                    return allocatedWorld.HasIntChannel(channelName);
+                case ChannelType.PrefabPlacementList:
+                    return allocatedWorld.HasPrefabPlacementListChannel(channelName);
+                default:
+                    return false;
             }
         }
     }

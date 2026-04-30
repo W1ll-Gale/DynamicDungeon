@@ -543,12 +543,16 @@ namespace DynamicDungeon.Editor.Nodes
                 RebuildNodePorts();
                 PopulateControls();
             }
+            else if (_nodeInstance is IParameterVisibilityProvider)
+            {
+                PopulateControls();
+            }
 
             _afterMutation?.Invoke();
 
             if (_generationOrchestrator != null)
             {
-                _generationOrchestrator.MarkNodeDirty(_nodeData.NodeId);
+                _generationOrchestrator.RequestPreviewRefresh();
             }
         }
 
@@ -618,7 +622,7 @@ namespace DynamicDungeon.Editor.Nodes
 
             if (_generationOrchestrator != null)
             {
-                _generationOrchestrator.MarkNodeDirty(_nodeData.NodeId);
+                _generationOrchestrator.RequestPreviewRefresh();
             }
         }
 

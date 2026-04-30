@@ -1,4 +1,5 @@
 using System;
+using DynamicDungeon.Runtime.Placement;
 using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Core
@@ -91,6 +92,11 @@ namespace DynamicDungeon.Runtime.Core
         public Unity.Collections.NativeList<Unity.Mathematics.int2> GetPointListChannel(string name)
         {
             return _channelBindings.GetPointListChannel(name);
+        }
+
+        public Unity.Collections.NativeList<PrefabPlacementRecord> GetPrefabPlacementListChannel(string name)
+        {
+            return _channelBindings.GetPrefabPlacementListChannel(name);
         }
     }
 }

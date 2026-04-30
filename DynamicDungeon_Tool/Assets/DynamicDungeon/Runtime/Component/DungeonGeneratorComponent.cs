@@ -70,6 +70,8 @@ namespace DynamicDungeon.Runtime.Component
         private readonly Executor _executor = new Executor();
         private readonly TilemapOutputPass _tilemapOutputPass = new TilemapOutputPass();
         private readonly TilemapLayerWriter _tilemapLayerWriter = new TilemapLayerWriter();
+        private readonly PrefabPlacementOutputPass _prefabPlacementOutputPass = new PrefabPlacementOutputPass();
+        private readonly GeneratedPrefabWriter _generatedPrefabWriter = new GeneratedPrefabWriter();
         private readonly System.Random _seedRandom = new System.Random();
         private readonly SemaphoreSlim _generationRequestSemaphore = new SemaphoreSlim(1, 1);
 
@@ -298,6 +300,13 @@ namespace DynamicDungeon.Runtime.Component
 
         private void ClearTilemapsIfPossible()
         {
+            Transform generatedPrefabParent = transform;
+            if (generatedPrefabParent != null)
+            {
+                _generatedPrefabWriter.EnsureRoot(generatedPrefabParent);
+                _generatedPrefabWriter.ClearAll();
+            }
+
             if (_layerDefinitions == null || _layerDefinitions.Count == 0)
             {
                 return;
@@ -715,17 +724,24 @@ namespace DynamicDungeon.Runtime.Component
 
         private void WriteSnapshotToTilemaps(WorldSnapshot snapshot, string outputChannelName)
         {
-            if (string.IsNullOrWhiteSpace(outputChannelName))
+            Grid resolvedGrid = ResolveGrid(true);
+            _generatedPrefabWriter.EnsureRoot(transform);
+            _generatedPrefabWriter.ClearAll();
+
+            if (!string.IsNullOrWhiteSpace(outputChannelName))
             {
-                return;
+                TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
+
+                _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
+                _tilemapLayerWriter.ClearAll();
+                _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+            }
+            else
+            {
+                ClearTilemapsIfPossible();
             }
 
-            Grid resolvedGrid = ResolveGrid(true);
-            TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
-
-            _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
-            _tilemapLayerWriter.ClearAll();
-            _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+            _prefabPlacementOutputPass.Execute(snapshot, resolvedGrid, _generatedPrefabWriter, _tilemapOffset);
         }
 
         private void ApplyPropertyOverrides(ExecutionPlan plan)

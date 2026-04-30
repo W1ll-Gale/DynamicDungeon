@@ -1,0 +1,300 @@
+fileFormatVersion: 2
+guid: 4d9b4c7f15e04594b1cb45ea7f53d9a1
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+*** Add File: C:\Users\willi\Documents\Github Repo\HonoursProject\DynamicDungeon_Tool\Assets\Test\Graphs\PrefabStampIntegrationGraph.asset
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: PrefabStampIntegrationGraph
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 4
+  WorldWidth: 128
+  WorldHeight: 128
+  DefaultSeed: 0
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 0}
+  TileSemanticRegistry: {fileID: 0}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: graph-output-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
+    NodeName: Output
+    Position: {x: 1300, y: -110}
+    Ports:
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 0
+      Type: 1
+    Parameters: []
+  - NodeId: 61c447b7-18c8-4475-8411-0ab55879445c
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NoiseNode
+    NodeName: Surface Gradient
+    Position: {x: -760, y: 170}
+    Ports:
+    - PortName: Output
+      DisplayName: Output
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: algorithm
+      Value: Gradient
+    - Name: direction
+      Value: Y
+    - Name: amplitude
+      Value: 1
+    - Name: scale
+      Value: 1.4
+  - NodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinNoiseNode
+    NodeName: Cave Noise
+    Position: {x: -760, y: -320}
+    Ports:
+    - PortName: Output__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+      DisplayName: Output
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: frequency
+      Value: 0.055
+    - Name: amplitude
+      Value: 1
+    - Name: offset
+      Value: 4,9
+    - Name: octaves
+      Value: 3
+    - Name: seedOffset
+      Value: 17
+  - NodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Cave Threshold
+    Position: {x: -470, y: -320}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: Output__3249a052-bf82-46ac-9508-e4b80e5ac782
+      DisplayName: Output
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.53
+  - NodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Cave Smooth
+    Position: {x: -160, y: -320}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: Output__38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+      DisplayName: Output
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+    - Name: survivalRule
+      Value: 45678
+    - Name: iterations
+      Value: 2
+    - Name: initialFillProbability
+      Value: 0.5
+    - Name: inputMode
+      Value: UseInputAsInitialState
+  - NodeId: 0e3b018e-5349-4323-9da9-01d0c12b2bc4
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Cave Logical IDs
+    Position: {x: 160, y: -320}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: LogicalIds
+    - Name: trueLogicalId
+      Value: 1
+    - Name: falseLogicalId
+      Value: 2
+  - NodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
+    NodeName: Stamp Points
+    Position: {x: 170, y: -620}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: Points__58eba4d1-20f0-4b58-a24b-1181ce8479b8
+      DisplayName: Points
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: minDistance
+      Value: 12
+    - Name: maxAttempts
+      Value: 30
+    - Name: pointCount
+      Value: 7
+  - NodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Marker Stamp
+    Position: {x: 520, y: -620}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: prefab
+      Value: 4d9b4c7f15e04594b1cb45ea7f53d9a1
+    - Name: footprintMode
+      Value: OutlineAndCarve
+    - Name: interiorLogicalId
+      Value: 1
+    - Name: outlineLogicalId
+      Value: 2
+    - Name: blendMode
+      Value: Overwrite
+    - Name: mirrorX
+      Value: true
+    - Name: mirrorY
+      Value: false
+    - Name: allowRotation
+      Value: true
+    - Name: maxOverlapTiles
+      Value: 1
+  - NodeId: a7347b7a-2352-4630-b419-97af62177939
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeWeightBlendNode
+    NodeName: Biome Base
+    Position: {x: -160, y: 180}
+    Ports:
+    - PortName: Weight 1
+      DisplayName: Weight 1
+      Direction: 0
+      Type: 0
+    - PortName: Weight 2
+      DisplayName: Weight 2
+      Direction: 0
+      Type: 0
+    - PortName: Weight 3
+      DisplayName: Weight 3
+      Direction: 0
+      Type: 0
+    - PortName: Weight 4
+      DisplayName: Weight 4
+      Direction: 0
+      Type: 0
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: biome1
+      Value: 7fefc95eed33b5149aa270bd174f056b
+    - Name: biome2
+      Value: 780a73c78dc730a4f9431ef81a871c80
+  - NodeId: 3ab354e8-3a28-48cb-8b2d-356682910c4f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Cave Biome Override
+    Position: {x: 200, y: 180}
+    Ports:
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 780a73c78dc730a4f9431ef81a871c80
+    - Name: blendEdgeWidth
+      Value: 3
+    - Name: probability
+      Value: 1
+  Connections:
+  - FromNodeId: 61c447b7-18c8-4475-8411-0ab55879445c
+    FromPortName: Output
+    ToNodeId: a7347b7a-2352-4630-b419-97af62177939
+    ToPortName: Weight 1
+    CastMode: 0
+  - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    FromPortName: Output__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    ToNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    FromPortName: Output__d1ed56c7-8ca3-4c4b-a31b-67d44e1edf99
+    ToNodeId: a7347b7a-2352-4630-b419-97af62177939
+    ToPortName: Weight 2
+    CastMode: 0
+  - FromNodeId: 3249a052-bf82-46ac-9508-e4b80e5ac782
+    FromPortName: Output__3249a052-bf82-46ac-9508-e4b80e5ac782
+    ToNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    FromPortName: Output__38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    ToNodeId: 0e3b018e-5349-4323-9da9-01d0c12b2bc4
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    FromPortName: Output__38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    ToNodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    FromPortName: Output__38a5b9c4-6e4f-4af5-94e5-bae1875d2628
+    ToNodeId: 3ab354e8-3a28-48cb-8b2d-356682910c4f
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: a7347b7a-2352-4630-b419-97af62177939
+    FromPortName: BiomeChannel
+    ToNodeId: 3ab354e8-3a28-48cb-8b2d-356682910c4f
+    ToPortName: BiomeChannel
+    CastMode: 0
+  - FromNodeId: 58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    FromPortName: Points__58eba4d1-20f0-4b58-a24b-1181ce8479b8
+    ToNodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: ab95549a-e359-4eab-9b70-5c6664e3225f
+    FromPortName: LogicalIds
+    ToNodeId: graph-output-node
+    ToPortName: LogicalIds
+    CastMode: 0
+  StickyNotes: []
+  Groups: []
+  ExposedProperties: []

@@ -5,6 +5,7 @@ namespace DynamicDungeon.Runtime.Core
         Float,
         Int,
         BoolMask,
-        PointList
+        PointList,
+        PrefabPlacementList
     }
 }
