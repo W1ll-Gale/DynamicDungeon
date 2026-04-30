@@ -76,8 +76,8 @@ namespace DynamicDungeon.Tests.Runtime
                 1, 1, 1, 1, 1, 1
             };
 
-            PoissonDiscSamplerNode firstNode = new PoissonDiscSamplerNode("poisson-node-a", "Poisson", "Mask", "Points", 1.0f, 30, 4);
-            PoissonDiscSamplerNode secondNode = new PoissonDiscSamplerNode("poisson-node-b", "Poisson", "Mask", "Points", 1.0f, 30, 4);
+            PoissonDiscSamplerNode firstNode = new PoissonDiscSamplerNode("poisson-node-limit", "Poisson", "Mask", "Points", 1.0f, 30, 4);
+            PoissonDiscSamplerNode secondNode = new PoissonDiscSamplerNode("poisson-node-limit", "Poisson", "Mask", "Points", 1.0f, 30, 4);
 
             Vector2Int[] firstRun = SortPointsStable((await ExecutePoissonAsync(firstNode, eligibleMask, 6, 6)).PointListChannels[0].Data);
             Vector2Int[] secondRun = SortPointsStable((await ExecutePoissonAsync(secondNode, eligibleMask, 6, 6)).PointListChannels[0].Data);
@@ -126,8 +126,8 @@ namespace DynamicDungeon.Tests.Runtime
 
             FixedFloatMapNode weightNodeA = new FixedFloatMapNode("weights-a", "Weights", weights);
             FixedFloatMapNode weightNodeB = new FixedFloatMapNode("weights-b", "Weights", weights);
-            StochasticScatterNode firstNode = new StochasticScatterNode("scatter-node-a", "Scatter", "Weights", "Points", 0.0f, 3);
-            StochasticScatterNode secondNode = new StochasticScatterNode("scatter-node-b", "Scatter", "Weights", "Points", 0.0f, 3);
+            StochasticScatterNode firstNode = new StochasticScatterNode("scatter-node-limit", "Scatter", "Weights", "Points", 0.0f, 3);
+            StochasticScatterNode secondNode = new StochasticScatterNode("scatter-node-limit", "Scatter", "Weights", "Points", 0.0f, 3);
 
             Vector2Int[] firstRun = SortPointsStable((await ExecuteNodesAsync(new IGenNode[] { weightNodeA, firstNode }, 4, 4, 4306L)).PointListChannels[0].Data);
             Vector2Int[] secondRun = SortPointsStable((await ExecuteNodesAsync(new IGenNode[] { weightNodeB, secondNode }, 4, 4, 4306L)).PointListChannels[0].Data);
@@ -185,8 +185,8 @@ namespace DynamicDungeon.Tests.Runtime
         [Test]
         public async Task PointGridNodeHonoursPointCountLimitDeterministically()
         {
-            PointGridNode firstNode = new PointGridNode("grid-node-a", "Grid", string.Empty, "Points", 2, 0.0f, 2);
-            PointGridNode secondNode = new PointGridNode("grid-node-b", "Grid", string.Empty, "Points", 2, 0.0f, 2);
+            PointGridNode firstNode = new PointGridNode("grid-node-limit", "Grid", string.Empty, "Points", 2, 0.0f, 2);
+            PointGridNode secondNode = new PointGridNode("grid-node-limit", "Grid", string.Empty, "Points", 2, 0.0f, 2);
 
             Vector2Int[] firstRun = SortPointsStable((await ExecuteNodesAsync(new IGenNode[] { firstNode }, 5, 4, 4307L)).PointListChannels[0].Data);
             Vector2Int[] secondRun = SortPointsStable((await ExecuteNodesAsync(new IGenNode[] { secondNode }, 5, 4, 4307L)).PointListChannels[0].Data);
@@ -253,8 +253,8 @@ namespace DynamicDungeon.Tests.Runtime
 
             FixedLogicalMapNode mapNodeA = new FixedLogicalMapNode("logical-map-limit-a", "LogicalIds", 4, 4, logicalIds);
             FixedLogicalMapNode mapNodeB = new FixedLogicalMapNode("logical-map-limit-b", "LogicalIds", 4, 4, logicalIds);
-            EdgeFinderNode firstNode = new EdgeFinderNode("edge-limit-a", "Edge", "LogicalIds", "Points", false, string.Empty, 1, false, string.Empty, 2, EdgeSide.Both, 1, 2);
-            EdgeFinderNode secondNode = new EdgeFinderNode("edge-limit-b", "Edge", "LogicalIds", "Points", false, string.Empty, 1, false, string.Empty, 2, EdgeSide.Both, 1, 2);
+            EdgeFinderNode firstNode = new EdgeFinderNode("edge-limit", "Edge", "LogicalIds", "Points", false, string.Empty, 1, false, string.Empty, 2, EdgeSide.Both, 1, 2);
+            EdgeFinderNode secondNode = new EdgeFinderNode("edge-limit", "Edge", "LogicalIds", "Points", false, string.Empty, 1, false, string.Empty, 2, EdgeSide.Both, 1, 2);
 
             Vector2Int[] firstRun = SortPointsStable((await ExecuteNodesAsync(new IGenNode[] { mapNodeA, firstNode }, 4, 4, 4308L)).PointListChannels[0].Data);
             Vector2Int[] secondRun = SortPointsStable((await ExecuteNodesAsync(new IGenNode[] { mapNodeB, secondNode }, 4, 4, 4308L)).PointListChannels[0].Data);

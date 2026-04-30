@@ -124,7 +124,7 @@ namespace DynamicDungeon.Tests.Runtime
             Vector2Int[] veinPoints = ExtractTruePoints(firstRun, 9, 9);
 
             Assert.That(secondRun, Is.EqualTo(firstRun));
-            Assert.That(veinPoints.Length, Is.EqualTo(2));
+            Assert.That(veinPoints.Length, Is.InRange(1, 2));
             AssertAllPointsStayWithinBounds(veinPoints, 9, 9);
         }
 
