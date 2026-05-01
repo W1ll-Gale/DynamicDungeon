@@ -63,6 +63,20 @@ namespace DynamicDungeon.Editor.Nodes
                 }
             }
 
+            if (context.NodeType == typeof(BiomeLayoutNode) &&
+                string.Equals(context.ParameterName, "rules", StringComparison.OrdinalIgnoreCase))
+            {
+                control = BiomeLayoutParameterControls.CreateBiomeLayoutRulesControl(context);
+                return control != null;
+            }
+
+            if (context.NodeType == typeof(LogicalIdRuleOverlayNode) &&
+                string.Equals(context.ParameterName, "rules", StringComparison.OrdinalIgnoreCase))
+            {
+                control = BiomeLayoutParameterControls.CreateLogicalIdRulesControl(context);
+                return control != null;
+            }
+
             return false;
         }
     }

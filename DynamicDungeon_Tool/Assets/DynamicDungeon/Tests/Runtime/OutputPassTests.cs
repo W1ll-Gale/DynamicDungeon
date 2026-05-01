@@ -136,6 +136,95 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public void ExecuteResolvesSemanticMaterialIdsThroughActiveBiomeTiles()
+        {
+            Grid grid = null;
+            TileSemanticRegistry registry = null;
+            BiomeAsset forestBiome = null;
+            BiomeAsset desertBiome = null;
+            BiomeAsset fallbackBiome = null;
+            TilemapLayerDefinition floorLayer = null;
+            TilemapLayerDefinition solidLayer = null;
+            TilemapLayerDefinition defaultLayer = null;
+            Tile forestSurfaceTile = null;
+            Tile forestCaveTile = null;
+            Tile desertSurfaceTile = null;
+            Tile desertCaveTile = null;
+
+            try
+            {
+                grid = CreateGrid();
+                registry = CreateRegistry();
+                forestBiome = CreateBiome();
+                desertBiome = CreateBiome();
+                fallbackBiome = CreateBiome();
+                floorLayer = CreateLayerDefinition("Floor", false, "Walkable");
+                solidLayer = CreateLayerDefinition("Solid", false, "Solid");
+                defaultLayer = CreateLayerDefinition("Default", true);
+                forestSurfaceTile = CreateTile(Color.green);
+                forestCaveTile = CreateTile(Color.gray);
+                desertSurfaceTile = CreateTile(Color.yellow);
+                desertCaveTile = CreateTile(new Color(0.65f, 0.45f, 0.25f, 1.0f));
+
+                AddRegistryEntry(registry, 10, "Surface Floor", "Walkable");
+                AddRegistryEntry(registry, 16, "Cave Wall", "Solid");
+                AddBiomeMapping(forestBiome, 10, forestSurfaceTile);
+                AddBiomeMapping(forestBiome, 16, forestCaveTile);
+                AddBiomeMapping(desertBiome, 10, desertSurfaceTile);
+                AddBiomeMapping(desertBiome, 16, desertCaveTile);
+
+                WorldSnapshot snapshot = new WorldSnapshot
+                {
+                    Width = 2,
+                    Height = 2,
+                    IntChannels = new[]
+                    {
+                        new WorldSnapshot.IntChannelSnapshot
+                        {
+                            Name = LogicalChannelName,
+                            Data = new[] { 10, 16, 10, 16 }
+                        },
+                        new WorldSnapshot.IntChannelSnapshot
+                        {
+                            Name = BiomeChannelUtility.ChannelName,
+                            Data = new[] { 0, 0, 1, 1 }
+                        }
+                    },
+                    BiomeChannelBiomes = new[] { forestBiome, desertBiome }
+                };
+                TilemapLayerWriter writer = new TilemapLayerWriter();
+                TilemapOutputPass outputPass = new TilemapOutputPass();
+                TilemapLayerDefinition[] layers = new[] { floorLayer, solidLayer, defaultLayer };
+
+                writer.EnsureTimelapsCreated(grid, layers);
+                outputPass.Execute(snapshot, LogicalChannelName, fallbackBiome, registry, writer, layers, Vector3Int.zero);
+
+                Tilemap floorTilemap = GetLayerTilemap(grid, "Floor");
+                Tilemap solidTilemap = GetLayerTilemap(grid, "Solid");
+
+                Assert.That(floorTilemap.GetTile(new Vector3Int(0, 0, 0)), Is.SameAs(forestSurfaceTile));
+                Assert.That(solidTilemap.GetTile(new Vector3Int(1, 0, 0)), Is.SameAs(forestCaveTile));
+                Assert.That(floorTilemap.GetTile(new Vector3Int(0, 1, 0)), Is.SameAs(desertSurfaceTile));
+                Assert.That(solidTilemap.GetTile(new Vector3Int(1, 1, 0)), Is.SameAs(desertCaveTile));
+            }
+            finally
+            {
+                DestroyImmediateIfNotNull(forestSurfaceTile);
+                DestroyImmediateIfNotNull(forestCaveTile);
+                DestroyImmediateIfNotNull(desertSurfaceTile);
+                DestroyImmediateIfNotNull(desertCaveTile);
+                DestroyImmediateIfNotNull(floorLayer);
+                DestroyImmediateIfNotNull(solidLayer);
+                DestroyImmediateIfNotNull(defaultLayer);
+                DestroyImmediateIfNotNull(forestBiome);
+                DestroyImmediateIfNotNull(desertBiome);
+                DestroyImmediateIfNotNull(fallbackBiome);
+                DestroyImmediateIfNotNull(registry);
+                DestroyImmediateIfNotNull(grid != null ? grid.gameObject : null);
+            }
+        }
+
+        [Test]
         public void ExecuteWritesGeneratedTileForSpriteMappings()
         {
             Grid grid = null;

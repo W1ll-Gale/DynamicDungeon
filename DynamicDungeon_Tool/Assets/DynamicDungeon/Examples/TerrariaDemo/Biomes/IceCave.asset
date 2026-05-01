@@ -23,3 +23,48 @@ MonoBehaviour:
     Tile: {fileID: 11400000, guid: ce40e9ec06dc35048a7a5cf4efbf385e, type: 2}
     SpriteAsset: {fileID: 0}
     WeightedTiles: []
+  - LogicalId: 10
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 257f7192787ac34499a0f5600a3f5dbe, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 11
+    TileType: 0
+    Tile: {fileID: 11400000, guid: ce40e9ec06dc35048a7a5cf4efbf385e, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 12
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 257f7192787ac34499a0f5600a3f5dbe, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 13
+    TileType: 0
+    Tile: {fileID: 11400000, guid: ce40e9ec06dc35048a7a5cf4efbf385e, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 14
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 257f7192787ac34499a0f5600a3f5dbe, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 15
+    TileType: 0
+    Tile: {fileID: 11400000, guid: ce40e9ec06dc35048a7a5cf4efbf385e, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 16
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 257f7192787ac34499a0f5600a3f5dbe, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 17
+    TileType: 0
+    Tile: {fileID: 11400000, guid: ce40e9ec06dc35048a7a5cf4efbf385e, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 18
+    TileType: 0
+    Tile: {fileID: 11400000, guid: ce40e9ec06dc35048a7a5cf4efbf385e, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []

@@ -23,3 +23,64 @@ MonoBehaviour:
     Tile: {fileID: 11400000, guid: 2812de76e0359c64aa97ab217ce75617, type: 2}
     SpriteAsset: {fileID: 0}
     WeightedTiles: []
+  - LogicalId: 10
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 2812de76e0359c64aa97ab217ce75617, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 11
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 2812de76e0359c64aa97ab217ce75617, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 12
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 2812de76e0359c64aa97ab217ce75617, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 13
+    TileType: 1
+    Tile: {fileID: 0}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles:
+    - Tile: {fileID: 11400000, guid: 2812de76e0359c64aa97ab217ce75617, type: 2}
+      Weight: 0.56
+    - Tile: {fileID: 11400000, guid: 257f7192787ac34499a0f5600a3f5dbe, type: 2}
+      Weight: 0.2
+    - Tile: {fileID: 11400000, guid: 7c9e1d2b3a4f5c6d8e9f0a1b2c3d4e5f, type: 2}
+      Weight: 0.24
+  - LogicalId: 14
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 2812de76e0359c64aa97ab217ce75617, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 15
+    TileType: 1
+    Tile: {fileID: 0}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles:
+    - Tile: {fileID: 11400000, guid: 2812de76e0359c64aa97ab217ce75617, type: 2}
+      Weight: 0.1
+    - Tile: {fileID: 11400000, guid: 257f7192787ac34499a0f5600a3f5dbe, type: 2}
+      Weight: 0.18
+    - Tile: {fileID: 11400000, guid: 7c9e1d2b3a4f5c6d8e9f0a1b2c3d4e5f, type: 2}
+      Weight: 0.72
+  - LogicalId: 16
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 7c9e1d2b3a4f5c6d8e9f0a1b2c3d4e5f, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 17
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 7c9e1d2b3a4f5c6d8e9f0a1b2c3d4e5f, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 18
+    TileType: 1
+    Tile: {fileID: 0}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles:
+    - Tile: {fileID: 11400000, guid: 2812de76e0359c64aa97ab217ce75617, type: 2}
+      Weight: 0.76
+    - Tile: {fileID: 11400000, guid: 257f7192787ac34499a0f5600a3f5dbe, type: 2}
+      Weight: 0.24

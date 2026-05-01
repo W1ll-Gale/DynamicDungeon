@@ -32,6 +32,42 @@ MonoBehaviour:
     DisplayName: Access
     Tags:
     - Trigger
+  - LogicalId: 10
+    DisplayName: Surface Floor
+    Tags:
+    - Walkable
+  - LogicalId: 11
+    DisplayName: Surface Wall
+    Tags:
+    - Solid
+  - LogicalId: 12
+    DisplayName: Underground Floor
+    Tags:
+    - Walkable
+  - LogicalId: 13
+    DisplayName: Underground Wall
+    Tags:
+    - Solid
+  - LogicalId: 14
+    DisplayName: Deep Floor
+    Tags:
+    - Walkable
+  - LogicalId: 15
+    DisplayName: Deep Wall
+    Tags:
+    - Solid
+  - LogicalId: 16
+    DisplayName: Cave Floor
+    Tags:
+    - Walkable
+  - LogicalId: 17
+    DisplayName: Cave Wall
+    Tags:
+    - Solid
+  - LogicalId: 18
+    DisplayName: Subsurface Ground Wall
+    Tags:
+    - Solid
   AllTags:
   - Walkable
   - Solid

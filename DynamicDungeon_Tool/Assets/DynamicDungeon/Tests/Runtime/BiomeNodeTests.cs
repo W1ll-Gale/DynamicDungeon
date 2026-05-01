@@ -433,6 +433,501 @@ namespace DynamicDungeon.Tests.Runtime
 
 
         [Test]
+        public async Task BiomeLayoutNodeStripsAreDeterministicAndProtectCenterBiome()
+        {
+            string forestBiomePath = null;
+            string jungleBiomePath = null;
+            string desertBiomePath = null;
+
+            try
+            {
+                forestBiomePath = CreateBiomeAsset("BiomeLayoutForest");
+                jungleBiomePath = CreateBiomeAsset("BiomeLayoutJungle");
+                desertBiomePath = CreateBiomeAsset("BiomeLayoutDesert");
+
+                string forestBiomeGuid = AssetDatabase.AssetPathToGUID(forestBiomePath);
+                string jungleBiomeGuid = AssetDatabase.AssetPathToGUID(jungleBiomePath);
+                string desertBiomeGuid = AssetDatabase.AssetPathToGUID(desertBiomePath);
+                string rules = CreateBiomeLayoutRulesJson(
+                    new[]
+                    {
+                        CreateBiomeLayoutEntry(forestBiomeGuid, 1.0f),
+                        CreateBiomeLayoutEntry(jungleBiomeGuid, 2.0f),
+                        CreateBiomeLayoutEntry(desertBiomeGuid, 1.0f)
+                    },
+                    new[]
+                    {
+                        CreateBiomeLayoutConstraint(BiomeLayoutConstraintType.ProtectedCenter, forestBiomeGuid, 8)
+                    });
+
+                BiomeLayoutNode firstNode = new BiomeLayoutNode(
+                    "layout-strips",
+                    "Layout Strips",
+                    axis: GradientDirection.X,
+                    minRegionSize: 4,
+                    maxRegionSize: 6,
+                    blendWidth: 0,
+                    rules: rules);
+                BiomeLayoutNode secondNode = new BiomeLayoutNode(
+                    "layout-strips",
+                    "Layout Strips",
+                    axis: GradientDirection.X,
+                    minRegionSize: 4,
+                    maxRegionSize: 6,
+                    blendWidth: 0,
+                    rules: rules);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(forestBiomeGuid);
+                ResolveBiomePalette(firstNode, palette);
+                ResolveBiomePalette(secondNode, palette);
+
+                int forestBiomeIndex = GetResolvedBiomeIndex(palette, forestBiomeGuid);
+                WorldSnapshot firstSnapshot = await ExecuteNodesAsync(new IGenNode[] { firstNode }, 32, 2, 7801L, palette.Biomes, null);
+                WorldSnapshot secondSnapshot = await ExecuteNodesAsync(new IGenNode[] { secondNode }, 32, 2, 7801L, palette.Biomes, null);
+                WorldSnapshot.IntChannelSnapshot firstBiomeChannel = GetIntChannel(firstSnapshot, BiomeChannelUtility.ChannelName);
+                WorldSnapshot.IntChannelSnapshot secondBiomeChannel = GetIntChannel(secondSnapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(firstBiomeChannel, Is.Not.Null);
+                Assert.That(secondBiomeChannel, Is.Not.Null);
+                CollectionAssert.AreEqual(firstBiomeChannel.Data, secondBiomeChannel.Data);
+
+                int y;
+                for (y = 0; y < 2; y++)
+                {
+                    int x;
+                    for (x = 12; x < 20; x++)
+                    {
+                        Assert.That(firstBiomeChannel.Data[x + (y * 32)], Is.EqualTo(forestBiomeIndex));
+                    }
+                }
+            }
+            finally
+            {
+                DeleteAssetIfExists(forestBiomePath);
+                DeleteAssetIfExists(jungleBiomePath);
+                DeleteAssetIfExists(desertBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeLayoutNodeStripsRespectWeightsAndRegionBounds()
+        {
+            string forestBiomePath = null;
+            string jungleBiomePath = null;
+            string desertBiomePath = null;
+
+            try
+            {
+                forestBiomePath = CreateBiomeAsset("BiomeLayoutWeightedForest");
+                jungleBiomePath = CreateBiomeAsset("BiomeLayoutWeightedJungle");
+                desertBiomePath = CreateBiomeAsset("BiomeLayoutWeightedDesert");
+
+                string forestBiomeGuid = AssetDatabase.AssetPathToGUID(forestBiomePath);
+                string jungleBiomeGuid = AssetDatabase.AssetPathToGUID(jungleBiomePath);
+                string desertBiomeGuid = AssetDatabase.AssetPathToGUID(desertBiomePath);
+                string rules = CreateBiomeLayoutRulesJson(
+                    new[]
+                    {
+                        CreateBiomeLayoutEntry(forestBiomeGuid, 1.0f, 4, 4),
+                        CreateBiomeLayoutEntry(jungleBiomeGuid, 0.0f, 4, 4),
+                        CreateBiomeLayoutEntry(desertBiomeGuid, 1.0f, 4, 4)
+                    });
+
+                BiomeLayoutNode layoutNode = new BiomeLayoutNode(
+                    "layout-weighted",
+                    "Layout Weighted",
+                    axis: GradientDirection.X,
+                    minRegionSize: 4,
+                    maxRegionSize: 4,
+                    blendWidth: 0,
+                    rules: rules);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(forestBiomeGuid);
+                ResolveBiomePalette(layoutNode, palette);
+
+                int jungleBiomeIndex = GetResolvedBiomeIndex(palette, jungleBiomeGuid);
+                WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { layoutNode }, 24, 1, 7802L, palette.Biomes, null);
+                WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(biomeChannel, Is.Not.Null);
+                Assert.That(Array.IndexOf(biomeChannel.Data, jungleBiomeIndex), Is.EqualTo(-1));
+                AssertStripRunBounds(biomeChannel.Data, 24, 0, 4, 4);
+            }
+            finally
+            {
+                DeleteAssetIfExists(forestBiomePath);
+                DeleteAssetIfExists(jungleBiomePath);
+                DeleteAssetIfExists(desertBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeLayoutNodeSupportsEdgeAndRequiredBiomesOutsideWeightedEntries()
+        {
+            string forestBiomePath = null;
+            string desertBiomePath = null;
+            string oceanBiomePath = null;
+            string jungleBiomePath = null;
+
+            try
+            {
+                forestBiomePath = CreateBiomeAsset("BiomeLayoutEdgeForest");
+                desertBiomePath = CreateBiomeAsset("BiomeLayoutEdgeDesert");
+                oceanBiomePath = CreateBiomeAsset("BiomeLayoutEdgeOcean");
+                jungleBiomePath = CreateBiomeAsset("BiomeLayoutRequiredJungle");
+
+                string forestBiomeGuid = AssetDatabase.AssetPathToGUID(forestBiomePath);
+                string desertBiomeGuid = AssetDatabase.AssetPathToGUID(desertBiomePath);
+                string oceanBiomeGuid = AssetDatabase.AssetPathToGUID(oceanBiomePath);
+                string jungleBiomeGuid = AssetDatabase.AssetPathToGUID(jungleBiomePath);
+                string rules = CreateBiomeLayoutRulesJson(
+                    new[]
+                    {
+                        CreateBiomeLayoutEntry(forestBiomeGuid, 1.0f, 4, 8),
+                        CreateBiomeLayoutEntry(desertBiomeGuid, 1.0f, 4, 8)
+                    },
+                    new[]
+                    {
+                        CreateBiomeLayoutConstraint(BiomeLayoutConstraintType.StartEdge, oceanBiomeGuid, 3),
+                        CreateBiomeLayoutConstraint(BiomeLayoutConstraintType.EndEdge, oceanBiomeGuid, 4),
+                        CreateBiomeLayoutConstraint(BiomeLayoutConstraintType.Required, jungleBiomeGuid, 5)
+                    });
+
+                BiomeLayoutNode layoutNode = new BiomeLayoutNode(
+                    "layout-constraints",
+                    "Layout Constraints",
+                    axis: GradientDirection.X,
+                    minRegionSize: 4,
+                    maxRegionSize: 8,
+                    blendWidth: 0,
+                    rules: rules);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(forestBiomeGuid);
+                ResolveBiomePalette(layoutNode, palette);
+
+                int oceanBiomeIndex = GetResolvedBiomeIndex(palette, oceanBiomeGuid);
+                int jungleBiomeIndex = GetResolvedBiomeIndex(palette, jungleBiomeGuid);
+                WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { layoutNode }, 32, 1, 7803L, palette.Biomes, null);
+                WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(biomeChannel, Is.Not.Null);
+                Assert.That(biomeChannel.Data[0], Is.EqualTo(oceanBiomeIndex));
+                Assert.That(biomeChannel.Data[1], Is.EqualTo(oceanBiomeIndex));
+                Assert.That(biomeChannel.Data[2], Is.EqualTo(oceanBiomeIndex));
+                Assert.That(biomeChannel.Data[28], Is.EqualTo(oceanBiomeIndex));
+                Assert.That(biomeChannel.Data[29], Is.EqualTo(oceanBiomeIndex));
+                Assert.That(biomeChannel.Data[30], Is.EqualTo(oceanBiomeIndex));
+                Assert.That(biomeChannel.Data[31], Is.EqualTo(oceanBiomeIndex));
+                CollectionAssert.Contains(biomeChannel.Data, jungleBiomeIndex);
+            }
+            finally
+            {
+                DeleteAssetIfExists(forestBiomePath);
+                DeleteAssetIfExists(desertBiomePath);
+                DeleteAssetIfExists(oceanBiomePath);
+                DeleteAssetIfExists(jungleBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeLayoutNodeBoundaryBlendKeepsSeamColumnsMostlyNative()
+        {
+            const int width = 16;
+            const int height = 512;
+            string firstBiomePath = null;
+            string secondBiomePath = null;
+
+            try
+            {
+                firstBiomePath = CreateBiomeAsset("BiomeLayoutBlendFirst");
+                secondBiomePath = CreateBiomeAsset("BiomeLayoutBlendSecond");
+
+                string firstBiomeGuid = AssetDatabase.AssetPathToGUID(firstBiomePath);
+                string secondBiomeGuid = AssetDatabase.AssetPathToGUID(secondBiomePath);
+                string rules = CreateBiomeLayoutRulesJson(
+                    new[]
+                    {
+                        CreateBiomeLayoutEntry(firstBiomeGuid, 1.0f, 8, 8),
+                        CreateBiomeLayoutEntry(secondBiomeGuid, 1.0f, 8, 8)
+                    });
+
+                BiomeLayoutNode firstNode = new BiomeLayoutNode(
+                    "layout-blend",
+                    "Layout Blend",
+                    axis: GradientDirection.X,
+                    minRegionSize: 8,
+                    maxRegionSize: 8,
+                    blendWidth: 4,
+                    rules: rules);
+                BiomeLayoutNode secondNode = new BiomeLayoutNode(
+                    "layout-blend",
+                    "Layout Blend",
+                    axis: GradientDirection.X,
+                    minRegionSize: 8,
+                    maxRegionSize: 8,
+                    blendWidth: 4,
+                    rules: rules);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(firstBiomeGuid);
+                ResolveBiomePalette(firstNode, palette);
+                ResolveBiomePalette(secondNode, palette);
+
+                WorldSnapshot firstSnapshot = await ExecuteNodesAsync(new IGenNode[] { firstNode }, width, height, 7810L, palette.Biomes, null);
+                WorldSnapshot secondSnapshot = await ExecuteNodesAsync(new IGenNode[] { secondNode }, width, height, 7810L, palette.Biomes, null);
+                WorldSnapshot.IntChannelSnapshot firstBiomeChannel = GetIntChannel(firstSnapshot, BiomeChannelUtility.ChannelName);
+                WorldSnapshot.IntChannelSnapshot secondBiomeChannel = GetIntChannel(secondSnapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(firstBiomeChannel, Is.Not.Null);
+                Assert.That(secondBiomeChannel, Is.Not.Null);
+                CollectionAssert.AreEqual(firstBiomeChannel.Data, secondBiomeChannel.Data);
+
+                int leftNativeBiome = firstBiomeChannel.Data[0];
+                int rightNativeBiome = firstBiomeChannel.Data[width - 1];
+                Assert.That(leftNativeBiome, Is.Not.EqualTo(rightNativeBiome));
+
+                int leftSeamNativeCount = CountColumnValue(firstBiomeChannel.Data, width, height, 7, leftNativeBiome);
+                int rightSeamNativeCount = CountColumnValue(firstBiomeChannel.Data, width, height, 8, rightNativeBiome);
+
+                Assert.That(leftSeamNativeCount, Is.GreaterThanOrEqualTo(height / 2), "Left seam column should not mostly flip into the neighbor biome.");
+                Assert.That(rightSeamNativeCount, Is.GreaterThanOrEqualTo(height / 2), "Right seam column should not mostly flip into the neighbor biome.");
+                Assert.That(CountColumnValue(firstBiomeChannel.Data, width, height, 7, rightNativeBiome), Is.GreaterThan(0));
+                Assert.That(CountColumnValue(firstBiomeChannel.Data, width, height, 8, leftNativeBiome), Is.GreaterThan(0));
+            }
+            finally
+            {
+                DeleteAssetIfExists(firstBiomePath);
+                DeleteAssetIfExists(secondBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task BiomeLayoutNodeCellsAreDeterministicAndApplyConstraints()
+        {
+            string forestBiomePath = null;
+            string desertBiomePath = null;
+            string oceanBiomePath = null;
+            string jungleBiomePath = null;
+
+            try
+            {
+                forestBiomePath = CreateBiomeAsset("BiomeLayoutCellForest");
+                desertBiomePath = CreateBiomeAsset("BiomeLayoutCellDesert");
+                oceanBiomePath = CreateBiomeAsset("BiomeLayoutCellOcean");
+                jungleBiomePath = CreateBiomeAsset("BiomeLayoutCellJungle");
+
+                string forestBiomeGuid = AssetDatabase.AssetPathToGUID(forestBiomePath);
+                string desertBiomeGuid = AssetDatabase.AssetPathToGUID(desertBiomePath);
+                string oceanBiomeGuid = AssetDatabase.AssetPathToGUID(oceanBiomePath);
+                string jungleBiomeGuid = AssetDatabase.AssetPathToGUID(jungleBiomePath);
+                string rules = CreateBiomeLayoutRulesJson(
+                    new[]
+                    {
+                        CreateBiomeLayoutEntry(forestBiomeGuid, 1.0f),
+                        CreateBiomeLayoutEntry(desertBiomeGuid, 1.0f)
+                    },
+                    new[]
+                    {
+                        CreateBiomeLayoutConstraint(BiomeLayoutConstraintType.StartEdge, oceanBiomeGuid, 4),
+                        CreateBiomeLayoutConstraint(BiomeLayoutConstraintType.ProtectedCenter, forestBiomeGuid, 4),
+                        CreateBiomeLayoutConstraint(BiomeLayoutConstraintType.Required, jungleBiomeGuid, 4)
+                    });
+
+                BiomeLayoutNode firstNode = new BiomeLayoutNode(
+                    "layout-cells",
+                    "Layout Cells",
+                    layoutMode: BiomeLayoutMode.Cells,
+                    axis: GradientDirection.X,
+                    cellSize: 4,
+                    blendWidth: 0,
+                    rules: rules);
+                BiomeLayoutNode secondNode = new BiomeLayoutNode(
+                    "layout-cells",
+                    "Layout Cells",
+                    layoutMode: BiomeLayoutMode.Cells,
+                    axis: GradientDirection.X,
+                    cellSize: 4,
+                    blendWidth: 0,
+                    rules: rules);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(forestBiomeGuid);
+                ResolveBiomePalette(firstNode, palette);
+                ResolveBiomePalette(secondNode, palette);
+
+                int forestBiomeIndex = GetResolvedBiomeIndex(palette, forestBiomeGuid);
+                int oceanBiomeIndex = GetResolvedBiomeIndex(palette, oceanBiomeGuid);
+                int jungleBiomeIndex = GetResolvedBiomeIndex(palette, jungleBiomeGuid);
+                WorldSnapshot firstSnapshot = await ExecuteNodesAsync(new IGenNode[] { firstNode }, 12, 8, 7804L, palette.Biomes, null);
+                WorldSnapshot secondSnapshot = await ExecuteNodesAsync(new IGenNode[] { secondNode }, 12, 8, 7804L, palette.Biomes, null);
+                WorldSnapshot.IntChannelSnapshot firstBiomeChannel = GetIntChannel(firstSnapshot, BiomeChannelUtility.ChannelName);
+                WorldSnapshot.IntChannelSnapshot secondBiomeChannel = GetIntChannel(secondSnapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(firstBiomeChannel, Is.Not.Null);
+                Assert.That(secondBiomeChannel, Is.Not.Null);
+                CollectionAssert.AreEqual(firstBiomeChannel.Data, secondBiomeChannel.Data);
+
+                int y;
+                for (y = 0; y < 8; y++)
+                {
+                    int x;
+                    for (x = 0; x < 4; x++)
+                    {
+                        Assert.That(firstBiomeChannel.Data[x + (y * 12)], Is.EqualTo(oceanBiomeIndex));
+                    }
+
+                    for (x = 4; x < 8; x++)
+                    {
+                        if (y >= 2 && y < 6)
+                        {
+                            Assert.That(firstBiomeChannel.Data[x + (y * 12)], Is.EqualTo(forestBiomeIndex));
+                        }
+                    }
+                }
+
+                CollectionAssert.Contains(firstBiomeChannel.Data, jungleBiomeIndex);
+            }
+            finally
+            {
+                DeleteAssetIfExists(forestBiomePath);
+                DeleteAssetIfExists(desertBiomePath);
+                DeleteAssetIfExists(oceanBiomePath);
+                DeleteAssetIfExists(jungleBiomePath);
+            }
+        }
+
+        [Test]
+        public async Task LogicalIdRuleOverlayAppliesRulesInOrderAndUsesMaskSlots()
+        {
+            ConstantNode baseNode = new ConstantNode("logical-base", "Logical Base", "BaseIds", ChannelType.Int, intValue: 2);
+            BiomeTestMaskNode maskNode = new BiomeTestMaskNode("logical-mask", "Logical Mask", MaskChannelName);
+            LogicalIdRuleOverlayNode overlayNode = new LogicalIdRuleOverlayNode(
+                "logical-rules",
+                "Logical Rules",
+                inputBaseChannelName: "BaseIds",
+                inputMask1ChannelName: MaskChannelName,
+                outputChannelName: LogicalChannelName,
+                rules: CreateLogicalRuleSetJson(
+                    new LogicalIdRule { MaskSlot = 0, SourceLogicalId = 2, TargetLogicalId = 10 },
+                    new LogicalIdRule { MaskSlot = 1, SourceLogicalId = 10, TargetLogicalId = 20 }));
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { baseNode, maskNode, overlayNode }, 5, 5, 7805L, null, null);
+            WorldSnapshot.IntChannelSnapshot logicalChannel = GetIntChannel(snapshot, LogicalChannelName);
+
+            Assert.That(logicalChannel, Is.Not.Null);
+            int y;
+            for (y = 0; y < 5; y++)
+            {
+                int x;
+                for (x = 0; x < 5; x++)
+                {
+                    int expectedValue = IsBiomeTestMaskTile(x, y, 5, 5) ? 20 : 10;
+                    Assert.That(logicalChannel.Data[x + (y * 5)], Is.EqualTo(expectedValue));
+                }
+            }
+        }
+
+        [Test]
+        public async Task ColumnSurfaceTransitionMaskIsDeterministicAndKeepsShallowTilesUnchanged()
+        {
+            const string transitionChannelName = "SubsurfaceTransitionMask";
+            BiomeTestMaskNode firstSolidNode = new BiomeTestMaskNode("solid-mask-a", "Solid Mask", MaskChannelName);
+            BiomeTestMaskNode secondSolidNode = new BiomeTestMaskNode("solid-mask-b", "Solid Mask", MaskChannelName);
+            ColumnSurfaceTransitionMaskNode firstTransitionNode = new ColumnSurfaceTransitionMaskNode(
+                "transition-mask",
+                "Transition Mask",
+                inputChannelName: MaskChannelName,
+                outputChannelName: transitionChannelName,
+                startDepth: 2,
+                endDepth: 6,
+                noiseFrequency: 0.12f);
+            ColumnSurfaceTransitionMaskNode secondTransitionNode = new ColumnSurfaceTransitionMaskNode(
+                "transition-mask",
+                "Transition Mask",
+                inputChannelName: MaskChannelName,
+                outputChannelName: transitionChannelName,
+                startDepth: 2,
+                endDepth: 6,
+                noiseFrequency: 0.12f);
+
+            WorldSnapshot firstSnapshot = await ExecuteNodesAsync(new IGenNode[] { firstSolidNode, firstTransitionNode }, 10, 10, 7807L, null, null);
+            WorldSnapshot secondSnapshot = await ExecuteNodesAsync(new IGenNode[] { secondSolidNode, secondTransitionNode }, 10, 10, 7807L, null, null);
+            WorldSnapshot.BoolMaskChannelSnapshot firstMask = GetBoolMaskChannel(firstSnapshot, transitionChannelName);
+            WorldSnapshot.BoolMaskChannelSnapshot secondMask = GetBoolMaskChannel(secondSnapshot, transitionChannelName);
+
+            Assert.That(firstMask, Is.Not.Null);
+            Assert.That(secondMask, Is.Not.Null);
+            CollectionAssert.AreEqual(firstMask.Data, secondMask.Data);
+
+            int x;
+            for (x = 1; x < 9; x++)
+            {
+                Assert.That(firstMask.Data[x + (8 * 10)], Is.EqualTo(0), "Surface-adjacent depth should stay untransitioned.");
+                Assert.That(firstMask.Data[x + (7 * 10)], Is.EqualTo(0), "Depth before the start depth should stay untransitioned.");
+                Assert.That(firstMask.Data[x + (2 * 10)], Is.EqualTo(1), "Depth at the end depth should be fully transitioned.");
+                Assert.That(firstMask.Data[x + (1 * 10)], Is.EqualTo(1), "Depth below the end depth should stay fully transitioned.");
+            }
+        }
+
+        [Test]
+        public async Task LogicalIdRuleOverlayLeavesUnmatchedTilesUnchanged()
+        {
+            ConstantNode baseNode = new ConstantNode("logical-fallback-base", "Logical Fallback Base", "BaseIds", ChannelType.Int, intValue: 7);
+            LogicalIdRuleOverlayNode overlayNode = new LogicalIdRuleOverlayNode(
+                "logical-fallback-rules",
+                "Logical Fallback Rules",
+                inputBaseChannelName: "BaseIds",
+                outputChannelName: LogicalChannelName,
+                rules: CreateLogicalRuleSetJson(new LogicalIdRule { MaskSlot = 0, SourceLogicalId = 99, TargetLogicalId = 20 }));
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { baseNode, overlayNode }, 3, 1, 7806L, null, null);
+            WorldSnapshot.IntChannelSnapshot logicalChannel = GetIntChannel(snapshot, LogicalChannelName);
+
+            Assert.That(logicalChannel, Is.Not.Null);
+            CollectionAssert.AreEqual(new[] { 7, 7, 7 }, logicalChannel.Data);
+        }
+
+        [Test]
+        public async Task TerrariaDemoGraphCompilesAndExecutesWithRefactoredBiomeLayout()
+        {
+            const string graphPath = "Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/TerrariaDemoGraph.asset";
+            const string materialContextLogicalChannelName = "MaterialContextLogicalIds";
+            GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(graphPath);
+            GraphCompileResult compileResult = null;
+
+            try
+            {
+                Assert.That(graph, Is.Not.Null);
+
+                compileResult = GraphCompiler.Compile(graph);
+                Assert.That(compileResult.IsSuccess, Is.True, BuildDiagnosticSummary(compileResult.Diagnostics));
+                Assert.That(compileResult.HasConnectedOutput, Is.True);
+                Assert.That(compileResult.OutputChannelName, Is.EqualTo(materialContextLogicalChannelName));
+                Assert.That(compileResult.Plan, Is.Not.Null);
+
+                Executor executor = new Executor();
+                ExecutionResult executionResult = await executor.ExecuteAsync(compileResult.Plan, CancellationToken.None);
+
+                Assert.That(executionResult.IsSuccess, Is.True, executionResult.ErrorMessage);
+                Assert.That(executionResult.Snapshot, Is.Not.Null);
+
+                WorldSnapshot.IntChannelSnapshot logicalChannel = GetIntChannel(executionResult.Snapshot, materialContextLogicalChannelName);
+                WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(executionResult.Snapshot, BiomeChannelUtility.ChannelName);
+
+                Assert.That(logicalChannel, Is.Not.Null);
+                Assert.That(biomeChannel, Is.Not.Null);
+                Assert.That(ContainsAny(logicalChannel.Data, 10, 11, 12, 13, 14, 15, 16, 17), Is.True);
+                Assert.That(ContainsAny(logicalChannel.Data, 18), Is.True);
+            }
+            finally
+            {
+                if (compileResult != null && compileResult.Plan != null)
+                {
+                    compileResult.Plan.Dispose();
+                }
+            }
+        }
+
+
+        [Test]
         public async Task GraphCompileIncludesDisconnectedBiomeLayersAndProducesSharedBiomeChannel()
         {
             string lowBiomePath = null;
@@ -693,6 +1188,122 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        private static string CreateBiomeLayoutRulesJson(BiomeLayoutEntry[] entries, BiomeLayoutConstraint[] constraints = null)
+        {
+            BiomeLayoutRules rules = new BiomeLayoutRules
+            {
+                Entries = entries ?? Array.Empty<BiomeLayoutEntry>(),
+                Constraints = constraints ?? Array.Empty<BiomeLayoutConstraint>()
+            };
+
+            return JsonUtility.ToJson(rules);
+        }
+
+        private static BiomeLayoutEntry CreateBiomeLayoutEntry(string biomeGuid, float weight, int minSize = 0, int maxSize = 0)
+        {
+            return new BiomeLayoutEntry
+            {
+                Biome = biomeGuid,
+                Weight = weight,
+                MinSize = minSize,
+                MaxSize = maxSize,
+                Enabled = true
+            };
+        }
+
+        private static BiomeLayoutConstraint CreateBiomeLayoutConstraint(BiomeLayoutConstraintType type, string biomeGuid, int size = 0)
+        {
+            return new BiomeLayoutConstraint
+            {
+                Type = type,
+                Biome = biomeGuid,
+                Size = size,
+                Enabled = true
+            };
+        }
+
+        private static string CreateLogicalRuleSetJson(params LogicalIdRule[] rules)
+        {
+            return JsonUtility.ToJson(new LogicalIdRuleSet { Rules = rules ?? Array.Empty<LogicalIdRule>() });
+        }
+
+        private static void AssertStripRunBounds(int[] biomeData, int width, int row, int minRunLength, int maxRunLength)
+        {
+            int runStart = 0;
+            int previousValue = biomeData[row * width];
+            int x;
+            for (x = 1; x <= width; x++)
+            {
+                int value = x < width ? biomeData[x + (row * width)] : int.MinValue;
+                if (x < width && value == previousValue)
+                {
+                    continue;
+                }
+
+                int runLength = x - runStart;
+                Assert.That(runLength, Is.GreaterThanOrEqualTo(minRunLength));
+                Assert.That(runLength, Is.LessThanOrEqualTo(maxRunLength));
+                runStart = x;
+                previousValue = value;
+            }
+        }
+
+        private static int CountColumnValue(int[] biomeData, int width, int height, int column, int value)
+        {
+            int count = 0;
+            int y;
+            for (y = 0; y < height; y++)
+            {
+                if (biomeData[column + (y * width)] == value)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static bool ContainsAny(int[] values, params int[] candidates)
+        {
+            if (values == null || candidates == null)
+            {
+                return false;
+            }
+
+            int valueIndex;
+            for (valueIndex = 0; valueIndex < values.Length; valueIndex++)
+            {
+                int candidateIndex;
+                for (candidateIndex = 0; candidateIndex < candidates.Length; candidateIndex++)
+                {
+                    if (values[valueIndex] == candidates[candidateIndex])
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static string BuildDiagnosticSummary(IReadOnlyList<GraphDiagnostic> diagnostics)
+        {
+            if (diagnostics == null || diagnostics.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            List<string> lines = new List<string>();
+            int diagnosticIndex;
+            for (diagnosticIndex = 0; diagnosticIndex < diagnostics.Count; diagnosticIndex++)
+            {
+                GraphDiagnostic diagnostic = diagnostics[diagnosticIndex];
+                lines.Add(diagnostic.Severity + ": " + diagnostic.Message + " (" + diagnostic.NodeId + ":" + diagnostic.PortName + ")");
+            }
+
+            return string.Join(Environment.NewLine, lines);
+        }
+
         private static void AddBiomeLayerNode(GenGraph graph, string nodeId, string nodeName, GradientDirection axis, float rangeMin, float rangeMax, string biomeGuid)
         {
             GenNodeData node = new GenNodeData(nodeId, typeof(BiomeLayerNode).FullName, nodeName, Vector2.zero);
@@ -879,6 +1490,21 @@ namespace DynamicDungeon.Tests.Runtime
             for (channelIndex = 0; channelIndex < snapshot.IntChannels.Length; channelIndex++)
             {
                 WorldSnapshot.IntChannelSnapshot channel = snapshot.IntChannels[channelIndex];
+                if (channel != null && string.Equals(channel.Name, channelName, StringComparison.Ordinal))
+                {
+                    return channel;
+                }
+            }
+
+            return null;
+        }
+
+        private static WorldSnapshot.BoolMaskChannelSnapshot GetBoolMaskChannel(WorldSnapshot snapshot, string channelName)
+        {
+            int channelIndex;
+            for (channelIndex = 0; channelIndex < snapshot.BoolMaskChannels.Length; channelIndex++)
+            {
+                WorldSnapshot.BoolMaskChannelSnapshot channel = snapshot.BoolMaskChannels[channelIndex];
                 if (channel != null && string.Equals(channel.Name, channelName, StringComparison.Ordinal))
                 {
                     return channel;
