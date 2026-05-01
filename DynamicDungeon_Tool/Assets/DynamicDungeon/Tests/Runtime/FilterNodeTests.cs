@@ -215,6 +215,37 @@ namespace DynamicDungeon.Tests.Runtime
             AssertValuesInRange(output.Data, 0.0f, 1.0f);
         }
 
+        [Test]
+        public async Task ColumnSurfaceBandNodeMarksOnlyTilesWithinDepthBelowHighestSolidPerColumn()
+        {
+            byte[] inputValues =
+            {
+                0, 0, 0,
+                1, 0, 0,
+                1, 0, 1,
+                1, 1, 1,
+                1, 1, 1
+            };
+
+            byte[] expectedValues =
+            {
+                0, 0, 0,
+                0, 0, 0,
+                1, 0, 0,
+                1, 1, 1,
+                0, 0, 1
+            };
+
+            BoolMaskSourceNode sourceNode = new BoolMaskSourceNode("surface-source", "Input", inputValues);
+            ColumnSurfaceBandNode surfaceBandNode = new ColumnSurfaceBandNode("surface-band", "Surface Band", "Input", "Output", 1, 2);
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { sourceNode, surfaceBandNode }, 3, 5, 1010L);
+            WorldSnapshot.BoolMaskChannelSnapshot output = GetBoolMaskChannel(snapshot, "Output");
+
+            Assert.That(output, Is.Not.Null);
+            CollectionAssert.AreEqual(expectedValues, output.Data);
+        }
+
         private static async Task<WorldSnapshot> ExecuteNodesAsync(IReadOnlyList<IGenNode> nodes, int width, int height, long seed)
         {
             ExecutionPlan plan = ExecutionPlan.Build(nodes, width, height, seed);

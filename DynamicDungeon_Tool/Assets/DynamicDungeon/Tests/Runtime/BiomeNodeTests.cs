@@ -87,6 +87,35 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public void BiomeMaskNodeResolvesBiomeFromCanonicalParameter()
+        {
+            string reservedBiomePath = null;
+            string targetBiomePath = null;
+
+            try
+            {
+                reservedBiomePath = CreateBiomeAsset("BiomeMaskReserved");
+                targetBiomePath = CreateBiomeAsset("BiomeMaskTarget");
+
+                string reservedBiomeGuid = AssetDatabase.AssetPathToGUID(reservedBiomePath);
+                string targetBiomeGuid = AssetDatabase.AssetPathToGUID(targetBiomePath);
+
+                BiomeMaskNode node = new BiomeMaskNode("biome-mask", "Biome Mask");
+                node.ReceiveParameter("biome", targetBiomeGuid);
+
+                BiomeChannelPalette palette = CreatePaletteWithReservedZeroIndex(reservedBiomeGuid);
+
+                string errorMessage;
+                Assert.That(node.ResolveBiomePalette(palette, out errorMessage), Is.True, errorMessage);
+            }
+            finally
+            {
+                DeleteAssetIfExists(reservedBiomePath);
+                DeleteAssetIfExists(targetBiomePath);
+            }
+        }
+
+        [Test]
         public async Task BiomeLayerNodeYStackedLayersWriteSeparateRangesWithoutOverwritingEachOther()
         {
             string reservedBiomePath = null;

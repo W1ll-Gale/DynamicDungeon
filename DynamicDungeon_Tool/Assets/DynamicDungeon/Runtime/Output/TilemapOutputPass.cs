@@ -82,6 +82,77 @@ namespace DynamicDungeon.Runtime.Output
             }
         }
 
+        public void ExecuteBackgroundFill(
+            WorldSnapshot snapshot,
+            string intChannelName,
+            BiomeAsset biome,
+            TilemapLayerWriter writer,
+            TilemapLayerDefinition backgroundLayer,
+            Vector3Int tilemapOffset,
+            ushort backgroundLogicalId)
+        {
+            if (snapshot == null)
+            {
+                throw new ArgumentNullException(nameof(snapshot));
+            }
+
+            if (string.IsNullOrWhiteSpace(intChannelName))
+            {
+                throw new ArgumentException("An int channel name is required.", nameof(intChannelName));
+            }
+
+            if (biome == null)
+            {
+                throw new ArgumentNullException(nameof(biome));
+            }
+
+            if (writer == null)
+            {
+                throw new ArgumentNullException(nameof(writer));
+            }
+
+            if (backgroundLayer == null)
+            {
+                return;
+            }
+
+            WorldSnapshot.IntChannelSnapshot channelSnapshot = GetIntChannel(snapshot, intChannelName);
+            WorldSnapshot.IntChannelSnapshot biomeChannelSnapshot = TryGetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+            IReadOnlyList<BiomeAsset> biomeChannelBiomes = snapshot.BiomeChannelBiomes ?? Array.Empty<BiomeAsset>();
+            int[] highestSolidByColumn = BuildHighestSolidByColumn(snapshot, channelSnapshot);
+
+            int x;
+            for (x = 0; x < snapshot.Width; x++)
+            {
+                int highestSolidY = highestSolidByColumn[x];
+                if (highestSolidY <= 0)
+                {
+                    continue;
+                }
+
+                int y;
+                for (y = 0; y < highestSolidY; y++)
+                {
+                    int index = (y * snapshot.Width) + x;
+                    if (channelSnapshot.Data[index] != LogicalTileId.Void)
+                    {
+                        continue;
+                    }
+
+                    Vector2Int cellPosition = new Vector2Int(x, y);
+                    BiomeAsset resolvedBiome = ResolveBiome(biome, biomeChannelSnapshot, biomeChannelBiomes, index);
+                    TileBase tile;
+                    if (resolvedBiome == null || !resolvedBiome.TryGetTile(backgroundLogicalId, cellPosition, out tile))
+                    {
+                        continue;
+                    }
+
+                    Vector3Int position = new Vector3Int(x + tilemapOffset.x, y + tilemapOffset.y, tilemapOffset.z);
+                    writer.WriteTile(position, tile, backgroundLayer);
+                }
+            }
+        }
+
         private static WorldSnapshot.IntChannelSnapshot GetIntChannel(WorldSnapshot snapshot, string intChannelName)
         {
             WorldSnapshot.IntChannelSnapshot channelSnapshot = TryGetIntChannel(snapshot, intChannelName);
@@ -121,6 +192,35 @@ namespace DynamicDungeon.Runtime.Output
             }
 
             return null;
+        }
+
+        private static int[] BuildHighestSolidByColumn(WorldSnapshot snapshot, WorldSnapshot.IntChannelSnapshot channelSnapshot)
+        {
+            int[] highestSolidByColumn = new int[snapshot.Width];
+
+            int x;
+            for (x = 0; x < highestSolidByColumn.Length; x++)
+            {
+                highestSolidByColumn[x] = -1;
+            }
+
+            int index;
+            for (index = 0; index < channelSnapshot.Data.Length; index++)
+            {
+                if (channelSnapshot.Data[index] == LogicalTileId.Void)
+                {
+                    continue;
+                }
+
+                int xCoordinate = index % snapshot.Width;
+                int yCoordinate = index / snapshot.Width;
+                if (yCoordinate > highestSolidByColumn[xCoordinate])
+                {
+                    highestSolidByColumn[xCoordinate] = yCoordinate;
+                }
+            }
+
+            return highestSolidByColumn;
         }
 
         private static TilemapLayerDefinition ResolveLayer(

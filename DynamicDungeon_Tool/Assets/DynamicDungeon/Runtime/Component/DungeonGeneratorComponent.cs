@@ -62,6 +62,15 @@ namespace DynamicDungeon.Runtime.Component
         private Vector3Int _tilemapOffset;
 
         [SerializeField]
+        private bool _renderBackgroundFromFloorTiles;
+
+        [SerializeField]
+        private TilemapLayerDefinition _backgroundLayerDefinition;
+
+        [SerializeField]
+        private int _backgroundLogicalId = LogicalTileId.Floor;
+
+        [SerializeField]
         private BakedWorldSnapshot _bakedWorldSnapshot;
 
         [SerializeField]
@@ -622,7 +631,7 @@ namespace DynamicDungeon.Runtime.Component
             outputChannelName = compileResult.OutputChannelName;
             hasConnectedOutput = compileResult.HasConnectedOutput;
             ApplyPropertyOverrides(compileResult.Plan);
-            ExecutionResult executionResult = _executor.ExecuteAsync(compileResult.Plan, CancellationToken.None).GetAwaiter().GetResult();
+            ExecutionResult executionResult = _executor.Execute(compileResult.Plan, CancellationToken.None);
 
             if (executionResult.WasCancelled)
             {
@@ -727,6 +736,11 @@ namespace DynamicDungeon.Runtime.Component
                 _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
                 _tilemapLayerWriter.ClearAll();
                 _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+                if (_renderBackgroundFromFloorTiles)
+                {
+                    ushort backgroundLogicalId = unchecked((ushort)Mathf.Max(0, _backgroundLogicalId));
+                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, _tilemapOffset, backgroundLogicalId);
+                }
             }
             else
             {

@@ -106,7 +106,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private static FloatChannelSnapshot[] BuildFloatChannels(WorldData data)
         {
-            NativeKeyValueArrays<FixedString128Bytes, NativeArray<float>> channelPairs = data.GetFloatChannelPairs(Allocator.TempJob);
+            NativeKeyValueArrays<FixedString128Bytes, NativeArray<float>> channelPairs = data.GetFloatChannelPairs(Allocator.Persistent);
             try
             {
                 FloatChannelSnapshot[] snapshots = new FloatChannelSnapshot[channelPairs.Length];
@@ -134,7 +134,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private static IntChannelSnapshot[] BuildIntChannels(WorldData data)
         {
-            NativeKeyValueArrays<FixedString128Bytes, NativeArray<int>> channelPairs = data.GetIntChannelPairs(Allocator.TempJob);
+            NativeKeyValueArrays<FixedString128Bytes, NativeArray<int>> channelPairs = data.GetIntChannelPairs(Allocator.Persistent);
             try
             {
                 IntChannelSnapshot[] snapshots = new IntChannelSnapshot[channelPairs.Length];
@@ -162,7 +162,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private static BoolMaskChannelSnapshot[] BuildBoolMaskChannels(WorldData data)
         {
-            NativeKeyValueArrays<FixedString128Bytes, NativeArray<byte>> channelPairs = data.GetBoolMaskChannelPairs(Allocator.TempJob);
+            NativeKeyValueArrays<FixedString128Bytes, NativeArray<byte>> channelPairs = data.GetBoolMaskChannelPairs(Allocator.Persistent);
             try
             {
                 BoolMaskChannelSnapshot[] snapshots = new BoolMaskChannelSnapshot[channelPairs.Length];
@@ -190,7 +190,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private static PointListChannelSnapshot[] BuildPointListChannels(WorldData data)
         {
-            NativeKeyValueArrays<FixedString128Bytes, NativeList<int2>> channelPairs = data.GetPointListChannelPairs(Allocator.TempJob);
+            NativeKeyValueArrays<FixedString128Bytes, NativeList<int2>> channelPairs = data.GetPointListChannelPairs(Allocator.Persistent);
             try
             {
                 PointListChannelSnapshot[] snapshots = new PointListChannelSnapshot[channelPairs.Length];
@@ -218,7 +218,7 @@ namespace DynamicDungeon.Runtime.Core
 
         private static PrefabPlacementListChannelSnapshot[] BuildPrefabPlacementChannels(WorldData data)
         {
-            NativeKeyValueArrays<FixedString128Bytes, NativeList<PrefabPlacementRecord>> channelPairs = data.GetPrefabPlacementListChannelPairs(Allocator.TempJob);
+            NativeKeyValueArrays<FixedString128Bytes, NativeList<PrefabPlacementRecord>> channelPairs = data.GetPrefabPlacementListChannelPairs(Allocator.Persistent);
             try
             {
                 PrefabPlacementListChannelSnapshot[] snapshots = new PrefabPlacementListChannelSnapshot[channelPairs.Length];

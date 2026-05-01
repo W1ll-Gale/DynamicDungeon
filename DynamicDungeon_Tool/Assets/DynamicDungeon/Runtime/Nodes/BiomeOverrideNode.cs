@@ -21,6 +21,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const int DefaultBatchSize = 64;
         private const float DiagonalCost = 1.41421356237f;
         private const string DefaultNodeName = "Biome Override";
+        private const string BiomeInputPortName = "Biome Input";
         private const string MaskPortName = "Mask";
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
@@ -111,7 +112,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _resolvedBiomeIndex = BiomeChannelUtility.UnassignedBiomeIndex;
             _ports = new[]
             {
-                new NodePortDefinition(BiomeChannelUtility.ChannelName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, false),
+                new NodePortDefinition(BiomeInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, false),
                 new NodePortDefinition(MaskPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, true),
                 new NodePortDefinition(BiomeChannelUtility.ChannelName, PortDirection.Output, ChannelType.Int)
             };
@@ -121,7 +122,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
         public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
         {
-            _inputBiomeChannelName = ResolveInputChannel(inputConnections, BiomeChannelUtility.ChannelName);
+            _inputBiomeChannelName = ResolveInputChannel(inputConnections, BiomeInputPortName);
             _inputMaskChannelName = ResolveInputChannel(inputConnections, MaskPortName);
             RefreshChannelDeclarations();
         }

@@ -12,4 +12,138 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2aea3fe10936abe47a6bbc8b5916b69b, type: 3}
   m_Name: PrefabStampCatalog
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Placement.PrefabStampCatalog
-  Entries: []
+  Entries:
+  - PrefabGuid: 75f965a629c6fb54e8f21780cf4b4f3c
+    Prefab: {fileID: 5290852943062408443, guid: 75f965a629c6fb54e8f21780cf4b4f3c, type: 3}
+    Template:
+      PrefabGuid: 75f965a629c6fb54e8f21780cf4b4f3c
+      AnchorOffset: {x: 0, y: 0, z: 0}
+      SupportsRandomRotation: 1
+      UsesTilemapFootprint: 0
+      OccupiedCells:
+      - {x: -2, y: 0}
+      - {x: -1, y: 0}
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      - {x: 2, y: 0}
+      - {x: -1, y: 1}
+      - {x: 0, y: 1}
+      - {x: 1, y: 1}
+  - PrefabGuid: fa14a44fd99bd1546b827989e2c1ad00
+    Prefab: {fileID: 5115036234770058186, guid: fa14a44fd99bd1546b827989e2c1ad00, type: 3}
+    Template:
+      PrefabGuid: fa14a44fd99bd1546b827989e2c1ad00
+      AnchorOffset: {x: -1.5, y: 1.5, z: 0}
+      SupportsRandomRotation: 1
+      UsesTilemapFootprint: 0
+      OccupiedCells:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: -1, y: 2}
+      - {x: 0, y: 2}
+      - {x: 1, y: 2}
+      - {x: -2, y: 3}
+      - {x: -1, y: 3}
+      - {x: 0, y: 3}
+      - {x: 1, y: 3}
+      - {x: 2, y: 3}
+      - {x: -1, y: 4}
+      - {x: 0, y: 4}
+      - {x: 1, y: 4}
+      - {x: 0, y: 5}
+  - PrefabGuid: 3bd23e3a9fb54ad789ea1cfe6af4a697
+    Prefab: {fileID: 5115036234770058186, guid: 3bd23e3a9fb54ad789ea1cfe6af4a697, type: 3}
+    Template:
+      PrefabGuid: 3bd23e3a9fb54ad789ea1cfe6af4a697
+      AnchorOffset: {x: -1.5, y: 1.5, z: 0}
+      SupportsRandomRotation: 1
+      UsesTilemapFootprint: 0
+      OccupiedCells:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: -1, y: 2}
+      - {x: 0, y: 2}
+      - {x: 1, y: 2}
+      - {x: -2, y: 3}
+      - {x: -1, y: 3}
+      - {x: 0, y: 3}
+      - {x: 1, y: 3}
+      - {x: 2, y: 3}
+      - {x: -1, y: 4}
+      - {x: 0, y: 4}
+      - {x: 1, y: 4}
+      - {x: 0, y: 5}
+  - PrefabGuid: 5e89d6339248418683558d6dd3676731
+    Prefab: {fileID: 5115036234770058186, guid: 5e89d6339248418683558d6dd3676731, type: 3}
+    Template:
+      PrefabGuid: 5e89d6339248418683558d6dd3676731
+      AnchorOffset: {x: -1.5, y: 1.5, z: 0}
+      SupportsRandomRotation: 1
+      UsesTilemapFootprint: 0
+      OccupiedCells:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: -1, y: 2}
+      - {x: 0, y: 2}
+      - {x: 1, y: 2}
+      - {x: -2, y: 3}
+      - {x: -1, y: 3}
+      - {x: 0, y: 3}
+      - {x: 1, y: 3}
+      - {x: 2, y: 3}
+      - {x: -1, y: 4}
+      - {x: 0, y: 4}
+      - {x: 1, y: 4}
+      - {x: 0, y: 5}
+  - PrefabGuid: f604b4ffcbe14fe5a17f9c780693c496
+    Prefab: {fileID: 5115036234770058186, guid: f604b4ffcbe14fe5a17f9c780693c496, type: 3}
+    Template:
+      PrefabGuid: f604b4ffcbe14fe5a17f9c780693c496
+      AnchorOffset: {x: -1.5, y: 1.5, z: 0}
+      SupportsRandomRotation: 1
+      UsesTilemapFootprint: 0
+      OccupiedCells:
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: 1, y: 1}
+      - {x: -1, y: 2}
+      - {x: 0, y: 2}
+      - {x: 1, y: 2}
+      - {x: 2, y: 2}
+      - {x: -2, y: 3}
+      - {x: -1, y: 3}
+      - {x: 0, y: 3}
+      - {x: 1, y: 3}
+      - {x: -1, y: 4}
+      - {x: 0, y: 4}
+      - {x: 0, y: 5}
+  - PrefabGuid: ef9e2f0474617894e9fb51d6e6fd09e9
+    Prefab: {fileID: 6834152649101725224, guid: ef9e2f0474617894e9fb51d6e6fd09e9, type: 3}
+    Template:
+      PrefabGuid: ef9e2f0474617894e9fb51d6e6fd09e9
+      AnchorOffset: {x: 0.5, y: 0.5, z: 0}
+      SupportsRandomRotation: 1
+      UsesTilemapFootprint: 0
+      OccupiedCells:
+      - {x: -2, y: 0}
+      - {x: -1, y: 0}
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      - {x: 2, y: 0}
+      - {x: -2, y: 1}
+      - {x: -1, y: 1}
+      - {x: 1, y: 1}
+      - {x: 2, y: 1}
+      - {x: -2, y: 2}
+      - {x: -1, y: 2}
+      - {x: 0, y: 2}
+      - {x: 1, y: 2}
+      - {x: 2, y: 2}
+      - {x: -2, y: 3}
+      - {x: -1, y: 3}
+      - {x: 0, y: 3}
+      - {x: 1, y: 3}
+      - {x: 2, y: 3}
+      - {x: -1, y: 4}
+      - {x: 0, y: 4}
+      - {x: 1, y: 4}

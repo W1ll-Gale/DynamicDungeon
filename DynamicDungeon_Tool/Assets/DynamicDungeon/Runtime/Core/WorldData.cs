@@ -391,7 +391,7 @@ namespace DynamicDungeon.Runtime.Core
                 return;
             }
 
-            NativeKeyValueArrays<FixedString128Bytes, NativeArray<T>> channelPairs = channelMap.GetKeyValueArrays(Allocator.TempJob);
+            NativeKeyValueArrays<FixedString128Bytes, NativeArray<T>> channelPairs = channelMap.GetKeyValueArrays(Allocator.Persistent);
             try
             {
                 int index;
@@ -417,7 +417,7 @@ namespace DynamicDungeon.Runtime.Core
                 return;
             }
 
-            NativeKeyValueArrays<FixedString128Bytes, NativeList<int2>> channelPairs = channelMap.GetKeyValueArrays(Allocator.TempJob);
+            NativeKeyValueArrays<FixedString128Bytes, NativeList<int2>> channelPairs = channelMap.GetKeyValueArrays(Allocator.Persistent);
             try
             {
                 int index;
@@ -443,7 +443,7 @@ namespace DynamicDungeon.Runtime.Core
                 return;
             }
 
-            NativeKeyValueArrays<FixedString128Bytes, NativeList<PrefabPlacementRecord>> channelPairs = channelMap.GetKeyValueArrays(Allocator.TempJob);
+            NativeKeyValueArrays<FixedString128Bytes, NativeList<PrefabPlacementRecord>> channelPairs = channelMap.GetKeyValueArrays(Allocator.Persistent);
             try
             {
                 int index;

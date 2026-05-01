@@ -39,6 +39,18 @@ namespace DynamicDungeon.Runtime.Nodes
         [Description("Frequency of the noise wave.")]
         private float _frequency = 0.05f;
 
+        [MinValue(1.0f)]
+        [Description("Number of fractal noise octaves blended together.")]
+        private int _octaves = 1;
+
+        [Range(0f, 1f)]
+        [Description("Amplitude multiplier applied after each octave.")]
+        private float _persistence = 0.5f;
+
+        [MinValue(1.0f)]
+        [Description("Frequency multiplier applied after each octave.")]
+        private float _lacunarity = 2.0f;
+
         [Description("Seed offset to apply to the noise generation.")]
         private float _seedOffset = 0.0f;
 
@@ -50,7 +62,7 @@ namespace DynamicDungeon.Runtime.Nodes
         public string NodeId => _nodeId;
         public string NodeName => _nodeName;
 
-        public SurfaceNoiseNode(string nodeId, string nodeName, string outputChannelName = "", float baseHeight = 0.5f, float amplitude = 0.1f, float frequency = 0.05f, float seedOffset = 0.0f)
+        public SurfaceNoiseNode(string nodeId, string nodeName, string outputChannelName = "", float baseHeight = 0.5f, float amplitude = 0.1f, float frequency = 0.05f, int octaves = 1, float persistence = 0.5f, float lacunarity = 2.0f, float seedOffset = 0.0f)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -64,6 +76,9 @@ namespace DynamicDungeon.Runtime.Nodes
             _baseHeight = baseHeight;
             _amplitude = amplitude;
             _frequency = frequency;
+            _octaves = math.max(1, octaves);
+            _persistence = math.clamp(persistence, 0.0f, 1.0f);
+            _lacunarity = math.max(1.0f, lacunarity);
             _seedOffset = seedOffset;
 
             RefreshPorts();
@@ -92,6 +107,30 @@ namespace DynamicDungeon.Runtime.Nodes
                 float.TryParse(value, out _amplitude);
             else if (string.Equals(name, "frequency", StringComparison.OrdinalIgnoreCase))
                 float.TryParse(value, out _frequency);
+            else if (string.Equals(name, "octaves", StringComparison.OrdinalIgnoreCase))
+            {
+                int parsedOctaves;
+                if (int.TryParse(value, out parsedOctaves))
+                {
+                    _octaves = math.max(1, parsedOctaves);
+                }
+            }
+            else if (string.Equals(name, "persistence", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsedPersistence;
+                if (float.TryParse(value, out parsedPersistence))
+                {
+                    _persistence = math.clamp(parsedPersistence, 0.0f, 1.0f);
+                }
+            }
+            else if (string.Equals(name, "lacunarity", StringComparison.OrdinalIgnoreCase))
+            {
+                float parsedLacunarity;
+                if (float.TryParse(value, out parsedLacunarity))
+                {
+                    _lacunarity = math.max(1.0f, parsedLacunarity);
+                }
+            }
             else if (string.Equals(name, "seedOffset", StringComparison.OrdinalIgnoreCase))
                 float.TryParse(value, out _seedOffset);
             else if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
@@ -107,7 +146,9 @@ namespace DynamicDungeon.Runtime.Nodes
             NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
 
             // Mix the context seed with our custom offset to ensure stability per-node
-            float nodeSeed = context.LocalSeed + _seedOffset;
+            float seedPhase;
+            float seedSlice;
+            CreateSeedOffsets(context.LocalSeed, _seedOffset, out seedPhase, out seedSlice);
 
             SurfaceNoiseJob job = new SurfaceNoiseJob
             {
@@ -117,7 +158,11 @@ namespace DynamicDungeon.Runtime.Nodes
                 BaseHeight = _baseHeight,
                 Amplitude = _amplitude,
                 Frequency = _frequency,
-                NodeSeed = nodeSeed
+                Octaves = _octaves,
+                Persistence = _persistence,
+                Lacunarity = _lacunarity,
+                SeedPhase = seedPhase,
+                SeedSlice = seedSlice
             };
 
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
@@ -131,6 +176,15 @@ namespace DynamicDungeon.Runtime.Nodes
             };
         }
 
+        private static void CreateSeedOffsets(long localSeed, float seedOffset, out float seedPhase, out float seedSlice)
+        {
+            long mixedSeed = localSeed + (long)math.round(seedOffset * 1000.0f);
+            uint lowerBits = unchecked((uint)(mixedSeed & 0xFFFF));
+            uint upperBits = unchecked((uint)((mixedSeed >> 16) & 0xFFFF));
+            seedPhase = lowerBits * 0.0001f;
+            seedSlice = upperBits * 0.0001f;
+        }
+
         [BurstCompile]
         private struct SurfaceNoiseJob : IJobParallelFor
         {
@@ -140,7 +194,11 @@ namespace DynamicDungeon.Runtime.Nodes
             public float BaseHeight;
             public float Amplitude;
             public float Frequency;
-            public float NodeSeed;
+            public int Octaves;
+            public float Persistence;
+            public float Lacunarity;
+            public float SeedPhase;
+            public float SeedSlice;
 
             public void Execute(int index)
             {
@@ -151,7 +209,21 @@ namespace DynamicDungeon.Runtime.Nodes
                 
                 // Generate 1D noise for the X column
                 // Use snoise (simplex) or cnoise (classic). Using raw cnoise scaled.
-                float noiseVal = noise.snoise(new float2(x * Frequency, NodeSeed));
+                float frequency = math.max(0.0001f, Frequency);
+                float amplitude = 1.0f;
+                float totalAmplitude = 0.0f;
+                float accumulatedNoise = 0.0f;
+                int octaveIndex;
+                for (octaveIndex = 0; octaveIndex < Octaves; octaveIndex++)
+                {
+                    float octaveNoise = noise.snoise(new float2(x * frequency, SeedSlice + (octaveIndex * 0.137f)));
+                    accumulatedNoise += octaveNoise * amplitude;
+                    totalAmplitude += amplitude;
+                    amplitude *= Persistence;
+                    frequency *= Lacunarity;
+                }
+
+                float noiseVal = totalAmplitude > 0.0f ? accumulatedNoise / totalAmplitude : 0.0f;
                 
                 float surfaceY = BaseHeight + (noiseVal * Amplitude);
 

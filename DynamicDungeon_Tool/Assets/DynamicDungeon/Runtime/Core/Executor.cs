@@ -15,6 +15,33 @@ namespace DynamicDungeon.Runtime.Core
 
         private int _isRunning;
 
+        public ExecutionResult Execute(
+            ExecutionPlan plan,
+            CancellationToken cancellationToken,
+            IProgress<float> progress = null,
+            bool disposePlanOnCompletion = true,
+            Action<int> jobCompleted = null)
+        {
+            if (plan == null)
+            {
+                throw new ArgumentNullException(nameof(plan));
+            }
+
+            if (Interlocked.Exchange(ref _isRunning, 1) != 0)
+            {
+                throw new InvalidOperationException("Only one execution may run at a time.");
+            }
+
+            try
+            {
+                return ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion, jobCompleted);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _isRunning, 0);
+            }
+        }
+
         public async Task<ExecutionResult> ExecuteAsync(
             ExecutionPlan plan,
             CancellationToken cancellationToken,

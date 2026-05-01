@@ -85,7 +85,6 @@ namespace DynamicDungeon.Runtime.Nodes
             string nodeName,
             string inputBiomeChannelName = "",
             string outputChannelName = "",
-            string targetBiome = "",
             string biome = "")
         {
             if (string.IsNullOrWhiteSpace(nodeId))
@@ -97,8 +96,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
             _inputBiomeChannelName = inputBiomeChannelName ?? string.Empty;
             _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, outputChannelName, FallbackOutputPortName);
-            _biome = string.IsNullOrWhiteSpace(biome) ? targetBiome : biome;
-            _biome = _biome ?? string.Empty;
+            _biome = biome ?? string.Empty;
             _resolvedBiomeIndex = BiomeChannelUtility.UnassignedBiomeIndex;
 
             RefreshPorts();
@@ -137,8 +135,7 @@ namespace DynamicDungeon.Runtime.Nodes
                 return;
             }
 
-            if (string.Equals(name, "targetBiome", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(name, "biome", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(name, "biome", StringComparison.OrdinalIgnoreCase))
             {
                 _biome = value ?? string.Empty;
                 return;
