@@ -404,7 +404,7 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             EditorUtility.SetDirty(_graph);
-            _afterMutation?.Invoke();
+            NotifyGraphMutated();
 
             GenNodeView nodeView = CreateNodeView(nodeData, nodeInstance);
             ProtectOutputNode(nodeView);
@@ -455,7 +455,7 @@ namespace DynamicDungeon.Editor.Windows
 
             PopulatePortData(nodeData, nodeInstance);
             EditorUtility.SetDirty(_graph);
-            _afterMutation?.Invoke();
+            NotifyGraphMutated();
 
             GenNodeView nodeView = CreateNodeView(nodeData, nodeInstance);
             _nodeViewsById[nodeData.NodeId ?? string.Empty] = nodeView;
@@ -482,6 +482,11 @@ namespace DynamicDungeon.Editor.Windows
             _generationOrchestrator?.RequestPreviewRefresh();
         }
 
+        public void MarkNodeDirty(string nodeId)
+        {
+            _generationOrchestrator?.MarkNodeDirty(nodeId);
+        }
+
         public void OpenNodeSearch(Vector2 graphLocalPosition)
         {
             _lastGraphLocalMousePosition = graphLocalPosition;
@@ -502,9 +507,9 @@ namespace DynamicDungeon.Editor.Windows
             Undo.RecordObject(_graph, "Add Sticky Note");
             GenStickyNoteData noteData = _graph.AddStickyNote(initialText ?? string.Empty, noteRect);
             EditorUtility.SetDirty(_graph);
-            _afterMutation?.Invoke();
+            NotifyGraphMutated();
 
-            StickyNoteView noteView = new StickyNoteView(_graph, noteData, _afterMutation);
+            StickyNoteView noteView = new StickyNoteView(_graph, noteData, NotifyGraphMutated);
             _stickyNoteViewsById[noteData.NoteId] = noteView;
             AddElement(noteView);
         }
@@ -522,15 +527,21 @@ namespace DynamicDungeon.Editor.Windows
             Undo.RecordObject(_graph, "Add Group");
             GenGroupData groupData = _graph.AddGroup("Group", groupRect);
             EditorUtility.SetDirty(_graph);
-            _afterMutation?.Invoke();
+            NotifyGraphMutated();
 
-            GroupView groupView = new GroupView(_graph, groupData, _afterMutation);
+            GroupView groupView = new GroupView(_graph, groupData, NotifyGraphMutated);
             _groupViewsById[groupData.GroupId] = groupView;
             AddElement(groupView);
         }
 
         private void OnViewTransformChanged(GraphView graphView)
         {
+            _viewTransformChanged?.Invoke();
+        }
+
+        private void NotifyGraphMutated()
+        {
+            _afterMutation?.Invoke();
             _viewTransformChanged?.Invoke();
         }
 
@@ -627,7 +638,7 @@ namespace DynamicDungeon.Editor.Windows
                     continue;
                 }
 
-                StickyNoteView noteView = new StickyNoteView(_graph, noteData, _afterMutation);
+                StickyNoteView noteView = new StickyNoteView(_graph, noteData, NotifyGraphMutated);
                 _stickyNoteViewsById[noteData.NoteId] = noteView;
                 AddElement(noteView);
             }
@@ -646,7 +657,7 @@ namespace DynamicDungeon.Editor.Windows
                     continue;
                 }
 
-                GroupView groupView = new GroupView(_graph, groupData, _afterMutation);
+                GroupView groupView = new GroupView(_graph, groupData, NotifyGraphMutated);
                 _groupViewsById[groupData.GroupId] = groupView;
                 AddElement(groupView);
             }
@@ -702,7 +713,7 @@ namespace DynamicDungeon.Editor.Windows
                     _generationOrchestrator,
                     _edgeConnectorListener,
                     OpenExpandedPreview,
-                    _afterMutation,
+                    NotifyGraphMutated,
                     subGraphAttribute.NestedGraphParameterName,
                     _onEnterSubGraph);
             }
@@ -714,7 +725,7 @@ namespace DynamicDungeon.Editor.Windows
                 _generationOrchestrator,
                 _edgeConnectorListener,
                 OpenExpandedPreview,
-                _afterMutation);
+                NotifyGraphMutated);
         }
 
         private Vector2 ConvertGraphLocalToContentPosition(Vector2 graphLocalPosition)
@@ -1258,7 +1269,7 @@ namespace DynamicDungeon.Editor.Windows
                 if (recordedUndo)
                 {
                     EditorUtility.SetDirty(_graph);
-                    _afterMutation?.Invoke();
+                    NotifyGraphMutated();
                 }
 
                 graphViewChange.edgesToCreate = validEdges;
@@ -1410,7 +1421,7 @@ namespace DynamicDungeon.Editor.Windows
 
                     graphStructureChanged = true;
                     EditorUtility.SetDirty(_graph);
-                    _afterMutation?.Invoke();
+                    NotifyGraphMutated();
                 }
             }
 
@@ -1509,7 +1520,7 @@ namespace DynamicDungeon.Editor.Windows
             GenGroupData groupData = _graph.AddGroup("Group", groupRect);
             EditorUtility.SetDirty(_graph);
 
-            GroupView groupView = new GroupView(_graph, groupData, _afterMutation);
+            GroupView groupView = new GroupView(_graph, groupData, NotifyGraphMutated);
             _groupViewsById[groupData.GroupId] = groupView;
             AddElement(groupView);
             groupView.AddElements(selectedNodeViews.Cast<GraphElement>().ToList());
@@ -1517,7 +1528,7 @@ namespace DynamicDungeon.Editor.Windows
             ClearSelection();
             AddToSelection(groupView);
 
-            _afterMutation?.Invoke();
+            NotifyGraphMutated();
             Undo.CollapseUndoOperations(undoGroup);
         }
 
@@ -1585,7 +1596,7 @@ namespace DynamicDungeon.Editor.Windows
                 }
             }
 
-            _afterMutation?.Invoke();
+            NotifyGraphMutated();
             Undo.CollapseUndoOperations(undoGroup);
         }
 
@@ -1753,7 +1764,7 @@ namespace DynamicDungeon.Editor.Windows
             if (changed)
             {
                 EditorUtility.SetDirty(_graph);
-                _afterMutation?.Invoke();
+                NotifyGraphMutated();
             }
         }
 
@@ -1801,7 +1812,7 @@ namespace DynamicDungeon.Editor.Windows
             if (changed)
             {
                 EditorUtility.SetDirty(_graph);
-                _afterMutation?.Invoke();
+                NotifyGraphMutated();
             }
         }
 
@@ -2365,7 +2376,7 @@ namespace DynamicDungeon.Editor.Windows
                 _generationOrchestrator.RequestPreviewRefresh();
             }
 
-            _afterMutation?.Invoke();
+            NotifyGraphMutated();
         }
 
         private GenConnectionData FindConnectionInGraph(

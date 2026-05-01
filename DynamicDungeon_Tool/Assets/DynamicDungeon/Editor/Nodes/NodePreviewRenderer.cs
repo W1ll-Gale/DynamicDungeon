@@ -157,9 +157,10 @@ namespace DynamicDungeon.Editor.Nodes
         private static Texture2D CreateTexture(int width, int height, Color32[] pixels)
         {
             Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            texture.hideFlags = HideFlags.HideAndDontSave;
             texture.filterMode = FilterMode.Point;
             texture.wrapMode = TextureWrapMode.Clamp;
-            texture.SetPixels32(pixels);
+            texture.SetPixelData(pixels, 0);
             texture.Apply(false, false);
             return texture;
         }

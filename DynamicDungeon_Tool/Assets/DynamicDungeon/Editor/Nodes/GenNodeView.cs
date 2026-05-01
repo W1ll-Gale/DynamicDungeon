@@ -47,7 +47,6 @@ namespace DynamicDungeon.Editor.Nodes
         private Texture2D _previewTexture;
         private VisualElement _bodyContainer;
         private VisualElement _controlsContainer;
-        private bool _lastExpandedState = true;
         private bool _suppressPositionSync;
         private float _lastKnownExpandedWidth = DefaultNodeSize.x;
 
@@ -101,7 +100,6 @@ namespace DynamicDungeon.Editor.Nodes
             RefreshPorts();
             RefreshExpandedState();
             UpdateExpandedContentVisibility();
-            schedule.Execute(SynchroniseExpandedState).Every(100);
 
             _suppressPositionSync = true;
             SetPosition(new Rect(nodeData.Position, DefaultNodeSize));
@@ -540,10 +538,8 @@ namespace DynamicDungeon.Editor.Nodes
 
             bool parameterVisibilityChanged = HasParameterVisibilityChanged(visibilityProvider, previousVisibilityByParameter);
 
-            if (string.Equals(parameterName, "algorithm", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(parameterName, "direction", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(parameterName, "outputType", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(parameterName, "matchById", StringComparison.OrdinalIgnoreCase))
+            bool requiresFullPreviewRefresh = RequiresFullPreviewRefresh(parameterName);
+            if (requiresFullPreviewRefresh)
             {
                 RebuildNodePorts();
                 PopulateControls();
@@ -557,7 +553,14 @@ namespace DynamicDungeon.Editor.Nodes
 
             if (_generationOrchestrator != null)
             {
-                _generationOrchestrator.RequestPreviewRefresh();
+                if (requiresFullPreviewRefresh)
+                {
+                    _generationOrchestrator.RequestPreviewRefresh();
+                }
+                else
+                {
+                    _generationOrchestrator.MarkNodeDirty(_nodeData.NodeId);
+                }
             }
         }
 
@@ -893,20 +896,8 @@ namespace DynamicDungeon.Editor.Nodes
             mouseDownEvent.StopImmediatePropagation();
         }
 
-        private void SynchroniseExpandedState()
-        {
-            if (_lastExpandedState == expanded)
-            {
-                return;
-            }
-
-            UpdateExpandedContentVisibility();
-        }
-
         private void UpdateExpandedContentVisibility()
         {
-            _lastExpandedState = expanded;
-
             if (_bodyContainer != null)
             {
                 _bodyContainer.style.display = expanded ? DisplayStyle.Flex : DisplayStyle.None;
@@ -994,6 +985,14 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             return DefaultNodeSize.x;
+        }
+
+        private static bool RequiresFullPreviewRefresh(string parameterName)
+        {
+            return string.Equals(parameterName, "algorithm", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(parameterName, "direction", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(parameterName, "outputType", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(parameterName, "matchById", StringComparison.OrdinalIgnoreCase);
         }
 
         private void RebuildNodePorts()

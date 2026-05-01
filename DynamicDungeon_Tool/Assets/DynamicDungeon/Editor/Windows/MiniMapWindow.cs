@@ -23,12 +23,21 @@ namespace DynamicDungeon.Editor.Windows
         private readonly Label _zoomLabel;
         private readonly MiniMapCanvas _canvas;
         private DynamicDungeonGraphView _graphView;
+        private int _refreshCountForTesting;
 
         protected override bool UsesUniformResize
         {
             get
             {
                 return true;
+            }
+        }
+
+        internal int RefreshCountForTesting
+        {
+            get
+            {
+                return _refreshCountForTesting;
             }
         }
 
@@ -85,9 +94,9 @@ namespace DynamicDungeon.Editor.Windows
             _zoomLabel.style.fontSize = 10.0f;
             _zoomLabel.pickingMode = PickingMode.Ignore;
             _canvas.Add(_zoomLabel);
+            _canvas.RegisterCallback<GeometryChangedEvent>(OnMiniMapCanvasGeometryChanged);
 
             AttachToGraphView(graphView);
-            schedule.Execute(RefreshMiniMap).Every(16);
         }
 
         public void AttachToGraphView(DynamicDungeonGraphView graphView)
@@ -108,8 +117,14 @@ namespace DynamicDungeon.Editor.Windows
             RefreshMiniMap();
         }
 
+        private void OnMiniMapCanvasGeometryChanged(GeometryChangedEvent geometryChangedEvent)
+        {
+            RefreshMiniMap();
+        }
+
         private void RefreshMiniMap()
         {
+            _refreshCountForTesting++;
             UpdateZoomLabel();
             _canvas.MarkDirtyRepaint();
         }

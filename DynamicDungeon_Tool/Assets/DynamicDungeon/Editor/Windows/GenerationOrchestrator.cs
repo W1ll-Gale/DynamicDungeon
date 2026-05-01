@@ -43,6 +43,7 @@ namespace DynamicDungeon.Editor.Windows
         private bool _loadingIndicatorsVisible;
         private bool _suppressFollowUpGeneration;
         private int _activeGenerationVersion;
+        private int _refreshScheduleCountForTesting;
         private double _loadingIndicatorTime;
         private double _nextGenerationTime;
 
@@ -73,6 +74,38 @@ namespace DynamicDungeon.Editor.Windows
             get
             {
                 return _isGenerating;
+            }
+        }
+
+        internal bool IsRefreshDebounceScheduledForTesting
+        {
+            get
+            {
+                return _debounceScheduled;
+            }
+        }
+
+        internal bool IsFullRefreshQueuedForTesting
+        {
+            get
+            {
+                return _generateAllRequested;
+            }
+        }
+
+        internal int PendingDirtyNodeCountForTesting
+        {
+            get
+            {
+                return _pendingDirtyNodeIds.Count;
+            }
+        }
+
+        internal int RefreshScheduleCountForTesting
+        {
+            get
+            {
+                return _refreshScheduleCountForTesting;
             }
         }
 
@@ -138,8 +171,7 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
-            ClearScheduledRefresh();
-            BeginGeneration(false);
+            ScheduleDebouncedRefresh();
         }
 
         public void GenerateAll()
@@ -174,11 +206,17 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
+            bool alreadyQueuedFullRefresh = _generateAllRequested && _debounceScheduled;
             _generateAllRequested = true;
 
             if (!_isGenerating && _cachedPlan != null)
             {
                 _cachedPlan.MarkAllDirty();
+            }
+
+            if (alreadyQueuedFullRefresh)
+            {
+                return;
             }
 
             if (_isGenerating)
@@ -188,8 +226,7 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
-            ClearScheduledRefresh();
-            BeginGeneration(true);
+            ScheduleDebouncedRefresh();
         }
 
         public void CancelGeneration()
@@ -256,6 +293,13 @@ namespace DynamicDungeon.Editor.Windows
 
         private void StartGeneration(bool forceFullGeneration)
         {
+            bool generateAll = forceFullGeneration || _generateAllRequested || _lastSnapshot == null;
+            if (!generateAll && _pendingDirtyNodeIds.Count == 0)
+            {
+                ReleaseEditorUpdateSubscriptionIfIdle();
+                return;
+            }
+
             _isGenerating = true;
             _activeGenerationVersion++;
             int generationVersion = _activeGenerationVersion;
@@ -273,7 +317,6 @@ namespace DynamicDungeon.Editor.Windows
                 List<string> dirtyNodeIds = new List<string>(_pendingDirtyNodeIds);
                 _pendingDirtyNodeIds.Clear();
 
-                bool generateAll = forceFullGeneration || _generateAllRequested || _lastSnapshot == null;
                 _generateAllRequested = false;
 
                 GraphCompileResult compileResult = GraphCompiler.CompileForPreview(_graph);
@@ -348,6 +391,11 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
+            if (!_debounceScheduled)
+            {
+                _refreshScheduleCountForTesting++;
+            }
+
             _nextGenerationTime = EditorApplication.timeSinceStartup + DebounceDelaySeconds;
             _debounceScheduled = true;
             EnsureEditorUpdateSubscription();
@@ -372,13 +420,14 @@ namespace DynamicDungeon.Editor.Windows
 
             TryShowLoadingIndicators();
 
-            if (_isGenerating || EditorApplication.timeSinceStartup < _nextGenerationTime)
+            if (!_debounceScheduled || _isGenerating || EditorApplication.timeSinceStartup < _nextGenerationTime)
             {
                 return;
             }
 
+            bool forceFullGeneration = _generateAllRequested;
             ClearScheduledRefresh();
-            BeginGeneration(false);
+            BeginGeneration(forceFullGeneration);
         }
 
         private void ClearScheduledRefresh()
@@ -462,7 +511,6 @@ namespace DynamicDungeon.Editor.Windows
                 {
                     _lastSnapshot = executionResult.Snapshot;
                     ProcessPendingPreviewUpdates();
-                    UpdateNodePreviewsFromPlan(_cachedPlan);
                     HideLoadingIndicators(DoneStatusText, false);
                     ReportDiagnostics(CombineDiagnostics(_activeCompileDiagnostics, executionResult.Diagnostics));
                 }
@@ -693,41 +741,6 @@ namespace DynamicDungeon.Editor.Windows
             CancelGeneration();
         }
 
-        private void UpdateNodePreviewsFromPlan(ExecutionPlan plan)
-        {
-            if (plan == null || _graphView == null)
-            {
-                return;
-            }
-
-            WorldData worldData = plan.AllocatedWorld;
-
-            int jobIndex;
-            for (jobIndex = 0; jobIndex < plan.Jobs.Count; jobIndex++)
-            {
-                NodeJobDescriptor job = plan.Jobs[jobIndex];
-
-                ChannelDeclaration primaryOutput;
-                if (!TryGetPrimaryOutputDeclaration(job, out primaryOutput))
-                {
-                    _graphView.SetNodePreview(job.Node.NodeId, null);
-                    continue;
-                }
-
-                Texture2D texture = null;
-                try
-                {
-                    texture = CreatePreviewTexture(primaryOutput, worldData);
-                }
-                catch (Exception exception)
-                {
-                    Debug.LogWarningFormat("Preview rendering failed for node '{0}': {1}", job.Node.NodeName, exception.Message);
-                }
-
-                _graphView.SetNodePreview(job.Node.NodeId, texture);
-            }
-        }
-
         private void ReportDiagnostics(IReadOnlyList<GraphDiagnostic> diagnostics)
         {
             IReadOnlyList<GraphDiagnostic> safeDiagnostics = diagnostics ?? Array.Empty<GraphDiagnostic>();
@@ -876,35 +889,6 @@ namespace DynamicDungeon.Editor.Windows
                     return NodePreviewRenderer.RenderBoolMaskChannel(previewUpdate.BoolMaskChannel, previewUpdate.Width, previewUpdate.Height);
                 case PreviewChannelType.PointList:
                     return NodePreviewRenderer.RenderPointListChannel(previewUpdate.PointListChannel, previewUpdate.Width, previewUpdate.Height);
-                default:
-                    return null;
-            }
-        }
-
-        private static Texture2D CreatePreviewTexture(ChannelDeclaration outputDeclaration, WorldData worldData)
-        {
-            switch (outputDeclaration.Type)
-            {
-                case ChannelType.Float:
-                    NativeArray<float> floatChannel = worldData.GetFloatChannel(outputDeclaration.ChannelName);
-                    return floatChannel.IsCreated
-                        ? NodePreviewRenderer.RenderFloatChannel(floatChannel, worldData.Width, worldData.Height)
-                        : null;
-                case ChannelType.Int:
-                    NativeArray<int> intChannel = worldData.GetIntChannel(outputDeclaration.ChannelName);
-                    return intChannel.IsCreated
-                        ? NodePreviewRenderer.RenderIntChannel(intChannel, worldData.Width, worldData.Height)
-                        : null;
-                case ChannelType.BoolMask:
-                    NativeArray<byte> boolMaskChannel = worldData.GetBoolMaskChannel(outputDeclaration.ChannelName);
-                    return boolMaskChannel.IsCreated
-                        ? NodePreviewRenderer.RenderBoolMaskChannel(boolMaskChannel, worldData.Width, worldData.Height)
-                        : null;
-                case ChannelType.PointList:
-                    NativeList<int2> pointListChannel = worldData.GetPointListChannel(outputDeclaration.ChannelName);
-                    return pointListChannel.IsCreated
-                        ? NodePreviewRenderer.RenderPointListChannel(pointListChannel, worldData.Width, worldData.Height)
-                        : null;
                 default:
                     return null;
             }
