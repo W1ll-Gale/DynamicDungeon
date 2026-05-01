@@ -810,7 +810,7 @@ namespace DynamicDungeon.Runtime.Graph
                 adjacency[connection.FromNode.Node.NodeId].Add(connection.ToNode);
             }
 
-            AddImplicitBiomeChannelOrdering(compiledNodes, adjacency);
+            AddImplicitBiomeChannelOrdering(compiledNodes, validatedConnections, adjacency);
             AddImplicitLogicalIdChannelOrdering(compiledNodes, adjacency);
             AddImplicitPrefabPlacementChannelOrdering(compiledNodes, adjacency);
 
@@ -827,8 +827,24 @@ namespace DynamicDungeon.Runtime.Graph
             return orderedNodes;
         }
 
-        private static void AddImplicitBiomeChannelOrdering(IReadOnlyList<CompiledNodeInfo> compiledNodes, Dictionary<string, List<CompiledNodeInfo>> adjacency)
+        private static void AddImplicitBiomeChannelOrdering(IReadOnlyList<CompiledNodeInfo> compiledNodes, IReadOnlyList<ValidatedConnection> validatedConnections, Dictionary<string, List<CompiledNodeInfo>> adjacency)
         {
+            HashSet<string> nodesWithExplicitBiomeInput = new HashSet<string>(StringComparer.Ordinal);
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < validatedConnections.Count; connectionIndex++)
+            {
+                ValidatedConnection connection = validatedConnections[connectionIndex];
+                if (connection == null ||
+                    connection.ToNode == null ||
+                    !string.Equals(connection.ToPort.Name, "Biome Input", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                nodesWithExplicitBiomeInput.Add(connection.ToNode.Node.NodeId);
+            }
+
             CompiledNodeInfo previousBiomeWriter = null;
 
             int nodeIndex;
@@ -840,7 +856,8 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
-                if (previousBiomeWriter != null)
+                if (previousBiomeWriter != null &&
+                    !nodesWithExplicitBiomeInput.Contains(compiledNode.Node.NodeId))
                 {
                     adjacency[previousBiomeWriter.Node.NodeId].Add(compiledNode);
                 }

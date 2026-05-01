@@ -18,6 +18,13 @@ namespace DynamicDungeon.Runtime.Nodes
     [Description("Overrides the biome channel inside a mask, with optional boundary blending and probabilistic scatter.")]
     public sealed class BiomeOverrideNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IBiomeChannelNode
     {
+        private enum BlendMode
+        {
+            AnyEdge = 0,
+            VerticalOnly = 1,
+            HorizontalOnly = 2
+        }
+
         private const int DefaultBatchSize = 64;
         private const float DiagonalCost = 1.41421356237f;
         private const string DefaultNodeName = "Biome Override";
@@ -44,6 +51,9 @@ namespace DynamicDungeon.Runtime.Nodes
         [RangeAttribute(0.0f, 1.0f)]
         [DescriptionAttribute("Base chance that a masked tile is overridden before blend-edge falloff is applied.")]
         private float _probability;
+
+        [DescriptionAttribute("How boundary blending measures distance from the mask edge.")]
+        private BlendMode _blendMode;
 
         private int _resolvedBiomeIndex;
         private ChannelDeclaration[] _channelDeclarations;
@@ -109,6 +119,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _overrideBiome = overrideBiome ?? string.Empty;
             _blendEdgeWidth = math.max(0.0f, blendEdgeWidth);
             _probability = math.saturate(probability);
+            _blendMode = BlendMode.AnyEdge;
             _resolvedBiomeIndex = BiomeChannelUtility.UnassignedBiomeIndex;
             _ports = new[]
             {
@@ -149,6 +160,12 @@ namespace DynamicDungeon.Runtime.Nodes
             if (string.Equals(name, "probability", StringComparison.OrdinalIgnoreCase))
             {
                 _probability = math.saturate(ParseFloat(value, _probability));
+                return;
+            }
+
+            if (string.Equals(name, "blendMode", StringComparison.OrdinalIgnoreCase))
+            {
+                _blendMode = ParseBlendMode(value, _blendMode);
             }
         }
 
@@ -195,34 +212,65 @@ namespace DynamicDungeon.Runtime.Nodes
             }
 
             NativeArray<float> distances = new NativeArray<float>(biomeChannel.Length, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            float unreachableDistance = math.sqrt((float)(context.Width * context.Width + context.Height * context.Height)) + (float)(context.Width + context.Height + 1);
+            JobHandle distanceHandle;
 
-            OverrideDistanceInitialiseJob initialiseJob = new OverrideDistanceInitialiseJob
+            if (_blendMode == BlendMode.VerticalOnly)
             {
-                Mask = mask,
-                Distances = distances,
-                UnreachableDistance = unreachableDistance
-            };
+                VerticalOverrideDistanceJob verticalDistanceJob = new VerticalOverrideDistanceJob
+                {
+                    Mask = mask,
+                    Distances = distances,
+                    Width = context.Width,
+                    Height = context.Height,
+                    UnreachableDistance = context.Height + 1.0f
+                };
 
-            JobHandle initialiseHandle = initialiseJob.Schedule(distances.Length, DefaultBatchSize, context.InputDependency);
-
-            OverrideDistanceForwardSweepJob forwardSweepJob = new OverrideDistanceForwardSweepJob
+                distanceHandle = verticalDistanceJob.Schedule(context.InputDependency);
+            }
+            else if (_blendMode == BlendMode.HorizontalOnly)
             {
-                Distances = distances,
-                Width = context.Width,
-                Height = context.Height
-            };
+                HorizontalOverrideDistanceJob horizontalDistanceJob = new HorizontalOverrideDistanceJob
+                {
+                    Mask = mask,
+                    Distances = distances,
+                    Width = context.Width,
+                    Height = context.Height,
+                    UnreachableDistance = context.Width + 1.0f
+                };
 
-            JobHandle forwardHandle = forwardSweepJob.Schedule(initialiseHandle);
-
-            OverrideDistanceBackwardSweepJob backwardSweepJob = new OverrideDistanceBackwardSweepJob
+                distanceHandle = horizontalDistanceJob.Schedule(context.InputDependency);
+            }
+            else
             {
-                Distances = distances,
-                Width = context.Width,
-                Height = context.Height
-            };
+                float unreachableDistance = math.sqrt((float)(context.Width * context.Width + context.Height * context.Height)) + (float)(context.Width + context.Height + 1);
 
-            JobHandle backwardHandle = backwardSweepJob.Schedule(forwardHandle);
+                OverrideDistanceInitialiseJob initialiseJob = new OverrideDistanceInitialiseJob
+                {
+                    Mask = mask,
+                    Distances = distances,
+                    UnreachableDistance = unreachableDistance
+                };
+
+                JobHandle initialiseHandle = initialiseJob.Schedule(distances.Length, DefaultBatchSize, context.InputDependency);
+
+                OverrideDistanceForwardSweepJob forwardSweepJob = new OverrideDistanceForwardSweepJob
+                {
+                    Distances = distances,
+                    Width = context.Width,
+                    Height = context.Height
+                };
+
+                JobHandle forwardHandle = forwardSweepJob.Schedule(initialiseHandle);
+
+                OverrideDistanceBackwardSweepJob backwardSweepJob = new OverrideDistanceBackwardSweepJob
+                {
+                    Distances = distances,
+                    Width = context.Width,
+                    Height = context.Height
+                };
+
+                distanceHandle = backwardSweepJob.Schedule(forwardHandle);
+            }
 
             BiomeOverrideApplyJob blendedApplyJob = new BiomeOverrideApplyJob
             {
@@ -237,7 +285,7 @@ namespace DynamicDungeon.Runtime.Nodes
                 Distances = distances
             };
 
-            JobHandle applyHandle = blendedApplyJob.Schedule(biomeChannel.Length, DefaultBatchSize, backwardHandle);
+            JobHandle applyHandle = blendedApplyJob.Schedule(biomeChannel.Length, DefaultBatchSize, distanceHandle);
             return distances.Dispose(applyHandle);
         }
 
@@ -274,6 +322,22 @@ namespace DynamicDungeon.Runtime.Nodes
         {
             float parsedValue;
             if (float.TryParse(value, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out parsedValue))
+            {
+                return parsedValue;
+            }
+
+            return fallbackValue;
+        }
+
+        private static BlendMode ParseBlendMode(string value, BlendMode fallbackValue)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return fallbackValue;
+            }
+
+            BlendMode parsedValue;
+            if (Enum.TryParse(value, true, out parsedValue))
             {
                 return parsedValue;
             }
@@ -379,6 +443,104 @@ namespace DynamicDungeon.Runtime.Nodes
                         }
 
                         Distances[index] = best;
+                    }
+                }
+            }
+        }
+
+        [BurstCompile]
+        private struct VerticalOverrideDistanceJob : IJob
+        {
+            [Unity.Collections.ReadOnly]
+            public NativeArray<byte> Mask;
+
+            public NativeArray<float> Distances;
+            public int Width;
+            public int Height;
+            public float UnreachableDistance;
+
+            public void Execute()
+            {
+                int x;
+                for (x = 0; x < Width; x++)
+                {
+                    float distance = UnreachableDistance;
+                    int y;
+                    for (y = 0; y < Height; y++)
+                    {
+                        int index = (y * Width) + x;
+                        if (Mask[index] == 0)
+                        {
+                            distance = 0.0f;
+                            Distances[index] = 0.0f;
+                            continue;
+                        }
+
+                        distance += 1.0f;
+                        Distances[index] = distance;
+                    }
+
+                    distance = UnreachableDistance;
+                    for (y = Height - 1; y >= 0; y--)
+                    {
+                        int index = (y * Width) + x;
+                        if (Mask[index] == 0)
+                        {
+                            distance = 0.0f;
+                            continue;
+                        }
+
+                        distance += 1.0f;
+                        Distances[index] = math.min(Distances[index], distance);
+                    }
+                }
+            }
+        }
+
+        [BurstCompile]
+        private struct HorizontalOverrideDistanceJob : IJob
+        {
+            [Unity.Collections.ReadOnly]
+            public NativeArray<byte> Mask;
+
+            public NativeArray<float> Distances;
+            public int Width;
+            public int Height;
+            public float UnreachableDistance;
+
+            public void Execute()
+            {
+                int y;
+                for (y = 0; y < Height; y++)
+                {
+                    float distance = UnreachableDistance;
+                    int x;
+                    for (x = 0; x < Width; x++)
+                    {
+                        int index = (y * Width) + x;
+                        if (Mask[index] == 0)
+                        {
+                            distance = 0.0f;
+                            Distances[index] = 0.0f;
+                            continue;
+                        }
+
+                        distance += 1.0f;
+                        Distances[index] = distance;
+                    }
+
+                    distance = UnreachableDistance;
+                    for (x = Width - 1; x >= 0; x--)
+                    {
+                        int index = (y * Width) + x;
+                        if (Mask[index] == 0)
+                        {
+                            distance = 0.0f;
+                            continue;
+                        }
+
+                        distance += 1.0f;
+                        Distances[index] = math.min(Distances[index], distance);
                     }
                 }
             }

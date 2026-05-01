@@ -246,6 +246,32 @@ namespace DynamicDungeon.Tests.Runtime
             CollectionAssert.AreEqual(expectedValues, output.Data);
         }
 
+        [Test]
+        public async Task AxisBandNodeMarksOnlyCellsInsideXAxisRange()
+        {
+            byte[] expectedValues =
+            {
+                0, 1, 1, 0,
+                0, 1, 1, 0
+            };
+
+            AxisBandNode axisBandNode = new AxisBandNode("axis-band", "Axis Band", "Output", GradientDirection.X, 0.25f, 0.74f);
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { axisBandNode }, 4, 2, 2024L);
+            WorldSnapshot.FloatChannelSnapshot output = GetFloatChannel(snapshot, "Output");
+
+            Assert.That(output, Is.Not.Null);
+
+            byte[] actualValues = new byte[output.Data.Length];
+            int index;
+            for (index = 0; index < output.Data.Length; index++)
+            {
+                actualValues[index] = output.Data[index] > 0.5f ? (byte)1 : (byte)0;
+            }
+
+            CollectionAssert.AreEqual(expectedValues, actualValues);
+        }
+
         private static async Task<WorldSnapshot> ExecuteNodesAsync(IReadOnlyList<IGenNode> nodes, int width, int height, long seed)
         {
             ExecutionPlan plan = ExecutionPlan.Build(nodes, width, height, seed);

@@ -127,7 +127,7 @@ MonoBehaviour:
     - Name: minHeight
       Value: 0
     - Name: maxHeight
-      Value: 0.32
+      Value: 0.42
   - NodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Sky Band
@@ -179,7 +179,7 @@ MonoBehaviour:
     - Name: minDepth
       Value: 0
     - Name: maxDepth
-      Value: 34
+      Value: 16
   - NodeId: 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
     NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
     NodeName: Cave Depth Mask
@@ -691,15 +691,15 @@ MonoBehaviour:
       Type: 2
     Parameters:
     - Name: seedCount
-      Value: 12
+      Value: 10
     - Name: iterations
-      Value: 10
+      Value: 18
     - Name: initialSpreadProbability
-      Value: 0.78
+      Value: 0.86
     - Name: falloff
-      Value: 0.88
+      Value: 0.94
     - Name: minClusterSeparation
-      Value: 10
+      Value: 14
   - NodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Moss Cave Override
@@ -865,15 +865,15 @@ MonoBehaviour:
       Type: 2
     Parameters:
     - Name: seedCount
-      Value: 7
+      Value: 8
     - Name: iterations
-      Value: 9
+      Value: 20
     - Name: initialSpreadProbability
-      Value: 0.76
+      Value: 0.87
     - Name: falloff
-      Value: 0.89
+      Value: 0.94
     - Name: minClusterSeparation
-      Value: 14
+      Value: 18
   - NodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Crystal Cave Override
@@ -2068,6 +2068,1176 @@ MonoBehaviour:
       Value: Overwrite
     - Name: mirrorX
       Value: True
+  - NodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Deep Underground Band
+    Position: {x: -3000, y: 980}
+    Ports:
+    - PortName: DeepUndergroundBand
+      DisplayName: DeepUndergroundBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.08
+    - Name: maxHeight
+      Value: 0.34
+  - NodeId: 46ca284a-d8a0-47fe-91fd-bb8f5d17d21f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.AxisBandNode
+    NodeName: Forest Jungle Blend Band
+    Position: {x: -1160, y: 980}
+    Ports:
+    - PortName: ForestJungleBlendBand
+      DisplayName: ForestJungleBlendBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: axis
+      Value: X
+    - Name: min
+      Value: 0.21
+    - Name: max
+      Value: 0.29
+  - NodeId: 31dd14f5-c0cf-497b-bc92-7a2e51a773e4
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Jungle Edge Blend
+    Position: {x: -840, y: 980}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 3be4ddcae4c96414792c22259a877e32
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: a442fcbc-fab0-42ec-a84d-3f2274cc0ff8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.AxisBandNode
+    NodeName: Jungle Desert Blend Band
+    Position: {x: -1160, y: 1120}
+    Ports:
+    - PortName: JungleDesertBlendBand
+      DisplayName: JungleDesertBlendBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: axis
+      Value: X
+    - Name: min
+      Value: 0.46
+    - Name: max
+      Value: 0.54
+  - NodeId: 8ae4c954-5fe6-428c-aaf9-7603d4f02719
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Desert Edge Blend
+    Position: {x: -840, y: 1120}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 1b2f425e07827a04d85c36901bf9e45e
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: c16739af-c6f5-43d7-94d0-90026cbb54c5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.AxisBandNode
+    NodeName: Desert Ice Blend Band
+    Position: {x: -1160, y: 1260}
+    Ports:
+    - PortName: DesertIceBlendBand
+      DisplayName: DesertIceBlendBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: axis
+      Value: X
+    - Name: min
+      Value: 0.71
+    - Name: max
+      Value: 0.79
+  - NodeId: 26916bc9-fcd3-4717-84cb-6a4b3052ac97
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Edge Blend
+    Position: {x: -840, y: 1260}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: efc61188ae998b342b58212389e649eb
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: 18f5b17f-99e2-4b4a-9b0f-bfbad8ea5281
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Forest Presence
+    Position: {x: -520, y: 1040}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: ForestPresenceMask
+      DisplayName: ForestPresenceMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 51fe096708f655e40a649cfeee3e895b
+  - NodeId: f0797257-b47b-46a5-bdbe-948ea8d2d95a
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Desert Presence
+    Position: {x: -520, y: 1180}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: DesertPresenceMask
+      DisplayName: DesertPresenceMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 1b2f425e07827a04d85c36901bf9e45e
+  - NodeId: 0e49b9f7-cf2d-4f86-a6ea-42ef954be6b8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Forest Underground Region
+    Position: {x: -200, y: 980}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: ForestUndergroundRegion
+      DisplayName: ForestUndergroundRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: d67dfdb9-38c5-4892-b486-3efea2860a55
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Underground Region
+    Position: {x: -200, y: 1120}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleUndergroundRegion
+      DisplayName: JungleUndergroundRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 90f0eb0e-8383-4ef9-a6a5-bc8fa8ba6a35
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Desert Underground Region
+    Position: {x: -200, y: 1260}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DesertUndergroundRegion
+      DisplayName: DesertUndergroundRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 6d243277-c13e-42ec-abcf-7780fb7f6ac0
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Underground Region
+    Position: {x: -200, y: 1400}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceUndergroundRegion
+      DisplayName: IceUndergroundRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: fae8e8ce-30b8-4387-b72a-6ca9fefecb46
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Forest Deep Region
+    Position: {x: -200, y: 1560}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: ForestDeepRegion
+      DisplayName: ForestDeepRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: a3660c50-bdc3-412f-a439-1dd4e98f12ff
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Deep Region
+    Position: {x: -200, y: 1700}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleDeepRegion
+      DisplayName: JungleDeepRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 2b57b94e-ee1b-470a-b9d8-04d294f670fc
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Desert Deep Region
+    Position: {x: -200, y: 1840}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DesertDeepRegion
+      DisplayName: DesertDeepRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 6543db0b-1691-4a9f-b7c6-984dc7c34db8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Deep Region
+    Position: {x: -200, y: 1980}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceDeepRegion
+      DisplayName: IceDeepRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 704d6d07-0c57-4f6c-bcff-7d85ab74ec45
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Forest Cave Region
+    Position: {x: -200, y: 2140}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: ForestCaveRegion
+      DisplayName: ForestCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: dc3c6b21-d872-4b40-b827-6d826a47a376
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Cave Region Material
+    Position: {x: -200, y: 2280}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleCaveMaterialRegion
+      DisplayName: JungleCaveMaterialRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 275ad7ba-bf3a-43f9-8c07-4e8d3219a4d6
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Desert Cave Region
+    Position: {x: -200, y: 2420}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DesertCaveRegion
+      DisplayName: DesertCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 3b2856d0-cfe2-4dbe-9209-53e50f2e8b0e
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Cave Region Material
+    Position: {x: -200, y: 2560}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceCaveMaterialRegion
+      DisplayName: IceCaveMaterialRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 45a4829c-3db3-4b2d-a971-2b0bc089917f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Forest Underground Override
+    Position: {x: 160, y: 980}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 0d1c2b3a4f5e69788796a5b4c3d2e1f0
+    - Name: blendEdgeWidth
+      Value: 8
+    - Name: probability
+      Value: 1
+  - NodeId: 70d14f59-c505-4e38-8a93-8dc9d8d7d67d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Jungle Underground Override
+    Position: {x: 160, y: 1120}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 3c4d5e6f708192837465564738291a2b
+    - Name: blendEdgeWidth
+      Value: 8
+    - Name: probability
+      Value: 1
+  - NodeId: 2b1f0e33-5afe-41b8-a723-8d525d4095fd
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Desert Underground Override
+    Position: {x: 160, y: 1260}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 6a7b8c9d0e1f23456789abcdef012345
+    - Name: blendEdgeWidth
+      Value: 8
+    - Name: probability
+      Value: 1
+  - NodeId: 6675d404-5f13-47a8-9539-81dbd18dc603
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Underground Override
+    Position: {x: 160, y: 1400}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 9d0e1f23456789abcdef0123456a7b8c
+    - Name: blendEdgeWidth
+      Value: 8
+    - Name: probability
+      Value: 1
+  - NodeId: 9ee6ddcb-ac0a-4cd5-acde-b36c17ca7bf6
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Forest Deep Override
+    Position: {x: 160, y: 1560}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 1a2b3c4d5e6f70819283746556473829
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 1
+  - NodeId: 8b52dc8f-bc56-4ea8-ab9a-ac763d247dd5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Jungle Deep Override
+    Position: {x: 160, y: 1700}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 4d5e6f708192837465564738291a2b3c
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 1
+  - NodeId: f1986100-61c0-4f76-bb85-64724edca0cb
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Desert Deep Override
+    Position: {x: 160, y: 1840}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 7b8c9d0e1f23456789abcdef0123456a
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 1
+  - NodeId: d15c5ccd-13a2-4644-904f-95cc7781aeb3
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Deep Override
+    Position: {x: 160, y: 1980}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: ae1f23456789abcdef0123456a7b8c9d
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 1
+  - NodeId: 34ee0a9d-42e9-47ec-883a-b38d569f48cc
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Forest Cave Override Layer
+    Position: {x: 160, y: 2140}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 2b3c4d5e6f708192837465564738291a
+    - Name: blendEdgeWidth
+      Value: 6
+    - Name: blendMode
+      Value: VerticalOnly
+    - Name: probability
+      Value: 1
+  - NodeId: b5f2cabf-9a7e-46c2-8cad-1ef77ab43dbf
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Jungle Cave Override Layer
+    Position: {x: 160, y: 2280}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 5e6f708192837465564738291a2b3c4d
+    - Name: blendEdgeWidth
+      Value: 6
+    - Name: blendMode
+      Value: VerticalOnly
+    - Name: probability
+      Value: 1
+  - NodeId: d7cf418a-d3c3-4ee3-866a-b9e85c325567
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Desert Cave Override Layer
+    Position: {x: 160, y: 2420}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 8c9d0e1f23456789abcdef0123456a7b
+    - Name: blendEdgeWidth
+      Value: 6
+    - Name: blendMode
+      Value: VerticalOnly
+    - Name: probability
+      Value: 1
+  - NodeId: 77ac2849-285c-475b-a6f7-53dca7f2ee8a
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Cave Override Layer
+    Position: {x: 160, y: 2560}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: bf23456789abcdef0123456a7b8c9dae
+    - Name: blendEdgeWidth
+      Value: 6
+    - Name: blendMode
+      Value: VerticalOnly
+    - Name: probability
+      Value: 1
+  - NodeId: c2f2d93d-3b68-4c89-b243-a8ba7cd30421
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Underground Blend Region
+    Position: {x: 520, y: 980}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleUndergroundBlendRegion
+      DisplayName: JungleUndergroundBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 665f4d5a-5711-4ca0-b7b9-78bf7c0b2dd6
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Desert Underground Blend Region
+    Position: {x: 520, y: 1120}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DesertUndergroundBlendRegion
+      DisplayName: DesertUndergroundBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: d2eb4b4c-5371-4dc1-94b9-1a6ab93cc1fd
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Underground Blend Region
+    Position: {x: 520, y: 1260}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceUndergroundBlendRegion
+      DisplayName: IceUndergroundBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 9a0ac8b2-4f36-4ff0-b1da-fc76497758b7
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Jungle Underground Edge Blend
+    Position: {x: 840, y: 980}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 3c4d5e6f708192837465564738291a2b
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: 941f9ce1-3d6a-4b25-820b-980762e39f5b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Desert Underground Edge Blend
+    Position: {x: 840, y: 1120}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 6a7b8c9d0e1f23456789abcdef012345
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: 51982a29-2a7a-4213-b4f4-85b8887b9f70
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Underground Edge Blend
+    Position: {x: 840, y: 1260}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 9d0e1f23456789abcdef0123456a7b8c
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: ebd95920-8b6a-49b0-a22f-16b9f0d09063
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Deep Blend Region
+    Position: {x: 520, y: 1560}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleDeepBlendRegion
+      DisplayName: JungleDeepBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 21cbb1c8-fa6c-41ea-b4c8-7720dc4884eb
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Desert Deep Blend Region
+    Position: {x: 520, y: 1700}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DesertDeepBlendRegion
+      DisplayName: DesertDeepBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: f84a8176-34f4-4fbd-bc41-d7bd7eaef828
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Deep Blend Region
+    Position: {x: 520, y: 1840}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceDeepBlendRegion
+      DisplayName: IceDeepBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 7a91a406-a224-44f7-a657-3c6b8088314d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Jungle Deep Edge Blend
+    Position: {x: 840, y: 1560}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 4d5e6f708192837465564738291a2b3c
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: 3141cab6-bb60-4dd0-acd5-e9041f859720
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Desert Deep Edge Blend
+    Position: {x: 840, y: 1700}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 7b8c9d0e1f23456789abcdef0123456a
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: c7d36c8f-c7c3-4ca4-a4f8-c0eca13eb0d0
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Deep Edge Blend
+    Position: {x: 840, y: 1840}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: ae1f23456789abcdef0123456a7b8c9d
+    - Name: blendEdgeWidth
+      Value: 10
+    - Name: probability
+      Value: 0.45
+  - NodeId: 2879d735-2f0f-40b5-b5cc-b75d92cb2c14
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Cave Blend Region
+    Position: {x: 520, y: 2140}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleCaveBlendRegion
+      DisplayName: JungleCaveBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 6f03b34f-32e8-4301-9a5d-1bec57f793b3
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Desert Cave Blend Region
+    Position: {x: 520, y: 2280}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DesertCaveBlendRegion
+      DisplayName: DesertCaveBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: edc3799d-0b4a-45b0-8f54-8783c9b4ac85
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Cave Blend Region
+    Position: {x: 520, y: 2420}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceCaveBlendRegion
+      DisplayName: IceCaveBlendRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+  - NodeId: 8f732b01-6697-4341-9c7f-f11ec7397f7d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Jungle Cave Edge Blend
+    Position: {x: 840, y: 2140}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 5e6f708192837465564738291a2b3c4d
+    - Name: blendEdgeWidth
+      Value: 12
+    - Name: blendMode
+      Value: AnyEdge
+    - Name: probability
+      Value: 1
+  - NodeId: 4946a27c-c978-4cfa-a3dc-aeec0bd3a3b3
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Desert Cave Edge Blend
+    Position: {x: 840, y: 2280}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 8c9d0e1f23456789abcdef0123456a7b
+    - Name: blendEdgeWidth
+      Value: 12
+    - Name: blendMode
+      Value: AnyEdge
+    - Name: probability
+      Value: 1
+  - NodeId: 2669bfcc-40d5-4af4-bdcb-bc20f4055610
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Cave Edge Blend
+    Position: {x: 840, y: 2420}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: bf23456789abcdef0123456a7b8c9dae
+    - Name: blendEdgeWidth
+      Value: 12
+    - Name: blendMode
+      Value: AnyEdge
+    - Name: probability
+      Value: 1
+  - NodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
+    NodeName: Cave Distance Field
+    Position: {x: -1080, y: 2520}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CaveDistanceField
+      DisplayName: CaveDistanceField
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: 7a3d7211-74a3-4ef4-b3ae-cdc4a5dfe87d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Cave Proximity
+    Position: {x: -760, y: 2520}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: CaveProximity
+      DisplayName: CaveProximity
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: inputType
+      Value: Float
+  - NodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Cave Material Proximity Mask
+    Position: {x: -440, y: 2520}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: CaveMaterialProximityMask
+      DisplayName: CaveMaterialProximityMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.45
+  - NodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave Material Region
+    Position: {x: -120, y: 2520}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveMaterialRegion
+      DisplayName: CaveMaterialRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
   Connections:
   - FromNodeId: 30729321-8c26-440a-8c37-54ed6a10e047
     FromPortName: TerrainMass
@@ -2244,7 +3414,7 @@ MonoBehaviour:
     ToNodeId: graph-output-node
     ToPortName: LogicalIds
     CastMode: 0
-  - FromNodeId: 48b01c7d-6fc8-499b-8e23-3245aed590c2
+  - FromNodeId: 26916bc9-fcd3-4717-84cb-6a4b3052ac97
     FromPortName: BiomeChannel
     ToNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
     ToPortName: Biome Channel
@@ -2254,8 +3424,8 @@ MonoBehaviour:
     ToNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
     ToPortName: A
     CastMode: 3
-  - FromNodeId: 08271325-c52e-41cc-aa71-693805aad513
-    FromPortName: CaveBand
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
     ToNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
     ToPortName: B
     CastMode: 0
@@ -2269,7 +3439,7 @@ MonoBehaviour:
     ToNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
     ToPortName: Mask
     CastMode: 0
-  - FromNodeId: 48b01c7d-6fc8-499b-8e23-3245aed590c2
+  - FromNodeId: 26916bc9-fcd3-4717-84cb-6a4b3052ac97
     FromPortName: BiomeChannel
     ToNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
     ToPortName: Biome Channel
@@ -2304,8 +3474,8 @@ MonoBehaviour:
     ToNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
     ToPortName: A
     CastMode: 3
-  - FromNodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
-    FromPortName: WallMask
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
     ToNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
     ToPortName: B
     CastMode: 0
@@ -2668,6 +3838,526 @@ MonoBehaviour:
     FromPortName: SpacedHousePoints
     ToNodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
     ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 48b01c7d-6fc8-499b-8e23-3245aed590c2
+    FromPortName: BiomeChannel
+    ToNodeId: 31dd14f5-c0cf-497b-bc92-7a2e51a773e4
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 46ca284a-d8a0-47fe-91fd-bb8f5d17d21f
+    FromPortName: ForestJungleBlendBand
+    ToNodeId: 31dd14f5-c0cf-497b-bc92-7a2e51a773e4
+    ToPortName: Mask
+    CastMode: 3
+  - FromNodeId: 31dd14f5-c0cf-497b-bc92-7a2e51a773e4
+    FromPortName: BiomeChannel
+    ToNodeId: 8ae4c954-5fe6-428c-aaf9-7603d4f02719
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: a442fcbc-fab0-42ec-a84d-3f2274cc0ff8
+    FromPortName: JungleDesertBlendBand
+    ToNodeId: 8ae4c954-5fe6-428c-aaf9-7603d4f02719
+    ToPortName: Mask
+    CastMode: 3
+  - FromNodeId: 8ae4c954-5fe6-428c-aaf9-7603d4f02719
+    FromPortName: BiomeChannel
+    ToNodeId: 26916bc9-fcd3-4717-84cb-6a4b3052ac97
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: c16739af-c6f5-43d7-94d0-90026cbb54c5
+    FromPortName: DesertIceBlendBand
+    ToNodeId: 26916bc9-fcd3-4717-84cb-6a4b3052ac97
+    ToPortName: Mask
+    CastMode: 3
+  - FromNodeId: 26916bc9-fcd3-4717-84cb-6a4b3052ac97
+    FromPortName: BiomeChannel
+    ToNodeId: 18f5b17f-99e2-4b4a-9b0f-bfbad8ea5281
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: 26916bc9-fcd3-4717-84cb-6a4b3052ac97
+    FromPortName: BiomeChannel
+    ToNodeId: f0797257-b47b-46a5-bdbe-948ea8d2d95a
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: 18f5b17f-99e2-4b4a-9b0f-bfbad8ea5281
+    FromPortName: ForestPresenceMask
+    ToNodeId: 0e49b9f7-cf2d-4f86-a6ea-42ef954be6b8
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: 0e49b9f7-cf2d-4f86-a6ea-42ef954be6b8
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    FromPortName: JungleBiomeMask
+    ToNodeId: d67dfdb9-38c5-4892-b486-3efea2860a55
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: d67dfdb9-38c5-4892-b486-3efea2860a55
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: f0797257-b47b-46a5-bdbe-948ea8d2d95a
+    FromPortName: DesertPresenceMask
+    ToNodeId: 90f0eb0e-8383-4ef9-a6a5-bc8fa8ba6a35
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: 90f0eb0e-8383-4ef9-a6a5-bc8fa8ba6a35
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    FromPortName: IceBiomeMask
+    ToNodeId: 6d243277-c13e-42ec-abcf-7780fb7f6ac0
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: 6d243277-c13e-42ec-abcf-7780fb7f6ac0
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 18f5b17f-99e2-4b4a-9b0f-bfbad8ea5281
+    FromPortName: ForestPresenceMask
+    ToNodeId: fae8e8ce-30b8-4387-b72a-6ca9fefecb46
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: fae8e8ce-30b8-4387-b72a-6ca9fefecb46
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    FromPortName: JungleBiomeMask
+    ToNodeId: a3660c50-bdc3-412f-a439-1dd4e98f12ff
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: a3660c50-bdc3-412f-a439-1dd4e98f12ff
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: f0797257-b47b-46a5-bdbe-948ea8d2d95a
+    FromPortName: DesertPresenceMask
+    ToNodeId: 2b57b94e-ee1b-470a-b9d8-04d294f670fc
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: 2b57b94e-ee1b-470a-b9d8-04d294f670fc
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    FromPortName: IceBiomeMask
+    ToNodeId: 6543db0b-1691-4a9f-b7c6-984dc7c34db8
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: 6543db0b-1691-4a9f-b7c6-984dc7c34db8
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 18f5b17f-99e2-4b4a-9b0f-bfbad8ea5281
+    FromPortName: ForestPresenceMask
+    ToNodeId: 704d6d07-0c57-4f6c-bcff-7d85ab74ec45
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 704d6d07-0c57-4f6c-bcff-7d85ab74ec45
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    FromPortName: JungleBiomeMask
+    ToNodeId: dc3c6b21-d872-4b40-b827-6d826a47a376
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: dc3c6b21-d872-4b40-b827-6d826a47a376
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: f0797257-b47b-46a5-bdbe-948ea8d2d95a
+    FromPortName: DesertPresenceMask
+    ToNodeId: 275ad7ba-bf3a-43f9-8c07-4e8d3219a4d6
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 275ad7ba-bf3a-43f9-8c07-4e8d3219a4d6
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    FromPortName: IceBiomeMask
+    ToNodeId: 3b2856d0-cfe2-4dbe-9209-53e50f2e8b0e
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 3b2856d0-cfe2-4dbe-9209-53e50f2e8b0e
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 26916bc9-fcd3-4717-84cb-6a4b3052ac97
+    FromPortName: BiomeChannel
+    ToNodeId: 45a4829c-3db3-4b2d-a971-2b0bc089917f
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 0e49b9f7-cf2d-4f86-a6ea-42ef954be6b8
+    FromPortName: ForestUndergroundRegion
+    ToNodeId: 45a4829c-3db3-4b2d-a971-2b0bc089917f
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 45a4829c-3db3-4b2d-a971-2b0bc089917f
+    FromPortName: BiomeChannel
+    ToNodeId: 70d14f59-c505-4e38-8a93-8dc9d8d7d67d
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: d67dfdb9-38c5-4892-b486-3efea2860a55
+    FromPortName: JungleUndergroundRegion
+    ToNodeId: 70d14f59-c505-4e38-8a93-8dc9d8d7d67d
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 70d14f59-c505-4e38-8a93-8dc9d8d7d67d
+    FromPortName: BiomeChannel
+    ToNodeId: 2b1f0e33-5afe-41b8-a723-8d525d4095fd
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 90f0eb0e-8383-4ef9-a6a5-bc8fa8ba6a35
+    FromPortName: DesertUndergroundRegion
+    ToNodeId: 2b1f0e33-5afe-41b8-a723-8d525d4095fd
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 2b1f0e33-5afe-41b8-a723-8d525d4095fd
+    FromPortName: BiomeChannel
+    ToNodeId: 6675d404-5f13-47a8-9539-81dbd18dc603
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 6d243277-c13e-42ec-abcf-7780fb7f6ac0
+    FromPortName: IceUndergroundRegion
+    ToNodeId: 6675d404-5f13-47a8-9539-81dbd18dc603
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 46ca284a-d8a0-47fe-91fd-bb8f5d17d21f
+    FromPortName: ForestJungleBlendBand
+    ToNodeId: c2f2d93d-3b68-4c89-b243-a8ba7cd30421
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: c2f2d93d-3b68-4c89-b243-a8ba7cd30421
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: c2f2d93d-3b68-4c89-b243-a8ba7cd30421
+    FromPortName: JungleUndergroundBlendRegion
+    ToNodeId: 9a0ac8b2-4f36-4ff0-b1da-fc76497758b7
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 6675d404-5f13-47a8-9539-81dbd18dc603
+    FromPortName: BiomeChannel
+    ToNodeId: 9a0ac8b2-4f36-4ff0-b1da-fc76497758b7
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: a442fcbc-fab0-42ec-a84d-3f2274cc0ff8
+    FromPortName: JungleDesertBlendBand
+    ToNodeId: 665f4d5a-5711-4ca0-b7b9-78bf7c0b2dd6
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: 665f4d5a-5711-4ca0-b7b9-78bf7c0b2dd6
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 665f4d5a-5711-4ca0-b7b9-78bf7c0b2dd6
+    FromPortName: DesertUndergroundBlendRegion
+    ToNodeId: 941f9ce1-3d6a-4b25-820b-980762e39f5b
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 9a0ac8b2-4f36-4ff0-b1da-fc76497758b7
+    FromPortName: BiomeChannel
+    ToNodeId: 941f9ce1-3d6a-4b25-820b-980762e39f5b
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: c16739af-c6f5-43d7-94d0-90026cbb54c5
+    FromPortName: DesertIceBlendBand
+    ToNodeId: d2eb4b4c-5371-4dc1-94b9-1a6ab93cc1fd
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: d2eb4b4c-5371-4dc1-94b9-1a6ab93cc1fd
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: d2eb4b4c-5371-4dc1-94b9-1a6ab93cc1fd
+    FromPortName: IceUndergroundBlendRegion
+    ToNodeId: 51982a29-2a7a-4213-b4f4-85b8887b9f70
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 941f9ce1-3d6a-4b25-820b-980762e39f5b
+    FromPortName: BiomeChannel
+    ToNodeId: 51982a29-2a7a-4213-b4f4-85b8887b9f70
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 51982a29-2a7a-4213-b4f4-85b8887b9f70
+    FromPortName: BiomeChannel
+    ToNodeId: 9ee6ddcb-ac0a-4cd5-acde-b36c17ca7bf6
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: fae8e8ce-30b8-4387-b72a-6ca9fefecb46
+    FromPortName: ForestDeepRegion
+    ToNodeId: 9ee6ddcb-ac0a-4cd5-acde-b36c17ca7bf6
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 9ee6ddcb-ac0a-4cd5-acde-b36c17ca7bf6
+    FromPortName: BiomeChannel
+    ToNodeId: 8b52dc8f-bc56-4ea8-ab9a-ac763d247dd5
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: a3660c50-bdc3-412f-a439-1dd4e98f12ff
+    FromPortName: JungleDeepRegion
+    ToNodeId: 8b52dc8f-bc56-4ea8-ab9a-ac763d247dd5
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 8b52dc8f-bc56-4ea8-ab9a-ac763d247dd5
+    FromPortName: BiomeChannel
+    ToNodeId: f1986100-61c0-4f76-bb85-64724edca0cb
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 2b57b94e-ee1b-470a-b9d8-04d294f670fc
+    FromPortName: DesertDeepRegion
+    ToNodeId: f1986100-61c0-4f76-bb85-64724edca0cb
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: f1986100-61c0-4f76-bb85-64724edca0cb
+    FromPortName: BiomeChannel
+    ToNodeId: d15c5ccd-13a2-4644-904f-95cc7781aeb3
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 6543db0b-1691-4a9f-b7c6-984dc7c34db8
+    FromPortName: IceDeepRegion
+    ToNodeId: d15c5ccd-13a2-4644-904f-95cc7781aeb3
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 46ca284a-d8a0-47fe-91fd-bb8f5d17d21f
+    FromPortName: ForestJungleBlendBand
+    ToNodeId: ebd95920-8b6a-49b0-a22f-16b9f0d09063
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: ebd95920-8b6a-49b0-a22f-16b9f0d09063
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: ebd95920-8b6a-49b0-a22f-16b9f0d09063
+    FromPortName: JungleDeepBlendRegion
+    ToNodeId: 7a91a406-a224-44f7-a657-3c6b8088314d
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: d15c5ccd-13a2-4644-904f-95cc7781aeb3
+    FromPortName: BiomeChannel
+    ToNodeId: 7a91a406-a224-44f7-a657-3c6b8088314d
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: a442fcbc-fab0-42ec-a84d-3f2274cc0ff8
+    FromPortName: JungleDesertBlendBand
+    ToNodeId: 21cbb1c8-fa6c-41ea-b4c8-7720dc4884eb
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: 21cbb1c8-fa6c-41ea-b4c8-7720dc4884eb
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 21cbb1c8-fa6c-41ea-b4c8-7720dc4884eb
+    FromPortName: DesertDeepBlendRegion
+    ToNodeId: 3141cab6-bb60-4dd0-acd5-e9041f859720
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 7a91a406-a224-44f7-a657-3c6b8088314d
+    FromPortName: BiomeChannel
+    ToNodeId: 3141cab6-bb60-4dd0-acd5-e9041f859720
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: c16739af-c6f5-43d7-94d0-90026cbb54c5
+    FromPortName: DesertIceBlendBand
+    ToNodeId: f84a8176-34f4-4fbd-bc41-d7bd7eaef828
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: f84a8176-34f4-4fbd-bc41-d7bd7eaef828
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: f84a8176-34f4-4fbd-bc41-d7bd7eaef828
+    FromPortName: IceDeepBlendRegion
+    ToNodeId: c7d36c8f-c7c3-4ca4-a4f8-c0eca13eb0d0
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 3141cab6-bb60-4dd0-acd5-e9041f859720
+    FromPortName: BiomeChannel
+    ToNodeId: c7d36c8f-c7c3-4ca4-a4f8-c0eca13eb0d0
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: c7d36c8f-c7c3-4ca4-a4f8-c0eca13eb0d0
+    FromPortName: BiomeChannel
+    ToNodeId: 34ee0a9d-42e9-47ec-883a-b38d569f48cc
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 704d6d07-0c57-4f6c-bcff-7d85ab74ec45
+    FromPortName: ForestCaveRegion
+    ToNodeId: 34ee0a9d-42e9-47ec-883a-b38d569f48cc
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 34ee0a9d-42e9-47ec-883a-b38d569f48cc
+    FromPortName: BiomeChannel
+    ToNodeId: b5f2cabf-9a7e-46c2-8cad-1ef77ab43dbf
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: dc3c6b21-d872-4b40-b827-6d826a47a376
+    FromPortName: JungleCaveMaterialRegion
+    ToNodeId: b5f2cabf-9a7e-46c2-8cad-1ef77ab43dbf
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: b5f2cabf-9a7e-46c2-8cad-1ef77ab43dbf
+    FromPortName: BiomeChannel
+    ToNodeId: d7cf418a-d3c3-4ee3-866a-b9e85c325567
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 275ad7ba-bf3a-43f9-8c07-4e8d3219a4d6
+    FromPortName: DesertCaveRegion
+    ToNodeId: d7cf418a-d3c3-4ee3-866a-b9e85c325567
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: d7cf418a-d3c3-4ee3-866a-b9e85c325567
+    FromPortName: BiomeChannel
+    ToNodeId: 77ac2849-285c-475b-a6f7-53dca7f2ee8a
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 3b2856d0-cfe2-4dbe-9209-53e50f2e8b0e
+    FromPortName: IceCaveMaterialRegion
+    ToNodeId: 77ac2849-285c-475b-a6f7-53dca7f2ee8a
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    FromPortName: OpenCaves
+    ToNodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
+    FromPortName: CaveDistanceField
+    ToNodeId: 7a3d7211-74a3-4ef4-b3ae-cdc4a5dfe87d
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 7a3d7211-74a3-4ef4-b3ae-cdc4a5dfe87d
+    FromPortName: CaveProximity
+    ToNodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
+    FromPortName: CaveMaterialProximityMask
+    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 46ca284a-d8a0-47fe-91fd-bb8f5d17d21f
+    FromPortName: ForestJungleBlendBand
+    ToNodeId: 2879d735-2f0f-40b5-b5cc-b75d92cb2c14
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 2879d735-2f0f-40b5-b5cc-b75d92cb2c14
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 2879d735-2f0f-40b5-b5cc-b75d92cb2c14
+    FromPortName: JungleCaveBlendRegion
+    ToNodeId: 8f732b01-6697-4341-9c7f-f11ec7397f7d
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 77ac2849-285c-475b-a6f7-53dca7f2ee8a
+    FromPortName: BiomeChannel
+    ToNodeId: 8f732b01-6697-4341-9c7f-f11ec7397f7d
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: a442fcbc-fab0-42ec-a84d-3f2274cc0ff8
+    FromPortName: JungleDesertBlendBand
+    ToNodeId: 6f03b34f-32e8-4301-9a5d-1bec57f793b3
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 6f03b34f-32e8-4301-9a5d-1bec57f793b3
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 6f03b34f-32e8-4301-9a5d-1bec57f793b3
+    FromPortName: DesertCaveBlendRegion
+    ToNodeId: 4946a27c-c978-4cfa-a3dc-aeec0bd3a3b3
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 8f732b01-6697-4341-9c7f-f11ec7397f7d
+    FromPortName: BiomeChannel
+    ToNodeId: 4946a27c-c978-4cfa-a3dc-aeec0bd3a3b3
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: c16739af-c6f5-43d7-94d0-90026cbb54c5
+    FromPortName: DesertIceBlendBand
+    ToNodeId: edc3799d-0b4a-45b0-8f54-8783c9b4ac85
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: edc3799d-0b4a-45b0-8f54-8783c9b4ac85
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: edc3799d-0b4a-45b0-8f54-8783c9b4ac85
+    FromPortName: IceCaveBlendRegion
+    ToNodeId: 2669bfcc-40d5-4af4-bdcb-bc20f4055610
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 4946a27c-c978-4cfa-a3dc-aeec0bd3a3b3
+    FromPortName: BiomeChannel
+    ToNodeId: 2669bfcc-40d5-4af4-bdcb-bc20f4055610
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 2669bfcc-40d5-4af4-bdcb-bc20f4055610
+    FromPortName: BiomeChannel
+    ToNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    FromPortName: BiomeChannel
+    ToNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    FromPortName: BiomeChannel
+    ToNodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    FromPortName: BiomeChannel
+    ToNodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
+    FromPortName: BiomeChannel
+    ToNodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
+    FromPortName: BiomeChannel
+    ToNodeId: 272ed66d-0521-4890-855c-c570cba4af92
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 272ed66d-0521-4890-855c-c570cba4af92
+    FromPortName: BiomeChannel
+    ToNodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
+    ToPortName: Biome Input
     CastMode: 0
   StickyNotes: []
   Groups: []
