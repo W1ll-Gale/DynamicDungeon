@@ -14,6 +14,8 @@ namespace DynamicDungeon.Editor.Windows
         private const string IdleStatusText = "Idle";
         private const string WindowTitle = "Dynamic Dungeon Graph";
         private const float DiagnosticsPanelHeight = 120.0f;
+        private const double AutoSaveDebounceSeconds = 1.0;
+        private const double AutoSaveGeneratingRetrySeconds = 0.25;
         private const string AutoSavePrefsKey = "DynamicDungeon.AutoSave";
         private const string CanvasScrollXPrefsKey = "DynamicDungeon.EditorWindow.CanvasScrollX";
         private const string CanvasScrollYPrefsKey = "DynamicDungeon.EditorWindow.CanvasScrollY";
@@ -27,6 +29,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private ObjectField _graphField;
         private Label _statusLabel;
+        private Label _saveStateLabel;
         private ToolbarToggle _autoSaveToggle;
         private ToolbarToggle _blackboardToggle;
         private ToolbarToggle _settingsToggle;
@@ -41,6 +44,8 @@ namespace DynamicDungeon.Editor.Windows
         private GenerationOrchestrator _generationOrchestrator;
         private DiagnosticsPanel _diagnosticsPanel;
         private bool _skipNextPreviewRefresh;
+        private bool _autoSavePending;
+        private double _nextAutoSaveTime;
 
         [SerializeField]
         private GenGraph _loadedGraph;
@@ -72,11 +77,11 @@ namespace DynamicDungeon.Editor.Windows
         {
             get
             {
-                return EditorPrefs.GetBool(AutoSavePrefsKey, false);
+                return LoadAutoSavePreference();
             }
             set
             {
-                EditorPrefs.SetBool(AutoSavePrefsKey, value);
+                SaveAutoSavePreference(value);
             }
         }
 
@@ -112,6 +117,25 @@ namespace DynamicDungeon.Editor.Windows
                 if (window != null)
                 {
                     window.RequestPreviewRefresh();
+                }
+            }
+        }
+
+        internal static void RefreshSaveStateForAllOpenWindows()
+        {
+            DynamicDungeonEditorWindow[] windows = Resources.FindObjectsOfTypeAll<DynamicDungeonEditorWindow>();
+            if (windows == null)
+            {
+                return;
+            }
+
+            int index;
+            for (index = 0; index < windows.Length; index++)
+            {
+                DynamicDungeonEditorWindow window = windows[index];
+                if (window != null)
+                {
+                    window.RefreshSaveStateAfterExternalSave();
                 }
             }
         }
@@ -192,6 +216,7 @@ namespace DynamicDungeon.Editor.Windows
             ApplyPanelVisibility();
             ApplyPanelLayouts();
             SetStatus(IdleStatusText);
+            RefreshSaveStateIndicator();
             RefreshWindowTitle();
         }
 
@@ -215,6 +240,13 @@ namespace DynamicDungeon.Editor.Windows
             {
                 _generationOrchestrator.Dispose();
                 _generationOrchestrator = null;
+            }
+
+            ClearQueuedAutoSave();
+
+            if (AutoSave)
+            {
+                SaveDirtyGraphImmediately();
             }
         }
 
@@ -254,13 +286,22 @@ namespace DynamicDungeon.Editor.Windows
             _autoSaveToggle.SetValueWithoutNotify(AutoSave);
             _autoSaveToggle.RegisterValueChangedCallback(OnAutoSaveToggleChanged);
             _autoSaveToggle.style.marginRight = 8.0f;
+            _autoSaveToggle.tooltip = "Save graph assets automatically after edits.";
             toolbar.Add(_autoSaveToggle);
 
             _statusLabel = new Label(IdleStatusText);
             _statusLabel.style.fontSize = 11.0f;
             _statusLabel.style.color = new Color(0.76f, 0.76f, 0.76f, 1.0f);
             _statusLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+            _statusLabel.style.marginRight = 8.0f;
             toolbar.Add(_statusLabel);
+
+            _saveStateLabel = new Label();
+            _saveStateLabel.style.fontSize = 11.0f;
+            _saveStateLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+            _saveStateLabel.style.minWidth = 58.0f;
+            _saveStateLabel.style.marginRight = 8.0f;
+            toolbar.Add(_saveStateLabel);
 
             VisualElement toolbarSpacer = new VisualElement();
             toolbarSpacer.style.flexGrow = 1.0f;
@@ -489,6 +530,7 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             SetStatus(IdleStatusText);
+            RefreshSaveStateIndicator();
             RefreshWindowTitle();
         }
 
@@ -513,22 +555,22 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnAfterGraphMutation()
         {
-            if (!AutoSave)
-            {
-                return;
-            }
-
-            if (_generationOrchestrator != null && _generationOrchestrator.IsGenerating)
-            {
-                return;
-            }
-
-            AssetDatabase.SaveAssets();
+            RefreshSaveStateIndicator();
+            QueueDirtyGraphAutoSave();
         }
 
         private void OnAutoSaveToggleChanged(ChangeEvent<bool> changeEvent)
         {
             AutoSave = changeEvent.newValue;
+
+            if (!AutoSave)
+            {
+                ClearQueuedAutoSave();
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            QueueDirtyGraphAutoSave();
         }
 
         private void OnBlackboardToggleChanged(ChangeEvent<bool> changeEvent)
@@ -682,6 +724,159 @@ namespace DynamicDungeon.Editor.Windows
             }
         }
 
+        private void QueueDirtyGraphAutoSave()
+        {
+            if (!AutoSave)
+            {
+                ClearQueuedAutoSave();
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            if (!IsTrackedGraphDirty())
+            {
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            _nextAutoSaveTime = EditorApplication.timeSinceStartup + AutoSaveDebounceSeconds;
+
+            if (_autoSavePending)
+            {
+                return;
+            }
+
+            _autoSavePending = true;
+            EditorApplication.update -= ProcessQueuedAutoSave;
+            EditorApplication.update += ProcessQueuedAutoSave;
+        }
+
+        private void ProcessQueuedAutoSave()
+        {
+            if (!_autoSavePending)
+            {
+                return;
+            }
+
+            if (!AutoSave)
+            {
+                ClearQueuedAutoSave();
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            if (!IsTrackedGraphDirty())
+            {
+                ClearQueuedAutoSave();
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            double currentTime = EditorApplication.timeSinceStartup;
+            if (currentTime < _nextAutoSaveTime)
+            {
+                return;
+            }
+
+            if (_generationOrchestrator != null && _generationOrchestrator.IsGenerating)
+            {
+                _nextAutoSaveTime = currentTime + AutoSaveGeneratingRetrySeconds;
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            ClearQueuedAutoSave();
+            SaveDirtyGraphImmediately();
+        }
+
+        private void ClearQueuedAutoSave()
+        {
+            if (!_autoSavePending)
+            {
+                return;
+            }
+
+            _autoSavePending = false;
+            EditorApplication.update -= ProcessQueuedAutoSave;
+        }
+
+        private void SaveDirtyGraphImmediately()
+        {
+            GenGraph graph = GetCurrentGraphForSaveState();
+            if (graph == null)
+            {
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            if (!IsTrackedGraphDirty())
+            {
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            AssetDatabase.SaveAssets();
+            RefreshSaveStateIndicator();
+        }
+
+        private void RefreshSaveStateAfterExternalSave()
+        {
+            if (!IsTrackedGraphDirty())
+            {
+                ClearQueuedAutoSave();
+            }
+
+            RefreshSaveStateIndicator();
+        }
+
+        private void RefreshSaveStateIndicator()
+        {
+            if (_saveStateLabel == null)
+            {
+                return;
+            }
+
+            GenGraph graph = GetCurrentGraphForSaveState();
+            if (graph == null)
+            {
+                _saveStateLabel.text = "No Graph";
+                _saveStateLabel.tooltip = "No graph asset is loaded.";
+                _saveStateLabel.style.color = new Color(0.55f, 0.55f, 0.55f, 1.0f);
+                return;
+            }
+
+            bool isUnsaved = IsTrackedGraphDirty();
+            _saveStateLabel.text = isUnsaved ? "Unsaved" : "Saved";
+            _saveStateLabel.tooltip = isUnsaved
+                ? (AutoSave
+                    ? "The current graph has unsaved changes. Auto Save will save it after editing pauses."
+                    : "The current graph has unsaved changes. Auto Save is off.")
+                : "The current graph asset is saved.";
+            _saveStateLabel.style.color = isUnsaved
+                ? new Color(1.0f, 0.62f, 0.2f, 1.0f)
+                : new Color(0.62f, 0.82f, 0.62f, 1.0f);
+        }
+
+        private GenGraph GetCurrentGraphForSaveState()
+        {
+            return _graphView != null && _graphView.Graph != null
+                ? _graphView.Graph
+                : _loadedGraph;
+        }
+
+        private bool IsTrackedGraphDirty()
+        {
+            GenGraph graph = GetCurrentGraphForSaveState();
+            if (graph != null && EditorUtility.IsDirty(graph))
+            {
+                return true;
+            }
+
+            return _loadedGraph != null
+                   && !ReferenceEquals(_loadedGraph, graph)
+                   && EditorUtility.IsDirty(_loadedGraph);
+        }
+
         private void OnGraphViewGeometryChanged(GeometryChangedEvent geometryChangedEvent)
         {
             ApplyPanelLayouts();
@@ -792,6 +987,16 @@ namespace DynamicDungeon.Editor.Windows
                 : (JsonUtility.FromJson<PanelViewSettings>(json) ?? new PanelViewSettings());
         }
 
+        private static bool LoadAutoSavePreference()
+        {
+            return EditorPrefs.GetBool(AutoSavePrefsKey, true);
+        }
+
+        private static void SaveAutoSavePreference(bool isEnabled)
+        {
+            EditorPrefs.SetBool(AutoSavePrefsKey, isEnabled);
+        }
+
         private static FloatingWindowLayout LoadLayout(string prefsKey, FloatingWindowLayout defaultLayout)
         {
             string json = EditorUserSettings.GetConfigValue(prefsKey);
@@ -803,6 +1008,26 @@ namespace DynamicDungeon.Editor.Windows
         internal static PanelViewSettings LoadPanelViewSettingsForTesting()
         {
             return LoadPanelViewSettings();
+        }
+
+        internal static bool LoadAutoSavePreferenceForTesting()
+        {
+            return LoadAutoSavePreference();
+        }
+
+        internal static void SaveAutoSavePreferenceForTesting(bool isEnabled)
+        {
+            SaveAutoSavePreference(isEnabled);
+        }
+
+        internal static void DeleteAutoSavePreferenceForTesting()
+        {
+            EditorPrefs.DeleteKey(AutoSavePrefsKey);
+        }
+
+        internal static bool HasAutoSavePreferenceForTesting()
+        {
+            return EditorPrefs.HasKey(AutoSavePrefsKey);
         }
 
         internal static FloatingWindowLayout LoadBlackboardLayoutForTesting()

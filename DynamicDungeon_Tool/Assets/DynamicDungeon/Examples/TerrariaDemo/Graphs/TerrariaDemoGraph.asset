@@ -239,7 +239,7 @@ MonoBehaviour:
   - NodeId: 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
     NodeName: Shallow Cave Band
-    Position: {x: -1720, y: -380}
+    Position: {x: -1799.9999, y: -575.9999}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -257,7 +257,7 @@ MonoBehaviour:
   - NodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Shallow Cave Region
-    Position: {x: -1400, y: -320}
+    Position: {x: -1404.745, y: -454.99997}
     Ports:
     - PortName: A
       DisplayName: A
@@ -277,7 +277,7 @@ MonoBehaviour:
   - NodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Shallow Cave Pockets
-    Position: {x: -1080, y: -320}
+    Position: {x: -1080, y: -711}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -571,7 +571,7 @@ MonoBehaviour:
   - NodeId: 2028b019-e0ad-4e81-8108-eb8011c7b5fd
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeLayerNode
     NodeName: Forest Layer
-    Position: {x: -1400, y: 760}
+    Position: {x: -1423, y: 739.32}
     Ports:
     - PortName: BiomeChannel
       DisplayName: BiomeChannel
@@ -830,6 +830,8 @@ MonoBehaviour:
       Value: 0
     - Name: distanceMode
       Value: Chebyshev
+    - Name: tagName
+      Value: 
   - NodeId: 54a82da2-7200-4468-9eea-b57e1770069a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Crystal Region
@@ -1120,6 +1122,8 @@ MonoBehaviour:
       Value: 18914d738c5d9e44cb2c39ae01763b84
     - Name: probability
       Value: 1
+    - Name: blendEdgeWidth
+      Value: 0
   - NodeId: c6b64ae4-2807-494d-9adb-069f6c9d9979
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Iron Zone
@@ -1232,6 +1236,8 @@ MonoBehaviour:
       Value: 79e09ec09101bf944b041249e2736e76
     - Name: probability
       Value: 1
+    - Name: blendEdgeWidth
+      Value: 0
   - NodeId: 2778bedb-770f-44ea-a2d3-c7f685eb199a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Gold Zone
@@ -1344,6 +1350,8 @@ MonoBehaviour:
       Value: 5f36cd43e17737d4e96cbb60df5a21be
     - Name: probability
       Value: 1
+    - Name: blendEdgeWidth
+      Value: 0
   - NodeId: 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Diamond Zone
@@ -1456,6 +1464,8 @@ MonoBehaviour:
       Value: 1864c3e44e2102d48a7770ea2a601075
     - Name: probability
       Value: 1
+    - Name: blendEdgeWidth
+      Value: 0
   - NodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: One
@@ -1470,6 +1480,8 @@ MonoBehaviour:
       Value: Float
     - Name: floatValue
       Value: 1
+    - Name: intValue
+      Value: 0
   - NodeId: 6999daac-7624-464b-9308-87663f179e01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: Zero
@@ -1483,6 +1495,8 @@ MonoBehaviour:
     - Name: outputType
       Value: Float
     - Name: floatValue
+      Value: 0
+    - Name: intValue
       Value: 0
   - NodeId: ced59584-f592-4d05-b4b5-487143502736
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
@@ -1590,6 +1604,8 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+    - Name: scalarB
+      Value: 0
   - NodeId: 62c2d399-7023-4628-b07a-c035317a8f19
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Jungle Tree Weight Base
@@ -1610,6 +1626,8 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+    - Name: scalarB
+      Value: 0
   - NodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Jungle Tree Weight
@@ -1648,6 +1666,8 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+    - Name: scalarB
+      Value: 0
   - NodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Desert Cactus Weight
@@ -1686,6 +1706,8 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+    - Name: scalarB
+      Value: 0
   - NodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Ice Tree Weight
@@ -1744,6 +1766,16 @@ MonoBehaviour:
       Value: True
     - Name: maxOverlapTiles
       Value: 0
+    - Name: interiorLogicalId
+      Value: 1
+    - Name: outlineLogicalId
+      Value: 2
+    - Name: blendMode
+      Value: Overwrite
+    - Name: mirrorY
+      Value: false
+    - Name: allowRotation
+      Value: false
   - NodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Jungle Tree Scatter
@@ -1784,6 +1816,16 @@ MonoBehaviour:
       Value: True
     - Name: maxOverlapTiles
       Value: 0
+    - Name: interiorLogicalId
+      Value: 1
+    - Name: outlineLogicalId
+      Value: 2
+    - Name: blendMode
+      Value: Overwrite
+    - Name: mirrorY
+      Value: false
+    - Name: allowRotation
+      Value: false
   - NodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Ice Tree Scatter
@@ -1824,6 +1866,16 @@ MonoBehaviour:
       Value: True
     - Name: maxOverlapTiles
       Value: 0
+    - Name: interiorLogicalId
+      Value: 1
+    - Name: outlineLogicalId
+      Value: 2
+    - Name: blendMode
+      Value: Overwrite
+    - Name: mirrorY
+      Value: false
+    - Name: allowRotation
+      Value: false
   - NodeId: 68905719-fc24-450e-8b09-869ff286d755
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Cactus Scatter
@@ -1864,6 +1916,16 @@ MonoBehaviour:
       Value: True
     - Name: maxOverlapTiles
       Value: 0
+    - Name: interiorLogicalId
+      Value: 1
+    - Name: outlineLogicalId
+      Value: 2
+    - Name: blendMode
+      Value: Overwrite
+    - Name: mirrorY
+      Value: false
+    - Name: allowRotation
+      Value: false
   - NodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Cloud Scatter
@@ -1904,6 +1966,16 @@ MonoBehaviour:
       Value: True
     - Name: maxOverlapTiles
       Value: 0
+    - Name: interiorLogicalId
+      Value: 1
+    - Name: outlineLogicalId
+      Value: 2
+    - Name: blendMode
+      Value: Overwrite
+    - Name: mirrorY
+      Value: false
+    - Name: allowRotation
+      Value: false
   - NodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
     NodeName: Cave House Anchors
@@ -1990,6 +2062,8 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+    - Name: scalarB
+      Value: 0
   - NodeId: 83addb74-0129-416d-811c-a0f3e8b6acb2
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: House Scatter
@@ -2068,6 +2142,14 @@ MonoBehaviour:
       Value: Overwrite
     - Name: mirrorX
       Value: True
+    - Name: interiorLogicalId
+      Value: 1
+    - Name: mirrorY
+      Value: false
+    - Name: allowRotation
+      Value: false
+    - Name: maxOverlapTiles
+      Value: 0
   - NodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Deep Underground Band

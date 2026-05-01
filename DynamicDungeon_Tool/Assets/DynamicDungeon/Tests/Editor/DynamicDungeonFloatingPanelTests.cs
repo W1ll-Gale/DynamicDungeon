@@ -9,6 +9,36 @@ namespace DynamicDungeon.Tests.Editor
     public sealed class DynamicDungeonFloatingPanelTests
     {
         [Test]
+        public void AutoSaveDefaultsOnAndPersistsTogglePreference()
+        {
+            bool hadOriginalPreference = DynamicDungeonEditorWindow.HasAutoSavePreferenceForTesting();
+            bool originalPreference = DynamicDungeonEditorWindow.LoadAutoSavePreferenceForTesting();
+
+            try
+            {
+                DynamicDungeonEditorWindow.DeleteAutoSavePreferenceForTesting();
+                Assert.That(DynamicDungeonEditorWindow.LoadAutoSavePreferenceForTesting(), Is.True);
+
+                DynamicDungeonEditorWindow.SaveAutoSavePreferenceForTesting(false);
+                Assert.That(DynamicDungeonEditorWindow.LoadAutoSavePreferenceForTesting(), Is.False);
+
+                DynamicDungeonEditorWindow.SaveAutoSavePreferenceForTesting(true);
+                Assert.That(DynamicDungeonEditorWindow.LoadAutoSavePreferenceForTesting(), Is.True);
+            }
+            finally
+            {
+                if (hadOriginalPreference)
+                {
+                    DynamicDungeonEditorWindow.SaveAutoSavePreferenceForTesting(originalPreference);
+                }
+                else
+                {
+                    DynamicDungeonEditorWindow.DeleteAutoSavePreferenceForTesting();
+                }
+            }
+        }
+
+        [Test]
         public void PanelViewSettingsRoundTripPersistsVisibilityChoices()
         {
             DynamicDungeonEditorWindow.PanelViewSettings originalSettings =
