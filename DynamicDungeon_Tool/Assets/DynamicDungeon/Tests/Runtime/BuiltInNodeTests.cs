@@ -136,6 +136,54 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task SurfaceNoiseReferenceHeightPreservesTopMarginWhenWorldHeightChanges()
+        {
+            SurfaceNoiseNode surfaceNode = new SurfaceNoiseNode(
+                "surface-node",
+                "Surface",
+                "Surface",
+                baseHeight: 0.5f,
+                amplitude: 0.0f,
+                frequency: 0.05f,
+                referenceHeight: 8);
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { surfaceNode }, 1, 12, 202601L);
+            WorldSnapshot.FloatChannelSnapshot output = GetFloatChannel(snapshot, "Surface");
+
+            Assert.That(output, Is.Not.Null);
+            int y;
+            for (y = 0; y <= 8; y++)
+            {
+                Assert.That(output.Data[y], Is.EqualTo(1.0f).Within(0.0001f));
+            }
+
+            for (y = 9; y < 12; y++)
+            {
+                Assert.That(output.Data[y], Is.EqualTo(0.0f).Within(0.0001f));
+            }
+        }
+
+        [Test]
+        public async Task HeightBandAnchorsBoundsAgainstReferenceHeight()
+        {
+            HeightBandNode bandNode = new HeightBandNode("height-band", "Height Band", "Band", 0.25f, 0.5f);
+            bandNode.ReceiveParameter("referenceHeight", "8");
+            bandNode.ReceiveParameter("minAnchor", "Top");
+            bandNode.ReceiveParameter("maxAnchor", "Top");
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { bandNode }, 1, 12, 202602L);
+            WorldSnapshot.FloatChannelSnapshot output = GetFloatChannel(snapshot, "Band");
+
+            Assert.That(output, Is.Not.Null);
+            int y;
+            for (y = 0; y < 12; y++)
+            {
+                float expected = y >= 6 && y <= 8 ? 1.0f : 0.0f;
+                Assert.That(output.Data[y], Is.EqualTo(expected).Within(0.0001f));
+            }
+        }
+
+        [Test]
         public async Task MathNodeAddOutputsPerTileSum()
         {
             float[] valuesA =

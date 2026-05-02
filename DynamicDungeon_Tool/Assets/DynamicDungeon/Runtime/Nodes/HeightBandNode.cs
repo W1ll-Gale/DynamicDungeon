@@ -6,6 +6,7 @@ using DynamicDungeon.Runtime.Graph;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
@@ -15,6 +16,13 @@ namespace DynamicDungeon.Runtime.Nodes
     [Description("Generates a vertical band mask. Outputs 1.0 inside the band, and 0.0 outside.")]
     public sealed class HeightBandNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
+        private enum BoundAnchor
+        {
+            Normalized = 0,
+            Bottom = 1,
+            Top = 2
+        }
+
         private const int DefaultBatchSize = 64;
         private const string DefaultNodeName = "Height Band";
         private const string FallbackOutputPortName = "Output";
@@ -33,6 +41,16 @@ namespace DynamicDungeon.Runtime.Nodes
         [Range(0f, 1f)]
         [Description("The upper normalized bound of the band (1 is top).")]
         private float _maxHeight = 1.0f;
+
+        [MinValue(0.0f)]
+        [Description("Optional authoring height in tiles for anchored bounds. Use 0 for regular normalized behavior.")]
+        private int _referenceHeight;
+
+        [Description("How the lower bound responds to world height changes when Reference Height is set.")]
+        private BoundAnchor _minAnchor = BoundAnchor.Normalized;
+
+        [Description("How the upper bound responds to world height changes when Reference Height is set.")]
+        private BoundAnchor _maxAnchor = BoundAnchor.Normalized;
 
         private ChannelDeclaration[] _channelDeclarations;
 
@@ -83,6 +101,30 @@ namespace DynamicDungeon.Runtime.Nodes
             {
                 float.TryParse(value, out _maxHeight);
             }
+            else if (string.Equals(name, "referenceHeight", StringComparison.OrdinalIgnoreCase))
+            {
+                int parsedReferenceHeight;
+                if (int.TryParse(value, out parsedReferenceHeight))
+                {
+                    _referenceHeight = math.max(0, parsedReferenceHeight);
+                }
+            }
+            else if (string.Equals(name, "minAnchor", StringComparison.OrdinalIgnoreCase))
+            {
+                BoundAnchor parsedAnchor;
+                if (Enum.TryParse(value ?? string.Empty, true, out parsedAnchor))
+                {
+                    _minAnchor = parsedAnchor;
+                }
+            }
+            else if (string.Equals(name, "maxAnchor", StringComparison.OrdinalIgnoreCase))
+            {
+                BoundAnchor parsedAnchor;
+                if (Enum.TryParse(value ?? string.Empty, true, out parsedAnchor))
+                {
+                    _maxAnchor = parsedAnchor;
+                }
+            }
             else if (string.Equals(name, "outputChannelName", StringComparison.OrdinalIgnoreCase))
             {
                 _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(_nodeId, value, FallbackOutputPortName);
@@ -94,14 +136,18 @@ namespace DynamicDungeon.Runtime.Nodes
         public JobHandle Schedule(NodeExecutionContext context)
         {
             NativeArray<float> output = context.GetFloatChannel(_outputChannelName);
+            float minHeight = ResolveBound(_minHeight, _minAnchor, context.Height, _referenceHeight);
+            float maxHeight = ResolveBound(_maxHeight, _maxAnchor, context.Height, _referenceHeight);
+            float resolvedMinHeight = math.min(minHeight, maxHeight);
+            float resolvedMaxHeight = math.max(minHeight, maxHeight);
 
             HeightBandJob job = new HeightBandJob
             {
                 Output = output,
                 Width = context.Width,
                 Height = context.Height,
-                MinHeight = _minHeight,
-                MaxHeight = _maxHeight
+                MinHeight = resolvedMinHeight,
+                MaxHeight = resolvedMaxHeight
             };
 
             return job.Schedule(output.Length, DefaultBatchSize, context.InputDependency);
@@ -113,6 +159,25 @@ namespace DynamicDungeon.Runtime.Nodes
             {
                 new ChannelDeclaration(_outputChannelName, ChannelType.Float, true)
             };
+        }
+
+        private static float ResolveBound(float normalizedValue, BoundAnchor anchor, int currentHeight, int referenceHeight)
+        {
+            float value = math.saturate(normalizedValue);
+            if (referenceHeight <= 0 || anchor == BoundAnchor.Normalized)
+            {
+                return value;
+            }
+
+            float safeCurrentHeight = math.max(1.0f, currentHeight);
+            float safeReferenceHeight = math.max(1.0f, referenceHeight);
+            if (anchor == BoundAnchor.Bottom)
+            {
+                return math.saturate((value * safeReferenceHeight) / safeCurrentHeight);
+            }
+
+            float topMarginTiles = (1.0f - value) * safeReferenceHeight;
+            return math.saturate((safeCurrentHeight - topMarginTiles) / safeCurrentHeight);
         }
 
         [BurstCompile]

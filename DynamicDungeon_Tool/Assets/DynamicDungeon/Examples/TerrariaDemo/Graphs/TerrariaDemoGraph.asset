@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
   SchemaVersion: 4
   WorldWidth: 512
-  WorldHeight: 128
+  WorldHeight: 192
   DefaultSeed: 246813579
   DefaultSeedMode: 1
   MaxValidationRetries: 1
@@ -56,6 +56,8 @@ MonoBehaviour:
       Value: 1.85
     - Name: seedOffset
       Value: 17
+    - Name: referenceHeight
+      Value: 128
   - NodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Terrain Mass Mask
@@ -114,6 +116,12 @@ MonoBehaviour:
       Value: 0.18
     - Name: maxHeight
       Value: 0.48
+    - Name: referenceHeight
+      Value: 128
+    - Name: minAnchor
+      Value: Top
+    - Name: maxAnchor
+      Value: Top
   - NodeId: fd837542-e32b-45ff-8499-937f33125ff1
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Deep Cave Band
@@ -128,6 +136,12 @@ MonoBehaviour:
       Value: 0
     - Name: maxHeight
       Value: 0.42
+    - Name: referenceHeight
+      Value: 128
+    - Name: minAnchor
+      Value: Bottom
+    - Name: maxAnchor
+      Value: Top
   - NodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Sky Band
@@ -2138,6 +2152,12 @@ MonoBehaviour:
       Value: 0.08
     - Name: maxHeight
       Value: 0.34
+    - Name: referenceHeight
+      Value: 128
+    - Name: minAnchor
+      Value: Bottom
+    - Name: maxAnchor
+      Value: Top
   - NodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
     NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
     NodeName: Cave Distance Field
