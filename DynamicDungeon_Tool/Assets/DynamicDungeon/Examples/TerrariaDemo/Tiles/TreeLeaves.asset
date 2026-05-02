@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: TreeLeaves
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: 7229671129288631938, guid: b2aec1b22fa5edf49b9b85ae3d2c0fc2, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b55a897e7a627bd4ca47c4ec190a67fa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

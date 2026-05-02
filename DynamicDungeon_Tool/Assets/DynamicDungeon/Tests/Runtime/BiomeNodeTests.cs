@@ -916,6 +916,8 @@ namespace DynamicDungeon.Tests.Runtime
                 Assert.That(biomeChannel, Is.Not.Null);
                 Assert.That(ContainsAny(logicalChannel.Data, 10, 11, 12, 13, 14, 15, 16, 17), Is.True);
                 Assert.That(ContainsAny(logicalChannel.Data, 18), Is.True);
+                Assert.That(ContainsBiomeTiles(executionResult.Snapshot, "MossCave"), Is.True);
+                Assert.That(ContainsBiomeTiles(executionResult.Snapshot, "CrystalCave"), Is.True);
             }
             finally
             {
@@ -1497,6 +1499,47 @@ namespace DynamicDungeon.Tests.Runtime
             }
 
             return null;
+        }
+
+        private static bool ContainsBiomeTiles(WorldSnapshot snapshot, string biomeName)
+        {
+            if (snapshot == null || snapshot.BiomeChannelBiomes == null || string.IsNullOrWhiteSpace(biomeName))
+            {
+                return false;
+            }
+
+            int biomeIndex = -1;
+            int index;
+            for (index = 0; index < snapshot.BiomeChannelBiomes.Length; index++)
+            {
+                BiomeAsset biome = snapshot.BiomeChannelBiomes[index];
+                if (biome != null && string.Equals(biome.name, biomeName, StringComparison.Ordinal))
+                {
+                    biomeIndex = index;
+                    break;
+                }
+            }
+
+            if (biomeIndex < 0)
+            {
+                return false;
+            }
+
+            WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+            if (biomeChannel == null || biomeChannel.Data == null)
+            {
+                return false;
+            }
+
+            for (index = 0; index < biomeChannel.Data.Length; index++)
+            {
+                if (biomeChannel.Data[index] == biomeIndex)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static WorldSnapshot.BoolMaskChannelSnapshot GetBoolMaskChannel(WorldSnapshot snapshot, string channelName)

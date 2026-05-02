@@ -23,7 +23,7 @@ MonoBehaviour:
     Tile: {fileID: 0}
     SpriteAsset: {fileID: 0}
     WeightedTiles:
-    - Tile: {fileID: 11400000, guid: 93e196dfa45273c49a5e6ab4b10519b6, type: 2}
+    - Tile: {fileID: 11400000, guid: 59410f5c3ec096642833c9f6323526b0, type: 2}
       Weight: 0.3
     - Tile: {fileID: 11400000, guid: 60856dae9077ef641995457fd0846738, type: 2}
       Weight: 0.7
