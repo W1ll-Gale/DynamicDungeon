@@ -727,12 +727,37 @@ namespace DynamicDungeon.Editor.Nodes
 
             int initialParameterCount = _nodeData.Parameters != null ? _nodeData.Parameters.Count : 0;
             GenNodeInstantiationUtility.PopulateDefaultParameters(_nodeData, _nodeInstance.GetType());
+            bool anyParameterPruned = PruneUnknownParameters();
             bool anyValueNormalised = NormaliseParameterValues();
             int updatedParameterCount = _nodeData.Parameters != null ? _nodeData.Parameters.Count : 0;
-            if ((updatedParameterCount != initialParameterCount || anyValueNormalised) && _graph != null)
+            if ((updatedParameterCount != initialParameterCount || anyParameterPruned || anyValueNormalised) && _graph != null)
             {
                 EditorUtility.SetDirty(_graph);
             }
+        }
+
+        private bool PruneUnknownParameters()
+        {
+            if (_nodeData == null || _nodeData.Parameters == null || _nodeInstance == null)
+            {
+                return false;
+            }
+
+            bool removedAnyParameter = false;
+            int parameterIndex;
+            for (parameterIndex = _nodeData.Parameters.Count - 1; parameterIndex >= 0; parameterIndex--)
+            {
+                SerializedParameter parameter = _nodeData.Parameters[parameterIndex];
+                if (parameter == null ||
+                    string.IsNullOrWhiteSpace(parameter.Name) ||
+                    !GenNodeInstantiationUtility.IsKnownSerialisedParameter(_nodeInstance.GetType(), parameter.Name))
+                {
+                    _nodeData.Parameters.RemoveAt(parameterIndex);
+                    removedAnyParameter = true;
+                }
+            }
+
+            return removedAnyParameter;
         }
 
         private bool NormaliseParameterValues()

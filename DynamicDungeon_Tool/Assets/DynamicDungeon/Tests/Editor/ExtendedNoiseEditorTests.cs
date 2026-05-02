@@ -35,6 +35,18 @@ namespace DynamicDungeon.Tests.Editor
         }
 
         [Test]
+        public void HeightBandDefaultParametersIncludeReferenceSizingControls()
+        {
+            GenNodeData nodeData = new GenNodeData("height-band", typeof(HeightBandNode).FullName, "Height Band", Vector2.zero);
+
+            List<SerializedParameter> parameters = GenNodeInstantiationUtility.CreateDefaultParameters(nodeData, typeof(HeightBandNode));
+
+            Assert.That(ContainsParameter(parameters, "referenceHeight"), Is.True);
+            Assert.That(ContainsParameter(parameters, "minAnchor"), Is.True);
+            Assert.That(ContainsParameter(parameters, "maxAnchor"), Is.True);
+        }
+
+        [Test]
         public void ConstantOutputTypeSwitchPreservesCastCompatibleConnection()
         {
             DynamicDungeonGraphView graphView = new DynamicDungeonGraphView();

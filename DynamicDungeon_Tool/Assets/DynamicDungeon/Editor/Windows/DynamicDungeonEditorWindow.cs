@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using DynamicDungeon.Runtime.Graph;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -31,6 +32,7 @@ namespace DynamicDungeon.Editor.Windows
         private Label _statusLabel;
         private Label _saveStateLabel;
         private ToolbarToggle _autoSaveToggle;
+        private ToolbarButton _discardChangesButton;
         private ToolbarToggle _blackboardToggle;
         private ToolbarToggle _settingsToggle;
         private ToolbarToggle _miniMapToggle;
@@ -302,6 +304,12 @@ namespace DynamicDungeon.Editor.Windows
             _saveStateLabel.style.minWidth = 58.0f;
             _saveStateLabel.style.marginRight = 8.0f;
             toolbar.Add(_saveStateLabel);
+
+            _discardChangesButton = new ToolbarButton(DiscardUnsavedGraphChanges);
+            _discardChangesButton.text = "Discard";
+            _discardChangesButton.tooltip = "Delete all unsaved changes on the loaded graph and reload it from disk.";
+            _discardChangesButton.style.marginRight = 8.0f;
+            toolbar.Add(_discardChangesButton);
 
             VisualElement toolbarSpacer = new VisualElement();
             toolbarSpacer.style.flexGrow = 1.0f;
@@ -819,6 +827,161 @@ namespace DynamicDungeon.Editor.Windows
             RefreshSaveStateIndicator();
         }
 
+        private void DiscardUnsavedGraphChanges()
+        {
+            GenGraph graph = GetCurrentGraphForSaveState();
+            if (graph == null || !IsTrackedGraphDirty())
+            {
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            List<GenGraph> dirtyGraphs = GetTrackedDirtyGraphs();
+            if (dirtyGraphs.Count == 0)
+            {
+                RefreshSaveStateIndicator();
+                return;
+            }
+
+            if (!EditorUtility.DisplayDialog(
+                    "Discard Unsaved Changes",
+                    "Delete all unsaved changes for the loaded graph and reload from disk?",
+                    "Discard",
+                    "Cancel"))
+            {
+                return;
+            }
+
+            ClearQueuedAutoSave();
+
+            Vector3 scrollOffset = Vector3.zero;
+            float zoomScale = 1.0f;
+            if (_graphView != null)
+            {
+                _graphView.GetViewportState(out scrollOffset, out zoomScale);
+            }
+
+            bool restoredAnyGraph = false;
+            int graphIndex;
+            for (graphIndex = 0; graphIndex < dirtyGraphs.Count; graphIndex++)
+            {
+                if (RestoreGraphFromSavedAsset(dirtyGraphs[graphIndex]))
+                {
+                    restoredAnyGraph = true;
+                }
+            }
+
+            if (_graphField != null)
+            {
+                _graphField.SetValueWithoutNotify(_loadedGraph);
+            }
+
+            if (restoredAnyGraph)
+            {
+                LoadGraphInCanvas(graph, scrollOffset, zoomScale);
+                return;
+            }
+
+            RefreshSaveStateIndicator();
+        }
+
+        private List<GenGraph> GetTrackedDirtyGraphs()
+        {
+            List<GenGraph> graphs = new List<GenGraph>();
+            AddDirtyGraph(graphs, GetCurrentGraphForSaveState());
+
+            if (_loadedGraph != null && !ReferenceEquals(_loadedGraph, GetCurrentGraphForSaveState()))
+            {
+                AddDirtyGraph(graphs, _loadedGraph);
+            }
+
+            return graphs;
+        }
+
+        private static void AddDirtyGraph(List<GenGraph> graphs, GenGraph graph)
+        {
+            if (graphs == null || graph == null || !EditorUtility.IsDirty(graph))
+            {
+                return;
+            }
+
+            string path = AssetDatabase.GetAssetPath(graph);
+            if (string.IsNullOrWhiteSpace(path) || graphs.Contains(graph))
+            {
+                return;
+            }
+
+            graphs.Add(graph);
+        }
+
+        private static bool RestoreGraphFromSavedAsset(GenGraph graph)
+        {
+            if (graph == null)
+            {
+                return false;
+            }
+
+            string assetPath = AssetDatabase.GetAssetPath(graph);
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return false;
+            }
+
+            string projectRoot = Path.GetDirectoryName(Application.dataPath);
+            if (string.IsNullOrWhiteSpace(projectRoot))
+            {
+                return false;
+            }
+
+            string sourceAbsolutePath = Path.GetFullPath(Path.Combine(projectRoot, assetPath));
+            if (!File.Exists(sourceAbsolutePath))
+            {
+                Debug.LogError("Could not find saved graph asset file at '" + sourceAbsolutePath + "'.");
+                return false;
+            }
+
+            string tempDirectory = Path.GetDirectoryName(assetPath);
+            if (string.IsNullOrWhiteSpace(tempDirectory))
+            {
+                tempDirectory = "Assets";
+            }
+
+            string tempAssetPath = AssetDatabase.GenerateUniqueAssetPath(
+                (tempDirectory + "/__DynamicDungeonDiscardTemp_" + Guid.NewGuid().ToString("N") + ".asset").Replace("\\", "/"));
+            string tempAbsolutePath = Path.GetFullPath(Path.Combine(projectRoot, tempAssetPath));
+
+            try
+            {
+                File.Copy(sourceAbsolutePath, tempAbsolutePath, false);
+                AssetDatabase.ImportAsset(tempAssetPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+
+                GenGraph savedGraph = AssetDatabase.LoadAssetAtPath<GenGraph>(tempAssetPath);
+                if (savedGraph == null)
+                {
+                    Debug.LogError("Could not load saved graph copy from '" + tempAssetPath + "'.");
+                    return false;
+                }
+
+                EditorUtility.CopySerialized(savedGraph, graph);
+                graph.name = Path.GetFileNameWithoutExtension(assetPath);
+                Undo.ClearUndo(graph);
+                EditorUtility.ClearDirty(graph);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("Could not discard unsaved graph changes for '" + assetPath + "': " + exception.Message);
+                return false;
+            }
+            finally
+            {
+                if (!string.IsNullOrWhiteSpace(tempAssetPath))
+                {
+                    AssetDatabase.DeleteAsset(tempAssetPath);
+                }
+            }
+        }
+
         private void RefreshSaveStateAfterExternalSave()
         {
             if (!IsTrackedGraphDirty())
@@ -842,6 +1005,7 @@ namespace DynamicDungeon.Editor.Windows
                 _saveStateLabel.text = "No Graph";
                 _saveStateLabel.tooltip = "No graph asset is loaded.";
                 _saveStateLabel.style.color = new Color(0.55f, 0.55f, 0.55f, 1.0f);
+                SetDiscardChangesButtonEnabled(false);
                 return;
             }
 
@@ -855,6 +1019,18 @@ namespace DynamicDungeon.Editor.Windows
             _saveStateLabel.style.color = isUnsaved
                 ? new Color(1.0f, 0.62f, 0.2f, 1.0f)
                 : new Color(0.62f, 0.82f, 0.62f, 1.0f);
+            SetDiscardChangesButtonEnabled(isUnsaved);
+        }
+
+        private void SetDiscardChangesButtonEnabled(bool isEnabled)
+        {
+            if (_discardChangesButton == null)
+            {
+                return;
+            }
+
+            _discardChangesButton.SetEnabled(isEnabled);
+            _discardChangesButton.style.opacity = isEnabled ? 1.0f : 0.45f;
         }
 
         private GenGraph GetCurrentGraphForSaveState()

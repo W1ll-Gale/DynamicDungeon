@@ -16,7 +16,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [Description("Generates a vertical band mask. Outputs 1.0 inside the band, and 0.0 outside.")]
     public sealed class HeightBandNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
-        private enum BoundAnchor
+        public enum BoundAnchor
         {
             Normalized = 0,
             Bottom = 1,
@@ -60,7 +60,15 @@ namespace DynamicDungeon.Runtime.Nodes
         public string NodeId => _nodeId;
         public string NodeName => _nodeName;
 
-        public HeightBandNode(string nodeId, string nodeName, string outputChannelName = "", float minHeight = 0f, float maxHeight = 1f)
+        public HeightBandNode(
+            string nodeId,
+            string nodeName,
+            string outputChannelName = "",
+            float minHeight = 0f,
+            float maxHeight = 1f,
+            int referenceHeight = 0,
+            BoundAnchor minAnchor = BoundAnchor.Normalized,
+            BoundAnchor maxAnchor = BoundAnchor.Normalized)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -72,6 +80,9 @@ namespace DynamicDungeon.Runtime.Nodes
             _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, outputChannelName, FallbackOutputPortName);
             _minHeight = minHeight;
             _maxHeight = maxHeight;
+            _referenceHeight = math.max(0, referenceHeight);
+            _minAnchor = minAnchor;
+            _maxAnchor = maxAnchor;
 
             RefreshPorts();
             RefreshChannelDeclarations();

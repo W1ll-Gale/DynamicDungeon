@@ -88,6 +88,12 @@ MonoBehaviour:
       Value: 0.05
     - Name: maxHeight
       Value: 0.82
+    - Name: referenceHeight
+      Value: 0
+    - Name: minAnchor
+      Value: Normalized
+    - Name: maxAnchor
+      Value: Normalized
   - NodeId: c41ad5c5-4bd8-43d8-8373-376a74d37254
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Surface Crust Band
@@ -102,6 +108,12 @@ MonoBehaviour:
       Value: 0.03
     - Name: maxHeight
       Value: 0.82
+    - Name: referenceHeight
+      Value: 0
+    - Name: minAnchor
+      Value: Normalized
+    - Name: maxAnchor
+      Value: Normalized
   - NodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Underground Band
@@ -117,11 +129,11 @@ MonoBehaviour:
     - Name: maxHeight
       Value: 0.48
     - Name: referenceHeight
-      Value: 128
+      Value: 0
     - Name: minAnchor
-      Value: Top
+      Value: Normalized
     - Name: maxAnchor
-      Value: Top
+      Value: Normalized
   - NodeId: fd837542-e32b-45ff-8499-937f33125ff1
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Deep Cave Band
@@ -137,11 +149,11 @@ MonoBehaviour:
     - Name: maxHeight
       Value: 0.42
     - Name: referenceHeight
-      Value: 128
+      Value: 0
     - Name: minAnchor
-      Value: Bottom
+      Value: Normalized
     - Name: maxAnchor
-      Value: Top
+      Value: Normalized
   - NodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Sky Band
@@ -156,6 +168,12 @@ MonoBehaviour:
       Value: 0.82
     - Name: maxHeight
       Value: 1
+    - Name: referenceHeight
+      Value: 0
+    - Name: minAnchor
+      Value: Normalized
+    - Name: maxAnchor
+      Value: Normalized
   - NodeId: 08271325-c52e-41cc-aa71-693805aad513
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Cave Region
@@ -1096,6 +1114,12 @@ MonoBehaviour:
       Value: 0.24
     - Name: maxHeight
       Value: 0.42
+    - Name: referenceHeight
+      Value: 0
+    - Name: minAnchor
+      Value: Normalized
+    - Name: maxAnchor
+      Value: Normalized
   - NodeId: 7c2aced2-da86-4c3d-ade5-719168a576fc
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Mid Ore Band
@@ -1110,6 +1134,12 @@ MonoBehaviour:
       Value: 0.12
     - Name: maxHeight
       Value: 0.3
+    - Name: referenceHeight
+      Value: 0
+    - Name: minAnchor
+      Value: Normalized
+    - Name: maxAnchor
+      Value: Normalized
   - NodeId: 8953ba8a-f86a-42cc-b3ba-f5d21f4bcc3d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Gold Ore Band
@@ -1124,6 +1154,12 @@ MonoBehaviour:
       Value: 0.05
     - Name: maxHeight
       Value: 0.18
+    - Name: referenceHeight
+      Value: 0
+    - Name: minAnchor
+      Value: Normalized
+    - Name: maxAnchor
+      Value: Normalized
   - NodeId: 0449a063-05b1-4877-95ae-9dcc15ba320f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Diamond Ore Band
@@ -1138,6 +1174,12 @@ MonoBehaviour:
       Value: 0.02
     - Name: maxHeight
       Value: 0.09
+    - Name: referenceHeight
+      Value: 0
+    - Name: minAnchor
+      Value: Normalized
+    - Name: maxAnchor
+      Value: Normalized
   - NodeId: 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Coal Zone
@@ -1991,7 +2033,7 @@ MonoBehaviour:
   - NodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Forest Tree Prefabs
-    Position: {x: 4815, y: 1330.52}
+    Position: {x: 4879, y: 1317}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2002,8 +2044,6 @@ MonoBehaviour:
       Direction: 1
       Type: 1
     Parameters:
-    - Name: prefab
-      Value: 51f71faa81cc4f741b4c2886c00273df
     - Name: footprintMode
       Value: None
     - Name: mirrorX
@@ -2020,6 +2060,8 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"51f71faa81cc4f741b4c2886c00273df","Weight":1.0}]}'
   - NodeId: forest-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Forest Tree Placement Points
@@ -2061,7 +2103,7 @@ MonoBehaviour:
   - NodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Jungle Tree Prefabs
-    Position: {x: 5195, y: 969.52}
+    Position: {x: 5188, y: 856.00006}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2072,8 +2114,6 @@ MonoBehaviour:
       Direction: 1
       Type: 1
     Parameters:
-    - Name: prefab
-      Value: ea5fc636fbbbe474cb55b6095ad39959
     - Name: footprintMode
       Value: None
     - Name: mirrorX
@@ -2090,6 +2130,8 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"ea5fc636fbbbe474cb55b6095ad39959","Weight":1.0}]}'
   - NodeId: jungle-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Jungle Tree Placement Points
@@ -2142,8 +2184,6 @@ MonoBehaviour:
       Direction: 1
       Type: 1
     Parameters:
-    - Name: prefab
-      Value: 3d29a499903e6c44b847b85c2c81242a
     - Name: footprintMode
       Value: None
     - Name: mirrorX
@@ -2160,6 +2200,8 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"3d29a499903e6c44b847b85c2c81242a","Weight":1.0}]}'
   - NodeId: ice-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Ice Tree Placement Points
@@ -2212,8 +2254,6 @@ MonoBehaviour:
       Direction: 1
       Type: 1
     Parameters:
-    - Name: prefab
-      Value: adcaa141de6eba940af9ebb2e4fc664e
     - Name: footprintMode
       Value: None
     - Name: mirrorX
@@ -2230,6 +2270,8 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"adcaa141de6eba940af9ebb2e4fc664e","Weight":1.0}]}'
   - NodeId: cactus-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Cactus Placement Points
@@ -2282,8 +2324,6 @@ MonoBehaviour:
       Direction: 1
       Type: 1
     Parameters:
-    - Name: prefab
-      Value: 75f965a629c6fb54e8f21780cf4b4f3c
     - Name: footprintMode
       Value: None
     - Name: mirrorX
@@ -2300,6 +2340,8 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"75f965a629c6fb54e8f21780cf4b4f3c","Weight":1.0}]}'
   - NodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
     NodeName: Cave House Anchors
@@ -2366,6 +2408,12 @@ MonoBehaviour:
       Value: 0.18
     - Name: maxHeight
       Value: 0.55
+    - Name: referenceHeight
+      Value: 0
+    - Name: minAnchor
+      Value: Normalized
+    - Name: maxAnchor
+      Value: Normalized
   - NodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: House Weights
@@ -2442,8 +2490,6 @@ MonoBehaviour:
       Direction: 1
       Type: 2
     Parameters:
-    - Name: prefab
-      Value: 33b4e04847c26624186a988d845dfcdf
     - Name: footprintMode
       Value: CarveInterior
     - Name: outlineLogicalId
@@ -2462,6 +2508,8 @@ MonoBehaviour:
       Value: 0
     - Name: reservedMaskChannelName
       Value: CaveHouseReservedMask
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"33b4e04847c26624186a988d845dfcdf","Weight":1.0}]}'
   - NodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Deep Underground Band
@@ -2477,11 +2525,11 @@ MonoBehaviour:
     - Name: maxHeight
       Value: 0.34
     - Name: referenceHeight
-      Value: 128
+      Value: 0
     - Name: minAnchor
-      Value: Bottom
+      Value: Normalized
     - Name: maxAnchor
-      Value: Top
+      Value: Normalized
   - NodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
     NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
     NodeName: Cave Distance Field

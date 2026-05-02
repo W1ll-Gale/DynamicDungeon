@@ -257,6 +257,44 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task WeightedVariants_IgnoreZeroWeightPrefabAndUseChosenFootprint()
+        {
+            PrefabStampTemplate firstTemplate = CreateTemplate("prefab-a-guid", new[] { new Vector2Int(0, 0) });
+            PrefabStampTemplate secondTemplate = CreateTemplate("prefab-b-guid", new[]
+            {
+                new Vector2Int(0, 0),
+                new Vector2Int(1, 0)
+            });
+
+            WorldSnapshot snapshot = await ExecutePrefabVariantsPlanAsync(
+                width: 4,
+                height: 1,
+                initialLogicalIds: new int[4],
+                placements: new[] { new int2(0, 0) },
+                templates: new[] { firstTemplate, secondTemplate },
+                weights: new[] { 0.0f, 1.0f },
+                footprintMode: PrefabFootprintMode.FillInterior,
+                interiorLogicalId: 7,
+                outlineLogicalId: 0,
+                blendMode: StampBlendMode.Overwrite,
+                mirrorX: false,
+                mirrorY: false,
+                allowRotation: false,
+                maxOverlapTiles: 2);
+
+            int[] expected =
+            {
+                7, 7, 0, 0
+            };
+
+            Assert.That(GetIntChannelData(snapshot, LogicalIdsChannelName), Is.EqualTo(expected));
+
+            PrefabPlacementRecord[] placementsRecorded = GetPlacementData(snapshot);
+            Assert.That(placementsRecorded.Length, Is.EqualTo(1));
+            Assert.That(placementsRecorded[0].TemplateIndex, Is.EqualTo(1));
+        }
+
+        [Test]
         public async Task OutlineAndCarve_ClearsInteriorAndWritesPerimeter()
         {
             PrefabStampTemplate template = CreateTemplate("prefab-guid", new[] { new Vector2Int(0, 0) });
@@ -702,12 +740,46 @@ namespace DynamicDungeon.Tests.Runtime
             bool allowRotation,
             int maxOverlapTiles)
         {
+            return await ExecutePrefabVariantsPlanAsync(
+                width,
+                height,
+                initialLogicalIds,
+                placements,
+                new[] { template },
+                new[] { 1.0f },
+                footprintMode,
+                interiorLogicalId,
+                outlineLogicalId,
+                blendMode,
+                mirrorX,
+                mirrorY,
+                allowRotation,
+                maxOverlapTiles);
+        }
+
+        private static async Task<WorldSnapshot> ExecutePrefabVariantsPlanAsync(
+            int width,
+            int height,
+            int[] initialLogicalIds,
+            int2[] placements,
+            PrefabStampTemplate[] templates,
+            float[] weights,
+            PrefabFootprintMode footprintMode,
+            int interiorLogicalId,
+            int outlineLogicalId,
+            StampBlendMode blendMode,
+            bool mirrorX,
+            bool mirrorY,
+            bool allowRotation,
+            int maxOverlapTiles)
+        {
             GraphCompilerPointListNode pointsNode = new GraphCompilerPointListNode("points", "Points Node", PointsChannelName);
             pointsNode.ReceiveParameter("points", SerialisePoints(placements));
 
             StampTestIntPatternNode logicalIdsNode = new StampTestIntPatternNode("logical-base", "Logical Base", LogicalIdsChannelName, initialLogicalIds);
             PrefabStamperNode stampNode = CreateResolvedPrefabNode(
-                template,
+                templates,
+                weights,
                 footprintMode,
                 interiorLogicalId,
                 outlineLogicalId,
@@ -725,11 +797,17 @@ namespace DynamicDungeon.Tests.Runtime
             };
 
             ExecutionPlan plan = ExecutionPlan.Build(nodes, width, height, 12345L);
-            GameObject palettePrefab = new GameObject("PalettePrefab");
+            GameObject[] palettePrefabs = new GameObject[templates.Length];
 
             try
             {
-                plan.SetPrefabPlacementPalette(new[] { palettePrefab }, new[] { template });
+                int prefabIndex;
+                for (prefabIndex = 0; prefabIndex < palettePrefabs.Length; prefabIndex++)
+                {
+                    palettePrefabs[prefabIndex] = new GameObject("PalettePrefab" + prefabIndex.ToString(CultureInfo.InvariantCulture));
+                }
+
+                plan.SetPrefabPlacementPalette(palettePrefabs, templates);
 
                 Executor executor = new Executor();
                 ExecutionResult result = await executor.ExecuteAsync(plan, CancellationToken.None);
@@ -740,12 +818,41 @@ namespace DynamicDungeon.Tests.Runtime
             }
             finally
             {
-                DestroyImmediateIfNotNull(palettePrefab);
+                int prefabIndex;
+                for (prefabIndex = 0; prefabIndex < palettePrefabs.Length; prefabIndex++)
+                {
+                    DestroyImmediateIfNotNull(palettePrefabs[prefabIndex]);
+                }
             }
         }
 
         private static PrefabStamperNode CreateResolvedPrefabNode(
             PrefabStampTemplate template,
+            PrefabFootprintMode footprintMode,
+            int interiorLogicalId,
+            int outlineLogicalId,
+            StampBlendMode blendMode,
+            bool mirrorX,
+            bool mirrorY,
+            bool allowRotation,
+            int maxOverlapTiles)
+        {
+            return CreateResolvedPrefabNode(
+                new[] { template },
+                new[] { 1.0f },
+                footprintMode,
+                interiorLogicalId,
+                outlineLogicalId,
+                blendMode,
+                mirrorX,
+                mirrorY,
+                allowRotation,
+                maxOverlapTiles);
+        }
+
+        private static PrefabStamperNode CreateResolvedPrefabNode(
+            PrefabStampTemplate[] templates,
+            float[] weights,
             PrefabFootprintMode footprintMode,
             int interiorLogicalId,
             int outlineLogicalId,
@@ -761,7 +868,20 @@ namespace DynamicDungeon.Tests.Runtime
                 { PointsChannelName, PointsChannelName }
             });
 
-            node.ReceiveParameter("prefab", template.PrefabGuid);
+            int variantCount = templates.Length;
+            PrefabStampVariantSet variantSet = new PrefabStampVariantSet();
+            variantSet.Variants = new PrefabStampVariant[variantCount];
+            int variantIndex;
+            for (variantIndex = 0; variantIndex < variantCount; variantIndex++)
+            {
+                variantSet.Variants[variantIndex] = new PrefabStampVariant
+                {
+                    Prefab = templates[variantIndex].PrefabGuid,
+                    Weight = weights[variantIndex]
+                };
+            }
+
+            node.ReceiveParameter("prefabVariants", JsonUtility.ToJson(variantSet));
             node.ReceiveParameter("footprintMode", footprintMode.ToString());
             node.ReceiveParameter("interiorLogicalId", interiorLogicalId.ToString(CultureInfo.InvariantCulture));
             node.ReceiveParameter("outlineLogicalId", outlineLogicalId.ToString(CultureInfo.InvariantCulture));
@@ -771,8 +891,20 @@ namespace DynamicDungeon.Tests.Runtime
             node.ReceiveParameter("allowRotation", allowRotation.ToString(CultureInfo.InvariantCulture));
             node.ReceiveParameter("maxOverlapTiles", maxOverlapTiles.ToString(CultureInfo.InvariantCulture));
 
-            SetPrivateField(node, "_resolvedTemplate", template);
-            SetPrivateField(node, "_resolvedTemplateIndex", 0);
+            PrefabStampTemplate[] resolvedTemplates = new PrefabStampTemplate[variantCount];
+            int[] resolvedTemplateIndices = new int[variantCount];
+            float[] resolvedWeights = new float[variantCount];
+
+            for (variantIndex = 0; variantIndex < variantCount; variantIndex++)
+            {
+                resolvedTemplates[variantIndex] = templates[variantIndex];
+                resolvedTemplateIndices[variantIndex] = variantIndex;
+                resolvedWeights[variantIndex] = weights[variantIndex];
+            }
+
+            SetPrivateField(node, "_resolvedTemplates", resolvedTemplates);
+            SetPrivateField(node, "_resolvedTemplateIndices", resolvedTemplateIndices);
+            SetPrivateField(node, "_resolvedTemplateWeights", resolvedWeights);
             SetPrivateField(node, "_prefabResolutionFailed", false);
 
             return node;

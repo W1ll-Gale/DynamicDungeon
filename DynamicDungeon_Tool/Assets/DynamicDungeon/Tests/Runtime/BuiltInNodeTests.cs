@@ -166,10 +166,15 @@ namespace DynamicDungeon.Tests.Runtime
         [Test]
         public async Task HeightBandAnchorsBoundsAgainstReferenceHeight()
         {
-            HeightBandNode bandNode = new HeightBandNode("height-band", "Height Band", "Band", 0.25f, 0.5f);
-            bandNode.ReceiveParameter("referenceHeight", "8");
-            bandNode.ReceiveParameter("minAnchor", "Top");
-            bandNode.ReceiveParameter("maxAnchor", "Top");
+            HeightBandNode bandNode = new HeightBandNode(
+                "height-band",
+                "Height Band",
+                "Band",
+                0.25f,
+                0.5f,
+                referenceHeight: 8,
+                minAnchor: HeightBandNode.BoundAnchor.Top,
+                maxAnchor: HeightBandNode.BoundAnchor.Top);
 
             WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { bandNode }, 1, 12, 202602L);
             WorldSnapshot.FloatChannelSnapshot output = GetFloatChannel(snapshot, "Band");

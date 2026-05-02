@@ -35,9 +35,9 @@ namespace DynamicDungeon.Runtime.Nodes
         private string _inputPointsChannelName;
         private string _reservedMaskChannelName;
 
-        [AssetGuidReference(typeof(GameObject))]
-        [DescriptionAttribute("Prefab asset stored as an asset GUID in the graph. The prefab must have PrefabStampAuthoring on its root.")]
-        private string _prefab;
+        [InspectorName("Prefab Variants")]
+        [DescriptionAttribute("Prefab variants and relative weights encoded as JSON. Use the custom editor table to author this value.")]
+        private string _prefabVariants;
 
         [DescriptionAttribute("How the inferred footprint edits the logical ID channel. None only records prefab placements.")]
         private PrefabFootprintMode _footprintMode;
@@ -65,8 +65,9 @@ namespace DynamicDungeon.Runtime.Nodes
         private int _maxOverlapTiles;
 
         private ChannelDeclaration[] _channelDeclarations;
-        private PrefabStampTemplate _resolvedTemplate;
-        private int _resolvedTemplateIndex = -1;
+        private PrefabStampTemplate[] _resolvedTemplates = Array.Empty<PrefabStampTemplate>();
+        private int[] _resolvedTemplateIndices = Array.Empty<int>();
+        private float[] _resolvedTemplateWeights = Array.Empty<float>();
         private bool _prefabResolutionFailed;
 
         public IReadOnlyList<NodePortDefinition> Ports
@@ -113,7 +114,6 @@ namespace DynamicDungeon.Runtime.Nodes
             string nodeId,
             string nodeName,
             string inputPointsChannelName = "",
-            string prefab = "",
             PrefabFootprintMode footprintMode = PrefabFootprintMode.None,
             int interiorLogicalId = DefaultInteriorLogicalId,
             int outlineLogicalId = DefaultOutlineLogicalId,
@@ -122,7 +122,8 @@ namespace DynamicDungeon.Runtime.Nodes
             bool mirrorY = false,
             bool allowRotation = false,
             int maxOverlapTiles = 0,
-            string reservedMaskChannelName = "")
+            string reservedMaskChannelName = "",
+            string prefabVariants = "")
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -132,7 +133,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeId = nodeId;
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? DefaultNodeName : nodeName;
             _inputPointsChannelName = inputPointsChannelName ?? string.Empty;
-            _prefab = prefab ?? string.Empty;
+            _prefabVariants = prefabVariants ?? string.Empty;
             _footprintMode = footprintMode;
             _interiorLogicalId = interiorLogicalId;
             _outlineLogicalId = outlineLogicalId;
@@ -169,12 +170,10 @@ namespace DynamicDungeon.Runtime.Nodes
                 return;
             }
 
-            if (string.Equals(name, "prefab", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(name, "prefabVariants", StringComparison.OrdinalIgnoreCase))
             {
-                _prefab = value ?? string.Empty;
-                _resolvedTemplate = default;
-                _resolvedTemplateIndex = -1;
-                _prefabResolutionFailed = false;
+                _prefabVariants = value ?? string.Empty;
+                ClearResolvedPrefabVariants();
                 RefreshChannelDeclarations();
                 return;
             }
@@ -282,11 +281,13 @@ namespace DynamicDungeon.Runtime.Nodes
         public bool ResolvePrefabPalette(PrefabStampPalette palette, out string errorMessage)
         {
             errorMessage = null;
-            _resolvedTemplate = default;
-            _resolvedTemplateIndex = -1;
+            _resolvedTemplates = Array.Empty<PrefabStampTemplate>();
+            _resolvedTemplateIndices = Array.Empty<int>();
+            _resolvedTemplateWeights = Array.Empty<float>();
             _prefabResolutionFailed = false;
 
-            if (string.IsNullOrWhiteSpace(_prefab))
+            PrefabStampVariant[] variants = GetConfiguredVariants();
+            if (variants.Length == 0)
             {
                 return true;
             }
@@ -298,12 +299,24 @@ namespace DynamicDungeon.Runtime.Nodes
                 return false;
             }
 
-            if (!palette.TryResolve(_prefab, out _resolvedTemplateIndex, out _resolvedTemplate, out errorMessage))
+            List<PrefabStampTemplate> resolvedTemplates = new List<PrefabStampTemplate>(variants.Length);
+            List<int> resolvedTemplateIndices = new List<int>(variants.Length);
+            List<float> resolvedTemplateWeights = new List<float>(variants.Length);
+
+            int variantIndex;
+            for (variantIndex = 0; variantIndex < variants.Length; variantIndex++)
             {
-                _prefabResolutionFailed = true;
-                return false;
+                PrefabStampVariant variant = variants[variantIndex];
+                if (!TryResolvePrefabVariant(palette, variant, variantIndex, resolvedTemplates, resolvedTemplateIndices, resolvedTemplateWeights, out errorMessage))
+                {
+                    _prefabResolutionFailed = true;
+                    return false;
+                }
             }
 
+            _resolvedTemplates = resolvedTemplates.ToArray();
+            _resolvedTemplateIndices = resolvedTemplateIndices.ToArray();
+            _resolvedTemplateWeights = resolvedTemplateWeights.ToArray();
             return true;
         }
 
@@ -344,11 +357,11 @@ namespace DynamicDungeon.Runtime.Nodes
                 return context.InputDependency;
             }
 
-            if (_resolvedTemplateIndex < 0 || !_resolvedTemplate.IsValid)
+            if (_resolvedTemplates == null || _resolvedTemplates.Length == 0)
             {
                 string warningMessage = _prefabResolutionFailed
-                    ? "Prefab Stamper could not resolve its prefab footprint from the stored prefab GUID. The node will not place anything."
-                    : "Prefab Stamper has no valid prefab footprint. The node will not place anything.";
+                    ? "Prefab Stamper could not resolve a prefab variant footprint. The node will not place anything."
+                    : "Prefab Stamper has no prefab variants with a positive weight. The node will not place anything.";
                 ManagedBlackboardDiagnosticUtility.AppendWarning(context.ManagedBlackboard, warningMessage, _nodeId, PointsPortName);
                 return context.InputDependency;
             }
@@ -356,7 +369,11 @@ namespace DynamicDungeon.Runtime.Nodes
             NativeList<int2> placements = context.GetPointListChannel(_inputPointsChannelName);
             NativeArray<int> logicalIds = context.GetIntChannel(LogicalIdsChannelName);
             NativeList<PrefabPlacementRecord> placementChannel = context.GetPrefabPlacementListChannel(PrefabPlacementChannelUtility.ChannelName);
-            NativeArray<int2> occupiedOffsets = CreateOccupiedOffsets();
+            NativeArray<int> templateIndices;
+            NativeArray<float> templateWeights;
+            NativeArray<int2> occupiedOffsetRanges;
+            NativeArray<int2> occupiedOffsets;
+            CreatePrefabVariantData(out templateIndices, out templateWeights, out occupiedOffsetRanges, out occupiedOffsets);
             bool writesReservedMask = UsesReservedMask();
             NativeArray<byte> reservedMask = writesReservedMask
                 ? context.GetBoolMaskChannel(_reservedMaskChannelName)
@@ -368,10 +385,12 @@ namespace DynamicDungeon.Runtime.Nodes
                 LogicalIds = logicalIds,
                 PlacementChannel = placementChannel,
                 ReservedMask = reservedMask,
+                TemplateIndices = templateIndices,
+                TemplateWeights = templateWeights,
+                OccupiedOffsetRanges = occupiedOffsetRanges,
                 OccupiedOffsets = occupiedOffsets,
                 WorldWidth = context.Width,
                 WorldHeight = context.Height,
-                TemplateIndex = _resolvedTemplateIndex,
                 FootprintMode = (int)_footprintMode,
                 BlendMode = (int)_blendMode,
                 MirrorX = _mirrorX,
@@ -386,6 +405,9 @@ namespace DynamicDungeon.Runtime.Nodes
 
             JobHandle jobHandle = job.Schedule(context.InputDependency);
             JobHandle disposeHandle = occupiedOffsets.Dispose(jobHandle);
+            disposeHandle = occupiedOffsetRanges.Dispose(disposeHandle);
+            disposeHandle = templateWeights.Dispose(disposeHandle);
+            disposeHandle = templateIndices.Dispose(disposeHandle);
             if (!writesReservedMask)
             {
                 disposeHandle = reservedMask.Dispose(disposeHandle);
@@ -415,10 +437,7 @@ namespace DynamicDungeon.Runtime.Nodes
                 declarations.Add(new ChannelDeclaration(PrefabPlacementChannelUtility.ChannelName, ChannelType.PrefabPlacementList, true));
             }
 
-            if (hasActivePlacement)
-            {
-                declarations.Add(new ChannelDeclaration(_reservedMaskChannelName, ChannelType.BoolMask, true));
-            }
+            declarations.Add(new ChannelDeclaration(_reservedMaskChannelName, ChannelType.BoolMask, true));
 
             _channelDeclarations = declarations.ToArray();
         }
@@ -435,8 +454,13 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private bool HasActivePlacement()
         {
-            return !string.IsNullOrWhiteSpace(_prefab) &&
+            return HasConfiguredPrefab() &&
                    !string.IsNullOrWhiteSpace(_inputPointsChannelName);
+        }
+
+        private bool HasConfiguredPrefab()
+        {
+            return GetConfiguredVariants().Length > 0;
         }
 
         private bool UsesBlendMode()
@@ -457,19 +481,121 @@ namespace DynamicDungeon.Runtime.Nodes
                    _footprintMode == PrefabFootprintMode.OutlineAndCarve;
         }
 
-        private NativeArray<int2> CreateOccupiedOffsets()
+        private void ClearResolvedPrefabVariants()
         {
-            Vector2Int[] occupiedCells = _resolvedTemplate.OccupiedCells ?? Array.Empty<Vector2Int>();
-            NativeArray<int2> occupiedOffsets = new NativeArray<int2>(occupiedCells.Length, Allocator.TempJob);
+            _resolvedTemplates = Array.Empty<PrefabStampTemplate>();
+            _resolvedTemplateIndices = Array.Empty<int>();
+            _resolvedTemplateWeights = Array.Empty<float>();
+            _prefabResolutionFailed = false;
+        }
 
-            int index;
-            for (index = 0; index < occupiedCells.Length; index++)
+        private static float SanitizeWeight(float weight)
+        {
+            if (float.IsNaN(weight) || float.IsInfinity(weight))
             {
-                Vector2Int cell = occupiedCells[index];
-                occupiedOffsets[index] = new int2(cell.x, cell.y);
+                return 0.0f;
             }
 
-            return occupiedOffsets;
+            return math.max(0.0f, weight);
+        }
+
+        private static bool TryResolvePrefabVariant(
+            PrefabStampPalette palette,
+            PrefabStampVariant variant,
+            int variantIndex,
+            List<PrefabStampTemplate> templates,
+            List<int> templateIndices,
+            List<float> weights,
+            out string errorMessage)
+        {
+            errorMessage = null;
+
+            if (variant == null ||
+                string.IsNullOrWhiteSpace(variant.Prefab) ||
+                SanitizeWeight(variant.Weight) <= 0.0f)
+            {
+                return true;
+            }
+
+            int templateIndex;
+            PrefabStampTemplate template;
+            if (!palette.TryResolve(variant.Prefab, out templateIndex, out template, out errorMessage))
+            {
+                errorMessage = "Prefab variant " + (variantIndex + 1).ToString(CultureInfo.InvariantCulture) + " could not be resolved: " + errorMessage;
+                return false;
+            }
+
+            templates.Add(template);
+            templateIndices.Add(templateIndex);
+            weights.Add(SanitizeWeight(variant.Weight));
+            return true;
+        }
+
+        private PrefabStampVariant[] GetConfiguredVariants()
+        {
+            PrefabStampVariantSet variantSet = ParseVariantSet(_prefabVariants);
+            return variantSet != null && variantSet.Variants != null
+                ? variantSet.Variants
+                : Array.Empty<PrefabStampVariant>();
+        }
+
+        private static PrefabStampVariantSet ParseVariantSet(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return new PrefabStampVariantSet();
+            }
+
+            try
+            {
+                return JsonUtility.FromJson<PrefabStampVariantSet>(value) ?? new PrefabStampVariantSet();
+            }
+            catch
+            {
+                return new PrefabStampVariantSet();
+            }
+        }
+
+        private void CreatePrefabVariantData(
+            out NativeArray<int> templateIndices,
+            out NativeArray<float> templateWeights,
+            out NativeArray<int2> occupiedOffsetRanges,
+            out NativeArray<int2> occupiedOffsets)
+        {
+            int variantCount = _resolvedTemplates != null ? _resolvedTemplates.Length : 0;
+            int totalOccupiedCellCount = 0;
+
+            int index;
+            for (index = 0; index < variantCount; index++)
+            {
+                Vector2Int[] occupiedCells = _resolvedTemplates[index].OccupiedCells ?? Array.Empty<Vector2Int>();
+                totalOccupiedCellCount += occupiedCells.Length;
+            }
+
+            templateIndices = new NativeArray<int>(variantCount, Allocator.TempJob);
+            templateWeights = new NativeArray<float>(variantCount, Allocator.TempJob);
+            occupiedOffsetRanges = new NativeArray<int2>(variantCount, Allocator.TempJob);
+            occupiedOffsets = new NativeArray<int2>(totalOccupiedCellCount, Allocator.TempJob);
+
+            int offsetCursor = 0;
+            for (index = 0; index < variantCount; index++)
+            {
+                PrefabStampTemplate template = _resolvedTemplates[index];
+                Vector2Int[] occupiedCells = template.OccupiedCells ?? Array.Empty<Vector2Int>();
+
+                templateIndices[index] = _resolvedTemplateIndices[index];
+                templateWeights[index] = _resolvedTemplateWeights[index];
+                occupiedOffsetRanges[index] = new int2(offsetCursor, occupiedCells.Length);
+
+                int cellIndex;
+                for (cellIndex = 0; cellIndex < occupiedCells.Length; cellIndex++)
+                {
+                    Vector2Int cell = occupiedCells[cellIndex];
+                    occupiedOffsets[offsetCursor + cellIndex] = new int2(cell.x, cell.y);
+                }
+
+                offsetCursor += occupiedCells.Length;
+            }
         }
 
         [BurstCompile]
@@ -483,11 +609,19 @@ namespace DynamicDungeon.Runtime.Nodes
             public NativeArray<byte> ReservedMask;
 
             [ReadOnly]
+            public NativeArray<int> TemplateIndices;
+
+            [ReadOnly]
+            public NativeArray<float> TemplateWeights;
+
+            [ReadOnly]
+            public NativeArray<int2> OccupiedOffsetRanges;
+
+            [ReadOnly]
             public NativeArray<int2> OccupiedOffsets;
 
             public int WorldWidth;
             public int WorldHeight;
-            public int TemplateIndex;
             public int FootprintMode;
             public int BlendMode;
             public bool MirrorX;
@@ -505,23 +639,25 @@ namespace DynamicDungeon.Runtime.Nodes
                 for (placementIndex = 0; placementIndex < Placements.Length; placementIndex++)
                 {
                     int2 placement = Placements[placementIndex];
+                    int variantIndex = ResolveVariantIndex(placementIndex);
+                    int templateIndex = TemplateIndices[variantIndex];
 
                     bool applyMirrorX;
                     bool applyMirrorY;
                     int quarterTurns;
                     ResolvePlacementTransform(placementIndex, out applyMirrorX, out applyMirrorY, out quarterTurns);
 
-                    if (ExceedsOverlapBudget(placement, applyMirrorX, applyMirrorY, quarterTurns))
+                    if (ExceedsOverlapBudget(placement, variantIndex, applyMirrorX, applyMirrorY, quarterTurns))
                     {
                         continue;
                     }
 
-                    ApplyFootprint(placement, applyMirrorX, applyMirrorY, quarterTurns);
-                    PlacementChannel.Add(new PrefabPlacementRecord(TemplateIndex, placement.x, placement.y, (byte)quarterTurns, applyMirrorX, applyMirrorY));
+                    ApplyFootprint(placement, variantIndex, applyMirrorX, applyMirrorY, quarterTurns);
+                    PlacementChannel.Add(new PrefabPlacementRecord(templateIndex, placement.x, placement.y, (byte)quarterTurns, applyMirrorX, applyMirrorY));
                 }
             }
 
-            private bool ExceedsOverlapBudget(int2 placement, bool applyMirrorX, bool applyMirrorY, int quarterTurns)
+            private bool ExceedsOverlapBudget(int2 placement, int variantIndex, bool applyMirrorX, bool applyMirrorY, int quarterTurns)
             {
                 if (FootprintMode == (int)PrefabFootprintMode.CarveInterior ||
                     FootprintMode == (int)PrefabFootprintMode.OutlineAndCarve)
@@ -529,13 +665,14 @@ namespace DynamicDungeon.Runtime.Nodes
                     return false;
                 }
 
-                int2 normalizationOffset = GetNormalizationOffset(applyMirrorX, applyMirrorY, quarterTurns);
+                int2 occupiedRange = OccupiedOffsetRanges[variantIndex];
+                int2 normalizationOffset = GetNormalizationOffset(occupiedRange, applyMirrorX, applyMirrorY, quarterTurns);
                 int overlapCount = 0;
 
-                int index;
-                for (index = 0; index < OccupiedOffsets.Length; index++)
+                int rangeIndex;
+                for (rangeIndex = 0; rangeIndex < occupiedRange.y; rangeIndex++)
                 {
-                    int2 offset = TransformOffset(OccupiedOffsets[index], applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
+                    int2 offset = TransformOffset(OccupiedOffsets[occupiedRange.x + rangeIndex], applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
                     int worldX = placement.x + offset.x;
                     int worldY = placement.y + offset.y;
                     if (worldX < 0 || worldX >= WorldWidth || worldY < 0 || worldY >= WorldHeight)
@@ -575,18 +712,19 @@ namespace DynamicDungeon.Runtime.Nodes
                 return true;
             }
 
-            private void ApplyFootprint(int2 placement, bool applyMirrorX, bool applyMirrorY, int quarterTurns)
+            private void ApplyFootprint(int2 placement, int variantIndex, bool applyMirrorX, bool applyMirrorY, int quarterTurns)
             {
                 if (FootprintMode == (int)PrefabFootprintMode.None)
                 {
                     return;
                 }
 
-                int2 normalizationOffset = GetNormalizationOffset(applyMirrorX, applyMirrorY, quarterTurns);
-                int index;
-                for (index = 0; index < OccupiedOffsets.Length; index++)
+                int2 occupiedRange = OccupiedOffsetRanges[variantIndex];
+                int2 normalizationOffset = GetNormalizationOffset(occupiedRange, applyMirrorX, applyMirrorY, quarterTurns);
+                int rangeIndex;
+                for (rangeIndex = 0; rangeIndex < occupiedRange.y; rangeIndex++)
                 {
-                    int2 offset = TransformOffset(OccupiedOffsets[index], applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
+                    int2 offset = TransformOffset(OccupiedOffsets[occupiedRange.x + rangeIndex], applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
                     int worldX = placement.x + offset.x;
                     int worldY = placement.y + offset.y;
                     if (worldX < 0 || worldX >= WorldWidth || worldY < 0 || worldY >= WorldHeight)
@@ -620,19 +758,19 @@ namespace DynamicDungeon.Runtime.Nodes
                 }
 
                 int cellIndex;
-                for (cellIndex = 0; cellIndex < OccupiedOffsets.Length; cellIndex++)
+                for (cellIndex = 0; cellIndex < occupiedRange.y; cellIndex++)
                 {
-                    int2 baseOffset = TransformOffset(OccupiedOffsets[cellIndex], applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
-                    ApplyOutlineNeighbour(placement, baseOffset + new int2(1, 0), applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
-                    ApplyOutlineNeighbour(placement, baseOffset + new int2(-1, 0), applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
-                    ApplyOutlineNeighbour(placement, baseOffset + new int2(0, 1), applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
-                    ApplyOutlineNeighbour(placement, baseOffset + new int2(0, -1), applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
+                    int2 baseOffset = TransformOffset(OccupiedOffsets[occupiedRange.x + cellIndex], applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
+                    ApplyOutlineNeighbour(placement, occupiedRange, baseOffset + new int2(1, 0), applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
+                    ApplyOutlineNeighbour(placement, occupiedRange, baseOffset + new int2(-1, 0), applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
+                    ApplyOutlineNeighbour(placement, occupiedRange, baseOffset + new int2(0, 1), applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
+                    ApplyOutlineNeighbour(placement, occupiedRange, baseOffset + new int2(0, -1), applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
                 }
             }
 
-            private void ApplyOutlineNeighbour(int2 placement, int2 candidateOffset, bool applyMirrorX, bool applyMirrorY, int quarterTurns, int2 normalizationOffset)
+            private void ApplyOutlineNeighbour(int2 placement, int2 occupiedRange, int2 candidateOffset, bool applyMirrorX, bool applyMirrorY, int quarterTurns, int2 normalizationOffset)
             {
-                if (ContainsOccupiedCell(candidateOffset, applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset))
+                if (ContainsOccupiedCell(occupiedRange, candidateOffset, applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset))
                 {
                     return;
                 }
@@ -648,12 +786,12 @@ namespace DynamicDungeon.Runtime.Nodes
                 ApplyBlend(worldIndex, OutlineLogicalId);
             }
 
-            private bool ContainsOccupiedCell(int2 candidateOffset, bool applyMirrorX, bool applyMirrorY, int quarterTurns, int2 normalizationOffset)
+            private bool ContainsOccupiedCell(int2 occupiedRange, int2 candidateOffset, bool applyMirrorX, bool applyMirrorY, int quarterTurns, int2 normalizationOffset)
             {
-                int index;
-                for (index = 0; index < OccupiedOffsets.Length; index++)
+                int rangeIndex;
+                for (rangeIndex = 0; rangeIndex < occupiedRange.y; rangeIndex++)
                 {
-                    int2 occupiedOffset = TransformOffset(OccupiedOffsets[index], applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
+                    int2 occupiedOffset = TransformOffset(OccupiedOffsets[occupiedRange.x + rangeIndex], applyMirrorX, applyMirrorY, quarterTurns, normalizationOffset);
                     if (occupiedOffset.x == candidateOffset.x && occupiedOffset.y == candidateOffset.y)
                     {
                         return true;
@@ -692,19 +830,54 @@ namespace DynamicDungeon.Runtime.Nodes
                 quarterTurns = AllowRotation ? (int)((hash >> 2) & 3u) : 0;
             }
 
-            private int2 GetNormalizationOffset(bool applyMirrorX, bool applyMirrorY, int quarterTurns)
+            private int ResolveVariantIndex(int placementIndex)
             {
-                if (OccupiedOffsets.Length == 0)
+                if (TemplateWeights.Length <= 1)
+                {
+                    return 0;
+                }
+
+                float totalWeight = 0.0f;
+                int index;
+                for (index = 0; index < TemplateWeights.Length; index++)
+                {
+                    totalWeight += TemplateWeights[index];
+                }
+
+                if (totalWeight <= 0.0f)
+                {
+                    return 0;
+                }
+
+                uint hash = HashPlacement(placementIndex, 0xC2B2AE35u);
+                float roll = HashToUnitFloat(hash) * totalWeight;
+                float cumulativeWeight = 0.0f;
+
+                for (index = 0; index < TemplateWeights.Length; index++)
+                {
+                    cumulativeWeight += TemplateWeights[index];
+                    if (roll < cumulativeWeight)
+                    {
+                        return index;
+                    }
+                }
+
+                return TemplateWeights.Length - 1;
+            }
+
+            private int2 GetNormalizationOffset(int2 occupiedRange, bool applyMirrorX, bool applyMirrorY, int quarterTurns)
+            {
+                if (occupiedRange.y == 0)
                 {
                     return int2.zero;
                 }
 
-                int2 min = TransformOffsetRaw(OccupiedOffsets[0], applyMirrorX, applyMirrorY, quarterTurns);
+                int2 min = TransformOffsetRaw(OccupiedOffsets[occupiedRange.x], applyMirrorX, applyMirrorY, quarterTurns);
 
-                int index;
-                for (index = 1; index < OccupiedOffsets.Length; index++)
+                int rangeIndex;
+                for (rangeIndex = 1; rangeIndex < occupiedRange.y; rangeIndex++)
                 {
-                    int2 transformed = TransformOffsetRaw(OccupiedOffsets[index], applyMirrorX, applyMirrorY, quarterTurns);
+                    int2 transformed = TransformOffsetRaw(OccupiedOffsets[occupiedRange.x + rangeIndex], applyMirrorX, applyMirrorY, quarterTurns);
                     min = math.min(min, transformed);
                 }
 
@@ -741,9 +914,19 @@ namespace DynamicDungeon.Runtime.Nodes
 
             private uint HashPlacement(int placementIndex)
             {
+                return HashPlacement(placementIndex, 0x9B17C4A5u);
+            }
+
+            private uint HashPlacement(int placementIndex, uint salt)
+            {
                 uint seedLow = unchecked((uint)LocalSeed);
                 uint seedHigh = unchecked((uint)(LocalSeed >> 32));
-                return math.hash(new uint4(unchecked((uint)placementIndex), seedLow, seedHigh, 0x9B17C4A5u));
+                return math.hash(new uint4(unchecked((uint)placementIndex), seedLow, seedHigh, salt));
+            }
+
+            private static float HashToUnitFloat(uint hash)
+            {
+                return (hash & 0x00FFFFFFu) / 16777216.0f;
             }
         }
     }

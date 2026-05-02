@@ -77,6 +77,13 @@ namespace DynamicDungeon.Editor.Nodes
                 return control != null;
             }
 
+            if (context.NodeType == typeof(PrefabStamperNode) &&
+                string.Equals(context.ParameterName, "prefabVariants", StringComparison.OrdinalIgnoreCase))
+            {
+                control = PrefabStampVariantParameterControls.CreatePrefabVariantsControl(context);
+                return control != null;
+            }
+
             return false;
         }
     }

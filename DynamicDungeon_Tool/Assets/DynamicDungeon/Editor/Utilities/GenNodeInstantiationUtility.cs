@@ -835,7 +835,33 @@ namespace DynamicDungeon.Editor.Utilities
                 }
             }
 
-            return true;
+            return false;
+        }
+
+        public static bool IsKnownSerialisedParameter(Type nodeType, string parameterName)
+        {
+            if (nodeType == null || string.IsNullOrWhiteSpace(parameterName))
+            {
+                return false;
+            }
+
+            ConstructorInfo[] constructors = nodeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+            int constructorIndex;
+            for (constructorIndex = 0; constructorIndex < constructors.Length; constructorIndex++)
+            {
+                ParameterInfo[] parameters = constructors[constructorIndex].GetParameters();
+                int parameterIndex;
+                for (parameterIndex = 0; parameterIndex < parameters.Length; parameterIndex++)
+                {
+                    ParameterInfo parameter = parameters[parameterIndex];
+                    if (parameter != null && string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static bool IsEditableSerialisedParameter(Type nodeType, ParameterInfo parameter)
