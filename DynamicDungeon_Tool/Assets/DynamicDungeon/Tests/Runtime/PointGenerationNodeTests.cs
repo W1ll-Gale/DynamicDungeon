@@ -138,6 +138,28 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task PointListOffsetNodeMovesPointsAndDropsOutOfBounds()
+        {
+            GraphCompilerPointListNode pointsNode = new GraphCompilerPointListNode("points", "Points", "InputPoints");
+            pointsNode.ReceiveParameter("points", "0,0;2,1;3,3");
+
+            PointListOffsetNode offsetNode = new PointListOffsetNode("offset", "Offset", outputChannelName: "OffsetPoints", offsetX: 0, offsetY: 1);
+            offsetNode.ReceiveInputConnections(new Dictionary<string, string>
+            {
+                { "Points", "InputPoints" }
+            });
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { pointsNode, offsetNode }, 4, 4, 4309L);
+            WorldSnapshot.PointListChannelSnapshot pointList = GetPointListChannel(snapshot, "OffsetPoints");
+
+            Assert.That(SortPointsStable(pointList.Data), Is.EqualTo(new[]
+            {
+                new Vector2Int(0, 1),
+                new Vector2Int(2, 2)
+            }));
+        }
+
+        [Test]
         public async Task PointGridNodePlacesOnePointPerCellAtCentresWhenJitterIsDisconnected()
         {
             PointGridNode gridNode = new PointGridNode("grid-node", "Grid", string.Empty, "Points", 2, 0.0f);

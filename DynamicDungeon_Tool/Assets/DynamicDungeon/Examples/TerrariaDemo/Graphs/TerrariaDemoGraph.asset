@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Output
-    Position: {x: 980, y: 3216}
+    Position: {x: 167.0271, y: 2420.96}
     Ports:
     - PortName: LogicalIds
       DisplayName: LogicalIds
@@ -647,7 +647,7 @@ MonoBehaviour:
   - NodeId: biome-layout-randomized
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeLayoutNode
     NodeName: Random Biome Layout
-    Position: {x: -1523, y: 471.64044}
+    Position: {x: -847.714, y: 591.3216}
     Ports:
     - PortName: BiomeChannel
       DisplayName: BiomeChannel
@@ -671,7 +671,7 @@ MonoBehaviour:
   - NodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Jungle Presence
-    Position: {x: -220, y: 392.64044}
+    Position: {x: -90.12457, y: 590.99976}
     Ports:
     - PortName: Biome Channel
       DisplayName: Biome Channel
@@ -797,7 +797,7 @@ MonoBehaviour:
   - NodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Ice Presence
-    Position: {x: -220, y: 632.64044}
+    Position: {x: -90.12457, y: 830.99976}
     Ports:
     - PortName: Biome Channel
       DisplayName: Biome Channel
@@ -1065,7 +1065,7 @@ MonoBehaviour:
   - NodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Ore Wall Mask
-    Position: {x: 2211, y: -1715.3999}
+    Position: {x: 2223, y: -1805}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1161,7 +1161,7 @@ MonoBehaviour:
   - NodeId: 868da92d-18cc-4e91-a39b-35f4b2569640
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Coal Clumps
-    Position: {x: 2211, y: -1535.3999}
+    Position: {x: 2223, y: -1660.4171}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -1185,7 +1185,7 @@ MonoBehaviour:
   - NodeId: 6f076013-c3de-435c-aa1f-c8c9f46607c9
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Coal Veins
-    Position: {x: 2211, y: -1375.3999}
+    Position: {x: 2223, y: -1535.9998}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -1211,7 +1211,7 @@ MonoBehaviour:
   - NodeId: 79db410b-8dcb-4a46-af55-26bb112b5717
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Coal Mask
-    Position: {x: 2531, y: -1455.3999}
+    Position: {x: 2531, y: -1805.0001}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1231,7 +1231,7 @@ MonoBehaviour:
   - NodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Coal Ore Override
-    Position: {x: 2851, y: -1455.3999}
+    Position: {x: 2852, y: -1804.96}
     Ports:
     - PortName: Biome Input
       DisplayName: Biome Input
@@ -1275,7 +1275,7 @@ MonoBehaviour:
   - NodeId: c7572979-2da5-44be-bfee-1762ed82425a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Iron Clumps
-    Position: {x: 2211, y: -1295.3999}
+    Position: {x: 2222.9998, y: -1389.9998}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -1299,7 +1299,7 @@ MonoBehaviour:
   - NodeId: 09faa8f3-9fce-4aa8-b428-5f7b980a5b49
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Iron Veins
-    Position: {x: 2211, y: -1175.3999}
+    Position: {x: 2223, y: -1244.5}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -1325,7 +1325,7 @@ MonoBehaviour:
   - NodeId: 5c4ed9a0-d941-4874-ba2e-8fbbd290b79f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Iron Mask
-    Position: {x: 2531, y: -1255.3999}
+    Position: {x: 2531, y: -1499.0001}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1345,7 +1345,7 @@ MonoBehaviour:
   - NodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Iron Ore Override
-    Position: {x: 2851, y: -1255.3999}
+    Position: {x: 2851, y: -1498.9998}
     Ports:
     - PortName: Biome Input
       DisplayName: Biome Input
@@ -1389,7 +1389,7 @@ MonoBehaviour:
   - NodeId: dda42942-e1e4-4651-be72-924eb8b517b7
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Gold Clumps
-    Position: {x: 2211, y: -1095.3999}
+    Position: {x: 2223, y: -1115.935}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -1413,7 +1413,7 @@ MonoBehaviour:
   - NodeId: cce810a0-8818-44f3-9b61-2c8d72a5bdd5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Gold Veins
-    Position: {x: 2211, y: -975.3999}
+    Position: {x: 2223, y: -985}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -1439,7 +1439,7 @@ MonoBehaviour:
   - NodeId: c4fd252a-8972-465d-a833-cf46a30effe5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Gold Mask
-    Position: {x: 2531, y: -1055.3999}
+    Position: {x: 2531, y: -1204}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1459,7 +1459,7 @@ MonoBehaviour:
   - NodeId: 272ed66d-0521-4890-855c-c570cba4af92
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Gold Ore Override
-    Position: {x: 2851, y: -1055.3999}
+    Position: {x: 2852, y: -1204.0002}
     Ports:
     - PortName: Biome Input
       DisplayName: Biome Input
@@ -1503,7 +1503,7 @@ MonoBehaviour:
   - NodeId: d7f3563e-cf6f-4c75-97b6-9149b3af394b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Diamond Clumps
-    Position: {x: 2211, y: -895.3999}
+    Position: {x: 2211, y: -825.5}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -1527,7 +1527,7 @@ MonoBehaviour:
   - NodeId: ebbbd407-9d4c-4be8-9b51-d3fbea5a112b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Diamond Veins
-    Position: {x: 2211, y: -775.3999}
+    Position: {x: 2223, y: -666}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -1553,7 +1553,7 @@ MonoBehaviour:
   - NodeId: c6a6d713-9cfe-4e17-b39b-7b896fcf9c24
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Diamond Mask
-    Position: {x: 2531, y: -855.3999}
+    Position: {x: 2531, y: -890.9999}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1573,7 +1573,7 @@ MonoBehaviour:
   - NodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Diamond Ore Override
-    Position: {x: 2851, y: -855.3999}
+    Position: {x: 2850.0002, y: -895.0001}
     Ports:
     - PortName: Biome Input
       DisplayName: Biome Input
@@ -1597,7 +1597,7 @@ MonoBehaviour:
   - NodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Crystal Cave Override
-    Position: {x: 2851, y: -655.3999}
+    Position: {x: 2855, y: -589.0001}
     Ports:
     - PortName: Biome Input
       DisplayName: Biome Input
@@ -1621,7 +1621,7 @@ MonoBehaviour:
   - NodeId: crystal-cave-visual-override
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Crystal Cave Visual Override
-    Position: {x: 2531, y: -655.3999}
+    Position: {x: 2525.9998, y: -205}
     Ports:
     - PortName: Biome Input
       DisplayName: Biome Input
@@ -1645,7 +1645,7 @@ MonoBehaviour:
   - NodeId: visual-biome-channel-copy
     NodeTypeName: DynamicDungeon.Runtime.Nodes.IntChannelCopyNode
     NodeName: Visual Biome Channel
-    Position: {x: 2851, y: -545.3999}
+    Position: {x: 2972.995, y: -205.01001}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -1661,7 +1661,7 @@ MonoBehaviour:
   - NodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: One
-    Position: {x: 2428.0156, y: 1667}
+    Position: {x: 1788, y: 898.52}
     Ports:
     - PortName: OneFloat
       DisplayName: OneFloat
@@ -1677,7 +1677,7 @@ MonoBehaviour:
   - NodeId: 6999daac-7624-464b-9308-87663f179e01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: Zero
-    Position: {x: 2456, y: 2035.1278}
+    Position: {x: 1816, y: 1266.52}
     Ports:
     - PortName: ZeroFloat
       DisplayName: ZeroFloat
@@ -1693,7 +1693,7 @@ MonoBehaviour:
   - NodeId: ced59584-f592-4d05-b4b5-487143502736
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
     NodeName: Surface Floor Weights
-    Position: {x: 2776, y: 1720}
+    Position: {x: 2136, y: 951.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1712,10 +1712,62 @@ MonoBehaviour:
       Direction: 1
       Type: 0
     Parameters: []
+  - NodeId: surface-prop-placement-points
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
+    NodeName: Surface Prop Ground Points
+    Position: {x: 1759, y: 1697.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: SurfacePropGroundPoints
+      DisplayName: SurfacePropGroundPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: conditions
+      Value: '{"Entries":[{"Offset":{"x":-1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":0,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":2,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":3,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":-1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":0,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":-1,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":0,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":2},"MatchById":true,"LogicalId":0,"TagName":""}]}'
+  - NodeId: surface-prop-placement-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
+    NodeName: Surface Prop Placement Mask
+    Position: {x: 2270, y: 1606.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: SurfacePropPlacementMask
+      DisplayName: SurfacePropPlacementMask
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: surface-prop-placement-weights
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
+    NodeName: Surface Prop Placement Weights
+    Position: {x: 2563, y: 1463.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SurfacePropPlacementWeights
+      DisplayName: SurfacePropPlacementWeights
+      Direction: 1
+      Type: 0
+    Parameters: []
   - NodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Forest Mask
-    Position: {x: 1380, y: 972.64044}
+    Position: {x: 374.286, y: 470.3216}
     Ports:
     - PortName: Biome Channel
       DisplayName: Biome Channel
@@ -1731,7 +1783,7 @@ MonoBehaviour:
   - NodeId: 8104437b-0d86-42e7-b702-88b0035651e6
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Final Jungle Mask
-    Position: {x: 1380, y: 1112.6404}
+    Position: {x: 372.286, y: 748.3216}
     Ports:
     - PortName: Biome Channel
       DisplayName: Biome Channel
@@ -1747,7 +1799,7 @@ MonoBehaviour:
   - NodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Desert Mask
-    Position: {x: 1380, y: 1252.6404}
+    Position: {x: 372.286, y: 1023.3216}
     Ports:
     - PortName: Biome Channel
       DisplayName: Biome Channel
@@ -1763,7 +1815,7 @@ MonoBehaviour:
   - NodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Final Ice Mask
-    Position: {x: 1380, y: 1392.6404}
+    Position: {x: 372.286, y: 1289.3215}
     Ports:
     - PortName: Biome Channel
       DisplayName: Biome Channel
@@ -1779,7 +1831,7 @@ MonoBehaviour:
   - NodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Forest Tree Weight
-    Position: {x: 3123.5312, y: 1667}
+    Position: {x: 2484, y: 898.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1801,7 +1853,7 @@ MonoBehaviour:
   - NodeId: 62c2d399-7023-4628-b07a-c035317a8f19
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Jungle Tree Weight Base
-    Position: {x: 3124, y: 1950}
+    Position: {x: 2484, y: 1181.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1823,7 +1875,7 @@ MonoBehaviour:
   - NodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Jungle Tree Weight
-    Position: {x: 3416, y: 1680}
+    Position: {x: 2776, y: 911.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1841,7 +1893,7 @@ MonoBehaviour:
   - NodeId: ceb72be0-5035-400a-a151-3a859daedd51
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Desert Cactus Weight Base
-    Position: {x: 2790.9285, y: 2192}
+    Position: {x: 2164, y: 1253.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1863,7 +1915,7 @@ MonoBehaviour:
   - NodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Desert Cactus Weight
-    Position: {x: 3416, y: 1950}
+    Position: {x: 2776, y: 1181.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1881,7 +1933,7 @@ MonoBehaviour:
   - NodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Ice Tree Weight Base
-    Position: {x: 3124, y: 2490}
+    Position: {x: 2484, y: 1721.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1903,7 +1955,7 @@ MonoBehaviour:
   - NodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Ice Tree Weight
-    Position: {x: 3592.4214, y: 2192}
+    Position: {x: 3200, y: 1388.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1921,7 +1973,7 @@ MonoBehaviour:
   - NodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Forest Tree Scatter
-    Position: {x: 4696, y: 2220}
+    Position: {x: 4056, y: 1467.52}
     Ports:
     - PortName: Weights
       DisplayName: Weights
@@ -1939,7 +1991,7 @@ MonoBehaviour:
   - NodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Forest Tree Prefabs
-    Position: {x: 5016, y: 2280}
+    Position: {x: 4815, y: 1330.52}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -1968,10 +2020,30 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+  - NodeId: forest-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Forest Tree Placement Points
+    Position: {x: 4381, y: 1330.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: ForestTreePlacementPoints
+      DisplayName: ForestTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+    - Name: offsetY
+      Value: 1
+    - Name: outputChannelName
+      Value: ForestTreePlacementPoints
   - NodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Jungle Tree Scatter
-    Position: {x: 4696, y: 2019}
+    Position: {x: 4056, y: 1209.52}
     Ports:
     - PortName: Weights
       DisplayName: Weights
@@ -1989,7 +2061,7 @@ MonoBehaviour:
   - NodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Jungle Tree Prefabs
-    Position: {x: 5016, y: 2046}
+    Position: {x: 5195, y: 969.52}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2018,10 +2090,30 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+  - NodeId: jungle-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Jungle Tree Placement Points
+    Position: {x: 4815, y: 1042.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: JungleTreePlacementPoints
+      DisplayName: JungleTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+    - Name: offsetY
+      Value: 1
+    - Name: outputChannelName
+      Value: JungleTreePlacementPoints
   - NodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Ice Tree Scatter
-    Position: {x: 4696, y: 2720}
+    Position: {x: 4056, y: 1994.52}
     Ports:
     - PortName: Weights
       DisplayName: Weights
@@ -2039,7 +2131,7 @@ MonoBehaviour:
   - NodeId: 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Ice Tree Prefabs
-    Position: {x: 5016, y: 2560}
+    Position: {x: 5085, y: 2236.52}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2068,10 +2160,30 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+  - NodeId: ice-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Ice Tree Placement Points
+    Position: {x: 4511, y: 2121.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: IceTreePlacementPoints
+      DisplayName: IceTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+    - Name: offsetY
+      Value: 1
+    - Name: outputChannelName
+      Value: IceTreePlacementPoints
   - NodeId: 68905719-fc24-450e-8b09-869ff286d755
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Cactus Scatter
-    Position: {x: 4696, y: 2490}
+    Position: {x: 4056, y: 1721.52}
     Ports:
     - PortName: Weights
       DisplayName: Weights
@@ -2089,7 +2201,7 @@ MonoBehaviour:
   - NodeId: 598ec486-5ceb-4977-9ff6-cf36bb53fca2
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Cactus Prefabs
-    Position: {x: 5016, y: 2420}
+    Position: {x: 4993, y: 1744.52}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2118,10 +2230,30 @@ MonoBehaviour:
       Value: false
     - Name: allowRotation
       Value: false
+  - NodeId: cactus-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Cactus Placement Points
+    Position: {x: 4614, y: 1709.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: CactusPlacementPoints
+      DisplayName: CactusPlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+    - Name: offsetY
+      Value: 1
+    - Name: outputChannelName
+      Value: CactusPlacementPoints
   - NodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Cloud Scatter
-    Position: {x: 4696, y: 1720}
+    Position: {x: 3476, y: 887.52}
     Ports:
     - PortName: Weights
       DisplayName: Weights
@@ -2139,7 +2271,7 @@ MonoBehaviour:
   - NodeId: 7d91fd3c-0f1a-4313-b849-600a81f07311
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Cloud Prefabs
-    Position: {x: 5016, y: 1780}
+    Position: {x: 4041, y: 816.52}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2171,7 +2303,7 @@ MonoBehaviour:
   - NodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
     NodeName: Cave House Anchors
-    Position: {x: 2519.4998, y: 2623}
+    Position: {x: 1893, y: 1994.52}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -2187,7 +2319,7 @@ MonoBehaviour:
   - NodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
     NodeName: House Candidate Mask
-    Position: {x: 3124, y: 2778}
+    Position: {x: 2461, y: 2062.52}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2201,7 +2333,7 @@ MonoBehaviour:
   - NodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
     NodeName: House Candidate Weights
-    Position: {x: 3416, y: 2490}
+    Position: {x: 2776, y: 1721.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -2223,7 +2355,7 @@ MonoBehaviour:
   - NodeId: cdf66d27-6d46-44ed-97d5-101ecbe82a90
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: House Band
-    Position: {x: 3416, y: 2765}
+    Position: {x: 2776, y: 1996.52}
     Ports:
     - PortName: HouseBand
       DisplayName: HouseBand
@@ -2237,7 +2369,7 @@ MonoBehaviour:
   - NodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: House Weights
-    Position: {x: 3771.6506, y: 2890}
+    Position: {x: 3132, y: 2121.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -2256,28 +2388,10 @@ MonoBehaviour:
       Value: Multiply
     - Name: scalarB
       Value: 0.75
-  - NodeId: 83addb74-0129-416d-811c-a0f3e8b6acb2
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
-    NodeName: House Scatter
-    Position: {x: 3996.2007, y: 2623}
-    Ports:
-    - PortName: Weights
-      DisplayName: Weights
-      Direction: 0
-      Type: 0
-    - PortName: HousePoints
-      DisplayName: HousePoints
-      Direction: 1
-      Type: 3
-    Parameters:
-    - Name: threshold
-      Value: 0.25
-    - Name: pointCount
-      Value: 6
   - NodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: House Eligibility Mask
-    Position: {x: 4056.0005, y: 2939.25}
+    Position: {x: 3416, y: 2170.52}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -2293,7 +2407,7 @@ MonoBehaviour:
   - NodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
     NodeName: House Poisson
-    Position: {x: 4352.95, y: 2939}
+    Position: {x: 3713, y: 2170.52}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -2313,7 +2427,7 @@ MonoBehaviour:
   - NodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Cave House Prefabs
-    Position: {x: 4716.051, y: 3066}
+    Position: {x: 4076, y: 2297.52}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2513,7 +2627,7 @@ MonoBehaviour:
   - NodeId: prefab-reserved-void-overlay
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
     NodeName: Prefab Reserved Void
-    Position: {x: -2260, y: 3216}
+    Position: {x: -581.9729, y: 2420.96}
     Ports:
     - PortName: Base
       DisplayName: Base
@@ -3025,8 +3139,33 @@ MonoBehaviour:
     ToNodeId: ced59584-f592-4d05-b4b5-487143502736
     ToPortName: Mask
     CastMode: 0
-  - FromNodeId: ced59584-f592-4d05-b4b5-487143502736
-    FromPortName: SurfaceFloorWeights
+  - FromNodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
+    FromPortName: BaseLogicalIds
+    ToNodeId: surface-prop-placement-points
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-points
+    FromPortName: SurfacePropGroundPoints
+    ToNodeId: surface-prop-placement-mask
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    FromPortName: OneFloat
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 6999daac-7624-464b-9308-87663f179e01
+    FromPortName: ZeroFloat
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-mask
+    FromPortName: SurfacePropPlacementMask
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
     ToNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
     ToPortName: A
     CastMode: 0
@@ -3035,8 +3174,8 @@ MonoBehaviour:
     ToNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
     ToPortName: B
     CastMode: 0
-  - FromNodeId: ced59584-f592-4d05-b4b5-487143502736
-    FromPortName: SurfaceFloorWeights
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
     ToNodeId: 62c2d399-7023-4628-b07a-c035317a8f19
     ToPortName: A
     CastMode: 0
@@ -3050,8 +3189,8 @@ MonoBehaviour:
     ToNodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
     ToPortName: A
     CastMode: 0
-  - FromNodeId: ced59584-f592-4d05-b4b5-487143502736
-    FromPortName: SurfaceFloorWeights
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
     ToNodeId: ceb72be0-5035-400a-a151-3a859daedd51
     ToPortName: A
     CastMode: 0
@@ -3065,8 +3204,8 @@ MonoBehaviour:
     ToNodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
     ToPortName: A
     CastMode: 0
-  - FromNodeId: ced59584-f592-4d05-b4b5-487143502736
-    FromPortName: SurfaceFloorWeights
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
     ToNodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
     ToPortName: A
     CastMode: 0
@@ -3102,21 +3241,41 @@ MonoBehaviour:
     CastMode: 0
   - FromNodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
     FromPortName: TreePoints
+    ToNodeId: forest-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: forest-tree-point-offset
+    FromPortName: ForestTreePlacementPoints
     ToNodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
     ToPortName: Points
     CastMode: 0
   - FromNodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
     FromPortName: JungleTreePoints
+    ToNodeId: jungle-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: jungle-tree-point-offset
+    FromPortName: JungleTreePlacementPoints
     ToNodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
     ToPortName: Points
     CastMode: 0
   - FromNodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
     FromPortName: IceTreePoints
+    ToNodeId: ice-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: ice-tree-point-offset
+    FromPortName: IceTreePlacementPoints
     ToNodeId: 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
     ToPortName: Points
     CastMode: 0
   - FromNodeId: 68905719-fc24-450e-8b09-869ff286d755
     FromPortName: CactusPoints
+    ToNodeId: cactus-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: cactus-point-offset
+    FromPortName: CactusPlacementPoints
     ToNodeId: 598ec486-5ceb-4977-9ff6-cf36bb53fca2
     ToPortName: Points
     CastMode: 0
@@ -3401,10 +3560,10 @@ MonoBehaviour:
     Title: Biome Layout
     Position:
       serializedVersion: 2
-      x: -1548
-      y: 333.64044
-      width: 3248
-      height: 1326
+      x: -872.71405
+      y: 397.32166
+      width: 1565
+      height: 1159
     ContainedNodeIds:
     - biome-layout-randomized
     - 2c999f26-725b-48aa-b73b-eabb740d6e8b
@@ -3473,14 +3632,17 @@ MonoBehaviour:
     Title: Props
     Position:
       serializedVersion: 2
-      x: 2431
-      y: 1621
-      width: 2891
-      height: 1446
+      x: 1734
+      y: 757.52
+      width: 3767
+      height: 1894
     ContainedNodeIds:
     - d200aa4b-459f-43ea-baa1-3b7bd15f8b40
     - 6999daac-7624-464b-9308-87663f179e01
     - ced59584-f592-4d05-b4b5-487143502736
+    - surface-prop-placement-points
+    - surface-prop-placement-mask
+    - surface-prop-placement-weights
     - 810ae1cf-7a53-4772-ba1a-9e254c858fa3
     - 62c2d399-7023-4628-b07a-c035317a8f19
     - 757d030a-42ab-4f59-8055-d42881b78bd5
@@ -3489,12 +3651,16 @@ MonoBehaviour:
     - fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
     - 6510aebd-0ebe-4c96-9b81-a5be340738b8
     - 480778a2-45e3-4772-96ff-64c8852c0f60
+    - forest-tree-point-offset
     - fe4f3b73-12a8-4542-8106-2c0323c44b71
     - 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    - jungle-tree-point-offset
     - 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
     - ab33acfc-89ad-47f4-b87a-1c2921219c01
+    - ice-tree-point-offset
     - 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
     - 68905719-fc24-450e-8b09-869ff286d755
+    - cactus-point-offset
     - 598ec486-5ceb-4977-9ff6-cf36bb53fca2
     - f5a86bb7-261c-4dfa-bd8f-cb006763428c
     - 7d91fd3c-0f1a-4313-b849-600a81f07311
@@ -3503,7 +3669,6 @@ MonoBehaviour:
     - f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
     - cdf66d27-6d46-44ed-97d5-101ecbe82a90
     - 3f29eb2a-e049-4862-8f96-33e0f7f88106
-    - 83addb74-0129-416d-811c-a0f3e8b6acb2
     - 681448c3-fc8a-48ac-9237-e6a486c1e035
     - 9bedff46-3f82-482d-b30a-caff2a462f45
     - fac00bf5-5235-4ccb-8116-1fe0fd349484
@@ -3512,10 +3677,10 @@ MonoBehaviour:
     Title: Output
     Position:
       serializedVersion: 2
-      x: 955
-      y: 3157
-      width: 290
-      height: 258
+      x: -606.9729
+      y: 2361.9597
+      width: 1039
+      height: 443
     ContainedNodeIds:
     - prefab-reserved-void-overlay
     - graph-output-node

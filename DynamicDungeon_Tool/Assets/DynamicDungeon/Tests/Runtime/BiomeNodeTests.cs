@@ -889,6 +889,7 @@ namespace DynamicDungeon.Tests.Runtime
         public async Task TerrariaDemoGraphCompilesAndExecutesWithRefactoredBiomeLayout()
         {
             const string graphPath = "Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/TerrariaDemoGraph.asset";
+            const string baseLogicalChannelName = "BaseLogicalIds";
             const string materialContextLogicalChannelName = "MaterialContextLogicalIds";
             GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(graphPath);
             GraphCompileResult compileResult = null;
@@ -910,14 +911,27 @@ namespace DynamicDungeon.Tests.Runtime
                 Assert.That(executionResult.Snapshot, Is.Not.Null);
 
                 WorldSnapshot.IntChannelSnapshot logicalChannel = GetIntChannel(executionResult.Snapshot, materialContextLogicalChannelName);
+                WorldSnapshot.IntChannelSnapshot baseLogicalChannel = GetIntChannel(executionResult.Snapshot, baseLogicalChannelName);
                 WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(executionResult.Snapshot, BiomeChannelUtility.ChannelName);
 
                 Assert.That(logicalChannel, Is.Not.Null);
+                Assert.That(baseLogicalChannel, Is.Not.Null);
                 Assert.That(biomeChannel, Is.Not.Null);
                 Assert.That(ContainsAny(logicalChannel.Data, 10, 11, 12, 13, 14, 15, 16, 17), Is.True);
                 Assert.That(ContainsAny(logicalChannel.Data, 18), Is.True);
                 Assert.That(ContainsBiomeTiles(executionResult.Snapshot, "MossCave"), Is.True);
                 Assert.That(ContainsBiomeTiles(executionResult.Snapshot, "CrystalCave"), Is.True);
+                Assert.That(GetPointCount(executionResult.Snapshot, "SurfacePropGroundPoints"), Is.GreaterThan(0));
+                AssertSurfacePlacementPointsUseSupportedAirCells(executionResult.Snapshot, baseLogicalChannel, "ForestTreePlacementPoints");
+                AssertSurfacePlacementPointsUseSupportedAirCells(executionResult.Snapshot, baseLogicalChannel, "JungleTreePlacementPoints");
+                AssertSurfacePlacementPointsUseSupportedAirCells(executionResult.Snapshot, baseLogicalChannel, "IceTreePlacementPoints");
+                AssertSurfacePlacementPointsUseSupportedAirCells(executionResult.Snapshot, baseLogicalChannel, "CactusPlacementPoints");
+                Assert.That(
+                    GetPointCount(executionResult.Snapshot, "ForestTreePlacementPoints") +
+                    GetPointCount(executionResult.Snapshot, "JungleTreePlacementPoints") +
+                    GetPointCount(executionResult.Snapshot, "IceTreePlacementPoints") +
+                    GetPointCount(executionResult.Snapshot, "CactusPlacementPoints"),
+                    Is.GreaterThan(0));
             }
             finally
             {
@@ -1572,6 +1586,69 @@ namespace DynamicDungeon.Tests.Runtime
             }
 
             return null;
+        }
+
+        private static WorldSnapshot.PointListChannelSnapshot GetPointListChannel(WorldSnapshot snapshot, string channelName)
+        {
+            int channelIndex;
+            for (channelIndex = 0; channelIndex < snapshot.PointListChannels.Length; channelIndex++)
+            {
+                WorldSnapshot.PointListChannelSnapshot channel = snapshot.PointListChannels[channelIndex];
+                if (channel != null && string.Equals(channel.Name, channelName, StringComparison.Ordinal))
+                {
+                    return channel;
+                }
+            }
+
+            return null;
+        }
+
+        private static void AssertSurfacePlacementPointsUseSupportedAirCells(
+            WorldSnapshot snapshot,
+            WorldSnapshot.IntChannelSnapshot baseLogicalChannel,
+            string pointChannelName,
+            bool requireAny = false)
+        {
+            WorldSnapshot.PointListChannelSnapshot pointChannel = GetPointListChannel(snapshot, pointChannelName);
+            Assert.That(pointChannel, Is.Not.Null, pointChannelName);
+            if (requireAny)
+            {
+                Assert.That(pointChannel.Data, Is.Not.Empty, pointChannelName);
+            }
+
+            int pointIndex;
+            for (pointIndex = 0; pointIndex < pointChannel.Data.Length; pointIndex++)
+            {
+                Vector2Int point = pointChannel.Data[pointIndex];
+                AssertPlacementFootprintIsSupported(baseLogicalChannel.Data, snapshot.Width, snapshot.Height, point, pointChannelName);
+            }
+        }
+
+        private static void AssertPlacementFootprintIsSupported(int[] data, int width, int height, Vector2Int point, string pointChannelName)
+        {
+            int offsetX;
+            for (offsetX = -1; offsetX <= 3; offsetX++)
+            {
+                Assert.That(IsLogicalIdAt(data, width, height, point.x + offsetX, point.y, 0), Is.True, pointChannelName + " point must have horizontal clearance.");
+                Assert.That(IsLogicalIdAt(data, width, height, point.x + offsetX, point.y + 1, 0), Is.True, pointChannelName + " point must have head clearance.");
+                Assert.That(IsLogicalIdAt(data, width, height, point.x + offsetX, point.y - 1, 2), Is.True, pointChannelName + " point must have ground support across the tree footprint.");
+            }
+        }
+
+        private static bool IsLogicalIdAt(int[] data, int width, int height, int x, int y, int expectedLogicalId)
+        {
+            if (x < 0 || x >= width || y < 0 || y >= height)
+            {
+                return false;
+            }
+
+            return data[x + (y * width)] == expectedLogicalId;
+        }
+
+        private static int GetPointCount(WorldSnapshot snapshot, string channelName)
+        {
+            WorldSnapshot.PointListChannelSnapshot channel = GetPointListChannel(snapshot, channelName);
+            return channel == null || channel.Data == null ? 0 : channel.Data.Length;
         }
 
         private static bool ContainsBiomeTiles(WorldSnapshot snapshot, string biomeName)
