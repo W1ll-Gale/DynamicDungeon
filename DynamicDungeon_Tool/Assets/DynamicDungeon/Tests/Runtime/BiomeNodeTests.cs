@@ -1190,6 +1190,79 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        [Test]
+        public void BackgroundFillCanUseSeparateBiomeChannel()
+        {
+            const string visualBiomeChannelName = "VisualBiomeChannel";
+            const ushort backgroundLogicalId = 17;
+
+            Grid grid = null;
+            BiomeAsset fallbackBiome = null;
+            BiomeAsset visualBiome = null;
+            BiomeAsset oreBiome = null;
+            TilemapLayerDefinition visualLayer = null;
+            Tile visualTile = null;
+            Tile oreTile = null;
+
+            try
+            {
+                grid = new GameObject("BackgroundBiomeOutputGrid").AddComponent<Grid>();
+                fallbackBiome = ScriptableObject.CreateInstance<BiomeAsset>();
+                visualBiome = ScriptableObject.CreateInstance<BiomeAsset>();
+                oreBiome = ScriptableObject.CreateInstance<BiomeAsset>();
+                visualLayer = CreateLayerDefinition("Visual", false);
+                visualTile = CreateTile(Color.gray);
+                oreTile = CreateTile(Color.yellow);
+
+                AddBiomeMapping(visualBiome, backgroundLogicalId, visualTile);
+                AddBiomeMapping(oreBiome, backgroundLogicalId, oreTile);
+
+                WorldSnapshot snapshot = new WorldSnapshot();
+                snapshot.Width = 1;
+                snapshot.Height = 2;
+                snapshot.IntChannels = new[]
+                {
+                    new WorldSnapshot.IntChannelSnapshot
+                    {
+                        Name = LogicalChannelName,
+                        Data = new[] { LogicalTileId.Void, (int)LogicalTileId.Floor }
+                    },
+                    new WorldSnapshot.IntChannelSnapshot
+                    {
+                        Name = BiomeChannelUtility.ChannelName,
+                        Data = new[] { 1, 1 }
+                    },
+                    new WorldSnapshot.IntChannelSnapshot
+                    {
+                        Name = visualBiomeChannelName,
+                        Data = new[] { 0, 0 }
+                    }
+                };
+                snapshot.BiomeChannelBiomes = new[] { visualBiome, oreBiome };
+
+                TilemapLayerWriter writer = new TilemapLayerWriter();
+                TilemapOutputPass outputPass = new TilemapOutputPass();
+                writer.EnsureTimelapsCreated(grid, new[] { visualLayer });
+
+                outputPass.ExecuteBackgroundFill(snapshot, LogicalChannelName, fallbackBiome, writer, visualLayer, Vector3Int.zero, backgroundLogicalId, visualBiomeChannelName);
+
+                Tilemap visualTilemap = GetLayerTilemap(grid, "Visual");
+                TileBase resolvedTile = visualTilemap.GetTile(new Vector3Int(0, 0, 0));
+                Assert.That(resolvedTile, Is.SameAs(visualTile));
+                Assert.That(resolvedTile, Is.Not.SameAs(oreTile));
+            }
+            finally
+            {
+                DestroyImmediateIfNotNull(visualTile);
+                DestroyImmediateIfNotNull(oreTile);
+                DestroyImmediateIfNotNull(visualLayer);
+                DestroyImmediateIfNotNull(visualBiome);
+                DestroyImmediateIfNotNull(oreBiome);
+                DestroyImmediateIfNotNull(fallbackBiome);
+                DestroyImmediateIfNotNull(grid != null ? grid.gameObject : null);
+            }
+        }
+
         private static string CreateBiomeLayoutRulesJson(BiomeLayoutEntry[] entries, BiomeLayoutConstraint[] constraints = null)
         {
             BiomeLayoutRules rules = new BiomeLayoutRules

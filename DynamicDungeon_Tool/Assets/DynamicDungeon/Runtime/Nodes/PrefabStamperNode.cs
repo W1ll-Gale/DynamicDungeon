@@ -22,20 +22,18 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string DefaultNodeName = "Prefab Stamper";
         private const string PointsPortName = "Points";
         private const string LogicalIdsChannelName = GraphOutputUtility.OutputInputPortName;
+        private const string ReservedMaskFallbackOutputName = "ReservedMask";
         private const int DefaultInteriorLogicalId = 1;
         private const int DefaultOutlineLogicalId = 2;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
-        private static readonly NodePortDefinition[] _ports =
-        {
-            new NodePortDefinition(PointsPortName, PortDirection.Input, ChannelType.PointList, PortCapacity.Single, false),
-            new NodePortDefinition(LogicalIdsChannelName, PortDirection.Output, ChannelType.Int)
-        };
 
         private readonly string _nodeId;
         private readonly string _nodeName;
+        private NodePortDefinition[] _ports;
 
         private string _inputPointsChannelName;
+        private string _reservedMaskChannelName;
 
         [AssetGuidReference(typeof(GameObject))]
         [DescriptionAttribute("Prefab asset stored as an asset GUID in the graph. The prefab must have PrefabStampAuthoring on its root.")]
@@ -123,7 +121,8 @@ namespace DynamicDungeon.Runtime.Nodes
             bool mirrorX = false,
             bool mirrorY = false,
             bool allowRotation = false,
-            int maxOverlapTiles = 0)
+            int maxOverlapTiles = 0,
+            string reservedMaskChannelName = "")
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -142,7 +141,9 @@ namespace DynamicDungeon.Runtime.Nodes
             _mirrorY = mirrorY;
             _allowRotation = allowRotation;
             _maxOverlapTiles = math.max(0, maxOverlapTiles);
+            _reservedMaskChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, reservedMaskChannelName, ReservedMaskFallbackOutputName);
 
+            RefreshPorts();
             RefreshChannelDeclarations();
         }
 
@@ -178,11 +179,20 @@ namespace DynamicDungeon.Runtime.Nodes
                 return;
             }
 
+            if (string.Equals(name, "reservedMaskChannelName", StringComparison.OrdinalIgnoreCase))
+            {
+                _reservedMaskChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(_nodeId, value, ReservedMaskFallbackOutputName);
+                RefreshPorts();
+                RefreshChannelDeclarations();
+                return;
+            }
+
             if (string.Equals(name, "footprintMode", StringComparison.OrdinalIgnoreCase))
             {
                 try
                 {
                     _footprintMode = (PrefabFootprintMode)Enum.Parse(typeof(PrefabFootprintMode), value ?? string.Empty, true);
+                    RefreshChannelDeclarations();
                 }
                 catch
                 {
@@ -347,12 +357,17 @@ namespace DynamicDungeon.Runtime.Nodes
             NativeArray<int> logicalIds = context.GetIntChannel(LogicalIdsChannelName);
             NativeList<PrefabPlacementRecord> placementChannel = context.GetPrefabPlacementListChannel(PrefabPlacementChannelUtility.ChannelName);
             NativeArray<int2> occupiedOffsets = CreateOccupiedOffsets();
+            bool writesReservedMask = UsesReservedMask();
+            NativeArray<byte> reservedMask = writesReservedMask
+                ? context.GetBoolMaskChannel(_reservedMaskChannelName)
+                : new NativeArray<byte>(1, Allocator.TempJob, NativeArrayOptions.ClearMemory);
 
             PrefabPlacementStampJob job = new PrefabPlacementStampJob
             {
                 Placements = placements,
                 LogicalIds = logicalIds,
                 PlacementChannel = placementChannel,
+                ReservedMask = reservedMask,
                 OccupiedOffsets = occupiedOffsets,
                 WorldWidth = context.Width,
                 WorldHeight = context.Height,
@@ -365,11 +380,18 @@ namespace DynamicDungeon.Runtime.Nodes
                 MaxOverlapTiles = _maxOverlapTiles,
                 InteriorLogicalId = _interiorLogicalId,
                 OutlineLogicalId = _outlineLogicalId,
+                WriteReservedMask = writesReservedMask,
                 LocalSeed = context.LocalSeed
             };
 
             JobHandle jobHandle = job.Schedule(context.InputDependency);
-            return occupiedOffsets.Dispose(jobHandle);
+            JobHandle disposeHandle = occupiedOffsets.Dispose(jobHandle);
+            if (!writesReservedMask)
+            {
+                disposeHandle = reservedMask.Dispose(disposeHandle);
+            }
+
+            return disposeHandle;
         }
 
         private void RefreshChannelDeclarations()
@@ -393,7 +415,22 @@ namespace DynamicDungeon.Runtime.Nodes
                 declarations.Add(new ChannelDeclaration(PrefabPlacementChannelUtility.ChannelName, ChannelType.PrefabPlacementList, true));
             }
 
+            if (hasActivePlacement)
+            {
+                declarations.Add(new ChannelDeclaration(_reservedMaskChannelName, ChannelType.BoolMask, true));
+            }
+
             _channelDeclarations = declarations.ToArray();
+        }
+
+        private void RefreshPorts()
+        {
+            _ports = new[]
+            {
+                new NodePortDefinition(PointsPortName, PortDirection.Input, ChannelType.PointList, PortCapacity.Single, false),
+                new NodePortDefinition(LogicalIdsChannelName, PortDirection.Output, ChannelType.Int),
+                new NodePortDefinition(_reservedMaskChannelName, PortDirection.Output, ChannelType.BoolMask, displayName: GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _reservedMaskChannelName, ReservedMaskFallbackOutputName))
+            };
         }
 
         private bool HasActivePlacement()
@@ -412,6 +449,12 @@ namespace DynamicDungeon.Runtime.Nodes
         {
             return _footprintMode == PrefabFootprintMode.None ||
                    _footprintMode == PrefabFootprintMode.FillInterior;
+        }
+
+        private bool UsesReservedMask()
+        {
+            return _footprintMode == PrefabFootprintMode.CarveInterior ||
+                   _footprintMode == PrefabFootprintMode.OutlineAndCarve;
         }
 
         private NativeArray<int2> CreateOccupiedOffsets()
@@ -437,6 +480,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
             public NativeArray<int> LogicalIds;
             public NativeList<PrefabPlacementRecord> PlacementChannel;
+            public NativeArray<byte> ReservedMask;
 
             [ReadOnly]
             public NativeArray<int2> OccupiedOffsets;
@@ -452,6 +496,7 @@ namespace DynamicDungeon.Runtime.Nodes
             public int MaxOverlapTiles;
             public int InteriorLogicalId;
             public int OutlineLogicalId;
+            public bool WriteReservedMask;
             public long LocalSeed;
 
             public void Execute()
@@ -555,6 +600,11 @@ namespace DynamicDungeon.Runtime.Nodes
                         FootprintMode == (int)PrefabFootprintMode.OutlineAndCarve)
                     {
                         LogicalIds[worldIndex] = LogicalTileId.Void;
+                        if (WriteReservedMask)
+                        {
+                            ReservedMask[worldIndex] = 1;
+                        }
+
                         continue;
                     }
 

@@ -13,74 +13,6 @@ MonoBehaviour:
   m_Name: PrefabStampCatalog
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Placement.PrefabStampCatalog
   Entries:
-  - PrefabGuid: 75f965a629c6fb54e8f21780cf4b4f3c
-    Prefab: {fileID: 5290852943062408443, guid: 75f965a629c6fb54e8f21780cf4b4f3c, type: 3}
-    Template:
-      PrefabGuid: 75f965a629c6fb54e8f21780cf4b4f3c
-      AnchorOffset: {x: 0, y: 0, z: 0}
-      SupportsRandomRotation: 1
-      UsesTilemapFootprint: 0
-      OccupiedCells:
-      - {x: -2, y: 0}
-      - {x: -1, y: 0}
-      - {x: 0, y: 0}
-      - {x: 1, y: 0}
-      - {x: 2, y: 0}
-      - {x: -1, y: 1}
-      - {x: 0, y: 1}
-      - {x: 1, y: 1}
-  - PrefabGuid: ef9e2f0474617894e9fb51d6e6fd09e9
-    Prefab: {fileID: 6834152649101725224, guid: ef9e2f0474617894e9fb51d6e6fd09e9, type: 3}
-    Template:
-      PrefabGuid: ef9e2f0474617894e9fb51d6e6fd09e9
-      AnchorOffset: {x: 0.5, y: 0.5, z: 0}
-      SupportsRandomRotation: 1
-      UsesTilemapFootprint: 0
-      OccupiedCells:
-      - {x: -2, y: 0}
-      - {x: -1, y: 0}
-      - {x: 0, y: 0}
-      - {x: 1, y: 0}
-      - {x: 2, y: 0}
-      - {x: -2, y: 1}
-      - {x: -1, y: 1}
-      - {x: 1, y: 1}
-      - {x: 2, y: 1}
-      - {x: -2, y: 2}
-      - {x: -1, y: 2}
-      - {x: 0, y: 2}
-      - {x: 1, y: 2}
-      - {x: 2, y: 2}
-      - {x: -2, y: 3}
-      - {x: -1, y: 3}
-      - {x: 0, y: 3}
-      - {x: 1, y: 3}
-      - {x: 2, y: 3}
-      - {x: -1, y: 4}
-      - {x: 0, y: 4}
-      - {x: 1, y: 4}
-  - PrefabGuid: 3d29a499903e6c44b847b85c2c81242a
-    Prefab: {fileID: 7115732961527051695, guid: 3d29a499903e6c44b847b85c2c81242a, type: 3}
-    Template:
-      PrefabGuid: 3d29a499903e6c44b847b85c2c81242a
-      AnchorOffset: {x: 0, y: 0, z: 0}
-      SupportsRandomRotation: 0
-      UsesTilemapFootprint: 1
-      OccupiedCells:
-      - {x: -1, y: 0}
-      - {x: -1, y: 1}
-      - {x: -2, y: 2}
-      - {x: -1, y: 2}
-      - {x: 0, y: 2}
-      - {x: -3, y: 3}
-      - {x: -2, y: 3}
-      - {x: -1, y: 3}
-      - {x: 0, y: 3}
-      - {x: 1, y: 3}
-      - {x: -2, y: 4}
-      - {x: -1, y: 4}
-      - {x: 0, y: 4}
-      - {x: -1, y: 5}
   - PrefabGuid: 51f71faa81cc4f741b4c2886c00273df
     Prefab: {fileID: 7115732961527051695, guid: 51f71faa81cc4f741b4c2886c00273df, type: 3}
     Template:
@@ -125,6 +57,28 @@ MonoBehaviour:
       - {x: -1, y: 4}
       - {x: 0, y: 4}
       - {x: -1, y: 5}
+  - PrefabGuid: 3d29a499903e6c44b847b85c2c81242a
+    Prefab: {fileID: 7115732961527051695, guid: 3d29a499903e6c44b847b85c2c81242a, type: 3}
+    Template:
+      PrefabGuid: 3d29a499903e6c44b847b85c2c81242a
+      AnchorOffset: {x: 0, y: 0, z: 0}
+      SupportsRandomRotation: 0
+      UsesTilemapFootprint: 1
+      OccupiedCells:
+      - {x: -1, y: 0}
+      - {x: -1, y: 1}
+      - {x: -2, y: 2}
+      - {x: -1, y: 2}
+      - {x: 0, y: 2}
+      - {x: -3, y: 3}
+      - {x: -2, y: 3}
+      - {x: -1, y: 3}
+      - {x: 0, y: 3}
+      - {x: 1, y: 3}
+      - {x: -2, y: 4}
+      - {x: -1, y: 4}
+      - {x: 0, y: 4}
+      - {x: -1, y: 5}
   - PrefabGuid: adcaa141de6eba940af9ebb2e4fc664e
     Prefab: {fileID: 7115732961527051695, guid: adcaa141de6eba940af9ebb2e4fc664e, type: 3}
     Template:
@@ -137,3 +91,93 @@ MonoBehaviour:
       - {x: -1, y: 1}
       - {x: -1, y: 2}
       - {x: -1, y: 3}
+  - PrefabGuid: 75f965a629c6fb54e8f21780cf4b4f3c
+    Prefab: {fileID: 5290852943062408443, guid: 75f965a629c6fb54e8f21780cf4b4f3c, type: 3}
+    Template:
+      PrefabGuid: 75f965a629c6fb54e8f21780cf4b4f3c
+      AnchorOffset: {x: 0, y: 0, z: 0}
+      SupportsRandomRotation: 1
+      UsesTilemapFootprint: 0
+      OccupiedCells:
+      - {x: -2, y: 0}
+      - {x: -1, y: 0}
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      - {x: 2, y: 0}
+      - {x: -1, y: 1}
+      - {x: 0, y: 1}
+      - {x: 1, y: 1}
+  - PrefabGuid: 33b4e04847c26624186a988d845dfcdf
+    Prefab: {fileID: 7115732961527051695, guid: 33b4e04847c26624186a988d845dfcdf, type: 3}
+    Template:
+      PrefabGuid: 33b4e04847c26624186a988d845dfcdf
+      AnchorOffset: {x: 0, y: 0, z: 0}
+      SupportsRandomRotation: 0
+      UsesTilemapFootprint: 1
+      OccupiedCells:
+      - {x: -6, y: 0}
+      - {x: -5, y: 0}
+      - {x: -4, y: 0}
+      - {x: -3, y: 0}
+      - {x: -2, y: 0}
+      - {x: -1, y: 0}
+      - {x: 0, y: 0}
+      - {x: 1, y: 0}
+      - {x: 2, y: 0}
+      - {x: 3, y: 0}
+      - {x: 4, y: 0}
+      - {x: -6, y: 1}
+      - {x: -5, y: 1}
+      - {x: -4, y: 1}
+      - {x: -3, y: 1}
+      - {x: -2, y: 1}
+      - {x: -1, y: 1}
+      - {x: 0, y: 1}
+      - {x: 1, y: 1}
+      - {x: 2, y: 1}
+      - {x: 3, y: 1}
+      - {x: 4, y: 1}
+      - {x: -6, y: 2}
+      - {x: -5, y: 2}
+      - {x: -4, y: 2}
+      - {x: -3, y: 2}
+      - {x: -2, y: 2}
+      - {x: -1, y: 2}
+      - {x: 0, y: 2}
+      - {x: 1, y: 2}
+      - {x: 2, y: 2}
+      - {x: 3, y: 2}
+      - {x: 4, y: 2}
+      - {x: -6, y: 3}
+      - {x: -5, y: 3}
+      - {x: -4, y: 3}
+      - {x: -3, y: 3}
+      - {x: -2, y: 3}
+      - {x: -1, y: 3}
+      - {x: 0, y: 3}
+      - {x: 1, y: 3}
+      - {x: 2, y: 3}
+      - {x: 3, y: 3}
+      - {x: 4, y: 3}
+      - {x: -6, y: 4}
+      - {x: -5, y: 4}
+      - {x: -4, y: 4}
+      - {x: -3, y: 4}
+      - {x: -2, y: 4}
+      - {x: -1, y: 4}
+      - {x: 0, y: 4}
+      - {x: 1, y: 4}
+      - {x: 2, y: 4}
+      - {x: 3, y: 4}
+      - {x: 4, y: 4}
+      - {x: -6, y: 5}
+      - {x: -5, y: 5}
+      - {x: -4, y: 5}
+      - {x: -3, y: 5}
+      - {x: -2, y: 5}
+      - {x: -1, y: 5}
+      - {x: 0, y: 5}
+      - {x: 1, y: 5}
+      - {x: 2, y: 5}
+      - {x: 3, y: 5}
+      - {x: 4, y: 5}

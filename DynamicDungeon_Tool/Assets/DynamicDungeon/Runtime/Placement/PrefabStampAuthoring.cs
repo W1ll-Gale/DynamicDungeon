@@ -14,6 +14,12 @@ namespace DynamicDungeon.Runtime.Placement
         private Tilemap _footprintTilemap;
 
         [SerializeField]
+        private List<Tilemap> _footprintTilemaps = new List<Tilemap>();
+
+        [SerializeField]
+        private bool _fillEnclosedTilemapInterior = true;
+
+        [SerializeField]
         private Vector2 _fallbackCellSize = Vector2.one;
 
         [SerializeField]
@@ -58,23 +64,32 @@ namespace DynamicDungeon.Runtime.Placement
             derivedAnchorOffset = Vector3.zero;
             errorMessage = null;
 
-            Tilemap sourceTilemap = ResolveFootprintTilemap();
-            if (sourceTilemap == null)
+            List<Tilemap> sourceTilemaps = ResolveFootprintTilemaps();
+            if (sourceTilemaps.Count == 0)
             {
                 return false;
             }
 
             HashSet<Vector2Int> uniqueCells = new HashSet<Vector2Int>();
-            BoundsInt bounds = sourceTilemap.cellBounds;
-
-            foreach (Vector3Int position in bounds.allPositionsWithin)
+            int tilemapIndex;
+            for (tilemapIndex = 0; tilemapIndex < sourceTilemaps.Count; tilemapIndex++)
             {
-                if (sourceTilemap.GetTile(position) == null)
+                Tilemap sourceTilemap = sourceTilemaps[tilemapIndex];
+                if (sourceTilemap == null)
                 {
                     continue;
                 }
 
-                uniqueCells.Add(new Vector2Int(position.x - _originCell.x, position.y - _originCell.y));
+                BoundsInt bounds = sourceTilemap.cellBounds;
+                foreach (Vector3Int position in bounds.allPositionsWithin)
+                {
+                    if (sourceTilemap.GetTile(position) == null)
+                    {
+                        continue;
+                    }
+
+                    uniqueCells.Add(new Vector2Int(position.x - _originCell.x, position.y - _originCell.y));
+                }
             }
 
             if (uniqueCells.Count == 0)
@@ -83,9 +98,14 @@ namespace DynamicDungeon.Runtime.Placement
                 return false;
             }
 
+            if (_fillEnclosedTilemapInterior)
+            {
+                FillEnclosedInterior(uniqueCells);
+            }
+
             occupiedCells.AddRange(uniqueCells);
             occupiedCells.Sort(CompareCells);
-            derivedAnchorOffset = _anchorOffset + transform.InverseTransformPoint(sourceTilemap.transform.position);
+            derivedAnchorOffset = _anchorOffset + transform.InverseTransformPoint(sourceTilemaps[0].transform.position);
             return true;
         }
 
@@ -141,15 +161,132 @@ namespace DynamicDungeon.Runtime.Placement
             return true;
         }
 
-        private Tilemap ResolveFootprintTilemap()
+        private List<Tilemap> ResolveFootprintTilemaps()
         {
-            if (_footprintTilemap != null)
+            List<Tilemap> tilemaps = new List<Tilemap>();
+            if (_footprintTilemaps != null)
             {
-                return _footprintTilemap;
+                int index;
+                for (index = 0; index < _footprintTilemaps.Count; index++)
+                {
+                    Tilemap tilemap = _footprintTilemaps[index];
+                    if (tilemap != null && !tilemaps.Contains(tilemap))
+                    {
+                        tilemaps.Add(tilemap);
+                    }
+                }
             }
 
-            Tilemap[] tilemaps = GetComponentsInChildren<Tilemap>(true);
-            return tilemaps != null && tilemaps.Length > 0 ? tilemaps[0] : null;
+            bool hasExplicitTilemapList = tilemaps.Count > 0;
+            if (_footprintTilemap != null)
+            {
+                if (!tilemaps.Contains(_footprintTilemap))
+                {
+                    tilemaps.Insert(0, _footprintTilemap);
+                }
+            }
+
+            if (hasExplicitTilemapList)
+            {
+                return tilemaps;
+            }
+
+            Tilemap[] childTilemaps = GetComponentsInChildren<Tilemap>(true);
+            if (childTilemaps != null)
+            {
+                int index;
+                for (index = 0; index < childTilemaps.Length; index++)
+                {
+                    Tilemap childTilemap = childTilemaps[index];
+                    if (childTilemap != null && !tilemaps.Contains(childTilemap))
+                    {
+                        tilemaps.Add(childTilemap);
+                    }
+                }
+            }
+
+            return tilemaps;
+        }
+
+        private static void FillEnclosedInterior(HashSet<Vector2Int> occupiedCells)
+        {
+            if (occupiedCells == null || occupiedCells.Count == 0)
+            {
+                return;
+            }
+
+            bool hasBounds = false;
+            int minX = 0;
+            int minY = 0;
+            int maxX = 0;
+            int maxY = 0;
+
+            foreach (Vector2Int cell in occupiedCells)
+            {
+                if (!hasBounds)
+                {
+                    minX = maxX = cell.x;
+                    minY = maxY = cell.y;
+                    hasBounds = true;
+                    continue;
+                }
+
+                minX = Mathf.Min(minX, cell.x);
+                minY = Mathf.Min(minY, cell.y);
+                maxX = Mathf.Max(maxX, cell.x);
+                maxY = Mathf.Max(maxY, cell.y);
+            }
+
+            minX--;
+            minY--;
+            maxX++;
+            maxY++;
+
+            HashSet<Vector2Int> outside = new HashSet<Vector2Int>();
+            Queue<Vector2Int> queue = new Queue<Vector2Int>();
+            EnqueueOutside(new Vector2Int(minX, minY), occupiedCells, outside, queue);
+
+            while (queue.Count > 0)
+            {
+                Vector2Int cell = queue.Dequeue();
+                EnqueueOutside(new Vector2Int(cell.x + 1, cell.y), occupiedCells, outside, queue, minX, minY, maxX, maxY);
+                EnqueueOutside(new Vector2Int(cell.x - 1, cell.y), occupiedCells, outside, queue, minX, minY, maxX, maxY);
+                EnqueueOutside(new Vector2Int(cell.x, cell.y + 1), occupiedCells, outside, queue, minX, minY, maxX, maxY);
+                EnqueueOutside(new Vector2Int(cell.x, cell.y - 1), occupiedCells, outside, queue, minX, minY, maxX, maxY);
+            }
+
+            int x;
+            for (x = minX + 1; x < maxX; x++)
+            {
+                int y;
+                for (y = minY + 1; y < maxY; y++)
+                {
+                    Vector2Int cell = new Vector2Int(x, y);
+                    if (!occupiedCells.Contains(cell) && !outside.Contains(cell))
+                    {
+                        occupiedCells.Add(cell);
+                    }
+                }
+            }
+        }
+
+        private static void EnqueueOutside(Vector2Int cell, HashSet<Vector2Int> occupiedCells, HashSet<Vector2Int> outside, Queue<Vector2Int> queue)
+        {
+            outside.Add(cell);
+            queue.Enqueue(cell);
+        }
+
+        private static void EnqueueOutside(Vector2Int cell, HashSet<Vector2Int> occupiedCells, HashSet<Vector2Int> outside, Queue<Vector2Int> queue, int minX, int minY, int maxX, int maxY)
+        {
+            if (cell.x < minX || cell.x > maxX || cell.y < minY || cell.y > maxY ||
+                occupiedCells.Contains(cell) ||
+                outside.Contains(cell))
+            {
+                return;
+            }
+
+            outside.Add(cell);
+            queue.Enqueue(cell);
         }
 
         private static int CompareCells(Vector2Int left, Vector2Int right)

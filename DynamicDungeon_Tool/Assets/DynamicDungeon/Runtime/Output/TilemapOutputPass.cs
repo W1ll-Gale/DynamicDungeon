@@ -89,7 +89,8 @@ namespace DynamicDungeon.Runtime.Output
             TilemapLayerWriter writer,
             TilemapLayerDefinition backgroundLayer,
             Vector3Int tilemapOffset,
-            ushort backgroundLogicalId)
+            ushort backgroundLogicalId,
+            string biomeChannelName = null)
         {
             if (snapshot == null)
             {
@@ -117,7 +118,8 @@ namespace DynamicDungeon.Runtime.Output
             }
 
             WorldSnapshot.IntChannelSnapshot channelSnapshot = GetIntChannel(snapshot, intChannelName);
-            WorldSnapshot.IntChannelSnapshot biomeChannelSnapshot = TryGetIntChannel(snapshot, BiomeChannelUtility.ChannelName);
+            string resolvedBiomeChannelName = string.IsNullOrWhiteSpace(biomeChannelName) ? BiomeChannelUtility.ChannelName : biomeChannelName;
+            WorldSnapshot.IntChannelSnapshot biomeChannelSnapshot = TryGetIntChannel(snapshot, resolvedBiomeChannelName);
             IReadOnlyList<BiomeAsset> biomeChannelBiomes = snapshot.BiomeChannelBiomes ?? Array.Empty<BiomeAsset>();
             int[] highestSolidByColumn = BuildHighestSolidByColumn(snapshot, channelSnapshot);
 

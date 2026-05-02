@@ -31,6 +31,10 @@ namespace DynamicDungeon.Editor.Inspectors
         private SerializedProperty _layerDefinitionsProperty;
         private SerializedProperty _biomeProperty;
         private SerializedProperty _tilemapOffsetProperty;
+        private SerializedProperty _renderBackgroundFromFloorTilesProperty;
+        private SerializedProperty _backgroundLayerDefinitionProperty;
+        private SerializedProperty _backgroundLogicalIdProperty;
+        private SerializedProperty _backgroundBiomeChannelNameProperty;
         private SerializedProperty _bakedWorldSnapshotProperty;
         private SerializedProperty _propertyOverridesProperty;
 
@@ -54,6 +58,10 @@ namespace DynamicDungeon.Editor.Inspectors
             _layerDefinitionsProperty = serializedObject.FindProperty("_layerDefinitions");
             _biomeProperty = serializedObject.FindProperty("_biome");
             _tilemapOffsetProperty = serializedObject.FindProperty("_tilemapOffset");
+            _renderBackgroundFromFloorTilesProperty = serializedObject.FindProperty("_renderBackgroundFromFloorTiles");
+            _backgroundLayerDefinitionProperty = serializedObject.FindProperty("_backgroundLayerDefinition");
+            _backgroundLogicalIdProperty = serializedObject.FindProperty("_backgroundLogicalId");
+            _backgroundBiomeChannelNameProperty = serializedObject.FindProperty("_backgroundBiomeChannelName");
             _bakedWorldSnapshotProperty = serializedObject.FindProperty("_bakedWorldSnapshot");
             _propertyOverridesProperty = serializedObject.FindProperty("_propertyOverrides");
 
@@ -339,6 +347,17 @@ namespace DynamicDungeon.Editor.Inspectors
 
             GUILayout.Space(4.0f);
             _layerDefinitionsList.DoLayoutList();
+
+            GUILayout.Space(4.0f);
+            EditorGUILayout.PropertyField(_renderBackgroundFromFloorTilesProperty, new GUIContent("Render Background From Floor Tiles"));
+            if (_renderBackgroundFromFloorTilesProperty.boolValue)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(_backgroundLayerDefinitionProperty, new GUIContent("Background Layer"));
+                EditorGUILayout.PropertyField(_backgroundLogicalIdProperty, new GUIContent("Background Logical ID"));
+                EditorGUILayout.PropertyField(_backgroundBiomeChannelNameProperty, new GUIContent("Background Biome Channel"));
+                EditorGUI.indentLevel--;
+            }
 
             if (_biomeProperty.objectReferenceValue == null)
             {

@@ -71,6 +71,9 @@ namespace DynamicDungeon.Runtime.Component
         private int _backgroundLogicalId = LogicalTileId.Floor;
 
         [SerializeField]
+        private string _backgroundBiomeChannelName;
+
+        [SerializeField]
         private BakedWorldSnapshot _bakedWorldSnapshot;
 
         [SerializeField]
@@ -739,7 +742,7 @@ namespace DynamicDungeon.Runtime.Component
                 if (_renderBackgroundFromFloorTiles)
                 {
                     ushort backgroundLogicalId = unchecked((ushort)Mathf.Max(0, _backgroundLogicalId));
-                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, _tilemapOffset, backgroundLogicalId);
+                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, _tilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
                 }
             }
             else

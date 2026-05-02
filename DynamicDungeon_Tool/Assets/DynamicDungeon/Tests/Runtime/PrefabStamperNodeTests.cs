@@ -82,6 +82,55 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public void PrefabStampAuthoring_CombinesTilemapsAndFillsEnclosedInterior()
+        {
+            GameObject root = null;
+            Tile tile = null;
+
+            try
+            {
+                root = new GameObject("AuthoringRoot");
+                root.AddComponent<Grid>();
+                PrefabStampAuthoring authoring = root.AddComponent<PrefabStampAuthoring>();
+                tile = ScriptableObject.CreateInstance<Tile>();
+
+                Tilemap lower = CreateTilemapChild(root.transform, "Lower");
+                Tilemap upper = CreateTilemapChild(root.transform, "Upper");
+
+                lower.SetTile(new Vector3Int(0, 0, 0), tile);
+                lower.SetTile(new Vector3Int(1, 0, 0), tile);
+                lower.SetTile(new Vector3Int(2, 0, 0), tile);
+                lower.SetTile(new Vector3Int(0, 1, 0), tile);
+                lower.SetTile(new Vector3Int(2, 1, 0), tile);
+                upper.SetTile(new Vector3Int(0, 2, 0), tile);
+                upper.SetTile(new Vector3Int(1, 2, 0), tile);
+                upper.SetTile(new Vector3Int(2, 2, 0), tile);
+
+                bool built = authoring.TryBuildTemplate("prefab-guid", out PrefabStampTemplate template, out string errorMessage);
+
+                Assert.That(built, Is.True, errorMessage);
+                Assert.That(template.UsesTilemapFootprint, Is.True);
+                Assert.That(template.OccupiedCells, Is.EqualTo(new[]
+                {
+                    new Vector2Int(0, 0),
+                    new Vector2Int(1, 0),
+                    new Vector2Int(2, 0),
+                    new Vector2Int(0, 1),
+                    new Vector2Int(1, 1),
+                    new Vector2Int(2, 1),
+                    new Vector2Int(0, 2),
+                    new Vector2Int(1, 2),
+                    new Vector2Int(2, 2)
+                }));
+            }
+            finally
+            {
+                DestroyImmediateIfNotNull(tile);
+                DestroyImmediateIfNotNull(root);
+            }
+        }
+
+        [Test]
         public void PrefabStampAuthoring_BuildsTemplateFromSnappedChildren()
         {
             GameObject root = null;
@@ -347,6 +396,38 @@ namespace DynamicDungeon.Tests.Runtime
             Assert.That(output[ToIndex(0, 0, 3)], Is.EqualTo(VoidLogicalId));
             Assert.That(output[ToIndex(1, 0, 3)], Is.EqualTo(VoidLogicalId));
             Assert.That(GetPlacementData(snapshot).Length, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task CarveModes_WriteReservedMask()
+        {
+            PrefabStampTemplate template = CreateTemplate("prefab-guid", new[]
+            {
+                new Vector2Int(0, 0),
+                new Vector2Int(1, 0),
+                new Vector2Int(0, 1)
+            });
+
+            WorldSnapshot snapshot = await ExecutePrefabPlanAsync(
+                width: 4,
+                height: 4,
+                initialLogicalIds: CreateFilledArray(16, LogicalTileId.Wall),
+                placements: new[] { new int2(1, 1) },
+                template: template,
+                footprintMode: PrefabFootprintMode.CarveInterior,
+                interiorLogicalId: 7,
+                outlineLogicalId: 0,
+                blendMode: StampBlendMode.Overwrite,
+                mirrorX: false,
+                mirrorY: false,
+                allowRotation: false,
+                maxOverlapTiles: 0);
+
+            byte[] reservedMask = GetBoolMaskChannelData(snapshot, "ReservedMask__stamp");
+            Assert.That(reservedMask[ToIndex(1, 1, 4)], Is.EqualTo(1));
+            Assert.That(reservedMask[ToIndex(2, 1, 4)], Is.EqualTo(1));
+            Assert.That(reservedMask[ToIndex(1, 2, 4)], Is.EqualTo(1));
+            Assert.That(reservedMask[ToIndex(2, 2, 4)], Is.EqualTo(0));
         }
 
         [Test]
@@ -743,6 +824,33 @@ namespace DynamicDungeon.Tests.Runtime
             return null;
         }
 
+        private static byte[] GetBoolMaskChannelData(WorldSnapshot snapshot, string channelName)
+        {
+            int index;
+            for (index = 0; index < snapshot.BoolMaskChannels.Length; index++)
+            {
+                WorldSnapshot.BoolMaskChannelSnapshot channel = snapshot.BoolMaskChannels[index];
+                if (channel != null && string.Equals(channel.Name, channelName, StringComparison.Ordinal))
+                {
+                    return channel.Data;
+                }
+            }
+
+            return null;
+        }
+
+        private static int[] CreateFilledArray(int length, int value)
+        {
+            int[] values = new int[length];
+            int index;
+            for (index = 0; index < values.Length; index++)
+            {
+                values[index] = value;
+            }
+
+            return values;
+        }
+
         private static int CountCellsWithValue(int[] data, int value)
         {
             int count = 0;
@@ -864,6 +972,15 @@ namespace DynamicDungeon.Tests.Runtime
             GameObject child = new GameObject(name);
             child.transform.SetParent(parent, false);
             child.transform.localPosition = localPosition;
+        }
+
+        private static Tilemap CreateTilemapChild(Transform parent, string name)
+        {
+            GameObject tilemapObject = new GameObject(name);
+            tilemapObject.transform.SetParent(parent, false);
+            Tilemap tilemap = tilemapObject.AddComponent<Tilemap>();
+            tilemapObject.AddComponent<TilemapRenderer>();
+            return tilemap;
         }
 
         private static void SetPrivateField<TTarget, TValue>(TTarget target, string fieldName, TValue value)

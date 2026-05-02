@@ -1618,10 +1618,50 @@ MonoBehaviour:
       Value: 0
     - Name: probability
       Value: 1
+  - NodeId: crystal-cave-visual-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Crystal Cave Visual Override
+    Position: {x: 2531, y: -655.3999}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 9b64401900a722143b09f2d0bde4dfb2
+    - Name: blendEdgeWidth
+      Value: 0
+    - Name: probability
+      Value: 1
+  - NodeId: visual-biome-channel-copy
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.IntChannelCopyNode
+    NodeName: Visual Biome Channel
+    Position: {x: 2851, y: -545.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: VisualBiomeChannel
+      DisplayName: VisualBiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: VisualBiomeChannel
   - NodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: One
-    Position: {x: 2456, y: 1680}
+    Position: {x: 2428.0156, y: 1667}
     Ports:
     - PortName: OneFloat
       DisplayName: OneFloat
@@ -1637,7 +1677,7 @@ MonoBehaviour:
   - NodeId: 6999daac-7624-464b-9308-87663f179e01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: Zero
-    Position: {x: 2456, y: 1820}
+    Position: {x: 2456, y: 2035.1278}
     Ports:
     - PortName: ZeroFloat
       DisplayName: ZeroFloat
@@ -1801,7 +1841,7 @@ MonoBehaviour:
   - NodeId: ceb72be0-5035-400a-a151-3a859daedd51
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Desert Cactus Weight Base
-    Position: {x: 3123.9998, y: 2220}
+    Position: {x: 2790.9285, y: 2192}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1863,7 +1903,7 @@ MonoBehaviour:
   - NodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Ice Tree Weight
-    Position: {x: 3416, y: 2220}
+    Position: {x: 3592.4214, y: 2192}
     Ports:
     - PortName: A
       DisplayName: A
@@ -2197,7 +2237,7 @@ MonoBehaviour:
   - NodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: House Weights
-    Position: {x: 3736, y: 2660}
+    Position: {x: 3771.6506, y: 2890}
     Ports:
     - PortName: A
       DisplayName: A
@@ -2215,11 +2255,11 @@ MonoBehaviour:
     - Name: operation
       Value: Multiply
     - Name: scalarB
-      Value: 0
+      Value: 0.75
   - NodeId: 83addb74-0129-416d-811c-a0f3e8b6acb2
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: House Scatter
-    Position: {x: 4056, y: 2660}
+    Position: {x: 3996.2007, y: 2623}
     Ports:
     - PortName: Weights
       DisplayName: Weights
@@ -2237,7 +2277,7 @@ MonoBehaviour:
   - NodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: House Eligibility Mask
-    Position: {x: 4056, y: 2600}
+    Position: {x: 4056.0005, y: 2939.25}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -2253,7 +2293,7 @@ MonoBehaviour:
   - NodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
     NodeName: House Poisson
-    Position: {x: 4219.9897, y: 2233}
+    Position: {x: 4352.95, y: 2939}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -2273,7 +2313,7 @@ MonoBehaviour:
   - NodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Cave House Prefabs
-    Position: {x: 4376, y: 2660}
+    Position: {x: 4716.051, y: 3066}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -2283,11 +2323,15 @@ MonoBehaviour:
       DisplayName: LogicalIds
       Direction: 1
       Type: 1
+    - PortName: CaveHouseReservedMask
+      DisplayName: ReservedMask
+      Direction: 1
+      Type: 2
     Parameters:
     - Name: prefab
-      Value: ef9e2f0474617894e9fb51d6e6fd09e9
+      Value: 33b4e04847c26624186a988d845dfcdf
     - Name: footprintMode
-      Value: OutlineAndCarve
+      Value: CarveInterior
     - Name: outlineLogicalId
       Value: 2
     - Name: blendMode
@@ -2302,6 +2346,8 @@ MonoBehaviour:
       Value: false
     - Name: maxOverlapTiles
       Value: 0
+    - Name: reservedMaskChannelName
+      Value: CaveHouseReservedMask
   - NodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Deep Underground Band
@@ -2464,6 +2510,40 @@ MonoBehaviour:
       Value: '{"Rules":[{"Enabled":true,"MaskSlot":0,"SourceLogicalId":1,"TargetLogicalId":10},{"Enabled":true,"MaskSlot":0,"SourceLogicalId":2,"TargetLogicalId":18},{"Enabled":true,"MaskSlot":1,"SourceLogicalId":10,"TargetLogicalId":10},{"Enabled":true,"MaskSlot":1,"SourceLogicalId":18,"TargetLogicalId":11},{"Enabled":true,"MaskSlot":2,"SourceLogicalId":10,"TargetLogicalId":12},{"Enabled":true,"MaskSlot":2,"SourceLogicalId":18,"TargetLogicalId":13},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":10,"TargetLogicalId":14},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":12,"TargetLogicalId":14},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":18,"TargetLogicalId":15},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":13,"TargetLogicalId":15},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":10,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":12,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":14,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":11,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":18,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":13,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":15,"TargetLogicalId":17}]}'
     - Name: outputChannelName
       Value: MaterialContextLogicalIds
+  - NodeId: prefab-reserved-void-overlay
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
+    NodeName: Prefab Reserved Void
+    Position: {x: -2260, y: 3216}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Mask 1
+      DisplayName: Mask 1
+      Direction: 0
+      Type: 2
+    - PortName: Mask 2
+      DisplayName: Mask 2
+      Direction: 0
+      Type: 2
+    - PortName: Mask 3
+      DisplayName: Mask 3
+      Direction: 0
+      Type: 2
+    - PortName: Mask 4
+      DisplayName: Mask 4
+      Direction: 0
+      Type: 2
+    - PortName: FinalLogicalIds
+      DisplayName: FinalLogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: rules
+      Value: '{"Rules":[{"Enabled":true,"MaskSlot":1,"SourceLogicalId":-1,"TargetLogicalId":0}]}'
+    - Name: outputChannelName
+      Value: FinalLogicalIds
   Connections:
   - FromNodeId: 30729321-8c26-440a-8c37-54ed6a10e047
     FromPortName: TerrainMass
@@ -2763,6 +2843,11 @@ MonoBehaviour:
   - FromNodeId: crystal-cave-wall-mask
     FromPortName: CrystalWallPockets
     ToNodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: crystal-cave-wall-mask
+    FromPortName: CrystalWallPockets
+    ToNodeId: crystal-cave-visual-override
     ToPortName: Mask
     CastMode: 0
   - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
@@ -3142,6 +3227,16 @@ MonoBehaviour:
     CastMode: 0
   - FromNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
     FromPortName: BiomeChannel
+    ToNodeId: crystal-cave-visual-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: crystal-cave-visual-override
+    FromPortName: BiomeChannel
+    ToNodeId: visual-biome-channel-copy
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: visual-biome-channel-copy
+    FromPortName: VisualBiomeChannel
     ToNodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
     ToPortName: Biome Input
     CastMode: 0
@@ -3227,6 +3322,16 @@ MonoBehaviour:
     CastMode: 0
   - FromNodeId: logical-id-material-context
     FromPortName: MaterialContextLogicalIds
+    ToNodeId: prefab-reserved-void-overlay
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
+    FromPortName: CaveHouseReservedMask
+    ToNodeId: prefab-reserved-void-overlay
+    ToPortName: Mask 1
+    CastMode: 0
+  - FromNodeId: prefab-reserved-void-overlay
+    FromPortName: FinalLogicalIds
     ToNodeId: graph-output-node
     ToPortName: LogicalIds
     CastMode: 0
@@ -3333,6 +3438,8 @@ MonoBehaviour:
     - crystal-pocket-ids
     - crystal-pocket-neighbour-mask
     - crystal-cave-wall-mask
+    - crystal-cave-visual-override
+    - visual-biome-channel-copy
     - 246c68d4-6427-4de7-8e42-3859c3a495fb
     - e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
     - 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
@@ -3410,6 +3517,7 @@ MonoBehaviour:
       width: 290
       height: 258
     ContainedNodeIds:
+    - prefab-reserved-void-overlay
     - graph-output-node
     BackgroundColor: {r: 0.18, g: 0.18, b: 0.18, a: 0.3}
   ExposedProperties: []
