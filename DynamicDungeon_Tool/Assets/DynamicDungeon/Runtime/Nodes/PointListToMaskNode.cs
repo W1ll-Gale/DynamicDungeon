@@ -61,7 +61,7 @@ namespace DynamicDungeon.Runtime.Nodes
             };
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             string inputChannelName;
             if (inputConnections != null && inputConnections.TryGetValue(PointsPortName, out inputChannelName))

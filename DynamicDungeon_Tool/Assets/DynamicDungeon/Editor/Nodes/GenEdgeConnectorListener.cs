@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DynamicDungeon.Editor.Windows;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DynamicDungeon.Editor.Nodes
 {
@@ -12,6 +13,16 @@ namespace DynamicDungeon.Editor.Nodes
 
         public void OnDropOutsidePort(Edge edge, Vector2 position)
         {
+            DynamicDungeonGraphView graphView = null;
+            if (edge != null)
+            {
+                Port anchorPort = edge.output != null ? edge.output : edge.input;
+                graphView = anchorPort != null ? anchorPort.GetFirstAncestorOfType<DynamicDungeonGraphView>() : null;
+                if (graphView != null)
+                {
+                    graphView.OpenFilteredNodeSearch(graphView.WorldToLocal(position), anchorPort);
+                }
+            }
         }
 
         public void OnDrop(GraphView graphView, Edge edge)

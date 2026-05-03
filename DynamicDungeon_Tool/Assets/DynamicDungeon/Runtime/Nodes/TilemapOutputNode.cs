@@ -17,7 +17,9 @@ namespace DynamicDungeon.Runtime.Nodes
         private readonly NodePortDefinition[] _ports;
 
         private ChannelDeclaration[] _channelDeclarations;
-        private string _inputChannelName;
+        private string _logicalIdsChannelName;
+        private string _biomeChannelName;
+        private string _prefabPlacementsChannelName;
 
         public IReadOnlyList<NodePortDefinition> Ports
         {
@@ -70,24 +72,29 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? GraphOutputUtility.OutputNodeDisplayName : nodeName;
             _ports = new[]
             {
-                new NodePortDefinition(GraphOutputUtility.OutputInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, true)
+                new NodePortDefinition(GraphOutputUtility.OutputInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, true, "Primary logical ID channel used to render tiles."),
+                new NodePortDefinition(GraphOutputUtility.BiomeInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, false, "Optional biome channel used by biome-aware output passes."),
+                new NodePortDefinition(GraphOutputUtility.PrefabPlacementInputPortName, PortDirection.Input, ChannelType.PrefabPlacementList, PortCapacity.Multi, false, "Optional prefab placement writers used by placement output passes.")
             };
 
             RefreshChannelDeclarations();
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             string inputChannelName;
             if (inputConnections != null &&
                 inputConnections.TryGetValue(GraphOutputUtility.OutputInputPortName, out inputChannelName))
             {
-                _inputChannelName = inputChannelName ?? string.Empty;
+                _logicalIdsChannelName = inputChannelName ?? string.Empty;
             }
             else
             {
-                _inputChannelName = string.Empty;
+                _logicalIdsChannelName = string.Empty;
             }
+
+            _biomeChannelName = ResolveOptionalInput(inputConnections, GraphOutputUtility.BiomeInputPortName);
+            _prefabPlacementsChannelName = ResolveOptionalInput(inputConnections, GraphOutputUtility.PrefabPlacementInputPortName);
 
             RefreshChannelDeclarations();
         }
@@ -99,16 +106,37 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private void RefreshChannelDeclarations()
         {
-            if (string.IsNullOrWhiteSpace(_inputChannelName))
+            List<ChannelDeclaration> declarations = new List<ChannelDeclaration>();
+            if (!string.IsNullOrWhiteSpace(_logicalIdsChannelName))
             {
-                _channelDeclarations = Array.Empty<ChannelDeclaration>();
-                return;
+                declarations.Add(new ChannelDeclaration(_logicalIdsChannelName, ChannelType.Int, false));
             }
 
-            _channelDeclarations = new[]
+            if (!string.IsNullOrWhiteSpace(_biomeChannelName))
             {
-                new ChannelDeclaration(_inputChannelName, ChannelType.Int, false)
-            };
+                declarations.Add(new ChannelDeclaration(_biomeChannelName, ChannelType.Int, false));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_prefabPlacementsChannelName))
+            {
+                declarations.Add(new ChannelDeclaration(_prefabPlacementsChannelName, ChannelType.PrefabPlacementList, false));
+            }
+
+            _channelDeclarations = declarations.Count == 0
+                ? Array.Empty<ChannelDeclaration>()
+                : declarations.ToArray();
+        }
+
+        private static string ResolveOptionalInput(InputConnectionMap inputConnections, string portName)
+        {
+            string channelName;
+            if (inputConnections != null &&
+                inputConnections.TryGetValue(portName, out channelName))
+            {
+                return channelName ?? string.Empty;
+            }
+
+            return string.Empty;
         }
     }
 }

@@ -131,7 +131,7 @@ namespace DynamicDungeon.Runtime.Nodes
             RefreshChannelDeclarations();
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             _inputBiomeChannelName = ResolveInputChannel(inputConnections, BiomeInputPortName);
             _inputMaskChannelName = ResolveInputChannel(inputConnections, MaskPortName);

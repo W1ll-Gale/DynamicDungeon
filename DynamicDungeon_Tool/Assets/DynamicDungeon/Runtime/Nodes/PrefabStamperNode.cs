@@ -148,7 +148,7 @@ namespace DynamicDungeon.Runtime.Nodes
             RefreshChannelDeclarations();
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             string inputChannelName;
             if (inputConnections != null && inputConnections.TryGetValue(PointsPortName, out inputChannelName))
@@ -448,6 +448,7 @@ namespace DynamicDungeon.Runtime.Nodes
             {
                 new NodePortDefinition(PointsPortName, PortDirection.Input, ChannelType.PointList, PortCapacity.Single, false),
                 new NodePortDefinition(LogicalIdsChannelName, PortDirection.Output, ChannelType.Int),
+                new NodePortDefinition(PrefabPlacementChannelUtility.ChannelName, PortDirection.Output, ChannelType.PrefabPlacementList),
                 new NodePortDefinition(_reservedMaskChannelName, PortDirection.Output, ChannelType.BoolMask, displayName: GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _reservedMaskChannelName, ReservedMaskFallbackOutputName))
             };
         }

@@ -21,6 +21,8 @@ namespace DynamicDungeon.Editor.Windows
         private const float DefaultGroupHeight = 200.0f;
         private const float DefaultNoteWidth = 200.0f;
         private const float DefaultNoteHeight = 150.0f;
+        private const float AutoLayoutColumnSpacing = 280.0f;
+        private const float AutoLayoutRowSpacing = 140.0f;
         private const string BlackboardPropertyDragDataKey = BlackboardPanel.PropertyDragDataKey;
 
         private readonly GridBackground _gridBackground;
@@ -274,6 +276,53 @@ namespace DynamicDungeon.Editor.Windows
             return true;
         }
 
+        public bool SelectAndFrameGroup(string groupId)
+        {
+            if (string.IsNullOrWhiteSpace(groupId))
+            {
+                return false;
+            }
+
+            GroupView groupView;
+            if (!_groupViewsById.TryGetValue(groupId, out groupView))
+            {
+                return false;
+            }
+
+            ClearSelection();
+            AddToSelection(groupView);
+            FrameSelection();
+            return true;
+        }
+
+        internal IReadOnlyList<GroupNavigationItem> GetGroupNavigationItems()
+        {
+            List<GroupNavigationItem> items = new List<GroupNavigationItem>();
+            if (_graph == null || _graph.Groups == null)
+            {
+                return items;
+            }
+
+            int groupIndex;
+            for (groupIndex = 0; groupIndex < _graph.Groups.Count; groupIndex++)
+            {
+                GenGroupData groupData = _graph.Groups[groupIndex];
+                if (groupData == null || string.IsNullOrWhiteSpace(groupData.GroupId))
+                {
+                    continue;
+                }
+
+                int nodeCount = groupData.ContainedNodeIds != null ? groupData.ContainedNodeIds.Count : 0;
+                items.Add(new GroupNavigationItem(
+                    groupData.GroupId,
+                    groupData.Title,
+                    nodeCount,
+                    groupData.Position));
+            }
+
+            return items;
+        }
+
         public void LoadGraph(GenGraph graph)
         {
             _suppressGraphMutationCallbacks = true;
@@ -490,6 +539,28 @@ namespace DynamicDungeon.Editor.Windows
         public void OpenNodeSearch(Vector2 graphLocalPosition)
         {
             _lastGraphLocalMousePosition = graphLocalPosition;
+            _nodeSearchWindow.ClearChannelTypeFilter();
+            _nodeSearchWindow.SetGraphLocalSearchPosition(graphLocalPosition);
+            SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(graphLocalPosition)), _nodeSearchWindow);
+        }
+
+        public void OpenFilteredNodeSearch(Vector2 graphLocalPosition, Port anchorPort)
+        {
+            _lastGraphLocalMousePosition = graphLocalPosition;
+
+            NodePortDefinition anchorDefinition;
+            if (anchorPort != null && GenPortUtility.TryGetPortDefinition(anchorPort, out anchorDefinition))
+            {
+                PortDirection requiredDirection = anchorDefinition.Direction == PortDirection.Output
+                    ? PortDirection.Input
+                    : PortDirection.Output;
+                _nodeSearchWindow.SetChannelTypeFilter(anchorDefinition.Type, requiredDirection);
+            }
+            else
+            {
+                _nodeSearchWindow.ClearChannelTypeFilter();
+            }
+
             _nodeSearchWindow.SetGraphLocalSearchPosition(graphLocalPosition);
             SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(graphLocalPosition)), _nodeSearchWindow);
         }
@@ -1098,6 +1169,10 @@ namespace DynamicDungeon.Editor.Windows
                 "Ungroup Selection",
                 _ => UngroupSelection(),
                 _ => CanUngroupSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            contextEvent.menu.AppendAction(
+                "Auto Layout Selection",
+                _ => AutoLayoutSelection(),
+                _ => CanAutoLayoutSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
         }
 
         private void OnKeyDown(KeyDownEvent keyDownEvent)
@@ -1497,6 +1572,61 @@ namespace DynamicDungeon.Editor.Windows
             return false;
         }
 
+        public bool CanAutoLayoutSelection()
+        {
+            return GetSelectedNodeViews().Count > 0 || GetSelectedGroupViews().Count > 0;
+        }
+
+        public void AutoLayoutSelection()
+        {
+            if (_graph == null)
+            {
+                return;
+            }
+
+            List<GenNodeView> selectedNodeViews = ResolveAutoLayoutNodeSelection();
+            if (selectedNodeViews.Count == 0)
+            {
+                return;
+            }
+
+            Undo.RecordObject(_graph, "Auto Layout Selection");
+
+            List<GenNodeView> orderedNodes = SortNodesByDependency(selectedNodeViews);
+            Dictionary<string, int> columnsByNodeId = CalculateDependencyColumns(orderedNodes);
+            Dictionary<int, int> rowsByColumn = new Dictionary<int, int>();
+
+            Rect selectionBounds = CalculateNodeViewsRect(selectedNodeViews);
+            Vector2 origin = selectionBounds.position;
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < orderedNodes.Count; nodeIndex++)
+            {
+                GenNodeView nodeView = orderedNodes[nodeIndex];
+                int column;
+                if (!columnsByNodeId.TryGetValue(nodeView.NodeData.NodeId, out column))
+                {
+                    column = 0;
+                }
+
+                int row;
+                rowsByColumn.TryGetValue(column, out row);
+                rowsByColumn[column] = row + 1;
+
+                Vector2 position = new Vector2(
+                    origin.x + column * AutoLayoutColumnSpacing,
+                    origin.y + row * AutoLayoutRowSpacing);
+
+                Rect currentRect = nodeView.GetPosition();
+                currentRect.position = position;
+                nodeView.SetPosition(currentRect);
+                nodeView.NodeData.Position = position;
+            }
+
+            RefreshSelectedGroupBounds(selectedNodeViews);
+            EditorUtility.SetDirty(_graph);
+            NotifyGraphMutated();
+        }
+
         public void GroupSelection()
         {
             if (_graph == null)
@@ -1632,6 +1762,203 @@ namespace DynamicDungeon.Editor.Windows
             return selectedGroups;
         }
 
+        private List<GenNodeView> ResolveAutoLayoutNodeSelection()
+        {
+            List<GenNodeView> selectedNodeViews = GetSelectedNodeViews();
+            HashSet<string> selectedNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            List<GenNodeView> result = new List<GenNodeView>();
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < selectedNodeViews.Count; nodeIndex++)
+            {
+                GenNodeView nodeView = selectedNodeViews[nodeIndex];
+                if (nodeView != null && selectedNodeIds.Add(nodeView.NodeData.NodeId ?? string.Empty))
+                {
+                    result.Add(nodeView);
+                }
+            }
+
+            List<GroupView> selectedGroupViews = GetSelectedGroupViews();
+            int groupIndex;
+            for (groupIndex = 0; groupIndex < selectedGroupViews.Count; groupIndex++)
+            {
+                GroupView groupView = selectedGroupViews[groupIndex];
+                if (groupView == null)
+                {
+                    continue;
+                }
+
+                foreach (GraphElement element in groupView.containedElements)
+                {
+                    GenNodeView nodeView = element as GenNodeView;
+                    if (nodeView != null && selectedNodeIds.Add(nodeView.NodeData.NodeId ?? string.Empty))
+                    {
+                        result.Add(nodeView);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private List<GenNodeView> SortNodesByDependency(List<GenNodeView> nodeViews)
+        {
+            Dictionary<string, GenNodeView> nodeViewsById = new Dictionary<string, GenNodeView>(StringComparer.Ordinal);
+            Dictionary<string, int> incomingCountsByNodeId = new Dictionary<string, int>(StringComparer.Ordinal);
+            Dictionary<string, List<string>> outgoingByNodeId = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < nodeViews.Count; nodeIndex++)
+            {
+                GenNodeView nodeView = nodeViews[nodeIndex];
+                string nodeId = nodeView.NodeData.NodeId ?? string.Empty;
+                nodeViewsById[nodeId] = nodeView;
+                incomingCountsByNodeId[nodeId] = 0;
+                outgoingByNodeId[nodeId] = new List<string>();
+            }
+
+            if (_graph != null && _graph.Connections != null)
+            {
+                int connectionIndex;
+                for (connectionIndex = 0; connectionIndex < _graph.Connections.Count; connectionIndex++)
+                {
+                    GenConnectionData connection = _graph.Connections[connectionIndex];
+                    if (connection == null ||
+                        !nodeViewsById.ContainsKey(connection.FromNodeId ?? string.Empty) ||
+                        !nodeViewsById.ContainsKey(connection.ToNodeId ?? string.Empty))
+                    {
+                        continue;
+                    }
+
+                    outgoingByNodeId[connection.FromNodeId].Add(connection.ToNodeId);
+                    incomingCountsByNodeId[connection.ToNodeId] = incomingCountsByNodeId[connection.ToNodeId] + 1;
+                }
+            }
+
+            Queue<string> ready = new Queue<string>();
+            foreach (KeyValuePair<string, int> entry in incomingCountsByNodeId)
+            {
+                if (entry.Value == 0)
+                {
+                    ready.Enqueue(entry.Key);
+                }
+            }
+
+            List<GenNodeView> ordered = new List<GenNodeView>();
+            while (ready.Count > 0)
+            {
+                string nodeId = ready.Dequeue();
+                GenNodeView nodeView;
+                if (nodeViewsById.TryGetValue(nodeId, out nodeView))
+                {
+                    ordered.Add(nodeView);
+                }
+
+                List<string> outgoing;
+                if (!outgoingByNodeId.TryGetValue(nodeId, out outgoing))
+                {
+                    continue;
+                }
+
+                int outgoingIndex;
+                for (outgoingIndex = 0; outgoingIndex < outgoing.Count; outgoingIndex++)
+                {
+                    string toNodeId = outgoing[outgoingIndex];
+                    incomingCountsByNodeId[toNodeId] = incomingCountsByNodeId[toNodeId] - 1;
+                    if (incomingCountsByNodeId[toNodeId] == 0)
+                    {
+                        ready.Enqueue(toNodeId);
+                    }
+                }
+            }
+
+            if (ordered.Count < nodeViews.Count)
+            {
+                for (nodeIndex = 0; nodeIndex < nodeViews.Count; nodeIndex++)
+                {
+                    GenNodeView nodeView = nodeViews[nodeIndex];
+                    if (!ordered.Contains(nodeView))
+                    {
+                        ordered.Add(nodeView);
+                    }
+                }
+            }
+
+            return ordered;
+        }
+
+        private Dictionary<string, int> CalculateDependencyColumns(List<GenNodeView> orderedNodes)
+        {
+            HashSet<string> selectedNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            Dictionary<string, int> columnsByNodeId = new Dictionary<string, int>(StringComparer.Ordinal);
+
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < orderedNodes.Count; nodeIndex++)
+            {
+                string nodeId = orderedNodes[nodeIndex].NodeData.NodeId ?? string.Empty;
+                selectedNodeIds.Add(nodeId);
+                columnsByNodeId[nodeId] = 0;
+            }
+
+            if (_graph == null || _graph.Connections == null)
+            {
+                return columnsByNodeId;
+            }
+
+            int connectionIndex;
+            for (connectionIndex = 0; connectionIndex < _graph.Connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = _graph.Connections[connectionIndex];
+                if (connection == null ||
+                    !selectedNodeIds.Contains(connection.FromNodeId ?? string.Empty) ||
+                    !selectedNodeIds.Contains(connection.ToNodeId ?? string.Empty))
+                {
+                    continue;
+                }
+
+                int fromColumn;
+                columnsByNodeId.TryGetValue(connection.FromNodeId, out fromColumn);
+                int toColumn;
+                columnsByNodeId.TryGetValue(connection.ToNodeId, out toColumn);
+                columnsByNodeId[connection.ToNodeId] = Mathf.Max(toColumn, fromColumn + 1);
+            }
+
+            return columnsByNodeId;
+        }
+
+        private void RefreshSelectedGroupBounds(List<GenNodeView> autoLayoutNodeViews)
+        {
+            HashSet<string> autoLayoutNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            int nodeIndex;
+            for (nodeIndex = 0; nodeIndex < autoLayoutNodeViews.Count; nodeIndex++)
+            {
+                autoLayoutNodeIds.Add(autoLayoutNodeViews[nodeIndex].NodeData.NodeId ?? string.Empty);
+            }
+
+            List<GroupView> selectedGroups = GetSelectedGroupViews();
+            int groupIndex;
+            for (groupIndex = 0; groupIndex < selectedGroups.Count; groupIndex++)
+            {
+                GroupView groupView = selectedGroups[groupIndex];
+                if (groupView == null)
+                {
+                    continue;
+                }
+
+                List<GenNodeView> groupNodes = groupView.containedElements
+                    .OfType<GenNodeView>()
+                    .Where(nodeView => autoLayoutNodeIds.Contains(nodeView.NodeData.NodeId ?? string.Empty))
+                    .ToList();
+                if (groupNodes.Count == 0)
+                {
+                    continue;
+                }
+
+                Rect groupRect = CalculateGroupRect(groupNodes);
+                groupView.SetPosition(groupRect);
+            }
+        }
+
         private List<GroupView> GetContainingGroups(GraphElement graphElement)
         {
             List<GroupView> containingGroups = new List<GroupView>();
@@ -1681,6 +2008,23 @@ namespace DynamicDungeon.Editor.Windows
             selectionBounds.xMax += padding;
             selectionBounds.yMax += padding;
             return selectionBounds;
+        }
+
+        private static Rect CalculateNodeViewsRect(IReadOnlyList<GenNodeView> nodeViews)
+        {
+            if (nodeViews == null || nodeViews.Count == 0)
+            {
+                return new Rect(0.0f, 0.0f, DefaultGroupWidth, DefaultGroupHeight);
+            }
+
+            Rect bounds = nodeViews[0].GetPosition();
+            int nodeIndex;
+            for (nodeIndex = 1; nodeIndex < nodeViews.Count; nodeIndex++)
+            {
+                bounds = UnionRect(bounds, nodeViews[nodeIndex].GetPosition());
+            }
+
+            return bounds;
         }
 
         private static Rect UnionRect(Rect first, Rect second)

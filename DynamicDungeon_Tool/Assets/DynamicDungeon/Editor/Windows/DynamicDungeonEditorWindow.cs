@@ -26,6 +26,7 @@ namespace DynamicDungeon.Editor.Windows
         private const string PanelViewSettingsPrefsKey = "DynamicDungeon.EditorWindow.PanelViewSettings";
         private const string BlackboardLayoutPrefsKey = "DynamicDungeon.EditorWindow.BlackboardLayout";
         private const string GraphSettingsLayoutPrefsKey = "DynamicDungeon.EditorWindow.GraphSettingsLayout";
+        private const string GroupNavigatorLayoutPrefsKey = "DynamicDungeon.EditorWindow.GroupNavigatorLayout";
         private const string MiniMapLayoutPrefsKey = "DynamicDungeon.EditorWindow.MiniMapLayout";
 
         private ObjectField _graphField;
@@ -35,6 +36,7 @@ namespace DynamicDungeon.Editor.Windows
         private ToolbarButton _discardChangesButton;
         private ToolbarToggle _blackboardToggle;
         private ToolbarToggle _settingsToggle;
+        private ToolbarToggle _groupNavigatorToggle;
         private ToolbarToggle _miniMapToggle;
         private ToolbarToggle _diagnosticsToggle;
         private ToolbarButton _docsButton;
@@ -42,6 +44,7 @@ namespace DynamicDungeon.Editor.Windows
         private DynamicDungeonGraphView _graphView;
         private BlackboardWindow _blackboardWindow;
         private GraphSettingsWindow _graphSettingsWindow;
+        private GroupNavigatorWindow _groupNavigatorWindow;
         private MiniMapWindow _miniMapWindow;
         private GenerationOrchestrator _generationOrchestrator;
         private DiagnosticsPanel _diagnosticsPanel;
@@ -61,6 +64,7 @@ namespace DynamicDungeon.Editor.Windows
         private PanelViewSettings _panelViewSettings;
         private FloatingWindowLayout _blackboardLayout;
         private FloatingWindowLayout _graphSettingsLayout;
+        private FloatingWindowLayout _groupNavigatorLayout;
         private FloatingWindowLayout _miniMapLayout;
 
         [Serializable]
@@ -68,10 +72,12 @@ namespace DynamicDungeon.Editor.Windows
         {
             public bool IsBlackboardVisible = true;
             public bool IsGraphSettingsVisible = true;
+            public bool IsGroupNavigatorVisible = true;
             public bool IsMiniMapVisible = true;
             public bool IsDiagnosticsVisible = true;
             public bool IsBlackboardCollapsed;
             public bool IsGraphSettingsCollapsed;
+            public bool IsGroupNavigatorCollapsed;
             public bool IsMiniMapCollapsed;
         }
 
@@ -188,6 +194,11 @@ namespace DynamicDungeon.Editor.Windows
             _graphSettingsWindow.SetCollapsed(_panelViewSettings.IsGraphSettingsCollapsed);
             _graphView.Add(_graphSettingsWindow);
 
+            _groupNavigatorWindow = new GroupNavigatorWindow(_groupNavigatorLayout, _graphView);
+            _groupNavigatorWindow.SetLayoutChangedCallback(SavePanelState);
+            _groupNavigatorWindow.SetCollapsed(_panelViewSettings.IsGroupNavigatorCollapsed);
+            _graphView.Add(_groupNavigatorWindow);
+
             _miniMapWindow = new MiniMapWindow(_miniMapLayout, _graphView);
             _miniMapWindow.SetLayoutChangedCallback(SavePanelState);
             _miniMapWindow.SetCollapsed(_panelViewSettings.IsMiniMapCollapsed);
@@ -213,6 +224,7 @@ namespace DynamicDungeon.Editor.Windows
                 _diagnosticsPanel.SetGraphContext(_graphView, null);
                 _blackboardWindow.SetGraph(null);
                 _graphSettingsWindow.SetGraph(null);
+                _groupNavigatorWindow.SetGraph(null);
             }
 
             ApplyPanelVisibility();
@@ -333,6 +345,13 @@ namespace DynamicDungeon.Editor.Windows
                 _panelViewSettings.IsGraphSettingsVisible,
                 OnSettingsToggleChanged);
             panelToggleGroup.Add(_settingsToggle);
+
+            _groupNavigatorToggle = BuildPanelToggle(
+                LoadGroupNavigatorIcon(),
+                "Toggle Groups window",
+                _panelViewSettings.IsGroupNavigatorVisible,
+                OnGroupNavigatorToggleChanged);
+            panelToggleGroup.Add(_groupNavigatorToggle);
 
             _miniMapToggle = BuildPanelToggle(
                 LoadMiniMapIcon(),
@@ -507,6 +526,7 @@ namespace DynamicDungeon.Editor.Windows
         {
             _blackboardWindow?.SetGraph(graph);
             _graphSettingsWindow?.SetGraph(graph);
+            _groupNavigatorWindow?.SetGraph(graph);
 
             if (_generationOrchestrator != null)
             {
@@ -563,6 +583,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnAfterGraphMutation()
         {
+            _groupNavigatorWindow?.Refresh();
             RefreshSaveStateIndicator();
             QueueDirtyGraphAutoSave();
         }
@@ -591,6 +612,13 @@ namespace DynamicDungeon.Editor.Windows
         private void OnSettingsToggleChanged(ChangeEvent<bool> changeEvent)
         {
             _panelViewSettings.IsGraphSettingsVisible = changeEvent.newValue;
+            ApplyPanelVisibility();
+            SavePanelState();
+        }
+
+        private void OnGroupNavigatorToggleChanged(ChangeEvent<bool> changeEvent)
+        {
+            _panelViewSettings.IsGroupNavigatorVisible = changeEvent.newValue;
             ApplyPanelVisibility();
             SavePanelState();
         }
@@ -1062,6 +1090,7 @@ namespace DynamicDungeon.Editor.Windows
         {
             _blackboardWindow?.SetVisible(_panelViewSettings.IsBlackboardVisible);
             _graphSettingsWindow?.SetVisible(_panelViewSettings.IsGraphSettingsVisible);
+            _groupNavigatorWindow?.SetVisible(_panelViewSettings.IsGroupNavigatorVisible);
             _miniMapWindow?.SetVisible(_panelViewSettings.IsMiniMapVisible);
             if (_diagnosticsPanel != null)
             {
@@ -1076,6 +1105,11 @@ namespace DynamicDungeon.Editor.Windows
             if (_settingsToggle != null)
             {
                 _settingsToggle.SetValueWithoutNotify(_panelViewSettings.IsGraphSettingsVisible);
+            }
+
+            if (_groupNavigatorToggle != null)
+            {
+                _groupNavigatorToggle.SetValueWithoutNotify(_panelViewSettings.IsGroupNavigatorVisible);
             }
 
             if (_miniMapToggle != null)
@@ -1099,6 +1133,7 @@ namespace DynamicDungeon.Editor.Windows
 
             _blackboardWindow?.UpdateParentRect(graphViewRect);
             _graphSettingsWindow?.UpdateParentRect(graphViewRect);
+            _groupNavigatorWindow?.UpdateParentRect(graphViewRect);
             _miniMapWindow?.UpdateParentRect(graphViewRect);
         }
 
@@ -1117,6 +1152,7 @@ namespace DynamicDungeon.Editor.Windows
             _panelViewSettings = LoadPanelViewSettings();
             _blackboardLayout = LoadLayout(BlackboardLayoutPrefsKey, CreateDefaultBlackboardLayout());
             _graphSettingsLayout = LoadLayout(GraphSettingsLayoutPrefsKey, CreateDefaultGraphSettingsLayout());
+            _groupNavigatorLayout = LoadLayout(GroupNavigatorLayoutPrefsKey, CreateDefaultGroupNavigatorLayout());
             _miniMapLayout = LoadLayout(MiniMapLayoutPrefsKey, CreateDefaultMiniMapLayout());
         }
 
@@ -1135,6 +1171,12 @@ namespace DynamicDungeon.Editor.Windows
                 _panelViewSettings.IsGraphSettingsCollapsed = _graphSettingsWindow.IsCollapsedForTesting;
             }
 
+            if (_groupNavigatorWindow != null && graphViewRect.width > 0.0f && graphViewRect.height > 0.0f)
+            {
+                _groupNavigatorWindow.CaptureCurrentLayout();
+                _panelViewSettings.IsGroupNavigatorCollapsed = _groupNavigatorWindow.IsCollapsedForTesting;
+            }
+
             if (_miniMapWindow != null && graphViewRect.width > 0.0f && graphViewRect.height > 0.0f)
             {
                 _miniMapWindow.CaptureCurrentLayout();
@@ -1150,6 +1192,9 @@ namespace DynamicDungeon.Editor.Windows
             EditorUserSettings.SetConfigValue(
                 GraphSettingsLayoutPrefsKey,
                 JsonUtility.ToJson(_graphSettingsLayout ?? CreateDefaultGraphSettingsLayout()));
+            EditorUserSettings.SetConfigValue(
+                GroupNavigatorLayoutPrefsKey,
+                JsonUtility.ToJson(_groupNavigatorLayout ?? CreateDefaultGroupNavigatorLayout()));
             EditorUserSettings.SetConfigValue(
                 MiniMapLayoutPrefsKey,
                 JsonUtility.ToJson(_miniMapLayout ?? CreateDefaultMiniMapLayout()));
@@ -1226,6 +1271,11 @@ namespace DynamicDungeon.Editor.Windows
             return CreateDefaultGraphSettingsLayout();
         }
 
+        internal static FloatingWindowLayout CreateDefaultGroupNavigatorLayoutForTesting()
+        {
+            return CreateDefaultGroupNavigatorLayout();
+        }
+
         internal static FloatingWindowLayout CreateDefaultMiniMapLayoutForTesting()
         {
             return CreateDefaultMiniMapLayout();
@@ -1244,6 +1294,11 @@ namespace DynamicDungeon.Editor.Windows
         internal static void SaveGraphSettingsLayoutForTesting(FloatingWindowLayout layout)
         {
             EditorUserSettings.SetConfigValue(GraphSettingsLayoutPrefsKey, JsonUtility.ToJson(layout));
+        }
+
+        internal static void SaveGroupNavigatorLayoutForTesting(FloatingWindowLayout layout)
+        {
+            EditorUserSettings.SetConfigValue(GroupNavigatorLayoutPrefsKey, JsonUtility.ToJson(layout));
         }
 
         internal static void SaveMiniMapLayoutForTesting(FloatingWindowLayout layout)
@@ -1275,6 +1330,18 @@ namespace DynamicDungeon.Editor.Windows
             };
         }
 
+        private static FloatingWindowLayout CreateDefaultGroupNavigatorLayout()
+        {
+            return new FloatingWindowLayout
+            {
+                DockToLeft = true,
+                DockToTop = false,
+                HorizontalOffset = 8.0f,
+                VerticalOffset = 8.0f,
+                Size = new Vector2(260.0f, 260.0f)
+            };
+        }
+
         private static FloatingWindowLayout CreateDefaultMiniMapLayout()
         {
             return new FloatingWindowLayout
@@ -1303,6 +1370,17 @@ namespace DynamicDungeon.Editor.Windows
         private static Texture2D LoadInspectorIcon()
         {
             return EditorGUIUtility.IconContent("UnityEditor.InspectorWindow").image as Texture2D;
+        }
+
+        private static Texture2D LoadGroupNavigatorIcon()
+        {
+            Texture2D icon = EditorGUIUtility.IconContent("d_UnityEditor.SceneHierarchyWindow").image as Texture2D;
+            if (icon == null)
+            {
+                icon = EditorGUIUtility.IconContent("UnityEditor.SceneHierarchyWindow").image as Texture2D;
+            }
+
+            return icon;
         }
 
         private static Texture2D LoadMiniMapIcon()

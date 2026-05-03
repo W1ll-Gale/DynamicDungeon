@@ -83,8 +83,18 @@ namespace DynamicDungeon.Editor.Inspectors
         public override void OnInspectorGUI()
         {
             DungeonGeneratorComponent component = (DungeonGeneratorComponent)target;
+            if (component == null)
+            {
+                return;
+            }
 
             EnsureStyles();
+
+            if (_graphSerializedObject != null && _graphSerializedObject.targetObject == null)
+            {
+                _graphSerializedObject = null;
+                _previousGraph = null;
+            }
 
             serializedObject.Update();
             _graphSerializedObject?.Update();
@@ -418,7 +428,9 @@ namespace DynamicDungeon.Editor.Inspectors
             GUILayout.Space(4.0f);
 
             EditorGUILayout.BeginHorizontal();
+            EditorGUI.BeginDisabledGroup(_graphProperty.objectReferenceValue == null);
             generateRequested = GUILayout.Button("Generate", GUILayout.Height(LargeActionButtonHeight));
+            EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginDisabledGroup(!component.IsGenerating);
             cancelRequested = GUILayout.Button("Cancel", GUILayout.Height(LargeActionButtonHeight));

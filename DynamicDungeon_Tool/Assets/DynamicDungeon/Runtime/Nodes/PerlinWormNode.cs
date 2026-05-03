@@ -151,7 +151,7 @@ namespace DynamicDungeon.Runtime.Nodes
             RefreshChannelDeclarations();
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             string maskChannelName;
             if (inputConnections != null && inputConnections.TryGetValue(MaskPortName, out maskChannelName))

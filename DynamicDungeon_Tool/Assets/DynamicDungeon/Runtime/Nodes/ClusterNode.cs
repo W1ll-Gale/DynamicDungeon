@@ -126,7 +126,7 @@ namespace DynamicDungeon.Runtime.Nodes
             RefreshChannelDeclarations();
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             _seedChannelName = GrowthSeedUtility.ResolveInputConnection(inputConnections, SeedPortName);
             _maskChannelName = GrowthSeedUtility.ResolveInputConnection(inputConnections, MaskPortName);

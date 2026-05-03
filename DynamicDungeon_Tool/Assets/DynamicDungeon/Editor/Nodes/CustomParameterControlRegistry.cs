@@ -70,10 +70,25 @@ namespace DynamicDungeon.Editor.Nodes
                 return control != null;
             }
 
-            if (context.NodeType == typeof(LogicalIdRuleOverlayNode) &&
+            if ((context.NodeType == typeof(LogicalIdRuleOverlayNode) ||
+                 context.NodeType == typeof(LogicalIdRuleStackNode)) &&
                 string.Equals(context.ParameterName, "rules", StringComparison.OrdinalIgnoreCase))
             {
                 control = BiomeLayoutParameterControls.CreateLogicalIdRulesControl(context);
+                return control != null;
+            }
+
+            if (context.NodeType == typeof(BiomeOverrideStackNode) &&
+                string.Equals(context.ParameterName, "rules", StringComparison.OrdinalIgnoreCase))
+            {
+                control = StackRuleParameterControls.CreateBiomeOverrideRulesControl(context);
+                return control != null;
+            }
+
+            if (context.NodeType == typeof(PlacementSetNode) &&
+                string.Equals(context.ParameterName, "rules", StringComparison.OrdinalIgnoreCase))
+            {
+                control = StackRuleParameterControls.CreatePlacementSetRulesControl(context);
                 return control != null;
             }
 

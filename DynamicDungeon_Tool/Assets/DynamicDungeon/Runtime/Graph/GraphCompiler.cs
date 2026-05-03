@@ -332,7 +332,9 @@ namespace DynamicDungeon.Runtime.Graph
                 GenNodeData nodeData = nodeDataList[nodeIndex];
                 if (nodeData == null ||
                     string.IsNullOrWhiteSpace(nodeData.NodeId) ||
-                    (!WritesBiomeChannel(nodeData.Ports) && !WritesLogicalIdChannel(nodeData.Ports)))
+                    (!WritesBiomeChannel(nodeData.Ports) &&
+                     !WritesLogicalIdChannel(nodeData.Ports) &&
+                     !WritesPrefabPlacementChannel(nodeData.Ports)))
                 {
                     continue;
                 }
@@ -651,28 +653,32 @@ namespace DynamicDungeon.Runtime.Graph
 
         private static void ApplyInputConnectionBindings(IReadOnlyList<CompiledNodeInfo> compiledNodes, IReadOnlyList<ValidatedConnection> validatedConnections)
         {
-            Dictionary<string, Dictionary<string, string>> inputConnectionsByNodeId = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+            Dictionary<string, Dictionary<string, List<string>>> inputConnectionsByNodeId = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.Ordinal);
 
             int connectionIndex;
             for (connectionIndex = 0; connectionIndex < validatedConnections.Count; connectionIndex++)
             {
                 ValidatedConnection connection = validatedConnections[connectionIndex];
-                Dictionary<string, string> nodeConnections;
+                Dictionary<string, List<string>> nodeConnections;
                 if (!inputConnectionsByNodeId.TryGetValue(connection.ToNode.Node.NodeId, out nodeConnections))
                 {
-                    nodeConnections = new Dictionary<string, string>(StringComparer.Ordinal);
+                    nodeConnections = new Dictionary<string, List<string>>(StringComparer.Ordinal);
                     inputConnectionsByNodeId.Add(connection.ToNode.Node.NodeId, nodeConnections);
                 }
 
-                if (!nodeConnections.ContainsKey(connection.ToPort.Name))
+                List<string> portConnections;
+                if (!nodeConnections.TryGetValue(connection.ToPort.Name, out portConnections))
                 {
-                    // For cast connections the downstream node reads from the implicit cast channel.
-                    // For same-type connections it reads directly from the source port's channel.
-                    string sourceChannelName = (connection.CastMode != CastMode.None)
-                        ? connection.CastChannelName
-                        : connection.SourceChannelName;
-                    nodeConnections.Add(connection.ToPort.Name, sourceChannelName);
+                    portConnections = new List<string>();
+                    nodeConnections.Add(connection.ToPort.Name, portConnections);
                 }
+
+                // For cast connections the downstream node reads from the implicit cast channel.
+                // For same-type connections it reads directly from the source port's channel.
+                string sourceChannelName = (connection.CastMode != CastMode.None)
+                    ? connection.CastChannelName
+                    : connection.SourceChannelName;
+                portConnections.Add(sourceChannelName);
             }
 
             int nodeIndex;
@@ -685,13 +691,19 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
-                Dictionary<string, string> nodeConnections;
+                Dictionary<string, List<string>> nodeConnections;
                 if (!inputConnectionsByNodeId.TryGetValue(compiledNode.Node.NodeId, out nodeConnections))
                 {
-                    nodeConnections = new Dictionary<string, string>(StringComparer.Ordinal);
+                    nodeConnections = new Dictionary<string, List<string>>(StringComparer.Ordinal);
                 }
 
-                inputConnectionReceiver.ReceiveInputConnections(nodeConnections);
+                InputConnectionMap connectionMap = new InputConnectionMap();
+                foreach (KeyValuePair<string, List<string>> nodeConnection in nodeConnections)
+                {
+                    connectionMap.SetConnections(nodeConnection.Key, nodeConnection.Value);
+                }
+
+                inputConnectionReceiver.ReceiveInputConnections(connectionMap);
             }
         }
 
@@ -1062,6 +1074,29 @@ namespace DynamicDungeon.Runtime.Graph
                 if (declaration.IsWrite &&
                     declaration.Type == ChannelType.PrefabPlacementList &&
                     string.Equals(declaration.ChannelName, PrefabPlacementChannelUtility.ChannelName, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool WritesPrefabPlacementChannel(IReadOnlyList<GenPortData> ports)
+        {
+            if (ports == null)
+            {
+                return false;
+            }
+
+            int portIndex;
+            for (portIndex = 0; portIndex < ports.Count; portIndex++)
+            {
+                GenPortData port = ports[portIndex];
+                if (port != null &&
+                    port.Direction == PortDirection.Output &&
+                    port.Type == ChannelType.PrefabPlacementList &&
+                    string.Equals(port.PortName, PrefabPlacementChannelUtility.ChannelName, StringComparison.Ordinal))
                 {
                     return true;
                 }

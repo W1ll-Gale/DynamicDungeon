@@ -292,6 +292,7 @@ namespace DynamicDungeon.Editor.Nodes
             private readonly Action<string, string> _onValueChanged;
             private readonly Label _summaryLabel;
             private readonly VisualElement _ruleList;
+            private readonly int _maxMaskSlot;
 
             private LogicalIdRuleSet _ruleSet;
             private bool _isRefreshing;
@@ -301,6 +302,7 @@ namespace DynamicDungeon.Editor.Nodes
                 _parameterName = context.ParameterName;
                 _onValueChanged = context.OnValueChanged;
                 _ruleSet = ParseLogicalRules(context.ParameterValue);
+                _maxMaskSlot = context.NodeType == typeof(LogicalIdRuleStackNode) ? 64 : 4;
 
                 style.flexDirection = FlexDirection.Column;
                 style.flexGrow = 1.0f;
@@ -379,12 +381,14 @@ namespace DynamicDungeon.Editor.Nodes
                 });
                 row.Add(enabledToggle);
 
-                IntegerField maskField = CreateIntegerField("Mask", Mathf.Clamp(safeRule.MaskSlot, 0, 4), 48.0f, value =>
+                IntegerField maskField = CreateIntegerField("Mask", Mathf.Clamp(safeRule.MaskSlot, 0, _maxMaskSlot), 48.0f, value =>
                 {
-                    safeRule.MaskSlot = Mathf.Clamp(value, 0, 4);
+                    safeRule.MaskSlot = Mathf.Clamp(value, 0, _maxMaskSlot);
                     ApplyChanges();
                 });
-                maskField.tooltip = "0 means always. 1-4 use the matching mask input slot.";
+                maskField.tooltip = _maxMaskSlot > 4
+                    ? "0 means always. Positive values use the matching multi-input mask slot."
+                    : "0 means always. 1-4 use the matching mask input slot.";
                 row.Add(maskField);
 
                 Button sourceButton = null;

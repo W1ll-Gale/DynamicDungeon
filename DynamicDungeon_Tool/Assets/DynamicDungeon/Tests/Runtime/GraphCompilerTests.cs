@@ -368,6 +368,90 @@ namespace DynamicDungeon.Tests.Runtime
             }
         }
 
+        [Test]
+        public void MultiInputPortReceivesAllConnectionsInGraphOrder()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                GraphCompilerMultiInputRecorderNode.LastInputChannels = Array.Empty<string>();
+                AddIntFillNode(graph, "source-a", "Source A", "A", 1);
+                AddIntFillNode(graph, "source-b", "Source B", "B", 2);
+                AddIntFillNode(graph, "source-c", "Source C", "C", 3);
+                AddMultiInputRecorderNode(graph, "recorder", "Recorder", "RecorderOutput");
+
+                graph.Connections.Add(new GenConnectionData("source-b", "B", "recorder", "Inputs"));
+                graph.Connections.Add(new GenConnectionData("source-a", "A", "recorder", "Inputs"));
+                graph.Connections.Add(new GenConnectionData("source-c", "C", "recorder", "Inputs"));
+                ConnectToOutput(graph, "recorder", "RecorderOutput");
+
+                GraphCompileResult result = GraphCompiler.Compile(graph);
+
+                Assert.That(result.IsSuccess, Is.True, JoinDiagnostics(result.Diagnostics));
+                CollectionAssert.AreEqual(new[] { "B", "A", "C" }, GraphCompilerMultiInputRecorderNode.LastInputChannels);
+                result.Plan.Dispose();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
+        public void SingleInputPortStillRejectsMultipleIncomingConnections()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                AddIntFillNode(graph, "source-a", "Source A", "A", 1);
+                AddIntFillNode(graph, "source-b", "Source B", "B", 2);
+                AddCopyNode(graph, "copy", "Copy", "Input", "Copied");
+
+                graph.Connections.Add(new GenConnectionData("source-a", "A", "copy", "Input"));
+                graph.Connections.Add(new GenConnectionData("source-b", "B", "copy", "Input"));
+                ConnectToOutput(graph, "copy", "Copied");
+
+                GraphCompileResult result = GraphCompiler.Compile(graph);
+
+                Assert.That(result.IsSuccess, Is.False);
+                Assert.That(ContainsError(result.Diagnostics, "does not allow multiple incoming connections"), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
+        public void MultiInputPortReceivesImplicitCastChannelsInConnectionOrder()
+        {
+            GenGraph graph = CreateGraph();
+            try
+            {
+                GraphCompilerBoolMaskMultiInputRecorderNode.LastInputChannels = Array.Empty<string>();
+                AddIntFillNode(graph, "source-a", "Source A", "A", 1);
+                AddIntFillNode(graph, "source-b", "Source B", "B", 0);
+                AddBoolMaskMultiInputRecorderNode(graph, "recorder", "Recorder", "RecorderOutput");
+
+                graph.Connections.Add(new GenConnectionData("source-a", "A", "recorder", "Masks"));
+                graph.Connections.Add(new GenConnectionData("source-b", "B", "recorder", "Masks"));
+                ConnectToOutput(graph, "recorder", "RecorderOutput");
+
+                GraphCompileResult result = GraphCompiler.Compile(graph);
+
+                Assert.That(result.IsSuccess, Is.True, JoinDiagnostics(result.Diagnostics));
+                Assert.That(GraphCompilerBoolMaskMultiInputRecorderNode.LastInputChannels.Length, Is.EqualTo(2));
+                Assert.That(GraphCompilerBoolMaskMultiInputRecorderNode.LastInputChannels[0], Does.StartWith("__cast_"));
+                Assert.That(GraphCompilerBoolMaskMultiInputRecorderNode.LastInputChannels[1], Does.StartWith("__cast_"));
+                Assert.That(GraphCompilerBoolMaskMultiInputRecorderNode.LastInputChannels[0], Is.Not.EqualTo(GraphCompilerBoolMaskMultiInputRecorderNode.LastInputChannels[1]));
+                result.Plan.Dispose();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
         private static void AddCopyNode(GenGraph graph, string nodeId, string nodeName, string inputPortName, string outputPortName)
         {
             GenNodeData node = new GenNodeData(nodeId, typeof(GraphCompilerCopyNode).FullName, nodeName, Vector2.zero);
@@ -381,6 +465,22 @@ namespace DynamicDungeon.Tests.Runtime
             GenNodeData node = new GenNodeData(nodeId, typeof(GraphCompilerIntFillNode).FullName, nodeName, Vector2.zero);
             node.Ports.Add(new GenPortData(outputChannelName, PortDirection.Output, ChannelType.Int, displayName));
             node.Parameters.Add(new SerializedParameter("fillValue", fillValue.ToString(CultureInfo.InvariantCulture)));
+            graph.Nodes.Add(node);
+        }
+
+        private static void AddMultiInputRecorderNode(GenGraph graph, string nodeId, string nodeName, string outputPortName)
+        {
+            GenNodeData node = new GenNodeData(nodeId, typeof(GraphCompilerMultiInputRecorderNode).FullName, nodeName, Vector2.zero);
+            node.Ports.Add(new GenPortData("Inputs", PortDirection.Input, ChannelType.Int));
+            node.Ports.Add(new GenPortData(outputPortName, PortDirection.Output, ChannelType.Int));
+            graph.Nodes.Add(node);
+        }
+
+        private static void AddBoolMaskMultiInputRecorderNode(GenGraph graph, string nodeId, string nodeName, string outputPortName)
+        {
+            GenNodeData node = new GenNodeData(nodeId, typeof(GraphCompilerBoolMaskMultiInputRecorderNode).FullName, nodeName, Vector2.zero);
+            node.Ports.Add(new GenPortData("Masks", PortDirection.Input, ChannelType.BoolMask));
+            node.Ports.Add(new GenPortData(outputPortName, PortDirection.Output, ChannelType.Int));
             graph.Nodes.Add(node);
         }
 
@@ -440,6 +540,18 @@ namespace DynamicDungeon.Tests.Runtime
             }
 
             return count;
+        }
+
+        private static string JoinDiagnostics(IReadOnlyList<GraphDiagnostic> diagnostics)
+        {
+            List<string> messages = new List<string>();
+            int index;
+            for (index = 0; index < diagnostics.Count; index++)
+            {
+                messages.Add(diagnostics[index].Message);
+            }
+
+            return string.Join(Environment.NewLine, messages);
         }
 
         private static GenGraph CreateGraph()
@@ -656,7 +768,7 @@ namespace DynamicDungeon.Tests.Runtime
             RefreshChannelDeclarations();
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             string leftChannelName;
             string rightChannelName;
@@ -703,6 +815,134 @@ namespace DynamicDungeon.Tests.Runtime
             {
                 Output[index] = Input[index];
             }
+        }
+    }
+
+    internal sealed class GraphCompilerMultiInputRecorderNode : IGenNode, IInputConnectionReceiver
+    {
+        private readonly NodePortDefinition[] _ports;
+        private readonly string _nodeId;
+        private readonly string _nodeName;
+        private readonly string _outputChannelName;
+        private string[] _inputChannelNames = Array.Empty<string>();
+        private ChannelDeclaration[] _channelDeclarations;
+
+        public static string[] LastInputChannels = Array.Empty<string>();
+
+        public IReadOnlyList<NodePortDefinition> Ports => _ports;
+        public IReadOnlyList<ChannelDeclaration> ChannelDeclarations => _channelDeclarations;
+        public IReadOnlyList<BlackboardKey> BlackboardDeclarations => Array.Empty<BlackboardKey>();
+        public string NodeId => _nodeId;
+        public string NodeName => _nodeName;
+
+        public GraphCompilerMultiInputRecorderNode(string nodeId, string nodeName, string outputChannelName)
+        {
+            _nodeId = nodeId;
+            _nodeName = nodeName;
+            _outputChannelName = outputChannelName;
+            _ports = new[]
+            {
+                new NodePortDefinition("Inputs", PortDirection.Input, ChannelType.Int, PortCapacity.Multi, true),
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Int)
+            };
+
+            RefreshChannelDeclarations();
+        }
+
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
+        {
+            IReadOnlyList<string> connections = inputConnections != null
+                ? inputConnections.GetAll("Inputs")
+                : Array.Empty<string>();
+            _inputChannelNames = new string[connections.Count];
+            for (int index = 0; index < connections.Count; index++)
+            {
+                _inputChannelNames[index] = connections[index];
+            }
+
+            LastInputChannels = (string[])_inputChannelNames.Clone();
+            RefreshChannelDeclarations();
+        }
+
+        public JobHandle Schedule(NodeExecutionContext context)
+        {
+            return context.InputDependency;
+        }
+
+        private void RefreshChannelDeclarations()
+        {
+            List<ChannelDeclaration> declarations = new List<ChannelDeclaration>();
+            for (int index = 0; index < _inputChannelNames.Length; index++)
+            {
+                declarations.Add(new ChannelDeclaration(_inputChannelNames[index], ChannelType.Int, false));
+            }
+
+            declarations.Add(new ChannelDeclaration(_outputChannelName, ChannelType.Int, true));
+            _channelDeclarations = declarations.ToArray();
+        }
+    }
+
+    internal sealed class GraphCompilerBoolMaskMultiInputRecorderNode : IGenNode, IInputConnectionReceiver
+    {
+        private readonly NodePortDefinition[] _ports;
+        private readonly string _nodeId;
+        private readonly string _nodeName;
+        private readonly string _outputChannelName;
+        private string[] _inputChannelNames = Array.Empty<string>();
+        private ChannelDeclaration[] _channelDeclarations;
+
+        public static string[] LastInputChannels = Array.Empty<string>();
+
+        public IReadOnlyList<NodePortDefinition> Ports => _ports;
+        public IReadOnlyList<ChannelDeclaration> ChannelDeclarations => _channelDeclarations;
+        public IReadOnlyList<BlackboardKey> BlackboardDeclarations => Array.Empty<BlackboardKey>();
+        public string NodeId => _nodeId;
+        public string NodeName => _nodeName;
+
+        public GraphCompilerBoolMaskMultiInputRecorderNode(string nodeId, string nodeName, string outputChannelName)
+        {
+            _nodeId = nodeId;
+            _nodeName = nodeName;
+            _outputChannelName = outputChannelName;
+            _ports = new[]
+            {
+                new NodePortDefinition("Masks", PortDirection.Input, ChannelType.BoolMask, PortCapacity.Multi, true),
+                new NodePortDefinition(_outputChannelName, PortDirection.Output, ChannelType.Int)
+            };
+
+            RefreshChannelDeclarations();
+        }
+
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
+        {
+            IReadOnlyList<string> connections = inputConnections != null
+                ? inputConnections.GetAll("Masks")
+                : Array.Empty<string>();
+            _inputChannelNames = new string[connections.Count];
+            for (int index = 0; index < connections.Count; index++)
+            {
+                _inputChannelNames[index] = connections[index];
+            }
+
+            LastInputChannels = (string[])_inputChannelNames.Clone();
+            RefreshChannelDeclarations();
+        }
+
+        public JobHandle Schedule(NodeExecutionContext context)
+        {
+            return context.InputDependency;
+        }
+
+        private void RefreshChannelDeclarations()
+        {
+            List<ChannelDeclaration> declarations = new List<ChannelDeclaration>();
+            for (int index = 0; index < _inputChannelNames.Length; index++)
+            {
+                declarations.Add(new ChannelDeclaration(_inputChannelNames[index], ChannelType.BoolMask, false));
+            }
+
+            declarations.Add(new ChannelDeclaration(_outputChannelName, ChannelType.Int, true));
+            _channelDeclarations = declarations.ToArray();
         }
     }
 }

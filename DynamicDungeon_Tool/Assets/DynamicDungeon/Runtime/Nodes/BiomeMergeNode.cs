@@ -105,7 +105,7 @@ namespace DynamicDungeon.Runtime.Nodes
             RefreshChannelDeclarations();
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             _inputBaseChannelName = ResolveInput(inputConnections, BasePortName);
             _inputLayerChannelName = ResolveInput(inputConnections, LayerPortName);

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Nodes;
+using DynamicDungeon.Runtime.Placement;
 using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Graph
@@ -10,6 +12,8 @@ namespace DynamicDungeon.Runtime.Graph
     {
         public const string OutputNodeDisplayName = "Output";
         public const string OutputInputPortName = "LogicalIds";
+        public const string BiomeInputPortName = BiomeChannelUtility.ChannelName;
+        public const string PrefabPlacementInputPortName = PrefabPlacementChannelUtility.ChannelName;
 
         public static string OutputNodeTypeName
         {
@@ -192,6 +196,8 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             nodeData.Ports.Add(new GenPortData(OutputInputPortName, PortDirection.Input, ChannelType.Int));
+            nodeData.Ports.Add(new GenPortData(BiomeInputPortName, PortDirection.Input, ChannelType.Int));
+            nodeData.Ports.Add(new GenPortData(PrefabPlacementInputPortName, PortDirection.Input, ChannelType.PrefabPlacementList));
         }
 
         private static Vector2 ResolveDefaultOutputPosition(GenGraph graph)

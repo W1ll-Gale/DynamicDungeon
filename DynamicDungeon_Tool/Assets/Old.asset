@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
   m_Name: Old
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
-  SchemaVersion: 4
+  SchemaVersion: 5
   WorldWidth: 256
   WorldHeight: 128
   DefaultSeed: 246813579
@@ -31,6 +31,14 @@ MonoBehaviour:
       DisplayName: LogicalIds
       Direction: 0
       Type: 1
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 0
+      Type: 1
+    - PortName: __PrefabPlacements
+      DisplayName: __PrefabPlacements
+      Direction: 0
+      Type: 4
     Parameters: []
   - NodeId: 30729321-8c26-440a-8c37-54ed6a10e047
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SurfaceNoiseNode

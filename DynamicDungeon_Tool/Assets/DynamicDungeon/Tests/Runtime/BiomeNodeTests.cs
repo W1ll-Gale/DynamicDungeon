@@ -890,7 +890,7 @@ namespace DynamicDungeon.Tests.Runtime
         {
             const string graphPath = "Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/TerrariaDemoGraph.asset";
             const string baseLogicalChannelName = "BaseLogicalIds";
-            const string materialContextLogicalChannelName = "MaterialContextLogicalIds";
+            const string outputLogicalChannelName = "FinalLogicalIds";
             GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(graphPath);
             GraphCompileResult compileResult = null;
 
@@ -901,7 +901,7 @@ namespace DynamicDungeon.Tests.Runtime
                 compileResult = GraphCompiler.Compile(graph);
                 Assert.That(compileResult.IsSuccess, Is.True, BuildDiagnosticSummary(compileResult.Diagnostics));
                 Assert.That(compileResult.HasConnectedOutput, Is.True);
-                Assert.That(compileResult.OutputChannelName, Is.EqualTo(materialContextLogicalChannelName));
+                Assert.That(compileResult.OutputChannelName, Is.EqualTo(outputLogicalChannelName));
                 Assert.That(compileResult.Plan, Is.Not.Null);
 
                 Executor executor = new Executor();
@@ -910,7 +910,7 @@ namespace DynamicDungeon.Tests.Runtime
                 Assert.That(executionResult.IsSuccess, Is.True, executionResult.ErrorMessage);
                 Assert.That(executionResult.Snapshot, Is.Not.Null);
 
-                WorldSnapshot.IntChannelSnapshot logicalChannel = GetIntChannel(executionResult.Snapshot, materialContextLogicalChannelName);
+                WorldSnapshot.IntChannelSnapshot logicalChannel = GetIntChannel(executionResult.Snapshot, outputLogicalChannelName);
                 WorldSnapshot.IntChannelSnapshot baseLogicalChannel = GetIntChannel(executionResult.Snapshot, baseLogicalChannelName);
                 WorldSnapshot.IntChannelSnapshot biomeChannel = GetIntChannel(executionResult.Snapshot, BiomeChannelUtility.ChannelName);
 

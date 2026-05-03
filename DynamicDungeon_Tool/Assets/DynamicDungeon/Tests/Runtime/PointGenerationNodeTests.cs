@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using DynamicDungeon.Runtime.Core;
+using DynamicDungeon.Runtime.Graph;
 using DynamicDungeon.Runtime.Nodes;
 using NUnit.Framework;
 using Unity.Burst;
@@ -144,10 +145,9 @@ namespace DynamicDungeon.Tests.Runtime
             pointsNode.ReceiveParameter("points", "0,0;2,1;3,3");
 
             PointListOffsetNode offsetNode = new PointListOffsetNode("offset", "Offset", outputChannelName: "OffsetPoints", offsetX: 0, offsetY: 1);
-            offsetNode.ReceiveInputConnections(new Dictionary<string, string>
-            {
-                { "Points", "InputPoints" }
-            });
+            InputConnectionMap inputConnections = new InputConnectionMap();
+            inputConnections.SetConnections("Points", new[] { "InputPoints" });
+            offsetNode.ReceiveInputConnections(inputConnections);
 
             WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { pointsNode, offsetNode }, 4, 4, 4309L);
             WorldSnapshot.PointListChannelSnapshot pointList = GetPointListChannel(snapshot, "OffsetPoints");

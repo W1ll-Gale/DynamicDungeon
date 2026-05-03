@@ -863,10 +863,9 @@ namespace DynamicDungeon.Tests.Runtime
             int maxOverlapTiles)
         {
             PrefabStamperNode node = new PrefabStamperNode("stamp", "Stamp");
-            node.ReceiveInputConnections(new Dictionary<string, string>
-            {
-                { PointsChannelName, PointsChannelName }
-            });
+            InputConnectionMap inputConnections = new InputConnectionMap();
+            inputConnections.SetConnections(PointsChannelName, new[] { PointsChannelName });
+            node.ReceiveInputConnections(inputConnections);
 
             int variantCount = templates.Length;
             PrefabStampVariantSet variantSet = new PrefabStampVariantSet();

@@ -97,7 +97,7 @@ namespace DynamicDungeon.Runtime.Nodes
             };
         }
 
-        public void ReceiveInputConnections(IReadOnlyDictionary<string, string> inputConnections)
+        public void ReceiveInputConnections(InputConnectionMap inputConnections)
         {
             // No inputs
         }
