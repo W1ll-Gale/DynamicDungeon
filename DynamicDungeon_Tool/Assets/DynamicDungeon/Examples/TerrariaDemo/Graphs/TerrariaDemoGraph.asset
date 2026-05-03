@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Output
-    Position: {x: 167.0271, y: 2420.96}
+    Position: {x: 245, y: 2191}
     Ports:
     - PortName: LogicalIds
       DisplayName: LogicalIds
@@ -43,7 +43,7 @@ MonoBehaviour:
   - NodeId: 30729321-8c26-440a-8c37-54ed6a10e047
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SurfaceNoiseNode
     NodeName: Surface Profile
-    Position: {x: -4000, y: -676.52}
+    Position: {x: -4506.5737, y: -784.50635}
     Ports:
     - PortName: TerrainMass
       DisplayName: TerrainMass
@@ -52,24 +52,32 @@ MonoBehaviour:
     Parameters:
     - Name: baseHeight
       Value: 0.56
+      ObjectReference: {fileID: 0}
     - Name: amplitude
       Value: 0.17
+      ObjectReference: {fileID: 0}
     - Name: frequency
       Value: 0.016
+      ObjectReference: {fileID: 0}
     - Name: octaves
       Value: 3
+      ObjectReference: {fileID: 0}
     - Name: persistence
       Value: 0.45
+      ObjectReference: {fileID: 0}
     - Name: lacunarity
       Value: 1.85
+      ObjectReference: {fileID: 0}
     - Name: seedOffset
       Value: 17
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 128
+      ObjectReference: {fileID: 0}
   - NodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Terrain Mass Mask
-    Position: {x: -3680, y: -676.52}
+    Position: {x: -4186.5737, y: -784.50635}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -82,10 +90,11 @@ MonoBehaviour:
     Parameters:
     - Name: threshold
       Value: 0.5
+      ObjectReference: {fileID: 0}
   - NodeId: c51a5de2-490c-438f-a05e-106d9a02247b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Surface Band
-    Position: {x: -4000, y: -396.52002}
+    Position: {x: -4506.5737, y: -504.50635}
     Ports:
     - PortName: SurfaceBand
       DisplayName: SurfaceBand
@@ -94,18 +103,23 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.05
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.82
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: c41ad5c5-4bd8-43d8-8373-376a74d37254
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Surface Crust Band
-    Position: {x: -4000, y: -276.52002}
+    Position: {x: -4506.5737, y: -384.50635}
     Ports:
     - PortName: SurfaceCrustBand
       DisplayName: SurfaceCrustBand
@@ -114,18 +128,23 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.03
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.82
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Underground Band
-    Position: {x: -4000, y: -176.52002}
+    Position: {x: -4506.5737, y: -284.50635}
     Ports:
     - PortName: UndergroundBand
       DisplayName: UndergroundBand
@@ -134,18 +153,23 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.18
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.48
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: fd837542-e32b-45ff-8499-937f33125ff1
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Deep Cave Band
-    Position: {x: -4000, y: 43.47998}
+    Position: {x: -4506.5737, y: -64.50635}
     Ports:
     - PortName: DeepBand
       DisplayName: DeepBand
@@ -154,18 +178,23 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.42
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Sky Band
-    Position: {x: -4000, y: 263.47998}
+    Position: {x: -4506.5737, y: 155.49365}
     Ports:
     - PortName: SkyBand
       DisplayName: SkyBand
@@ -174,18 +203,23 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.82
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: 08271325-c52e-41cc-aa71-693805aad513
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Cave Region
-    Position: {x: -3680, y: -66.52002}
+    Position: {x: -4186.5737, y: -174.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -202,10 +236,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: e9fa758c-4c63-4a03-b791-79b84175d7dc
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
     NodeName: Surface Cave Buffer
-    Position: {x: -3360, y: -596.52}
+    Position: {x: -3866.5737, y: -704.50635}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -218,12 +253,14 @@ MonoBehaviour:
     Parameters:
     - Name: minDepth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: maxDepth
       Value: 8
+      ObjectReference: {fileID: 0}
   - NodeId: 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
     NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
     NodeName: Cave Depth Mask
-    Position: {x: -3040, y: -596.52}
+    Position: {x: -3546.5737, y: -704.50635}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -236,10 +273,11 @@ MonoBehaviour:
     Parameters:
     - Name: inputType
       Value: BoolMask
+      ObjectReference: {fileID: 0}
   - NodeId: cdb97ee3-de33-443b-bc14-174c947b8f41
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Caves Under Surface
-    Position: {x: -3360, y: -236.52002}
+    Position: {x: -3866.5737, y: -344.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -256,10 +294,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: d575842c-79cc-4180-adb5-8cc87584971d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Caves Below Surface Buffer
-    Position: {x: -2720, y: -436.52002}
+    Position: {x: -3226.5737, y: -544.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -276,10 +315,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
     NodeName: Shallow Cave Band
-    Position: {x: -2800, y: -932.52}
+    Position: {x: -3306.5737, y: -1040.5063}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -292,12 +332,14 @@ MonoBehaviour:
     Parameters:
     - Name: minDepth
       Value: 8
+      ObjectReference: {fileID: 0}
     - Name: maxDepth
       Value: 34
+      ObjectReference: {fileID: 0}
   - NodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Shallow Cave Region
-    Position: {x: -2405, y: -811.52}
+    Position: {x: -2911.5737, y: -919.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -314,10 +356,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Shallow Cave Pockets
-    Position: {x: -2080, y: -1067.52}
+    Position: {x: -2586.5737, y: -1175.5063}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -330,18 +373,23 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 10
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 8
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.62
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.76
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 10
+      ObjectReference: {fileID: 0}
   - NodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Cave Automata
-    Position: {x: -3040, y: -276.52002}
+    Position: {x: -3546.5737, y: -384.50635}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -354,14 +402,19 @@ MonoBehaviour:
     Parameters:
     - Name: birthRule
       Value: 5678
+      ObjectReference: {fileID: 0}
     - Name: survivalRule
       Value: 45678
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 6
+      ObjectReference: {fileID: 0}
     - Name: initialFillProbability
       Value: 0.45
+      ObjectReference: {fileID: 0}
     - Name: inputMode
       Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
   - NodeId: forest-deep-cave-region
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Forest Deep Cave Region
@@ -382,10 +435,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: forest-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Forest Deep Cave Automata
-    Position: {x: -3360, y: 203.47998}
+    Position: {x: -3914.5737, y: 25.493652}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -398,14 +452,19 @@ MonoBehaviour:
     Parameters:
     - Name: birthRule
       Value: 5678
+      ObjectReference: {fileID: 0}
     - Name: survivalRule
       Value: 45678
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 7
+      ObjectReference: {fileID: 0}
     - Name: initialFillProbability
       Value: 0.48
+      ObjectReference: {fileID: 0}
     - Name: inputMode
       Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
   - NodeId: jungle-deep-cave-region
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Jungle Deep Cave Region
@@ -426,6 +485,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: jungle-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Jungle Deep Cave Automata
@@ -442,18 +502,23 @@ MonoBehaviour:
     Parameters:
     - Name: birthRule
       Value: 5678
+      ObjectReference: {fileID: 0}
     - Name: survivalRule
       Value: 45678
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 8
+      ObjectReference: {fileID: 0}
     - Name: initialFillProbability
       Value: 0.52
+      ObjectReference: {fileID: 0}
     - Name: inputMode
       Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
   - NodeId: desert-deep-cave-region
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Desert Deep Cave Region
-    Position: {x: -3680, y: 523.47998}
+    Position: {x: -3680, y: 523.48}
     Ports:
     - PortName: A
       DisplayName: A
@@ -470,10 +535,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: desert-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Desert Deep Cave Automata
-    Position: {x: -3360, y: 523.47998}
+    Position: {x: -3360, y: 523.48}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -486,18 +552,23 @@ MonoBehaviour:
     Parameters:
     - Name: birthRule
       Value: 5678
+      ObjectReference: {fileID: 0}
     - Name: survivalRule
       Value: 45678
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 8
+      ObjectReference: {fileID: 0}
     - Name: initialFillProbability
       Value: 0.5
+      ObjectReference: {fileID: 0}
     - Name: inputMode
       Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
   - NodeId: ice-deep-cave-region
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Ice Deep Cave Region
-    Position: {x: -3680, y: 683.47998}
+    Position: {x: -3680, y: 683.48}
     Ports:
     - PortName: A
       DisplayName: A
@@ -514,10 +585,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: ice-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Ice Deep Cave Automata
-    Position: {x: -3360, y: 683.47998}
+    Position: {x: -3360, y: 683.48}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -530,14 +602,19 @@ MonoBehaviour:
     Parameters:
     - Name: birthRule
       Value: 5678
+      ObjectReference: {fileID: 0}
     - Name: survivalRule
       Value: 45678
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 6
+      ObjectReference: {fileID: 0}
     - Name: initialFillProbability
       Value: 0.46
+      ObjectReference: {fileID: 0}
     - Name: inputMode
       Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
   - NodeId: biome-deep-cave-automata-a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Biome Deep Cave Automata A
@@ -558,10 +635,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: biome-deep-cave-automata-b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Biome Deep Cave Automata B
-    Position: {x: -3040, y: 603.47998}
+    Position: {x: -3040, y: 603.48}
     Ports:
     - PortName: A
       DisplayName: A
@@ -578,6 +656,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: biome-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Biome Deep Cave Automata
@@ -598,6 +677,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: combined-automata-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Combined Automata Caves
@@ -618,10 +698,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Deep Cavern Pockets
-    Position: {x: -3040, y: 3.4799805}
+    Position: {x: -3546.5737, y: -104.50635}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -634,18 +715,23 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 8
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 20
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.8
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.9
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 18
+      ObjectReference: {fileID: 0}
   - NodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Primary Open Caves
-    Position: {x: -2720, y: -136.52002}
+    Position: {x: -3226.5737, y: -244.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -662,10 +748,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Base Open Caves
-    Position: {x: -2400, y: -136.52002}
+    Position: {x: -2906.5737, y: -244.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -682,10 +769,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: upper-underground-cave-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
     NodeName: Upper Underground Cave Band
-    Position: {x: -2400, y: -696.52002}
+    Position: {x: -2400, y: -696.52}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -698,12 +786,14 @@ MonoBehaviour:
     Parameters:
     - Name: minDepth
       Value: 6
+      ObjectReference: {fileID: 0}
     - Name: maxDepth
       Value: 44
+      ObjectReference: {fileID: 0}
   - NodeId: upper-underground-cave-pockets
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Upper Underground Small Caves
-    Position: {x: -2080, y: -696.52002}
+    Position: {x: -2080, y: -696.52}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -716,18 +806,23 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 18
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 9
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.66
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.8
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 8
+      ObjectReference: {fileID: 0}
   - NodeId: mid-underground-cave-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
     NodeName: Mid Underground Cave Band
-    Position: {x: -2400, y: -576.52002}
+    Position: {x: -2400, y: -576.52}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -740,12 +835,14 @@ MonoBehaviour:
     Parameters:
     - Name: minDepth
       Value: 14
+      ObjectReference: {fileID: 0}
     - Name: maxDepth
       Value: 82
+      ObjectReference: {fileID: 0}
   - NodeId: mid-underground-cave-pockets
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Mid Underground Growing Caves
-    Position: {x: -2080, y: -576.52002}
+    Position: {x: -2080, y: -576.52}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -758,18 +855,23 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 22
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 18
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.82
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.92
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 7
+      ObjectReference: {fileID: 0}
   - NodeId: staged-underground-pockets
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Staged Underground Pockets
-    Position: {x: -1760, y: -636.52002}
+    Position: {x: -1760, y: -636.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -786,10 +888,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: staged-base-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Staged Base Open Caves
-    Position: {x: -1440, y: -636.52002}
+    Position: {x: -1440, y: -636.52}
     Ports:
     - PortName: A
       DisplayName: A
@@ -806,6 +909,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: surface-entrance-worms
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
     NodeName: Surface Entrance Worms
@@ -822,34 +926,49 @@ MonoBehaviour:
     Parameters:
     - Name: wormCount
       Value: 12
+      ObjectReference: {fileID: 0}
     - Name: lengthMin
       Value: 70
+      ObjectReference: {fileID: 0}
     - Name: lengthMax
       Value: 130
+      ObjectReference: {fileID: 0}
     - Name: radius
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: endRadius
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: turnFrequency
       Value: 0.026
+      ObjectReference: {fileID: 0}
     - Name: turnStrength
       Value: 0.32
+      ObjectReference: {fileID: 0}
     - Name: stepSize
       Value: 1.05
+      ObjectReference: {fileID: 0}
     - Name: horizontalBias
       Value: 0.68
+      ObjectReference: {fileID: 0}
     - Name: downwardBias
       Value: 0.96
+      ObjectReference: {fileID: 0}
     - Name: startMode
       Value: SurfaceColumn
+      ObjectReference: {fileID: 0}
     - Name: mouthRadius
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: mouthLength
       Value: 4
+      ObjectReference: {fileID: 0}
     - Name: biasFadeSteps
       Value: 18
+      ObjectReference: {fileID: 0}
     - Name: seedOffset
       Value: 7
+      ObjectReference: {fileID: 0}
   - NodeId: surface-access-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Surface Access Open Caves
@@ -870,6 +989,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: shallow-perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
     NodeName: Shallow Perlin Worm Caves
@@ -886,28 +1006,49 @@ MonoBehaviour:
     Parameters:
     - Name: wormCount
       Value: 12
+      ObjectReference: {fileID: 0}
     - Name: lengthMin
       Value: 14
+      ObjectReference: {fileID: 0}
     - Name: lengthMax
       Value: 34
+      ObjectReference: {fileID: 0}
     - Name: radius
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: endRadius
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: turnFrequency
       Value: 0.055
+      ObjectReference: {fileID: 0}
     - Name: turnStrength
       Value: 0.5
+      ObjectReference: {fileID: 0}
     - Name: stepSize
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: horizontalBias
       Value: 0.55
+      ObjectReference: {fileID: 0}
     - Name: downwardBias
       Value: 0.15
+      ObjectReference: {fileID: 0}
     - Name: startMode
       Value: RandomInMask
+      ObjectReference: {fileID: 0}
     - Name: seedOffset
       Value: 11
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: shallow-worm-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Shallow Worm Open Caves
@@ -928,6 +1069,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
     NodeName: Deep Perlin Worm Caves
@@ -944,28 +1086,49 @@ MonoBehaviour:
     Parameters:
     - Name: wormCount
       Value: 14
+      ObjectReference: {fileID: 0}
     - Name: lengthMin
       Value: 64
+      ObjectReference: {fileID: 0}
     - Name: lengthMax
       Value: 170
+      ObjectReference: {fileID: 0}
     - Name: radius
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: endRadius
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: turnFrequency
       Value: 0.032
+      ObjectReference: {fileID: 0}
     - Name: turnStrength
       Value: 0.42
+      ObjectReference: {fileID: 0}
     - Name: stepSize
       Value: 1.15
+      ObjectReference: {fileID: 0}
     - Name: horizontalBias
       Value: 0.75
+      ObjectReference: {fileID: 0}
     - Name: downwardBias
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: startMode
       Value: RandomInMask
+      ObjectReference: {fileID: 0}
     - Name: seedOffset
       Value: 17
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: worm-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Worm Open Caves
@@ -986,6 +1149,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: large-deep-perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
     NodeName: Large Deep Perlin Worm Caves
@@ -1002,28 +1166,49 @@ MonoBehaviour:
     Parameters:
     - Name: wormCount
       Value: 4
+      ObjectReference: {fileID: 0}
     - Name: lengthMin
       Value: 90
+      ObjectReference: {fileID: 0}
     - Name: lengthMax
       Value: 190
+      ObjectReference: {fileID: 0}
     - Name: radius
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: endRadius
       Value: 3
+      ObjectReference: {fileID: 0}
     - Name: turnFrequency
       Value: 0.026
+      ObjectReference: {fileID: 0}
     - Name: turnStrength
       Value: 0.34
+      ObjectReference: {fileID: 0}
     - Name: stepSize
       Value: 1.2
+      ObjectReference: {fileID: 0}
     - Name: horizontalBias
       Value: 0.72
+      ObjectReference: {fileID: 0}
     - Name: downwardBias
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: startMode
       Value: RandomInMask
+      ObjectReference: {fileID: 0}
     - Name: seedOffset
       Value: 31
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: combined-deep-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Combined Deep Worm Caves
@@ -1044,10 +1229,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: moss-feature-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Moss Feature Open Caves
-    Position: {x: -2080, y: -136.52002}
+    Position: {x: -2586.5737, y: -244.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1064,10 +1250,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: feature-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Open Caves
-    Position: {x: -1760, y: -136.52002}
+    Position: {x: -2266.5737, y: -244.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1084,6 +1271,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: ice-feature-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Ice Feature Open Caves
@@ -1104,10 +1292,11 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: 253fc19f-6ac0-4cf6-a7ef-9e24cbe475fe
     NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
     NodeName: Solid Mask
-    Position: {x: -2720, y: -376.52002}
+    Position: {x: -3226.5737, y: -484.50635}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -1120,10 +1309,11 @@ MonoBehaviour:
     Parameters:
     - Name: inputType
       Value: BoolMask
+      ObjectReference: {fileID: 0}
   - NodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Terrain Solid
-    Position: {x: -2131.6853, y: -435.00003}
+    Position: {x: -2638.5737, y: -542.50635}
     Ports:
     - PortName: A
       DisplayName: A
@@ -1140,6 +1330,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
     NodeName: Base Terrain IDs
@@ -1156,8 +1347,10 @@ MonoBehaviour:
     Parameters:
     - Name: trueLogicalId
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: falseLogicalId
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 085d0f8b-3f82-4c28-b1ad-d84bcabe64d5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
     NodeName: Surface Ledge Points
@@ -1174,6 +1367,7 @@ MonoBehaviour:
     Parameters:
     - Name: conditions
       Value: '{"Entries":[{"Offset":{"x":0,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":0,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":-1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":-1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: 6cd9eea0-9ae5-415d-86c8-2709427db4c4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
     NodeName: Surface Ledge Mask
@@ -1208,6 +1402,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: ea8ac51f-ba19-44df-977c-899da7d0deca
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
     NodeName: Surface Crust Depth
@@ -1224,8 +1419,10 @@ MonoBehaviour:
     Parameters:
     - Name: minDepth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: maxDepth
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: subsurface-biome-transition
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceTransitionMaskNode
     NodeName: Subsurface Biome Transition
@@ -1242,12 +1439,16 @@ MonoBehaviour:
     Parameters:
     - Name: startDepth
       Value: 8
+      ObjectReference: {fileID: 0}
     - Name: endDepth
       Value: 34
+      ObjectReference: {fileID: 0}
     - Name: noiseFrequency
       Value: 0.09
+      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: SubsurfaceBiomeTransition
+      ObjectReference: {fileID: 0}
   - NodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Surface Crust Shape
@@ -1268,6 +1469,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Surface Crust Mask
@@ -1288,6 +1490,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
     NodeName: Final Terrain IDs
@@ -1308,6 +1511,7 @@ MonoBehaviour:
     Parameters:
     - Name: overlayLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
   - NodeId: biome-layout-randomized
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeLayoutNode
     NodeName: Random Biome Layout
@@ -1320,18 +1524,25 @@ MonoBehaviour:
     Parameters:
     - Name: layoutMode
       Value: Strips
+      ObjectReference: {fileID: 0}
     - Name: axis
       Value: X
+      ObjectReference: {fileID: 0}
     - Name: minRegionSize
       Value: 28
+      ObjectReference: {fileID: 0}
     - Name: maxRegionSize
       Value: 72
+      ObjectReference: {fileID: 0}
     - Name: cellSize
       Value: 32
+      ObjectReference: {fileID: 0}
     - Name: blendWidth
       Value: 16
+      ObjectReference: {fileID: 0}
     - Name: rules
       Value: '{"Entries":[{"Biome":"51fe096708f655e40a649cfeee3e895b","Weight":1.2,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"3be4ddcae4c96414792c22259a877e32","Weight":1.0,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"1b2f425e07827a04d85c36901bf9e45e","Weight":0.95,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"efc61188ae998b342b58212389e649eb","Weight":0.85,"MinSize":28,"MaxSize":72,"Enabled":true}],"Constraints":[{"Type":0,"Biome":"51fe096708f655e40a649cfeee3e895b","Size":64,"Enabled":true},{"Type":3,"Biome":"3be4ddcae4c96414792c22259a877e32","Size":32,"Enabled":true},{"Type":3,"Biome":"1b2f425e07827a04d85c36901bf9e45e","Size":32,"Enabled":true},{"Type":3,"Biome":"efc61188ae998b342b58212389e649eb","Size":32,"Enabled":true}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Jungle Presence
@@ -1348,6 +1559,7 @@ MonoBehaviour:
     Parameters:
     - Name: biome
       Value: 3be4ddcae4c96414792c22259a877e32
+      ObjectReference: {fileID: 0}
   - NodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Jungle Cave Region
@@ -1368,6 +1580,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Moss Cave Pockets
@@ -1384,14 +1597,19 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 10
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 18
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.86
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.94
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 14
+      ObjectReference: {fileID: 0}
   - NodeId: moss-pocket-ids
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
     NodeName: Moss Pocket IDs
@@ -1408,8 +1626,10 @@ MonoBehaviour:
     Parameters:
     - Name: trueLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: falseLogicalId
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: moss-pocket-neighbour-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
     NodeName: Moss Pocket Wall Neighbourhood
@@ -1426,14 +1646,19 @@ MonoBehaviour:
     Parameters:
     - Name: matchById
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: logicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: radius
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: distanceMode
       Value: Euclidean
+      ObjectReference: {fileID: 0}
     - Name: tagName
       Value: 
+      ObjectReference: {fileID: 0}
   - NodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Moss Cave Override
@@ -1454,10 +1679,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: baaee848be418e34d8662b0e76a2de46
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
   - NodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Ice Presence
@@ -1474,6 +1702,7 @@ MonoBehaviour:
     Parameters:
     - Name: biome
       Value: efc61188ae998b342b58212389e649eb
+      ObjectReference: {fileID: 0}
   - NodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Ice Cave Region
@@ -1494,6 +1723,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Ice Cave Pockets
@@ -1510,14 +1740,19 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 12
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 15
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.8
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.9
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 16
+      ObjectReference: {fileID: 0}
   - NodeId: ice-pocket-ids
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
     NodeName: Ice Pocket IDs
@@ -1534,8 +1769,10 @@ MonoBehaviour:
     Parameters:
     - Name: trueLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: falseLogicalId
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: ice-pocket-neighbour-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
     NodeName: Ice Pocket Wall Neighbourhood
@@ -1552,14 +1789,19 @@ MonoBehaviour:
     Parameters:
     - Name: matchById
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: logicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: radius
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: distanceMode
       Value: Euclidean
+      ObjectReference: {fileID: 0}
     - Name: tagName
       Value: 
+      ObjectReference: {fileID: 0}
   - NodeId: ice-cave-wall-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Ice Cave Wall Mask
@@ -1580,6 +1822,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Ice Cave Override
@@ -1600,10 +1843,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: 4a3017a94c069e6448e4c6f527624dba
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
   - NodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
     NodeName: Wall Mask
@@ -1620,14 +1866,19 @@ MonoBehaviour:
     Parameters:
     - Name: matchById
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: logicalId
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: radius
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: distanceMode
       Value: Chebyshev
+      ObjectReference: {fileID: 0}
     - Name: tagName
       Value: 
+      ObjectReference: {fileID: 0}
   - NodeId: moss-cave-wall-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Moss Cave Wall Mask
@@ -1648,6 +1899,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 54a82da2-7200-4468-9eea-b57e1770069a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Lower Crystal Region
@@ -1668,6 +1920,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 04d569af-2156-41d1-baf7-a6d264adee89
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Crystal Cave Pockets
@@ -1684,14 +1937,19 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 4
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 16
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.82
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.9
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 28
+      ObjectReference: {fileID: 0}
   - NodeId: crystal-pocket-ids
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
     NodeName: Crystal Pocket IDs
@@ -1708,8 +1966,10 @@ MonoBehaviour:
     Parameters:
     - Name: trueLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: falseLogicalId
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: crystal-pocket-neighbour-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
     NodeName: Crystal Pocket Wall Neighbourhood
@@ -1726,14 +1986,19 @@ MonoBehaviour:
     Parameters:
     - Name: matchById
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: logicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: radius
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: distanceMode
       Value: Euclidean
+      ObjectReference: {fileID: 0}
     - Name: tagName
       Value: 
+      ObjectReference: {fileID: 0}
   - NodeId: crystal-cave-wall-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Crystal Cave Wall Mask
@@ -1754,6 +2019,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 246c68d4-6427-4de7-8e42-3859c3a495fb
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
     NodeName: Ore Surface Buffer
@@ -1770,8 +2036,10 @@ MonoBehaviour:
     Parameters:
     - Name: minDepth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: maxDepth
       Value: 20
+      ObjectReference: {fileID: 0}
   - NodeId: e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
     NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
     NodeName: Ore Depth Mask
@@ -1788,6 +2056,7 @@ MonoBehaviour:
     Parameters:
     - Name: inputType
       Value: BoolMask
+      ObjectReference: {fileID: 0}
   - NodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Ore Wall Mask
@@ -1808,6 +2077,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 4978ff0f-b00f-40ef-8464-ceeb214dec50
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Upper Ore Band
@@ -1820,14 +2090,19 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.24
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.42
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: 7c2aced2-da86-4c3d-ade5-719168a576fc
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Mid Ore Band
@@ -1840,14 +2115,19 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.12
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.3
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: 8953ba8a-f86a-42cc-b3ba-f5d21f4bcc3d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Gold Ore Band
@@ -1860,14 +2140,19 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.05
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.18
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: 0449a063-05b1-4877-95ae-9dcc15ba320f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Diamond Ore Band
@@ -1880,14 +2165,19 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.02
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.09
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Coal Zone
@@ -1908,6 +2198,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: 868da92d-18cc-4e91-a39b-35f4b2569640
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Coal Clumps
@@ -1924,14 +2215,19 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 28
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 5
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.74
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.8
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 4
+      ObjectReference: {fileID: 0}
   - NodeId: 6f076013-c3de-435c-aa1f-c8c9f46607c9
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Coal Veins
@@ -1948,16 +2244,22 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 20
+      ObjectReference: {fileID: 0}
     - Name: veinLengthMin
       Value: 4
+      ObjectReference: {fileID: 0}
     - Name: veinLengthMax
       Value: 9
+      ObjectReference: {fileID: 0}
     - Name: wanderProbability
       Value: 0.3
+      ObjectReference: {fileID: 0}
     - Name: forkProbability
       Value: 0.12
+      ObjectReference: {fileID: 0}
     - Name: forkAngleRange
       Value: 45
+      ObjectReference: {fileID: 0}
   - NodeId: 79db410b-8dcb-4a46-af55-26bb112b5717
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Coal Mask
@@ -1978,6 +2280,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Coal Ore Override
@@ -1998,10 +2301,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: 18914d738c5d9e44cb2c39ae01763b84
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: c6b64ae4-2807-494d-9adb-069f6c9d9979
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Iron Zone
@@ -2022,6 +2328,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: c7572979-2da5-44be-bfee-1762ed82425a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Iron Clumps
@@ -2038,14 +2345,19 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 18
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 5
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.72
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.79
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 5
+      ObjectReference: {fileID: 0}
   - NodeId: 09faa8f3-9fce-4aa8-b428-5f7b980a5b49
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Iron Veins
@@ -2062,16 +2374,22 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 14
+      ObjectReference: {fileID: 0}
     - Name: veinLengthMin
       Value: 5
+      ObjectReference: {fileID: 0}
     - Name: veinLengthMax
       Value: 10
+      ObjectReference: {fileID: 0}
     - Name: wanderProbability
       Value: 0.28
+      ObjectReference: {fileID: 0}
     - Name: forkProbability
       Value: 0.14
+      ObjectReference: {fileID: 0}
     - Name: forkAngleRange
       Value: 50
+      ObjectReference: {fileID: 0}
   - NodeId: 5c4ed9a0-d941-4874-ba2e-8fbbd290b79f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Iron Mask
@@ -2092,6 +2410,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Iron Ore Override
@@ -2112,10 +2431,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: 79e09ec09101bf944b041249e2736e76
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 2778bedb-770f-44ea-a2d3-c7f685eb199a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Gold Zone
@@ -2136,6 +2458,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: dda42942-e1e4-4651-be72-924eb8b517b7
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Gold Clumps
@@ -2152,14 +2475,19 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 10
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 4
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.7
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.77
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 7
+      ObjectReference: {fileID: 0}
   - NodeId: cce810a0-8818-44f3-9b61-2c8d72a5bdd5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Gold Veins
@@ -2176,16 +2504,22 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 9
+      ObjectReference: {fileID: 0}
     - Name: veinLengthMin
       Value: 5
+      ObjectReference: {fileID: 0}
     - Name: veinLengthMax
       Value: 9
+      ObjectReference: {fileID: 0}
     - Name: wanderProbability
       Value: 0.24
+      ObjectReference: {fileID: 0}
     - Name: forkProbability
       Value: 0.08
+      ObjectReference: {fileID: 0}
     - Name: forkAngleRange
       Value: 38
+      ObjectReference: {fileID: 0}
   - NodeId: c4fd252a-8972-465d-a833-cf46a30effe5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Gold Mask
@@ -2206,6 +2540,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: 272ed66d-0521-4890-855c-c570cba4af92
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Gold Ore Override
@@ -2226,10 +2561,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: 5f36cd43e17737d4e96cbb60df5a21be
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Diamond Zone
@@ -2250,6 +2588,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: d7f3563e-cf6f-4c75-97b6-9149b3af394b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Diamond Clumps
@@ -2266,14 +2605,19 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 6
+      ObjectReference: {fileID: 0}
     - Name: iterations
       Value: 4
+      ObjectReference: {fileID: 0}
     - Name: initialSpreadProbability
       Value: 0.66
+      ObjectReference: {fileID: 0}
     - Name: falloff
       Value: 0.76
+      ObjectReference: {fileID: 0}
     - Name: minClusterSeparation
       Value: 9
+      ObjectReference: {fileID: 0}
   - NodeId: ebbbd407-9d4c-4be8-9b51-d3fbea5a112b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Diamond Veins
@@ -2290,16 +2634,22 @@ MonoBehaviour:
     Parameters:
     - Name: seedCount
       Value: 5
+      ObjectReference: {fileID: 0}
     - Name: veinLengthMin
       Value: 4
+      ObjectReference: {fileID: 0}
     - Name: veinLengthMax
       Value: 7
+      ObjectReference: {fileID: 0}
     - Name: wanderProbability
       Value: 0.2
+      ObjectReference: {fileID: 0}
     - Name: forkProbability
       Value: 0.05
+      ObjectReference: {fileID: 0}
     - Name: forkAngleRange
       Value: 32
+      ObjectReference: {fileID: 0}
   - NodeId: c6a6d713-9cfe-4e17-b39b-7b896fcf9c24
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Diamond Mask
@@ -2320,6 +2670,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
   - NodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Diamond Ore Override
@@ -2340,10 +2691,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: 1864c3e44e2102d48a7770ea2a601075
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Crystal Cave Override
@@ -2364,10 +2718,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: 9b64401900a722143b09f2d0bde4dfb2
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
   - NodeId: moss-cave-visual-override
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Moss Cave Visual Override
@@ -2388,10 +2745,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: baaee848be418e34d8662b0e76a2de46
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
   - NodeId: ice-cave-visual-override
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Ice Cave Visual Override
@@ -2412,10 +2772,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: 4a3017a94c069e6448e4c6f527624dba
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
   - NodeId: crystal-cave-visual-override
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
     NodeName: Crystal Cave Visual Override
@@ -2436,10 +2799,13 @@ MonoBehaviour:
     Parameters:
     - Name: overrideBiome
       Value: 9b64401900a722143b09f2d0bde4dfb2
+      ObjectReference: {fileID: 0}
     - Name: blendEdgeWidth
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: probability
       Value: 1
+      ObjectReference: {fileID: 0}
   - NodeId: visual-biome-channel-copy
     NodeTypeName: DynamicDungeon.Runtime.Nodes.IntChannelCopyNode
     NodeName: Visual Biome Channel
@@ -2456,6 +2822,7 @@ MonoBehaviour:
     Parameters:
     - Name: outputChannelName
       Value: VisualBiomeChannel
+      ObjectReference: {fileID: 0}
   - NodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: One
@@ -2468,10 +2835,13 @@ MonoBehaviour:
     Parameters:
     - Name: outputType
       Value: Float
+      ObjectReference: {fileID: 0}
     - Name: floatValue
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: intValue
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 6999daac-7624-464b-9308-87663f179e01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: Zero
@@ -2484,10 +2854,13 @@ MonoBehaviour:
     Parameters:
     - Name: outputType
       Value: Float
+      ObjectReference: {fileID: 0}
     - Name: floatValue
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: intValue
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: ced59584-f592-4d05-b4b5-487143502736
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
     NodeName: Surface Floor Weights
@@ -2526,6 +2899,7 @@ MonoBehaviour:
     Parameters:
     - Name: conditions
       Value: '{"Entries":[{"Offset":{"x":-1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":0,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":2,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":3,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":-1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":0,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":-1,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":0,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":2},"MatchById":true,"LogicalId":0,"TagName":""}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: surface-prop-placement-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
     NodeName: Surface Prop Placement Mask
@@ -2560,6 +2934,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: surface-prop-placement-weights
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
     NodeName: Surface Prop Placement Weights
@@ -2598,6 +2973,7 @@ MonoBehaviour:
     Parameters:
     - Name: biome
       Value: 51fe096708f655e40a649cfeee3e895b
+      ObjectReference: {fileID: 0}
   - NodeId: 8104437b-0d86-42e7-b702-88b0035651e6
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Final Jungle Mask
@@ -2614,6 +2990,7 @@ MonoBehaviour:
     Parameters:
     - Name: biome
       Value: 3be4ddcae4c96414792c22259a877e32
+      ObjectReference: {fileID: 0}
   - NodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Desert Mask
@@ -2630,6 +3007,7 @@ MonoBehaviour:
     Parameters:
     - Name: biome
       Value: 1b2f425e07827a04d85c36901bf9e45e
+      ObjectReference: {fileID: 0}
   - NodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Final Ice Mask
@@ -2646,6 +3024,7 @@ MonoBehaviour:
     Parameters:
     - Name: biome
       Value: efc61188ae998b342b58212389e649eb
+      ObjectReference: {fileID: 0}
   - NodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Forest Tree Weight
@@ -2666,8 +3045,10 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+      ObjectReference: {fileID: 0}
     - Name: scalarB
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 62c2d399-7023-4628-b07a-c035317a8f19
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Jungle Tree Weight Base
@@ -2688,8 +3069,10 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+      ObjectReference: {fileID: 0}
     - Name: scalarB
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Jungle Tree Weight
@@ -2706,8 +3089,10 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+      ObjectReference: {fileID: 0}
     - Name: scalarB
       Value: 0.82
+      ObjectReference: {fileID: 0}
   - NodeId: ceb72be0-5035-400a-a151-3a859daedd51
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Desert Cactus Weight Base
@@ -2728,8 +3113,10 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+      ObjectReference: {fileID: 0}
     - Name: scalarB
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Desert Cactus Weight
@@ -2746,8 +3133,10 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+      ObjectReference: {fileID: 0}
     - Name: scalarB
       Value: 0.42
+      ObjectReference: {fileID: 0}
   - NodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Ice Tree Weight Base
@@ -2768,8 +3157,10 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+      ObjectReference: {fileID: 0}
     - Name: scalarB
       Value: 0
+      ObjectReference: {fileID: 0}
   - NodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Ice Tree Weight
@@ -2786,8 +3177,10 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+      ObjectReference: {fileID: 0}
     - Name: scalarB
       Value: 0.6
+      ObjectReference: {fileID: 0}
   - NodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Forest Tree Scatter
@@ -2804,8 +3197,10 @@ MonoBehaviour:
     Parameters:
     - Name: threshold
       Value: 0.18
+      ObjectReference: {fileID: 0}
     - Name: pointCount
       Value: 18
+      ObjectReference: {fileID: 0}
   - NodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Forest Tree Prefabs
@@ -2822,22 +3217,31 @@ MonoBehaviour:
     Parameters:
     - Name: footprintMode
       Value: None
+      ObjectReference: {fileID: 0}
     - Name: mirrorX
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: maxOverlapTiles
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: interiorLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outlineLogicalId
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: blendMode
       Value: Overwrite
+      ObjectReference: {fileID: 0}
     - Name: mirrorY
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: allowRotation
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: prefabVariants
       Value: '{"Variants":[{"Prefab":"51f71faa81cc4f741b4c2886c00273df","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: forest-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Forest Tree Placement Points
@@ -2854,10 +3258,13 @@ MonoBehaviour:
     Parameters:
     - Name: offsetX
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: offsetY
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: ForestTreePlacementPoints
+      ObjectReference: {fileID: 0}
   - NodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Jungle Tree Scatter
@@ -2874,8 +3281,10 @@ MonoBehaviour:
     Parameters:
     - Name: threshold
       Value: 0.16
+      ObjectReference: {fileID: 0}
     - Name: pointCount
       Value: 18
+      ObjectReference: {fileID: 0}
   - NodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Jungle Tree Prefabs
@@ -2892,22 +3301,31 @@ MonoBehaviour:
     Parameters:
     - Name: footprintMode
       Value: None
+      ObjectReference: {fileID: 0}
     - Name: mirrorX
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: maxOverlapTiles
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: interiorLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outlineLogicalId
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: blendMode
       Value: Overwrite
+      ObjectReference: {fileID: 0}
     - Name: mirrorY
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: allowRotation
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: prefabVariants
       Value: '{"Variants":[{"Prefab":"ea5fc636fbbbe474cb55b6095ad39959","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: jungle-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Jungle Tree Placement Points
@@ -2924,10 +3342,13 @@ MonoBehaviour:
     Parameters:
     - Name: offsetX
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: offsetY
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: JungleTreePlacementPoints
+      ObjectReference: {fileID: 0}
   - NodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Ice Tree Scatter
@@ -2944,8 +3365,10 @@ MonoBehaviour:
     Parameters:
     - Name: threshold
       Value: 0.18
+      ObjectReference: {fileID: 0}
     - Name: pointCount
       Value: 14
+      ObjectReference: {fileID: 0}
   - NodeId: 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Ice Tree Prefabs
@@ -2962,22 +3385,31 @@ MonoBehaviour:
     Parameters:
     - Name: footprintMode
       Value: None
+      ObjectReference: {fileID: 0}
     - Name: mirrorX
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: maxOverlapTiles
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: interiorLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outlineLogicalId
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: blendMode
       Value: Overwrite
+      ObjectReference: {fileID: 0}
     - Name: mirrorY
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: allowRotation
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: prefabVariants
       Value: '{"Variants":[{"Prefab":"3d29a499903e6c44b847b85c2c81242a","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: ice-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Ice Tree Placement Points
@@ -2994,10 +3426,13 @@ MonoBehaviour:
     Parameters:
     - Name: offsetX
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: offsetY
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: IceTreePlacementPoints
+      ObjectReference: {fileID: 0}
   - NodeId: 68905719-fc24-450e-8b09-869ff286d755
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Cactus Scatter
@@ -3014,8 +3449,10 @@ MonoBehaviour:
     Parameters:
     - Name: threshold
       Value: 0.28
+      ObjectReference: {fileID: 0}
     - Name: pointCount
       Value: 12
+      ObjectReference: {fileID: 0}
   - NodeId: 598ec486-5ceb-4977-9ff6-cf36bb53fca2
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Cactus Prefabs
@@ -3032,22 +3469,31 @@ MonoBehaviour:
     Parameters:
     - Name: footprintMode
       Value: None
+      ObjectReference: {fileID: 0}
     - Name: mirrorX
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: maxOverlapTiles
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: interiorLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outlineLogicalId
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: blendMode
       Value: Overwrite
+      ObjectReference: {fileID: 0}
     - Name: mirrorY
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: allowRotation
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: prefabVariants
       Value: '{"Variants":[{"Prefab":"adcaa141de6eba940af9ebb2e4fc664e","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: cactus-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Cactus Placement Points
@@ -3064,10 +3510,13 @@ MonoBehaviour:
     Parameters:
     - Name: offsetX
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: offsetY
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: CactusPlacementPoints
+      ObjectReference: {fileID: 0}
   - NodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Cloud Scatter
@@ -3084,8 +3533,10 @@ MonoBehaviour:
     Parameters:
     - Name: threshold
       Value: 0.7
+      ObjectReference: {fileID: 0}
     - Name: pointCount
       Value: 20
+      ObjectReference: {fileID: 0}
   - NodeId: 7d91fd3c-0f1a-4313-b849-600a81f07311
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Cloud Prefabs
@@ -3102,22 +3553,31 @@ MonoBehaviour:
     Parameters:
     - Name: footprintMode
       Value: None
+      ObjectReference: {fileID: 0}
     - Name: mirrorX
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: maxOverlapTiles
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: interiorLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: outlineLogicalId
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: blendMode
       Value: Overwrite
+      ObjectReference: {fileID: 0}
     - Name: mirrorY
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: allowRotation
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: prefabVariants
       Value: '{"Variants":[{"Prefab":"75f965a629c6fb54e8f21780cf4b4f3c","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
     NodeName: Cave House Anchors
@@ -3134,6 +3594,7 @@ MonoBehaviour:
     Parameters:
     - Name: conditions
       Value: '{"Entries":[{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":2,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":3,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
     NodeName: House Candidate Mask
@@ -3164,8 +3625,10 @@ MonoBehaviour:
     Parameters:
     - Name: minDepth
       Value: 38
+      ObjectReference: {fileID: 0}
     - Name: maxDepth
       Value: 160
+      ObjectReference: {fileID: 0}
   - NodeId: cave-house-depth-candidates
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Cave House Depth Candidates
@@ -3186,6 +3649,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: cave-house-room-candidates
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Cave House Room Candidates
@@ -3206,6 +3670,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
     NodeName: House Candidate Weights
@@ -3240,14 +3705,19 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.18
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.55
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: House Weights
@@ -3268,8 +3738,10 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: Multiply
+      ObjectReference: {fileID: 0}
     - Name: scalarB
       Value: 0.75
+      ObjectReference: {fileID: 0}
   - NodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: House Eligibility Mask
@@ -3286,6 +3758,7 @@ MonoBehaviour:
     Parameters:
     - Name: threshold
       Value: 0.5
+      ObjectReference: {fileID: 0}
   - NodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
     NodeName: House Poisson
@@ -3302,10 +3775,13 @@ MonoBehaviour:
     Parameters:
     - Name: minDistance
       Value: 8
+      ObjectReference: {fileID: 0}
     - Name: maxAttempts
       Value: 24
+      ObjectReference: {fileID: 0}
     - Name: pointCount
       Value: 4
+      ObjectReference: {fileID: 0}
   - NodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
     NodeName: Cave House Prefabs
@@ -3326,24 +3802,34 @@ MonoBehaviour:
     Parameters:
     - Name: footprintMode
       Value: CarveInterior
+      ObjectReference: {fileID: 0}
     - Name: outlineLogicalId
       Value: 2
+      ObjectReference: {fileID: 0}
     - Name: blendMode
       Value: Overwrite
+      ObjectReference: {fileID: 0}
     - Name: mirrorX
       Value: True
+      ObjectReference: {fileID: 0}
     - Name: interiorLogicalId
       Value: 1
+      ObjectReference: {fileID: 0}
     - Name: mirrorY
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: allowRotation
       Value: false
+      ObjectReference: {fileID: 0}
     - Name: maxOverlapTiles
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: reservedMaskChannelName
       Value: CaveHouseReservedMask
+      ObjectReference: {fileID: 0}
     - Name: prefabVariants
       Value: '{"Variants":[{"Prefab":"33b4e04847c26624186a988d845dfcdf","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
   - NodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Deep Underground Band
@@ -3356,14 +3842,19 @@ MonoBehaviour:
     Parameters:
     - Name: minHeight
       Value: 0.08
+      ObjectReference: {fileID: 0}
     - Name: maxHeight
       Value: 0.34
+      ObjectReference: {fileID: 0}
     - Name: referenceHeight
       Value: 0
+      ObjectReference: {fileID: 0}
     - Name: minAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
     - Name: maxAnchor
       Value: Normalized
+      ObjectReference: {fileID: 0}
   - NodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
     NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
     NodeName: Cave Distance Field
@@ -3394,6 +3885,7 @@ MonoBehaviour:
     Parameters:
     - Name: inputType
       Value: Float
+      ObjectReference: {fileID: 0}
   - NodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Cave Material Proximity Mask
@@ -3410,6 +3902,7 @@ MonoBehaviour:
     Parameters:
     - Name: threshold
       Value: 0.45
+      ObjectReference: {fileID: 0}
   - NodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Cave Material Region
@@ -3430,6 +3923,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: cave-material-depth-transition
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceTransitionMaskNode
     NodeName: Cave Material Depth Transition
@@ -3446,12 +3940,16 @@ MonoBehaviour:
     Parameters:
     - Name: startDepth
       Value: 18
+      ObjectReference: {fileID: 0}
     - Name: endDepth
       Value: 78
+      ObjectReference: {fileID: 0}
     - Name: noiseFrequency
       Value: 0.12
+      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: CaveMaterialDepthTransition
+      ObjectReference: {fileID: 0}
   - NodeId: cave-material-depth-gate
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Cave Material Depth Gate
@@ -3472,6 +3970,7 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
   - NodeId: logical-id-material-context
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
     NodeName: Material Context IDs
@@ -3504,8 +4003,10 @@ MonoBehaviour:
     Parameters:
     - Name: rules
       Value: '{"Rules":[{"Enabled":true,"MaskSlot":0,"SourceLogicalId":1,"TargetLogicalId":10},{"Enabled":true,"MaskSlot":0,"SourceLogicalId":2,"TargetLogicalId":18},{"Enabled":true,"MaskSlot":1,"SourceLogicalId":10,"TargetLogicalId":10},{"Enabled":true,"MaskSlot":1,"SourceLogicalId":18,"TargetLogicalId":11},{"Enabled":true,"MaskSlot":2,"SourceLogicalId":10,"TargetLogicalId":12},{"Enabled":true,"MaskSlot":2,"SourceLogicalId":18,"TargetLogicalId":13},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":10,"TargetLogicalId":14},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":12,"TargetLogicalId":14},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":18,"TargetLogicalId":15},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":13,"TargetLogicalId":15},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":10,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":12,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":14,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":11,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":18,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":13,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":15,"TargetLogicalId":17}]}'
+      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: MaterialContextLogicalIds
+      ObjectReference: {fileID: 0}
   - NodeId: prefab-reserved-void-overlay
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
     NodeName: Prefab Reserved Void
@@ -3538,8 +4039,10 @@ MonoBehaviour:
     Parameters:
     - Name: rules
       Value: '{"Rules":[{"Enabled":true,"MaskSlot":1,"SourceLogicalId":-1,"TargetLogicalId":0}]}'
+      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: FinalLogicalIds
+      ObjectReference: {fileID: 0}
   Connections:
   - FromNodeId: 30729321-8c26-440a-8c37-54ed6a10e047
     FromPortName: TerrainMass
@@ -4661,24 +5164,16 @@ MonoBehaviour:
     ToNodeId: graph-output-node
     ToPortName: LogicalIds
     CastMode: 0
-  StickyNotes:
-  - NoteId: terraria-demo-output-note
-    Text: Final logical IDs feed the output node; prefab placement and biome outputs are optional schema v5 inputs.
-    Position:
-      serializedVersion: 2
-      x: -606.9729
-      y: 2824
-      width: 620
-      height: 120
+  StickyNotes: []
   Groups:
   - GroupId: terrain-shape-group
     Title: Terrain Shape
     Position:
       serializedVersion: 2
-      x: -4025
-      y: -1126.52
-      width: 2222
-      height: 1657
+      x: -4531.573
+      y: -1234.5062
+      width: 2530
+      height: 1718
     ContainedNodeIds:
     - 30729321-8c26-440a-8c37-54ed6a10e047
     - 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
@@ -4703,6 +5198,7 @@ MonoBehaviour:
     - feature-open-caves
     - 253fc19f-6ac0-4cf6-a7ef-9e24cbe475fe
     - 13755560-5c3d-4731-9e15-ceedd338fc84
+    - forest-deep-cave-automata
     BackgroundColor: {r: 0.13, g: 0.18, b: 0.2, a: 0.28}
   - GroupId: material-context-group
     Title: Material Context

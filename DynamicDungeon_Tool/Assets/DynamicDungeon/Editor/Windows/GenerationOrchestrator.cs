@@ -920,6 +920,19 @@ namespace DynamicDungeon.Editor.Windows
                 }
             }
 
+            if (job.Node is DynamicDungeon.Runtime.Nodes.SubGraphOutputNode)
+            {
+                for (channelIndex = 0; channelIndex < job.Channels.Count; channelIndex++)
+                {
+                    ChannelDeclaration channelDeclaration = job.Channels[channelIndex];
+                    if (!channelDeclaration.IsWrite && IsPreviewableChannelType(channelDeclaration.Type))
+                    {
+                        outputDeclaration = channelDeclaration;
+                        return true;
+                    }
+                }
+            }
+
             outputDeclaration = default;
             return false;
         }

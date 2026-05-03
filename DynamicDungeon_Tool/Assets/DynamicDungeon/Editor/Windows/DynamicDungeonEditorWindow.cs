@@ -56,6 +56,12 @@ namespace DynamicDungeon.Editor.Windows
         private GenGraph _loadedGraph;
 
         [SerializeField]
+        private List<GenGraph> _breadcrumbGraphs = new List<GenGraph>();
+
+        [SerializeField]
+        private List<string> _breadcrumbLabels = new List<string>();
+
+        [SerializeField]
         private bool _isDiagnosticsPanelCollapsed;
 
         [SerializeField]
@@ -171,6 +177,9 @@ namespace DynamicDungeon.Editor.Windows
             Toolbar toolbar = BuildToolbar();
             rootVisualElement.Add(toolbar);
 
+            _breadcrumbBar = new BreadcrumbBar(OnBreadcrumbGraphChanged);
+            rootVisualElement.Add(_breadcrumbBar);
+
             VisualElement contentArea = new VisualElement();
             contentArea.style.flexDirection = FlexDirection.Row;
             contentArea.style.flexGrow = 1.0f;
@@ -241,6 +250,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnDisable()
         {
+            SaveBreadcrumbTrail();
             SaveViewportPreferences();
             SavePanelState();
 
@@ -507,6 +517,19 @@ namespace DynamicDungeon.Editor.Windows
                 _graphField.SetValueWithoutNotify(graph);
             }
 
+            if (_breadcrumbBar != null)
+            {
+                ResetSavedBreadcrumbTrail(graph);
+                _breadcrumbBar.ResetTo(graph, graph != null ? graph.name : string.Empty);
+
+                if (graph == null)
+                {
+                    LoadGraphInCanvas(null, Vector3.zero, 1.0f);
+                }
+
+                return;
+            }
+
             LoadGraphInCanvas(graph, Vector3.zero, 1.0f);
         }
 
@@ -574,11 +597,13 @@ namespace DynamicDungeon.Editor.Windows
             _graphView.GetViewportState(out currentScrollOffset, out currentZoomScale);
             _breadcrumbBar.SaveViewportState(currentScrollOffset, currentZoomScale);
             _breadcrumbBar.Push(nestedGraph, label);
+            SaveBreadcrumbTrail();
         }
 
         private void OnBreadcrumbGraphChanged(GenGraph graph, Vector3 scrollOffset, float zoomScale)
         {
             LoadGraphInCanvas(graph, scrollOffset, zoomScale);
+            SaveBreadcrumbTrail();
         }
 
         private void OnAfterGraphMutation()
@@ -661,10 +686,76 @@ namespace DynamicDungeon.Editor.Windows
             titleContent = new GUIContent(WindowTitle);
         }
 
+        private void ResetSavedBreadcrumbTrail(GenGraph rootGraph)
+        {
+            if (_breadcrumbGraphs == null)
+            {
+                _breadcrumbGraphs = new List<GenGraph>();
+            }
+
+            if (_breadcrumbLabels == null)
+            {
+                _breadcrumbLabels = new List<string>();
+            }
+
+            _breadcrumbGraphs.Clear();
+            _breadcrumbLabels.Clear();
+
+            if (rootGraph != null)
+            {
+                _breadcrumbGraphs.Add(rootGraph);
+                _breadcrumbLabels.Add(rootGraph.name);
+            }
+        }
+
+        private void SaveBreadcrumbTrail()
+        {
+            if (_breadcrumbBar == null)
+            {
+                return;
+            }
+
+            if (_breadcrumbGraphs == null)
+            {
+                _breadcrumbGraphs = new List<GenGraph>();
+            }
+
+            if (_breadcrumbLabels == null)
+            {
+                _breadcrumbLabels = new List<string>();
+            }
+
+            _breadcrumbBar.CopyTrail(_breadcrumbGraphs, _breadcrumbLabels);
+        }
+
+        private bool TryRestoreBreadcrumbTrailAfterReload()
+        {
+            if (_breadcrumbBar == null ||
+                _loadedGraph == null ||
+                _breadcrumbGraphs == null ||
+                _breadcrumbGraphs.Count <= 1 ||
+                !ReferenceEquals(_breadcrumbGraphs[0], _loadedGraph))
+            {
+                return false;
+            }
+
+            if (_graphField != null)
+            {
+                _graphField.SetValueWithoutNotify(_loadedGraph);
+            }
+
+            _breadcrumbBar.RestoreTrail(_breadcrumbGraphs, _breadcrumbLabels);
+            return true;
+        }
+
         private void RestoreGraphAfterReload()
         {
             _skipNextPreviewRefresh = true;
-            LoadGraph(_loadedGraph);
+            bool restoredBreadcrumbTrail = TryRestoreBreadcrumbTrailAfterReload();
+            if (!restoredBreadcrumbTrail)
+            {
+                LoadGraph(_loadedGraph);
+            }
             _skipNextPreviewRefresh = false;
 
             if (_graphView == null || _loadedGraph == null)

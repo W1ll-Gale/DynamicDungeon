@@ -300,6 +300,13 @@ namespace DynamicDungeon.Editor.Nodes
                             : DropdownMenuAction.Status.Disabled);
 
                     menuPopulateEvent.menu.AppendAction(
+                        "Convert Selection To Subgraph",
+                        _ => graphView?.ConvertSelectionToSubGraph(),
+                        _ => graphView != null && graphView.CanConvertSelectionToSubGraph()
+                            ? DropdownMenuAction.Status.Normal
+                            : DropdownMenuAction.Status.Disabled);
+
+                    menuPopulateEvent.menu.AppendAction(
                         "Collapse Selection",
                         _ => graphView?.CollapseSelection(),
                         _ => graphView != null && graphView.CanCollapseSelection()

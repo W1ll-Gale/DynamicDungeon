@@ -159,6 +159,13 @@ namespace DynamicDungeon.Editor.Nodes
                     ? DropdownMenuAction.Status.Normal
                     : DropdownMenuAction.Status.Disabled);
 
+            contextEvent.menu.AppendAction(
+                "Convert Selection To Subgraph",
+                _ => graphView?.ConvertSelectionToSubGraph(),
+                _ => graphView != null && graphView.CanConvertSelectionToSubGraph()
+                    ? DropdownMenuAction.Status.Normal
+                    : DropdownMenuAction.Status.Disabled);
+
             contextEvent.menu.AppendSeparator();
             contextEvent.menu.AppendAction("Color/Default", _ => SetGroupColor(new Color(0.15f, 0.15f, 0.15f, 0.3f)));
             contextEvent.menu.AppendAction("Color/Red", _ => SetGroupColor(new Color(1.0f, 0.2f, 0.2f, 0.3f)));

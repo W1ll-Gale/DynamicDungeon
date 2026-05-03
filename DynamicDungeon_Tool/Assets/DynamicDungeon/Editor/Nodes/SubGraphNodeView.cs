@@ -4,6 +4,7 @@ using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Editor.Windows;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
+using DynamicDungeon.Runtime.Nodes;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -20,6 +21,9 @@ namespace DynamicDungeon.Editor.Nodes
     /// </summary>
     public sealed class SubGraphNodeView : GenNodeView
     {
+        public const string AutoInputPortName = "__SubGraphAutoInput";
+        public const string AutoOutputPortName = "__SubGraphAutoOutput";
+
         // Parameter name used to look up the nested graph asset GUID on the node data.
         private readonly string _nestedGraphParameterName;
 
@@ -49,6 +53,7 @@ namespace DynamicDungeon.Editor.Nodes
                 : nestedGraphParameterName;
             _onEnterSubGraph = onEnterSubGraph;
 
+            AddAutoBoundaryPorts(edgeConnectorListener);
             AddEnterButton();
             HookDoubleClickOnTitle();
         }
@@ -76,6 +81,63 @@ namespace DynamicDungeon.Editor.Nodes
             // Place the button at the bottom of the node's extension container so
             // it sits below both the preview thumbnail and the inlined controls.
             extensionContainer.Add(enterButton);
+        }
+
+        private void AddAutoBoundaryPorts(IEdgeConnectorListener edgeConnectorListener)
+        {
+            Port autoInputPort = InstantiateAutoPort(
+                AutoInputPortName,
+                "+ Input",
+                PortDirection.Input,
+                "Connect here to create a matching sub-graph input.");
+            if (edgeConnectorListener != null)
+            {
+                autoInputPort.AddManipulator(new EdgeConnector<Edge>(edgeConnectorListener));
+            }
+
+            inputContainer.Add(autoInputPort);
+            RefreshPorts();
+        }
+
+        private Port InstantiateAutoPort(string portName, string displayName, PortDirection direction, string tooltip)
+        {
+            Port portView = InstantiatePort(
+                Orientation.Horizontal,
+                direction == PortDirection.Input ? Direction.Input : Direction.Output,
+                Port.Capacity.Multi,
+                typeof(float));
+            portView.userData = new NodePortDefinition(
+                portName,
+                direction,
+                ChannelType.Float,
+                PortCapacity.Multi,
+                false,
+                tooltip,
+                displayName);
+            portView.portName = string.Empty;
+            portView.tooltip = tooltip;
+            portView.portColor = new Color(0.50f, 0.86f, 1.0f, 1.0f);
+            portView.style.marginTop = 6.0f;
+            portView.style.marginBottom = 2.0f;
+
+            Label portLabel = new Label(displayName);
+            portLabel.tooltip = tooltip;
+            portLabel.style.color = new Color(0.72f, 0.92f, 1.0f, 1.0f);
+            portLabel.style.flexGrow = 1.0f;
+            portLabel.style.unityTextAlign = direction == PortDirection.Input
+                ? TextAnchor.MiddleLeft
+                : TextAnchor.MiddleRight;
+            if (direction == PortDirection.Input)
+            {
+                portLabel.style.marginLeft = 4.0f;
+            }
+            else
+            {
+                portLabel.style.marginRight = 4.0f;
+            }
+
+            portView.contentContainer.Add(portLabel);
+            return portView;
         }
 
         private void HookDoubleClickOnTitle()
@@ -112,42 +174,296 @@ namespace DynamicDungeon.Editor.Nodes
                 return;
             }
 
-            _onEnterSubGraph?.Invoke(nestedGraph, title);
+            if (_onEnterSubGraph == null)
+            {
+                Debug.LogWarning("Sub-graph node '" + title + "' resolved its nested graph, but no graph navigation callback is registered.");
+                return;
+            }
+
+            RepairNestedGraphReference(nestedGraph);
+            _onEnterSubGraph.Invoke(nestedGraph, title);
         }
 
         private GenGraph ResolveNestedGraph()
         {
-            if (NodeData == null || NodeData.Parameters == null)
+            if (NodeData == null)
             {
                 return null;
             }
 
             SerializedParameter nestedGraphParameter = FindNestedGraphParameter();
+            GenGraph nestedGraph = ResolveNestedGraphParameter(nestedGraphParameter);
+            if (nestedGraph != null)
+            {
+                return nestedGraph;
+            }
+
+            nestedGraphParameter = FindNestedGraphParameterOnGraphModel();
+            nestedGraph = ResolveNestedGraphParameter(nestedGraphParameter);
+            if (nestedGraph != null)
+            {
+                return nestedGraph;
+            }
+
+            nestedGraphParameter = FindParameter(SubGraphNode.NestedGraphPathParameterName);
+            nestedGraph = ResolveNestedGraphParameter(nestedGraphParameter);
+            if (nestedGraph != null)
+            {
+                return nestedGraph;
+            }
+
+            nestedGraphParameter = FindParameterOnGraphModel(SubGraphNode.NestedGraphPathParameterName);
+            nestedGraph = ResolveNestedGraphParameter(nestedGraphParameter);
+            if (nestedGraph != null)
+            {
+                return nestedGraph;
+            }
+
+            return ResolveByGeneratedAssetName();
+        }
+
+        private GenGraph ResolveNestedGraphParameter(SerializedParameter nestedGraphParameter)
+        {
+            if (nestedGraphParameter == null)
+            {
+                return null;
+            }
+
+            GenGraph referencedGraph = nestedGraphParameter.ObjectReference as GenGraph;
+            if (referencedGraph != null)
+            {
+                return referencedGraph;
+            }
+
+            string assetPath = ResolveAssetPath(nestedGraphParameter);
+            if (!string.IsNullOrWhiteSpace(assetPath))
+            {
+                GenGraph loadedGraph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+                if (loadedGraph != null)
+                {
+                    return loadedGraph;
+                }
+
+                AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+                loadedGraph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+                if (loadedGraph != null)
+                {
+                    return loadedGraph;
+                }
+            }
+
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+
+            assetPath = ResolveAssetPath(nestedGraphParameter);
+            return string.IsNullOrWhiteSpace(assetPath)
+                ? null
+                : AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+        }
+
+        private static string ResolveAssetPath(SerializedParameter nestedGraphParameter)
+        {
             if (nestedGraphParameter == null || string.IsNullOrWhiteSpace(nestedGraphParameter.Value))
             {
-                return null;
+                return string.Empty;
             }
 
-            // The parameter value stores the asset GUID.
-            string assetPath = AssetDatabase.GUIDToAssetPath(nestedGraphParameter.Value);
-            if (string.IsNullOrWhiteSpace(assetPath))
+            string value = nestedGraphParameter.Value.Trim();
+            string guidPath = AssetDatabase.GUIDToAssetPath(value);
+            if (!string.IsNullOrWhiteSpace(guidPath))
             {
-                return null;
+                return guidPath;
             }
 
-            return AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+            return value.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase) ? value : string.Empty;
         }
 
         private SerializedParameter FindNestedGraphParameter()
         {
-            List<SerializedParameter> parameters = NodeData.Parameters;
+            return FindParameter(_nestedGraphParameterName);
+        }
+
+        private SerializedParameter FindParameter(string parameterName)
+        {
+            List<SerializedParameter> parameters = NodeData != null ? NodeData.Parameters : null;
+            if (parameters == null)
+            {
+                return null;
+            }
 
             int parameterIndex;
             for (parameterIndex = 0; parameterIndex < parameters.Count; parameterIndex++)
             {
                 SerializedParameter parameter = parameters[parameterIndex];
                 if (parameter != null &&
-                    string.Equals(parameter.Name, _nestedGraphParameterName, StringComparison.OrdinalIgnoreCase))
+                    string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return parameter;
+                }
+            }
+
+            return null;
+        }
+
+        private SerializedParameter FindNestedGraphParameterOnGraphModel()
+        {
+            return FindParameterOnGraphModel(_nestedGraphParameterName);
+        }
+
+        private SerializedParameter FindParameterOnGraphModel(string parameterName)
+        {
+            if (NodeData == null || string.IsNullOrWhiteSpace(NodeData.NodeId))
+            {
+                return null;
+            }
+
+            GenNodeView nodeView = this;
+            DynamicDungeonGraphView graphView = nodeView.GetFirstAncestorOfType<DynamicDungeonGraphView>();
+            GenGraph graph = graphView != null ? graphView.Graph : null;
+            GenNodeData graphNode = graph != null ? graph.GetNode(NodeData.NodeId) : null;
+            if (graphNode == null || graphNode.Parameters == null)
+            {
+                return null;
+            }
+
+            for (int parameterIndex = 0; parameterIndex < graphNode.Parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = graphNode.Parameters[parameterIndex];
+                if (parameter != null &&
+                    string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return parameter;
+                }
+            }
+
+            return null;
+        }
+
+        private GenGraph ResolveByGeneratedAssetName()
+        {
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return null;
+            }
+
+            string[] graphGuids = AssetDatabase.FindAssets("t:GenGraph " + title);
+            for (int guidIndex = 0; guidIndex < graphGuids.Length; guidIndex++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(graphGuids[guidIndex]);
+                if (string.IsNullOrWhiteSpace(assetPath) ||
+                    assetPath.IndexOf("/SubGraphs/", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+
+                GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+                if (graph != null)
+                {
+                    RepairNestedGraphReference(graph);
+                    return graph;
+                }
+            }
+
+            return null;
+        }
+
+        private void RepairNestedGraphReference(GenGraph nestedGraph)
+        {
+            if (nestedGraph == null || NodeData == null || string.IsNullOrWhiteSpace(NodeData.NodeId))
+            {
+                return;
+            }
+
+            string assetPath = AssetDatabase.GetAssetPath(nestedGraph);
+            if (string.IsNullOrWhiteSpace(assetPath))
+            {
+                return;
+            }
+
+            string assetGuid = AssetDatabase.AssetPathToGUID(assetPath);
+            if (string.IsNullOrWhiteSpace(assetGuid))
+            {
+                return;
+            }
+
+            DynamicDungeonGraphView graphView = this.GetFirstAncestorOfType<DynamicDungeonGraphView>();
+            GenGraph graph = graphView != null ? graphView.Graph : null;
+            GenNodeData graphNode = graph != null ? graph.GetNode(NodeData.NodeId) : NodeData;
+            if (graphNode == null)
+            {
+                return;
+            }
+
+            bool needsRepair =
+                NeedsParameterRepair(graphNode, _nestedGraphParameterName, assetGuid, nestedGraph) ||
+                NeedsParameterRepair(graphNode, SubGraphNode.NestedGraphPathParameterName, assetPath, nestedGraph);
+            if (!needsRepair)
+            {
+                return;
+            }
+
+            if (graph != null)
+            {
+                Undo.RecordObject(graph, "Repair Sub-Graph Reference");
+            }
+
+            EnsureParameter(graphNode, _nestedGraphParameterName, assetGuid, nestedGraph);
+            EnsureParameter(graphNode, SubGraphNode.NestedGraphPathParameterName, assetPath, nestedGraph);
+
+            if (!ReferenceEquals(graphNode, NodeData))
+            {
+                EnsureParameter(NodeData, _nestedGraphParameterName, assetGuid, nestedGraph);
+                EnsureParameter(NodeData, SubGraphNode.NestedGraphPathParameterName, assetPath, nestedGraph);
+            }
+
+            if (graph != null)
+            {
+                EditorUtility.SetDirty(graph);
+            }
+        }
+
+        private static bool NeedsParameterRepair(GenNodeData nodeData, string parameterName, string value, GenGraph nestedGraph)
+        {
+            SerializedParameter parameter = FindParameter(nodeData, parameterName);
+            if (parameter == null)
+            {
+                return true;
+            }
+
+            return !string.Equals(parameter.Value, value, StringComparison.Ordinal) ||
+                   parameter.ObjectReference != nestedGraph;
+        }
+
+        private static void EnsureParameter(GenNodeData nodeData, string parameterName, string value, GenGraph nestedGraph)
+        {
+            if (nodeData.Parameters == null)
+            {
+                nodeData.Parameters = new List<SerializedParameter>();
+            }
+
+            SerializedParameter parameter = FindParameter(nodeData, parameterName);
+            if (parameter == null)
+            {
+                nodeData.Parameters.Add(new SerializedParameter(parameterName, value, nestedGraph));
+                return;
+            }
+
+            parameter.Value = value;
+            parameter.ObjectReference = nestedGraph;
+        }
+
+        private static SerializedParameter FindParameter(GenNodeData nodeData, string parameterName)
+        {
+            List<SerializedParameter> parameters = nodeData != null ? nodeData.Parameters : null;
+            if (parameters == null)
+            {
+                return null;
+            }
+
+            for (int parameterIndex = 0; parameterIndex < parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = parameters[parameterIndex];
+                if (parameter != null &&
+                    string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
                 {
                     return parameter;
                 }

@@ -14,7 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Growth")]
     [NodeDisplayName("Perlin Worm")]
-    [Description("Carves smooth Terraria-style worm tunnels by walking noise-steered paths through an optional mask.")]
+    [Description("Carves smooth worm-like paths by walking noise-steered routes through an optional mask.")]
     public sealed class PerlinWormNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         public enum WormStartMode
@@ -70,7 +70,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private float _stepSize;
 
         [RangeAttribute(0.0f, 1.0f)]
-        [DescriptionAttribute("How strongly paths prefer long horizontal Terraria-style tunnels.")]
+        [DescriptionAttribute("How strongly paths prefer long horizontal tunnels.")]
         private float _horizontalBias;
 
         [RangeAttribute(0.0f, 1.0f)]

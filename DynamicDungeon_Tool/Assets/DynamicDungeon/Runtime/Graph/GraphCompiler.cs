@@ -4,7 +4,11 @@ using System.Globalization;
 using System.Reflection;
 using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Core;
+using DynamicDungeon.Runtime.Nodes;
 using DynamicDungeon.Runtime.Placement;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -121,8 +125,14 @@ namespace DynamicDungeon.Runtime.Graph
                 diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Graph world height must be greater than zero.", null, null));
             }
 
-            List<GenNodeData> nodeDataList = graph.Nodes ?? new List<GenNodeData>();
-            List<GenConnectionData> connectionDataList = graph.Connections ?? new List<GenConnectionData>();
+            GenGraph compilationGraph;
+            if (!TryExpandSubGraphs(graph, diagnostics, out compilationGraph))
+            {
+                return new GraphCompileResult(false, diagnostics, null, string.Empty, false);
+            }
+
+            List<GenNodeData> nodeDataList = compilationGraph.Nodes ?? new List<GenNodeData>();
+            List<GenConnectionData> connectionDataList = compilationGraph.Connections ?? new List<GenConnectionData>();
             GenNodeData outputNodeData = FindOutputNodeData(nodeDataList, diagnostics, requireOutputNode);
 
             if (HasErrors(diagnostics))
@@ -202,6 +212,650 @@ namespace DynamicDungeon.Runtime.Graph
                 diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Execution plan build failed: " + exception.Message, null, null));
                 return new GraphCompileResult(false, diagnostics, null, outputChannelName, hasConnectedOutput);
             }
+        }
+
+        private static bool TryExpandSubGraphs(GenGraph graph, List<GraphDiagnostic> diagnostics, out GenGraph expandedGraph)
+        {
+            expandedGraph = graph;
+
+            if (!ContainsSubGraphNode(graph))
+            {
+                return true;
+            }
+
+            HashSet<int> activeGraphIds = new HashSet<int>();
+            return TryExpandSubGraphsRecursive(graph, diagnostics, activeGraphIds, out expandedGraph);
+        }
+
+        private static bool TryExpandSubGraphsRecursive(GenGraph graph, List<GraphDiagnostic> diagnostics, HashSet<int> activeGraphIds, out GenGraph expandedGraph)
+        {
+            expandedGraph = null;
+
+            if (graph == null)
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph expansion failed because a graph reference was null.", null, null));
+                return false;
+            }
+
+            int graphId = graph.GetInstanceID();
+            if (!activeGraphIds.Add(graphId))
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Recursive sub-graph reference detected.", null, null));
+                return false;
+            }
+
+            expandedGraph = CreateEmptyExpandedGraph(graph);
+            List<GenNodeData> nodes = graph.Nodes ?? new List<GenNodeData>();
+            List<GenConnectionData> connections = graph.Connections ?? new List<GenConnectionData>();
+            HashSet<string> subGraphNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            bool success = true;
+
+            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = nodes[nodeIndex];
+                if (node == null)
+                {
+                    continue;
+                }
+
+                if (IsSubGraphNodeData(node))
+                {
+                    subGraphNodeIds.Add(node.NodeId ?? string.Empty);
+                    continue;
+                }
+
+                GenNodeData clonedNode = CloneNodeData(node, node.NodeId);
+                if (!TryAddExpandedNode(expandedGraph, clonedNode, diagnostics))
+                {
+                    success = false;
+                }
+            }
+
+            for (int connectionIndex = 0; connectionIndex < connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                if (subGraphNodeIds.Contains(connection.FromNodeId ?? string.Empty) ||
+                    subGraphNodeIds.Contains(connection.ToNodeId ?? string.Empty))
+                {
+                    continue;
+                }
+
+                expandedGraph.Connections.Add(CloneConnectionData(connection, connection.FromNodeId, connection.ToNodeId));
+            }
+
+            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = nodes[nodeIndex];
+                if (node == null || !IsSubGraphNodeData(node))
+                {
+                    continue;
+                }
+
+                if (!TryExpandSubGraphNode(graph, node, expandedGraph, diagnostics, activeGraphIds))
+                {
+                    success = false;
+                }
+            }
+
+            activeGraphIds.Remove(graphId);
+            return success;
+        }
+
+        private static bool TryExpandSubGraphNode(GenGraph parentGraph, GenNodeData subGraphNode, GenGraph expandedParent, List<GraphDiagnostic> diagnostics, HashSet<int> activeGraphIds)
+        {
+            GenGraph nestedGraph = ResolveNestedGraph(subGraphNode);
+            if (nestedGraph == null)
+            {
+                nestedGraph = ResolveNestedGraphByParentLocation(parentGraph, subGraphNode);
+            }
+
+            if (nestedGraph == null)
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph node '" + subGraphNode.NodeName + "' has no nested graph reference.", subGraphNode.NodeId, null));
+                return false;
+            }
+
+            string schemaErrorMessage;
+            if (!GraphOutputUtility.TryValidateCurrentSchema(nestedGraph, out schemaErrorMessage))
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Nested graph on node '" + subGraphNode.NodeName + "' is invalid: " + schemaErrorMessage, subGraphNode.NodeId, null));
+                return false;
+            }
+
+            GenGraph expandedNestedGraph;
+            if (!TryExpandSubGraphsRecursive(nestedGraph, diagnostics, activeGraphIds, out expandedNestedGraph))
+            {
+                return false;
+            }
+
+            List<GenConnectionData> parentConnections = parentGraph.Connections ?? new List<GenConnectionData>();
+            List<GenConnectionData> incomingParentConnections = FindConnectionsToNode(parentConnections, subGraphNode.NodeId);
+            List<GenConnectionData> outgoingParentConnections = FindConnectionsFromNode(parentConnections, subGraphNode.NodeId);
+            List<GenNodeData> nestedNodes = expandedNestedGraph.Nodes ?? new List<GenNodeData>();
+            List<GenConnectionData> nestedConnections = expandedNestedGraph.Connections ?? new List<GenConnectionData>();
+            HashSet<string> inputBoundaryNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            HashSet<string> outputBoundaryNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            Dictionary<string, string> internalNodeIdMap = new Dictionary<string, string>(StringComparer.Ordinal);
+            string nestedPrefix = (subGraphNode.NodeId ?? string.Empty) + "::";
+            bool success = true;
+
+            for (int nodeIndex = 0; nodeIndex < nestedNodes.Count; nodeIndex++)
+            {
+                GenNodeData nestedNode = nestedNodes[nodeIndex];
+                if (nestedNode == null)
+                {
+                    continue;
+                }
+
+                if (IsSubGraphInputNodeData(nestedNode))
+                {
+                    inputBoundaryNodeIds.Add(nestedNode.NodeId ?? string.Empty);
+                    continue;
+                }
+
+                if (IsSubGraphOutputNodeData(nestedNode))
+                {
+                    outputBoundaryNodeIds.Add(nestedNode.NodeId ?? string.Empty);
+                    continue;
+                }
+
+                string mappedNodeId = nestedPrefix + (nestedNode.NodeId ?? string.Empty);
+                internalNodeIdMap[nestedNode.NodeId ?? string.Empty] = mappedNodeId;
+                if (!TryAddExpandedNode(expandedParent, CloneNodeData(nestedNode, mappedNodeId), diagnostics))
+                {
+                    success = false;
+                }
+            }
+
+            HashSet<string> producedOutputPorts = new HashSet<string>(StringComparer.Ordinal);
+
+            for (int connectionIndex = 0; connectionIndex < nestedConnections.Count; connectionIndex++)
+            {
+                GenConnectionData nestedConnection = nestedConnections[connectionIndex];
+                if (nestedConnection == null)
+                {
+                    continue;
+                }
+
+                bool fromInputBoundary = inputBoundaryNodeIds.Contains(nestedConnection.FromNodeId ?? string.Empty);
+                bool toOutputBoundary = outputBoundaryNodeIds.Contains(nestedConnection.ToNodeId ?? string.Empty);
+
+                if (fromInputBoundary && toOutputBoundary)
+                {
+                    producedOutputPorts.Add(nestedConnection.ToPortName ?? string.Empty);
+                    AddPassthroughBoundaryConnections(expandedParent, incomingParentConnections, outgoingParentConnections, nestedConnection);
+                    continue;
+                }
+
+                if (fromInputBoundary)
+                {
+                    string mappedTargetNodeId;
+                    if (!internalNodeIdMap.TryGetValue(nestedConnection.ToNodeId ?? string.Empty, out mappedTargetNodeId))
+                    {
+                        diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph input boundary connection targets an unknown internal node.", subGraphNode.NodeId, nestedConnection.FromPortName));
+                        success = false;
+                        continue;
+                    }
+
+                    AddIncomingBoundaryConnections(expandedParent, incomingParentConnections, nestedConnection, mappedTargetNodeId);
+                    continue;
+                }
+
+                if (toOutputBoundary)
+                {
+                    string mappedSourceNodeId;
+                    if (!internalNodeIdMap.TryGetValue(nestedConnection.FromNodeId ?? string.Empty, out mappedSourceNodeId))
+                    {
+                        diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph output boundary connection reads from an unknown internal node.", subGraphNode.NodeId, nestedConnection.ToPortName));
+                        success = false;
+                        continue;
+                    }
+
+                    producedOutputPorts.Add(nestedConnection.ToPortName ?? string.Empty);
+                    AddOutgoingBoundaryConnections(expandedParent, outgoingParentConnections, nestedConnection, mappedSourceNodeId);
+                    continue;
+                }
+
+                string mappedFromNodeId;
+                string mappedToNodeId;
+                if (!internalNodeIdMap.TryGetValue(nestedConnection.FromNodeId ?? string.Empty, out mappedFromNodeId) ||
+                    !internalNodeIdMap.TryGetValue(nestedConnection.ToNodeId ?? string.Empty, out mappedToNodeId))
+                {
+                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph contains a connection that references an unknown node.", subGraphNode.NodeId, null));
+                    success = false;
+                    continue;
+                }
+
+                expandedParent.Connections.Add(CloneConnectionData(nestedConnection, mappedFromNodeId, mappedToNodeId));
+            }
+
+            for (int connectionIndex = 0; connectionIndex < outgoingParentConnections.Count; connectionIndex++)
+            {
+                GenConnectionData outgoingConnection = outgoingParentConnections[connectionIndex];
+                if (!producedOutputPorts.Contains(outgoingConnection.FromPortName ?? string.Empty))
+                {
+                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph output port '" + outgoingConnection.FromPortName + "' is connected in the parent graph but is not wired inside the nested graph.", subGraphNode.NodeId, outgoingConnection.FromPortName));
+                    success = false;
+                }
+            }
+
+            return success;
+        }
+
+        private static void AddIncomingBoundaryConnections(GenGraph expandedParent, IReadOnlyList<GenConnectionData> incomingParentConnections, GenConnectionData nestedConnection, string mappedTargetNodeId)
+        {
+            for (int connectionIndex = 0; connectionIndex < incomingParentConnections.Count; connectionIndex++)
+            {
+                GenConnectionData parentConnection = incomingParentConnections[connectionIndex];
+                if (!string.Equals(parentConnection.ToPortName, nestedConnection.FromPortName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                GenConnectionData expandedConnection = new GenConnectionData(
+                    parentConnection.FromNodeId,
+                    parentConnection.FromPortName,
+                    mappedTargetNodeId,
+                    nestedConnection.ToPortName);
+                expandedConnection.CastMode = ResolveBoundaryCast(parentConnection.CastMode, nestedConnection.CastMode);
+                expandedParent.Connections.Add(expandedConnection);
+            }
+        }
+
+        private static void AddOutgoingBoundaryConnections(GenGraph expandedParent, IReadOnlyList<GenConnectionData> outgoingParentConnections, GenConnectionData nestedConnection, string mappedSourceNodeId)
+        {
+            for (int connectionIndex = 0; connectionIndex < outgoingParentConnections.Count; connectionIndex++)
+            {
+                GenConnectionData parentConnection = outgoingParentConnections[connectionIndex];
+                if (!string.Equals(parentConnection.FromPortName, nestedConnection.ToPortName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                GenConnectionData expandedConnection = new GenConnectionData(
+                    mappedSourceNodeId,
+                    nestedConnection.FromPortName,
+                    parentConnection.ToNodeId,
+                    parentConnection.ToPortName);
+                expandedConnection.CastMode = ResolveBoundaryCast(parentConnection.CastMode, nestedConnection.CastMode);
+                expandedParent.Connections.Add(expandedConnection);
+            }
+        }
+
+        private static void AddPassthroughBoundaryConnections(GenGraph expandedParent, IReadOnlyList<GenConnectionData> incomingParentConnections, IReadOnlyList<GenConnectionData> outgoingParentConnections, GenConnectionData nestedConnection)
+        {
+            for (int incomingIndex = 0; incomingIndex < incomingParentConnections.Count; incomingIndex++)
+            {
+                GenConnectionData incomingConnection = incomingParentConnections[incomingIndex];
+                if (!string.Equals(incomingConnection.ToPortName, nestedConnection.FromPortName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                for (int outgoingIndex = 0; outgoingIndex < outgoingParentConnections.Count; outgoingIndex++)
+                {
+                    GenConnectionData outgoingConnection = outgoingParentConnections[outgoingIndex];
+                    if (!string.Equals(outgoingConnection.FromPortName, nestedConnection.ToPortName, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    GenConnectionData expandedConnection = new GenConnectionData(
+                        incomingConnection.FromNodeId,
+                        incomingConnection.FromPortName,
+                        outgoingConnection.ToNodeId,
+                        outgoingConnection.ToPortName);
+                    expandedConnection.CastMode = ResolveBoundaryCast(outgoingConnection.CastMode, incomingConnection.CastMode);
+                    expandedParent.Connections.Add(expandedConnection);
+                }
+            }
+        }
+
+        private static CastMode ResolveBoundaryCast(CastMode parentCastMode, CastMode nestedCastMode)
+        {
+            return parentCastMode != CastMode.None ? parentCastMode : nestedCastMode;
+        }
+
+        private static bool ContainsSubGraphNode(GenGraph graph)
+        {
+            List<GenNodeData> nodes = graph != null ? graph.Nodes : null;
+            if (nodes == null)
+            {
+                return false;
+            }
+
+            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            {
+                if (IsSubGraphNodeData(nodes[nodeIndex]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static GenGraph CreateEmptyExpandedGraph(GenGraph source)
+        {
+            GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
+            graph.SchemaVersion = source.SchemaVersion;
+            graph.WorldWidth = source.WorldWidth;
+            graph.WorldHeight = source.WorldHeight;
+            graph.DefaultSeed = source.DefaultSeed;
+            graph.DefaultSeedMode = source.DefaultSeedMode;
+            graph.MaxValidationRetries = source.MaxValidationRetries;
+            graph.Biome = source.Biome;
+            graph.TileSemanticRegistry = source.TileSemanticRegistry;
+            graph.PromoteBlackboardToParentScope = source.PromoteBlackboardToParentScope;
+            graph.ExposedProperties = source.ExposedProperties;
+            return graph;
+        }
+
+        private static bool TryAddExpandedNode(GenGraph graph, GenNodeData node, List<GraphDiagnostic> diagnostics)
+        {
+            if (node == null)
+            {
+                return true;
+            }
+
+            if (graph.GetNode(node.NodeId) != null)
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Duplicate node ID '" + node.NodeId + "' detected after sub-graph expansion.", node.NodeId, null));
+                return false;
+            }
+
+            graph.Nodes.Add(node);
+            return true;
+        }
+
+        private static GenGraph ResolveNestedGraph(GenNodeData nodeData)
+        {
+            GenGraph graphFromNodeInstance = ResolveNestedGraphFromNodeInstance(nodeData);
+            if (graphFromNodeInstance != null)
+            {
+                return graphFromNodeInstance;
+            }
+
+            List<SerializedParameter> parameters = nodeData != null ? nodeData.Parameters : null;
+            if (parameters == null)
+            {
+                return null;
+            }
+
+            for (int parameterIndex = 0; parameterIndex < parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = parameters[parameterIndex];
+                if (parameter != null &&
+                    string.Equals(parameter.Name, SubGraphNode.NestedGraphParameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    GenGraph nestedGraph = ResolveGraphReference(parameter);
+                    if (nestedGraph != null)
+                    {
+                        return nestedGraph;
+                    }
+                }
+            }
+
+            for (int parameterIndex = 0; parameterIndex < parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = parameters[parameterIndex];
+                if (parameter != null &&
+                    string.Equals(parameter.Name, SubGraphNode.NestedGraphPathParameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    GenGraph nestedGraph = ResolveGraphReference(parameter);
+                    if (nestedGraph != null)
+                    {
+                        return nestedGraph;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static GenGraph ResolveNestedGraphFromNodeInstance(GenNodeData nodeData)
+        {
+            if (nodeData == null)
+            {
+                return null;
+            }
+
+            string errorMessage;
+            IGenNode nodeInstance;
+            if (!TryInstantiateNode(typeof(SubGraphNode), nodeData, out nodeInstance, out errorMessage))
+            {
+                return null;
+            }
+
+            SubGraphNode subGraphNode = nodeInstance as SubGraphNode;
+            return subGraphNode != null ? subGraphNode.NestedGraph : null;
+        }
+
+        private static GenGraph ResolveNestedGraphByParentLocation(GenGraph parentGraph, GenNodeData subGraphNode)
+        {
+#if UNITY_EDITOR
+            if (parentGraph == null || subGraphNode == null || string.IsNullOrWhiteSpace(subGraphNode.NodeName))
+            {
+                return null;
+            }
+
+            string parentAssetPath = AssetDatabase.GetAssetPath(parentGraph);
+            if (string.IsNullOrWhiteSpace(parentAssetPath))
+            {
+                return ResolveNestedGraphByNameSearch(subGraphNode.NodeName);
+            }
+
+            string parentFolder = System.IO.Path.GetDirectoryName(parentAssetPath);
+            if (string.IsNullOrWhiteSpace(parentFolder))
+            {
+                return ResolveNestedGraphByNameSearch(subGraphNode.NodeName);
+            }
+
+            string candidatePath = (parentFolder.Replace("\\", "/") + "/SubGraphs/" + subGraphNode.NodeName + ".asset").Replace("\\", "/");
+            GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(candidatePath);
+            if (graph != null)
+            {
+                return graph;
+            }
+
+            AssetDatabase.ImportAsset(candidatePath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            graph = AssetDatabase.LoadAssetAtPath<GenGraph>(candidatePath);
+            return graph != null ? graph : ResolveNestedGraphByNameSearch(subGraphNode.NodeName);
+#else
+            return null;
+#endif
+        }
+
+#if UNITY_EDITOR
+        private static GenGraph ResolveNestedGraphByNameSearch(string graphName)
+        {
+            string[] guids = AssetDatabase.FindAssets("t:GenGraph " + graphName);
+            for (int guidIndex = 0; guidIndex < guids.Length; guidIndex++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guids[guidIndex]);
+                if (string.IsNullOrWhiteSpace(assetPath) ||
+                    assetPath.IndexOf("/SubGraphs/", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+
+                GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+                if (graph != null)
+                {
+                    return graph;
+                }
+            }
+
+            return null;
+        }
+#endif
+
+        private static GenGraph ResolveGraphReference(SerializedParameter parameter)
+        {
+            if (parameter == null)
+            {
+                return null;
+            }
+
+            GenGraph referencedGraph = parameter.ObjectReference as GenGraph;
+            if (referencedGraph != null)
+            {
+                return referencedGraph;
+            }
+
+#if UNITY_EDITOR
+            string assetPath = ResolveGraphAssetPath(parameter.Value);
+            if (!string.IsNullOrWhiteSpace(assetPath))
+            {
+                GenGraph loadedGraph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+                if (loadedGraph != null)
+                {
+                    return loadedGraph;
+                }
+
+                AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+                return AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+            }
+#endif
+
+            return null;
+        }
+
+#if UNITY_EDITOR
+        private static string ResolveGraphAssetPath(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string trimmedValue = value.Trim();
+            string guidPath = AssetDatabase.GUIDToAssetPath(trimmedValue);
+            if (!string.IsNullOrWhiteSpace(guidPath))
+            {
+                return guidPath;
+            }
+
+            return trimmedValue.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase)
+                ? trimmedValue
+                : string.Empty;
+        }
+#endif
+
+        private static List<GenConnectionData> FindConnectionsToNode(IReadOnlyList<GenConnectionData> connections, string nodeId)
+        {
+            List<GenConnectionData> result = new List<GenConnectionData>();
+            string safeNodeId = nodeId ?? string.Empty;
+            for (int connectionIndex = 0; connectionIndex < connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection != null && string.Equals(connection.ToNodeId, safeNodeId, StringComparison.Ordinal))
+                {
+                    result.Add(connection);
+                }
+            }
+
+            return result;
+        }
+
+        private static List<GenConnectionData> FindConnectionsFromNode(IReadOnlyList<GenConnectionData> connections, string nodeId)
+        {
+            List<GenConnectionData> result = new List<GenConnectionData>();
+            string safeNodeId = nodeId ?? string.Empty;
+            for (int connectionIndex = 0; connectionIndex < connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection != null && string.Equals(connection.FromNodeId, safeNodeId, StringComparison.Ordinal))
+                {
+                    result.Add(connection);
+                }
+            }
+
+            return result;
+        }
+
+        private static GenNodeData CloneNodeData(GenNodeData source, string nodeId)
+        {
+            GenNodeData clone = new GenNodeData(
+                nodeId ?? string.Empty,
+                source.NodeTypeName,
+                source.NodeName,
+                source.Position);
+
+            clone.Ports = ClonePorts(source.Ports);
+            clone.Parameters = CloneParameters(source.Parameters);
+            return clone;
+        }
+
+        private static List<GenPortData> ClonePorts(IReadOnlyList<GenPortData> source)
+        {
+            List<GenPortData> ports = new List<GenPortData>();
+            if (source == null)
+            {
+                return ports;
+            }
+
+            for (int portIndex = 0; portIndex < source.Count; portIndex++)
+            {
+                GenPortData port = source[portIndex];
+                if (port != null)
+                {
+                    ports.Add(new GenPortData(port.PortName, port.Direction, port.Type, port.DisplayName));
+                }
+            }
+
+            return ports;
+        }
+
+        private static List<SerializedParameter> CloneParameters(IReadOnlyList<SerializedParameter> source)
+        {
+            List<SerializedParameter> parameters = new List<SerializedParameter>();
+            if (source == null)
+            {
+                return parameters;
+            }
+
+            for (int parameterIndex = 0; parameterIndex < source.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = source[parameterIndex];
+                if (parameter != null)
+                {
+                    parameters.Add(new SerializedParameter(parameter.Name, parameter.Value, parameter.ObjectReference));
+                }
+            }
+
+            return parameters;
+        }
+
+        private static GenConnectionData CloneConnectionData(GenConnectionData source, string fromNodeId, string toNodeId)
+        {
+            GenConnectionData clone = new GenConnectionData(
+                fromNodeId,
+                source.FromPortName,
+                toNodeId,
+                source.ToPortName);
+            clone.CastMode = source.CastMode;
+            return clone;
+        }
+
+        private static bool IsSubGraphNodeData(GenNodeData nodeData)
+        {
+            return nodeData != null && string.Equals(nodeData.NodeTypeName, typeof(SubGraphNode).FullName, StringComparison.Ordinal);
+        }
+
+        private static bool IsSubGraphInputNodeData(GenNodeData nodeData)
+        {
+            return nodeData != null && string.Equals(nodeData.NodeTypeName, typeof(SubGraphInputNode).FullName, StringComparison.Ordinal);
+        }
+
+        private static bool IsSubGraphOutputNodeData(GenNodeData nodeData)
+        {
+            return nodeData != null && string.Equals(nodeData.NodeTypeName, typeof(SubGraphOutputNode).FullName, StringComparison.Ordinal);
         }
 
         private static GenNodeData FindOutputNodeData(IReadOnlyList<GenNodeData> nodeDataList, List<GraphDiagnostic> diagnostics, bool requireOutputNode)
@@ -1250,6 +1904,12 @@ namespace DynamicDungeon.Runtime.Graph
         private static bool TryGetSpecialArgumentValue(ParameterInfo parameter, GenNodeData nodeData, out object argumentValue)
         {
             string parameterName = parameter.Name ?? string.Empty;
+
+            if (parameter.ParameterType == typeof(GenNodeData))
+            {
+                argumentValue = nodeData;
+                return true;
+            }
 
             if (parameter.ParameterType == typeof(string) && string.Equals(parameterName, "nodeId", StringComparison.OrdinalIgnoreCase))
             {

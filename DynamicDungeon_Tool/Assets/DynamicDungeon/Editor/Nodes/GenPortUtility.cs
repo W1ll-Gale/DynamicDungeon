@@ -42,6 +42,11 @@ namespace DynamicDungeon.Editor.Nodes
                 return false;
             }
 
+            if (IsSubGraphAutoPort(portDefinition) || IsSubGraphAutoPort(otherPortDefinition))
+            {
+                return true;
+            }
+
             ChannelType fromType;
             ChannelType toType;
             ResolveConnectionTypes(portDefinition, otherPortDefinition, out fromType, out toType);
@@ -63,6 +68,11 @@ namespace DynamicDungeon.Editor.Nodes
             ChannelType toType;
             ResolveConnectionTypes(portDefinition, otherPortDefinition, out fromType, out toType);
 
+            if (IsSubGraphAutoPort(portDefinition) || IsSubGraphAutoPort(otherPortDefinition))
+            {
+                return false;
+            }
+
             return fromType != toType && CastRegistry.CanCast(fromType, toType);
         }
 
@@ -72,6 +82,14 @@ namespace DynamicDungeon.Editor.Nodes
             return TryGetPortDefinition(port, out portDefinition)
                 ? PortColourRegistry.GetColour(portDefinition.Type)
                 : Color.white;
+        }
+
+        public static bool IsSubGraphAutoPort(NodePortDefinition portDefinition)
+        {
+            return string.Equals(portDefinition.Name, SubGraphNodeView.AutoInputPortName, StringComparison.Ordinal) ||
+                   string.Equals(portDefinition.Name, SubGraphNodeView.AutoOutputPortName, StringComparison.Ordinal) ||
+                   string.Equals(portDefinition.Name, SubGraphBoundaryNodeView.AutoInputBoundaryPortName, StringComparison.Ordinal) ||
+                   string.Equals(portDefinition.Name, SubGraphBoundaryNodeView.AutoOutputBoundaryPortName, StringComparison.Ordinal);
         }
 
         public static string BuildPortTooltip(NodePortDefinition portDefinition)

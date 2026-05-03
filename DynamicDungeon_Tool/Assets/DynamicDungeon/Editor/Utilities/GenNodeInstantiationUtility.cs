@@ -423,6 +423,12 @@ namespace DynamicDungeon.Editor.Utilities
         {
             string parameterName = parameter.Name ?? string.Empty;
 
+            if (parameter.ParameterType == typeof(GenNodeData))
+            {
+                argumentValue = nodeData;
+                return true;
+            }
+
             if (parameter.ParameterType == typeof(string) && string.Equals(parameterName, "nodeId", StringComparison.OrdinalIgnoreCase))
             {
                 argumentValue = nodeData.NodeId ?? string.Empty;

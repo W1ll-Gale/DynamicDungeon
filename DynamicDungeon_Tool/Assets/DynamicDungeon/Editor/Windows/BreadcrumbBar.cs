@@ -165,6 +165,57 @@ namespace DynamicDungeon.Editor.Windows
             _onGraphChanged?.Invoke(graph, Vector3.zero, 1.0f);
         }
 
+        public void RestoreTrail(IReadOnlyList<GenGraph> graphs, IReadOnlyList<string> labels)
+        {
+            _entries.Clear();
+
+            if (graphs == null || graphs.Count == 0)
+            {
+                Rebuild();
+                return;
+            }
+
+            for (int graphIndex = 0; graphIndex < graphs.Count; graphIndex++)
+            {
+                GenGraph graph = graphs[graphIndex];
+                if (graph == null)
+                {
+                    continue;
+                }
+
+                string label = labels != null && graphIndex < labels.Count
+                    ? labels[graphIndex]
+                    : graph.name;
+                _entries.Add(new BreadcrumbEntry(graph, string.IsNullOrWhiteSpace(label) ? graph.name : label));
+            }
+
+            Rebuild();
+
+            if (_entries.Count > 0)
+            {
+                BreadcrumbEntry activeEntry = _entries[_entries.Count - 1];
+                _onGraphChanged?.Invoke(activeEntry.Graph, activeEntry.ScrollOffset, activeEntry.ZoomScale);
+            }
+        }
+
+        public void CopyTrail(List<GenGraph> graphs, List<string> labels)
+        {
+            if (graphs == null || labels == null)
+            {
+                return;
+            }
+
+            graphs.Clear();
+            labels.Clear();
+
+            for (int entryIndex = 0; entryIndex < _entries.Count; entryIndex++)
+            {
+                BreadcrumbEntry entry = _entries[entryIndex];
+                graphs.Add(entry.Graph);
+                labels.Add(entry.Label);
+            }
+        }
+
         // --- Private helpers ---
 
         private void Rebuild()

@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
+using DynamicDungeon.Runtime.Nodes;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -59,6 +61,7 @@ namespace DynamicDungeon.Editor.Windows
         private bool _expandedPreviewAutoFitUntilInteraction;
         private bool _isPanningExpandedPreview;
         private bool _suppressGraphMutationCallbacks;
+        private bool _subGraphPortReloadQueued;
         private Vector2 _lastGraphLocalMousePosition;
 
         public GenGraph Graph
@@ -222,6 +225,8 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
+            nodeId = ResolveVisiblePreviewNodeId(nodeId);
+
             GenNodeView nodeView;
             if (_nodeViewsById.TryGetValue(nodeId, out nodeView))
             {
@@ -242,12 +247,21 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             GenNodeView nodeView;
+            string visibleNodeId = ResolveVisiblePreviewNodeId(nodeId);
             if (_nodeViewsById.TryGetValue(nodeId, out nodeView))
             {
                 nodeView.SetPreview(texture);
 
                 UpdateExpandedPreviewForCurrentNode(nodeId, texture, nodeView.title);
 
+                return;
+            }
+
+            if (!string.Equals(visibleNodeId, nodeId, StringComparison.Ordinal) &&
+                _nodeViewsById.TryGetValue(visibleNodeId, out nodeView))
+            {
+                nodeView.SetPreview(texture);
+                UpdateExpandedPreviewForCurrentNode(visibleNodeId, texture, nodeView.title);
                 return;
             }
 
@@ -274,6 +288,17 @@ namespace DynamicDungeon.Editor.Windows
             AddToSelection(nodeView);
             FrameSelection();
             return true;
+        }
+
+        private static string ResolveVisiblePreviewNodeId(string nodeId)
+        {
+            if (string.IsNullOrWhiteSpace(nodeId))
+            {
+                return string.Empty;
+            }
+
+            int separatorIndex = nodeId.IndexOf("::", StringComparison.Ordinal);
+            return separatorIndex > 0 ? nodeId.Substring(0, separatorIndex) : nodeId;
         }
 
         public bool SelectAndFrameGroup(string groupId)
@@ -335,6 +360,8 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
+            EnsureBoundaryNodesForSubGraphAsset(_graph);
+            SyncSubGraphWrappersInGraph(_graph, false);
             BuildNodeViews();
             BuildEdgeViews();
             BuildStickyNoteViews();
@@ -534,6 +561,127 @@ namespace DynamicDungeon.Editor.Windows
         public void MarkNodeDirty(string nodeId)
         {
             _generationOrchestrator?.MarkNodeDirty(nodeId);
+        }
+
+        public void AddSubGraphBoundaryPort(GenNodeData boundaryNode, ChannelType channelType)
+        {
+            if (_graph == null || boundaryNode == null)
+            {
+                return;
+            }
+
+            bool isInputBoundary = IsSubGraphInputNodeData(boundaryNode);
+            bool isOutputBoundary = IsSubGraphOutputNodeData(boundaryNode);
+            if (!isInputBoundary && !isOutputBoundary)
+            {
+                return;
+            }
+
+            if (boundaryNode.Ports == null)
+            {
+                boundaryNode.Ports = new List<GenPortData>();
+            }
+
+            HashSet<string> usedPortNames = new HashSet<string>(StringComparer.Ordinal);
+            for (int portIndex = 0; portIndex < boundaryNode.Ports.Count; portIndex++)
+            {
+                GenPortData port = boundaryNode.Ports[portIndex];
+                if (port != null && !string.IsNullOrWhiteSpace(port.PortName))
+                {
+                    usedPortNames.Add(port.PortName);
+                }
+            }
+
+            string baseName = isInputBoundary ? "Input" : "Output";
+            string portName = CreateUniqueBoundaryPortName(baseName, usedPortNames);
+            PortDirection internalDirection = isInputBoundary ? PortDirection.Output : PortDirection.Input;
+
+            Undo.RecordObject(_graph, isInputBoundary ? "Add Sub-Graph Input Port" : "Add Sub-Graph Output Port");
+            boundaryNode.Ports.Add(new GenPortData(portName, internalDirection, channelType, portName));
+            EditorUtility.SetDirty(_graph);
+
+            SyncSubGraphPortsForGraphMutation();
+            NotifyGraphMutated();
+            RequestDeferredSubGraphPortReload();
+        }
+
+        public void DeleteSubGraphBoundaryPort(GenNodeData boundaryNode, string portName)
+        {
+            if (_graph == null || boundaryNode == null || string.IsNullOrWhiteSpace(portName))
+            {
+                return;
+            }
+
+            bool isInputBoundary = IsSubGraphInputNodeData(boundaryNode);
+            bool isOutputBoundary = IsSubGraphOutputNodeData(boundaryNode);
+            if (!isInputBoundary && !isOutputBoundary)
+            {
+                return;
+            }
+
+            List<GenPortData> ports = boundaryNode.Ports;
+            if (ports == null)
+            {
+                return;
+            }
+
+            int portIndex = ports.FindIndex(port => port != null && string.Equals(port.PortName, portName, StringComparison.Ordinal));
+            if (portIndex < 0)
+            {
+                return;
+            }
+
+            Undo.RecordObject(_graph, isInputBoundary ? "Delete Sub-Graph Input Port" : "Delete Sub-Graph Output Port");
+            ports.RemoveAt(portIndex);
+            RemoveConnectionsForBoundaryPort(boundaryNode.NodeId, portName, isInputBoundary);
+            EditorUtility.SetDirty(_graph);
+
+            SyncSubGraphPortsForGraphMutation();
+            NotifyGraphMutated();
+            RequestDeferredSubGraphPortReload();
+        }
+
+        private void RemoveConnectionsForBoundaryPort(string boundaryNodeId, string portName, bool inputBoundary)
+        {
+            List<GenConnectionData> connections = _graph != null ? _graph.Connections : null;
+            if (connections == null)
+            {
+                return;
+            }
+
+            for (int connectionIndex = connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                bool matches = inputBoundary
+                    ? string.Equals(connection.FromNodeId, boundaryNodeId, StringComparison.Ordinal) &&
+                      string.Equals(connection.FromPortName, portName, StringComparison.Ordinal)
+                    : string.Equals(connection.ToNodeId, boundaryNodeId, StringComparison.Ordinal) &&
+                      string.Equals(connection.ToPortName, portName, StringComparison.Ordinal);
+                if (matches)
+                {
+                    connections.RemoveAt(connectionIndex);
+                }
+            }
+        }
+
+        private void RequestDeferredSubGraphPortReload()
+        {
+            if (_subGraphPortReloadQueued)
+            {
+                return;
+            }
+
+            _subGraphPortReloadQueued = true;
+            schedule.Execute(() =>
+            {
+                _subGraphPortReloadQueued = false;
+                ReloadGraphFromModel();
+            }).StartingIn(0);
         }
 
         public void OpenNodeSearch(Vector2 graphLocalPosition)
@@ -771,6 +919,18 @@ namespace DynamicDungeon.Editor.Windows
         private GenNodeView CreateNodeView(GenNodeData nodeData, IGenNode nodeInstance)
         {
             Type nodeType = nodeInstance != null ? nodeInstance.GetType() : null;
+            if (nodeType == typeof(SubGraphInputNode) || nodeType == typeof(SubGraphOutputNode))
+            {
+                return new SubGraphBoundaryNodeView(
+                    _graph,
+                    nodeData,
+                    nodeInstance,
+                    _generationOrchestrator,
+                    _edgeConnectorListener,
+                    OpenExpandedPreview,
+                    NotifyGraphMutated);
+            }
+
             SubGraphNodeAttribute subGraphAttribute = nodeType != null
                 ? Attribute.GetCustomAttribute(nodeType, typeof(SubGraphNodeAttribute)) as SubGraphNodeAttribute
                 : null;
@@ -1170,6 +1330,10 @@ namespace DynamicDungeon.Editor.Windows
                 _ => UngroupSelection(),
                 _ => CanUngroupSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
             contextEvent.menu.AppendAction(
+                "Convert Selection To Subgraph",
+                _ => ConvertSelectionToSubGraph(),
+                _ => CanConvertSelectionToSubGraph() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            contextEvent.menu.AppendAction(
                 "Auto Layout Selection",
                 _ => AutoLayoutSelection(),
                 _ => CanAutoLayoutSelection() ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
@@ -1285,6 +1449,16 @@ namespace DynamicDungeon.Editor.Windows
                     if (!GenPortUtility.TryGetPortDefinition(outputPort, out outputPortDefinition) ||
                         !GenPortUtility.TryGetPortDefinition(inputPort, out inputPortDefinition))
                     {
+                        continue;
+                    }
+
+                    if (TryCreateSubGraphPortFromAutoConnection(
+                            fromNodeView,
+                            outputPortDefinition,
+                            toNodeView,
+                            inputPortDefinition))
+                    {
+                        graphStructureChanged = true;
                         continue;
                     }
 
@@ -1523,6 +1697,753 @@ namespace DynamicDungeon.Editor.Windows
             return graphElement != null && (graphElement.capabilities & Capabilities.Deletable) != 0;
         }
 
+        private bool TryCreateSubGraphPortFromAutoConnection(
+            GenNodeView fromNodeView,
+            NodePortDefinition outputPortDefinition,
+            GenNodeView toNodeView,
+            NodePortDefinition inputPortDefinition)
+        {
+            if (_graph == null || fromNodeView == null || toNodeView == null)
+            {
+                return false;
+            }
+
+            bool createsWrapperInput =
+                IsSubGraphNodeData(toNodeView.NodeData) &&
+                string.Equals(inputPortDefinition.Name, SubGraphNodeView.AutoInputPortName, StringComparison.Ordinal);
+            bool createsBoundaryInput =
+                IsSubGraphInputNodeData(fromNodeView.NodeData) &&
+                string.Equals(outputPortDefinition.Name, SubGraphBoundaryNodeView.AutoInputBoundaryPortName, StringComparison.Ordinal);
+            bool createsBoundaryOutput =
+                IsSubGraphOutputNodeData(toNodeView.NodeData) &&
+                string.Equals(inputPortDefinition.Name, SubGraphBoundaryNodeView.AutoOutputBoundaryPortName, StringComparison.Ordinal);
+            if (createsBoundaryInput || createsBoundaryOutput)
+            {
+                return TryCreateSubGraphBoundaryPortFromAutoConnection(
+                    fromNodeView,
+                    outputPortDefinition,
+                    toNodeView,
+                    inputPortDefinition,
+                    createsBoundaryInput);
+            }
+
+            if (!createsWrapperInput)
+            {
+                return false;
+            }
+
+            GenNodeData wrapperNode = toNodeView.NodeData;
+            GenGraph nestedGraph = ResolveNestedGraphForWrapper(_graph, wrapperNode);
+            if (nestedGraph == null)
+            {
+                Debug.LogWarning("Cannot auto-create a sub-graph port because '" + wrapperNode.NodeName + "' has no nested graph.");
+                return true;
+            }
+
+            EnsureBoundaryNodesForSubGraphAsset(nestedGraph);
+            GenNodeData boundaryNode = EnsureSubGraphBoundaryNode(nestedGraph, true);
+            if (boundaryNode == null)
+            {
+                Debug.LogWarning("Cannot auto-create a sub-graph port because the nested graph boundary node could not be created.");
+                return true;
+            }
+
+            if (HasConnectionIntoNodeFromPort(_graph, fromNodeView.NodeData.NodeId, outputPortDefinition.Name, wrapperNode.NodeId))
+            {
+                return true;
+            }
+
+            ChannelType channelType = outputPortDefinition.Type;
+            string baseName = ResolveBoundaryPortBaseNameFromDefinition(outputPortDefinition, "Input");
+            string portName = CreateUniqueBoundaryPortName(baseName, CollectPortNames(boundaryNode.Ports));
+            PortDirection boundaryDirection = PortDirection.Output;
+            PortDirection wrapperDirection = PortDirection.Input;
+
+            if (!ReferenceEquals(nestedGraph, _graph))
+            {
+                Undo.RecordObject(nestedGraph, "Add Sub-Graph Input Port");
+            }
+
+            if (boundaryNode.Ports == null)
+            {
+                boundaryNode.Ports = new List<GenPortData>();
+            }
+
+            boundaryNode.Ports.Add(new GenPortData(portName, boundaryDirection, channelType, portName));
+
+            if (wrapperNode.Ports == null)
+            {
+                wrapperNode.Ports = new List<GenPortData>();
+            }
+
+            wrapperNode.Ports.Add(new GenPortData(portName, wrapperDirection, channelType, portName));
+
+            GenConnectionData connectionData = new GenConnectionData(
+                fromNodeView.NodeData.NodeId,
+                outputPortDefinition.Name,
+                wrapperNode.NodeId,
+                portName);
+            _graph.Connections.Add(connectionData);
+
+            EditorUtility.SetDirty(_graph);
+            EditorUtility.SetDirty(nestedGraph);
+            SyncSubGraphPortsForGraphMutation();
+            RequestDeferredSubGraphPortReload();
+            return true;
+        }
+
+        private bool TryCreateSubGraphBoundaryPortFromAutoConnection(
+            GenNodeView fromNodeView,
+            NodePortDefinition outputPortDefinition,
+            GenNodeView toNodeView,
+            NodePortDefinition inputPortDefinition,
+            bool createsInputBoundaryPort)
+        {
+            GenNodeData boundaryNode = createsInputBoundaryPort ? fromNodeView.NodeData : toNodeView.NodeData;
+            if (boundaryNode == null)
+            {
+                return true;
+            }
+
+            if (GenPortUtility.IsSubGraphAutoPort(createsInputBoundaryPort ? inputPortDefinition : outputPortDefinition))
+            {
+                return true;
+            }
+
+            bool existingConnection = createsInputBoundaryPort
+                ? HasConnectionFromNodeToPort(_graph, boundaryNode.NodeId, toNodeView.NodeData.NodeId, inputPortDefinition.Name)
+                : HasConnectionIntoNodeFromPort(_graph, fromNodeView.NodeData.NodeId, outputPortDefinition.Name, boundaryNode.NodeId);
+            if (existingConnection)
+            {
+                return true;
+            }
+
+            ChannelType channelType = createsInputBoundaryPort ? inputPortDefinition.Type : outputPortDefinition.Type;
+            string baseName = createsInputBoundaryPort
+                ? ResolveBoundaryPortBaseNameFromDefinition(inputPortDefinition, "Input")
+                : ResolveBoundaryPortBaseNameFromDefinition(outputPortDefinition, "Output");
+            string portName = CreateUniqueBoundaryPortName(baseName, CollectPortNames(boundaryNode.Ports));
+            PortDirection boundaryDirection = createsInputBoundaryPort ? PortDirection.Output : PortDirection.Input;
+
+            Undo.RecordObject(_graph, createsInputBoundaryPort ? "Add Sub-Graph Input Port" : "Add Sub-Graph Output Port");
+            if (boundaryNode.Ports == null)
+            {
+                boundaryNode.Ports = new List<GenPortData>();
+            }
+
+            boundaryNode.Ports.Add(new GenPortData(portName, boundaryDirection, channelType, portName));
+
+            GenConnectionData connectionData = createsInputBoundaryPort
+                ? new GenConnectionData(boundaryNode.NodeId, portName, toNodeView.NodeData.NodeId, inputPortDefinition.Name)
+                : new GenConnectionData(fromNodeView.NodeData.NodeId, outputPortDefinition.Name, boundaryNode.NodeId, portName);
+            _graph.Connections.Add(connectionData);
+
+            EditorUtility.SetDirty(_graph);
+            SyncSubGraphPortsForGraphMutation();
+            RequestDeferredSubGraphPortReload();
+            return true;
+        }
+
+        private static GenNodeData EnsureSubGraphBoundaryNode(GenGraph nestedGraph, bool inputBoundary)
+        {
+            List<GenNodeData> nodes = nestedGraph != null ? nestedGraph.Nodes : null;
+            if (nodes == null)
+            {
+                return null;
+            }
+
+            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = nodes[nodeIndex];
+                if ((inputBoundary && IsSubGraphInputNodeData(node)) ||
+                    (!inputBoundary && IsSubGraphOutputNodeData(node)))
+                {
+                    return node;
+                }
+            }
+
+            GenNodeData boundaryNode = new GenNodeData(
+                Guid.NewGuid().ToString(),
+                inputBoundary ? typeof(SubGraphInputNode).FullName : typeof(SubGraphOutputNode).FullName,
+                inputBoundary ? SubGraphInputNode.DefaultNodeName : SubGraphOutputNode.DefaultNodeName,
+                inputBoundary ? new Vector2(-AutoLayoutColumnSpacing, -80.0f) : new Vector2(AutoLayoutColumnSpacing, -80.0f));
+            nodes.Add(boundaryNode);
+            return boundaryNode;
+        }
+
+        private static HashSet<string> CollectPortNames(IReadOnlyList<GenPortData> ports)
+        {
+            HashSet<string> portNames = new HashSet<string>(StringComparer.Ordinal);
+            if (ports == null)
+            {
+                return portNames;
+            }
+
+            for (int portIndex = 0; portIndex < ports.Count; portIndex++)
+            {
+                GenPortData port = ports[portIndex];
+                if (port != null && !string.IsNullOrWhiteSpace(port.PortName))
+                {
+                    portNames.Add(port.PortName);
+                }
+            }
+
+            return portNames;
+        }
+
+        private static bool HasConnectionIntoNodeFromPort(GenGraph graph, string fromNodeId, string fromPortName, string toNodeId)
+        {
+            List<GenConnectionData> connections = graph != null ? graph.Connections : null;
+            if (connections == null)
+            {
+                return false;
+            }
+
+            for (int connectionIndex = 0; connectionIndex < connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection != null &&
+                    string.Equals(connection.FromNodeId, fromNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.FromPortName, fromPortName, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToNodeId, toNodeId, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasConnectionFromNodeToPort(GenGraph graph, string fromNodeId, string toNodeId, string toPortName)
+        {
+            List<GenConnectionData> connections = graph != null ? graph.Connections : null;
+            if (connections == null)
+            {
+                return false;
+            }
+
+            for (int connectionIndex = 0; connectionIndex < connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection != null &&
+                    string.Equals(connection.FromNodeId, fromNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToNodeId, toNodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToPortName, toPortName, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string ResolveBoundaryPortBaseNameFromDefinition(NodePortDefinition portDefinition, string fallback)
+        {
+            if (!string.IsNullOrWhiteSpace(portDefinition.DisplayName) &&
+                !string.Equals(portDefinition.DisplayName, "+ Input", StringComparison.Ordinal) &&
+                !string.Equals(portDefinition.DisplayName, "+ Output", StringComparison.Ordinal))
+            {
+                return portDefinition.DisplayName;
+            }
+
+            return string.IsNullOrWhiteSpace(portDefinition.Name) ? fallback : portDefinition.Name;
+        }
+
+        private void SyncSubGraphPortsForGraphMutation()
+        {
+            if (_graph == null)
+            {
+                return;
+            }
+
+            SyncSubGraphWrappersInGraph(_graph, true);
+            if (ContainsSubGraphBoundaryNode(_graph))
+            {
+                SyncParentSubGraphWrappers(_graph);
+            }
+        }
+
+        private static bool SyncParentSubGraphWrappers(GenGraph nestedGraph)
+        {
+            if (nestedGraph == null)
+            {
+                return false;
+            }
+
+            bool anyChanged = false;
+            List<GenGraph> candidateGraphs = FindCandidateParentGraphs(nestedGraph);
+            for (int graphIndex = 0; graphIndex < candidateGraphs.Count; graphIndex++)
+            {
+                GenGraph candidateGraph = candidateGraphs[graphIndex];
+                if (candidateGraph == null || ReferenceEquals(candidateGraph, nestedGraph))
+                {
+                    continue;
+                }
+
+                if (SyncSubGraphWrappersInGraph(candidateGraph, nestedGraph, true))
+                {
+                    anyChanged = true;
+                }
+            }
+
+            return anyChanged;
+        }
+
+        private static List<GenGraph> FindCandidateParentGraphs(GenGraph nestedGraph)
+        {
+            List<GenGraph> graphs = new List<GenGraph>();
+            string nestedAssetPath = AssetDatabase.GetAssetPath(nestedGraph);
+            if (string.IsNullOrWhiteSpace(nestedAssetPath))
+            {
+                AddGraphsFromGuids(graphs, AssetDatabase.FindAssets("t:GenGraph"));
+                return graphs;
+            }
+
+            string normalisedPath = nestedAssetPath.Replace("\\", "/");
+            int subGraphsIndex = normalisedPath.LastIndexOf("/SubGraphs/", StringComparison.OrdinalIgnoreCase);
+            if (subGraphsIndex <= 0)
+            {
+                AddGraphsFromGuids(graphs, AssetDatabase.FindAssets("t:GenGraph"));
+                return graphs;
+            }
+
+            string parentFolder = normalisedPath.Substring(0, subGraphsIndex);
+            if (Directory.Exists(parentFolder))
+            {
+                string[] assetPaths = Directory.GetFiles(parentFolder, "*.asset", SearchOption.TopDirectoryOnly);
+                for (int assetIndex = 0; assetIndex < assetPaths.Length; assetIndex++)
+                {
+                    string assetPath = assetPaths[assetIndex].Replace("\\", "/");
+                    GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+                    if (graph != null)
+                    {
+                        graphs.Add(graph);
+                    }
+                }
+            }
+
+            if (graphs.Count == 0 && AssetDatabase.IsValidFolder(parentFolder))
+            {
+                AddGraphsFromGuids(graphs, AssetDatabase.FindAssets("t:GenGraph", new[] { parentFolder }));
+            }
+
+            if (graphs.Count == 0)
+            {
+                AddGraphsFromGuids(graphs, AssetDatabase.FindAssets("t:GenGraph"));
+            }
+
+            return graphs;
+        }
+
+        private static void AddGraphsFromGuids(List<GenGraph> graphs, string[] graphGuids)
+        {
+            if (graphs == null || graphGuids == null)
+            {
+                return;
+            }
+
+            for (int graphIndex = 0; graphIndex < graphGuids.Length; graphIndex++)
+            {
+                string graphPath = AssetDatabase.GUIDToAssetPath(graphGuids[graphIndex]);
+                if (string.IsNullOrWhiteSpace(graphPath))
+                {
+                    continue;
+                }
+
+                GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(graphPath);
+                if (graph != null && !graphs.Contains(graph))
+                {
+                    graphs.Add(graph);
+                }
+            }
+        }
+
+        private static bool SyncSubGraphWrappersInGraph(GenGraph parentGraph, bool recordUndo)
+        {
+            return SyncSubGraphWrappersInGraph(parentGraph, null, recordUndo);
+        }
+
+        private static bool SyncSubGraphWrappersInGraph(GenGraph parentGraph, GenGraph requiredNestedGraph, bool recordUndo)
+        {
+            if (parentGraph == null || parentGraph.Nodes == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            bool recordedUndo = false;
+            for (int nodeIndex = 0; nodeIndex < parentGraph.Nodes.Count; nodeIndex++)
+            {
+                GenNodeData wrapperNode = parentGraph.Nodes[nodeIndex];
+                if (!IsSubGraphNodeData(wrapperNode))
+                {
+                    continue;
+                }
+
+                GenGraph nestedGraph = ResolveNestedGraphForWrapper(parentGraph, wrapperNode);
+                if (nestedGraph == null ||
+                    (requiredNestedGraph != null && !ReferenceEquals(nestedGraph, requiredNestedGraph)))
+                {
+                    continue;
+                }
+
+                List<GenPortData> desiredPorts = BuildWrapperPortsFromNestedGraph(nestedGraph);
+                if (PortsMatch(wrapperNode.Ports, desiredPorts))
+                {
+                    continue;
+                }
+
+                if (recordUndo && !recordedUndo)
+                {
+                    Undo.RecordObject(parentGraph, "Sync Sub-Graph Ports");
+                    recordedUndo = true;
+                }
+
+                wrapperNode.Ports = ClonePorts(desiredPorts);
+                PruneInvalidWrapperConnections(parentGraph, wrapperNode);
+                EditorUtility.SetDirty(parentGraph);
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private static List<GenPortData> BuildWrapperPortsFromNestedGraph(GenGraph nestedGraph)
+        {
+            List<GenPortData> wrapperPorts = new List<GenPortData>();
+            List<GenNodeData> nestedNodes = nestedGraph != null ? nestedGraph.Nodes : null;
+            if (nestedNodes == null)
+            {
+                return wrapperPorts;
+            }
+
+            for (int nodeIndex = 0; nodeIndex < nestedNodes.Count; nodeIndex++)
+            {
+                GenNodeData node = nestedNodes[nodeIndex];
+                if (IsSubGraphInputNodeData(node))
+                {
+                    AddBoundaryPortsAsWrapperPorts(node.Ports, PortDirection.Output, PortDirection.Input, wrapperPorts);
+                }
+            }
+
+            for (int nodeIndex = 0; nodeIndex < nestedNodes.Count; nodeIndex++)
+            {
+                GenNodeData node = nestedNodes[nodeIndex];
+                if (IsSubGraphOutputNodeData(node))
+                {
+                    AddBoundaryPortsAsWrapperPorts(node.Ports, PortDirection.Input, PortDirection.Output, wrapperPorts);
+                }
+            }
+
+            return wrapperPorts;
+        }
+
+        private static void AddBoundaryPortsAsWrapperPorts(
+            IReadOnlyList<GenPortData> boundaryPorts,
+            PortDirection expectedBoundaryDirection,
+            PortDirection wrapperDirection,
+            List<GenPortData> wrapperPorts)
+        {
+            if (boundaryPorts == null || wrapperPorts == null)
+            {
+                return;
+            }
+
+            for (int portIndex = 0; portIndex < boundaryPorts.Count; portIndex++)
+            {
+                GenPortData boundaryPort = boundaryPorts[portIndex];
+                if (boundaryPort == null ||
+                    boundaryPort.Direction != expectedBoundaryDirection ||
+                    string.IsNullOrWhiteSpace(boundaryPort.PortName))
+                {
+                    continue;
+                }
+
+                wrapperPorts.Add(new GenPortData(
+                    boundaryPort.PortName,
+                    wrapperDirection,
+                    boundaryPort.Type,
+                    string.IsNullOrWhiteSpace(boundaryPort.DisplayName) ? boundaryPort.PortName : boundaryPort.DisplayName));
+            }
+        }
+
+        private static bool PortsMatch(IReadOnlyList<GenPortData> currentPorts, IReadOnlyList<GenPortData> desiredPorts)
+        {
+            IReadOnlyList<GenPortData> safeCurrentPorts = currentPorts ?? Array.Empty<GenPortData>();
+            IReadOnlyList<GenPortData> safeDesiredPorts = desiredPorts ?? Array.Empty<GenPortData>();
+            if (safeCurrentPorts.Count != safeDesiredPorts.Count)
+            {
+                return false;
+            }
+
+            for (int portIndex = 0; portIndex < safeCurrentPorts.Count; portIndex++)
+            {
+                GenPortData currentPort = safeCurrentPorts[portIndex];
+                GenPortData desiredPort = safeDesiredPorts[portIndex];
+                if (currentPort == null || desiredPort == null)
+                {
+                    if (currentPort != desiredPort)
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (!string.Equals(currentPort.PortName, desiredPort.PortName, StringComparison.Ordinal) ||
+                    !string.Equals(currentPort.DisplayName, desiredPort.DisplayName, StringComparison.Ordinal) ||
+                    currentPort.Direction != desiredPort.Direction ||
+                    currentPort.Type != desiredPort.Type)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static void PruneInvalidWrapperConnections(GenGraph parentGraph, GenNodeData wrapperNode)
+        {
+            if (parentGraph == null || parentGraph.Connections == null || wrapperNode == null)
+            {
+                return;
+            }
+
+            HashSet<string> inputPortNames = new HashSet<string>(StringComparer.Ordinal);
+            HashSet<string> outputPortNames = new HashSet<string>(StringComparer.Ordinal);
+            List<GenPortData> ports = wrapperNode.Ports ?? new List<GenPortData>();
+            for (int portIndex = 0; portIndex < ports.Count; portIndex++)
+            {
+                GenPortData port = ports[portIndex];
+                if (port == null || string.IsNullOrWhiteSpace(port.PortName))
+                {
+                    continue;
+                }
+
+                if (port.Direction == PortDirection.Input)
+                {
+                    inputPortNames.Add(port.PortName);
+                }
+                else
+                {
+                    outputPortNames.Add(port.PortName);
+                }
+            }
+
+            string wrapperNodeId = wrapperNode.NodeId ?? string.Empty;
+            for (int connectionIndex = parentGraph.Connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+            {
+                GenConnectionData connection = parentGraph.Connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                bool staleInput = string.Equals(connection.ToNodeId, wrapperNodeId, StringComparison.Ordinal) &&
+                    !inputPortNames.Contains(connection.ToPortName ?? string.Empty);
+                bool staleOutput = string.Equals(connection.FromNodeId, wrapperNodeId, StringComparison.Ordinal) &&
+                    !outputPortNames.Contains(connection.FromPortName ?? string.Empty);
+                if (staleInput || staleOutput)
+                {
+                    parentGraph.Connections.RemoveAt(connectionIndex);
+                }
+            }
+        }
+
+        private static GenGraph ResolveNestedGraphForWrapper(GenGraph parentGraph, GenNodeData wrapperNode)
+        {
+            List<SerializedParameter> parameters = wrapperNode != null ? wrapperNode.Parameters : null;
+            GenGraph nestedGraph = ResolveNestedGraphFromParameter(parameters, SubGraphNode.NestedGraphParameterName);
+            if (nestedGraph != null)
+            {
+                return nestedGraph;
+            }
+
+            nestedGraph = ResolveNestedGraphFromParameter(parameters, SubGraphNode.NestedGraphPathParameterName);
+            return nestedGraph != null ? nestedGraph : ResolveNestedGraphByParentLocation(parentGraph, wrapperNode);
+        }
+
+        private static GenGraph ResolveNestedGraphFromParameter(IReadOnlyList<SerializedParameter> parameters, string parameterName)
+        {
+            if (parameters == null)
+            {
+                return null;
+            }
+
+            for (int parameterIndex = 0; parameterIndex < parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = parameters[parameterIndex];
+                if (parameter == null ||
+                    !string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                GenGraph objectReferenceGraph = parameter.ObjectReference as GenGraph;
+                if (objectReferenceGraph != null)
+                {
+                    return objectReferenceGraph;
+                }
+
+                string assetPath = ResolveGraphAssetPath(parameter.Value);
+                if (!string.IsNullOrWhiteSpace(assetPath))
+                {
+                    GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+                    if (graph != null)
+                    {
+                        return graph;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static string ResolveGraphAssetPath(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string trimmedValue = value.Trim();
+            string guidPath = AssetDatabase.GUIDToAssetPath(trimmedValue);
+            if (!string.IsNullOrWhiteSpace(guidPath))
+            {
+                return guidPath;
+            }
+
+            return trimmedValue.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase)
+                ? trimmedValue
+                : string.Empty;
+        }
+
+        private static GenGraph ResolveNestedGraphByParentLocation(GenGraph parentGraph, GenNodeData wrapperNode)
+        {
+            if (parentGraph == null || wrapperNode == null || string.IsNullOrWhiteSpace(wrapperNode.NodeName))
+            {
+                return null;
+            }
+
+            string parentAssetPath = AssetDatabase.GetAssetPath(parentGraph);
+            if (!string.IsNullOrWhiteSpace(parentAssetPath))
+            {
+                string parentFolder = Path.GetDirectoryName(parentAssetPath);
+                if (!string.IsNullOrWhiteSpace(parentFolder))
+                {
+                    string candidatePath = (parentFolder.Replace("\\", "/") + "/SubGraphs/" + wrapperNode.NodeName + ".asset").Replace("\\", "/");
+                    GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(candidatePath);
+                    if (graph != null)
+                    {
+                        return graph;
+                    }
+                }
+            }
+
+            string[] guids = AssetDatabase.FindAssets("t:GenGraph " + wrapperNode.NodeName);
+            for (int guidIndex = 0; guidIndex < guids.Length; guidIndex++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guids[guidIndex]);
+                if (string.IsNullOrWhiteSpace(assetPath) ||
+                    assetPath.IndexOf("/SubGraphs/", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    continue;
+                }
+
+                GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
+                if (graph != null)
+                {
+                    return graph;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool ContainsSubGraphBoundaryNode(GenGraph graph)
+        {
+            List<GenNodeData> nodes = graph != null ? graph.Nodes : null;
+            if (nodes == null)
+            {
+                return false;
+            }
+
+            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = nodes[nodeIndex];
+                if (IsSubGraphInputNodeData(node) || IsSubGraphOutputNodeData(node))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void EnsureBoundaryNodesForSubGraphAsset(GenGraph graph)
+        {
+            if (graph == null || graph.Nodes == null || !IsSubGraphAsset(graph))
+            {
+                return;
+            }
+
+            bool hasInputBoundary = false;
+            bool hasOutputBoundary = false;
+            for (int nodeIndex = 0; nodeIndex < graph.Nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = graph.Nodes[nodeIndex];
+                hasInputBoundary = hasInputBoundary || IsSubGraphInputNodeData(node);
+                hasOutputBoundary = hasOutputBoundary || IsSubGraphOutputNodeData(node);
+            }
+
+            if (hasInputBoundary && hasOutputBoundary)
+            {
+                return;
+            }
+
+            if (!hasInputBoundary)
+            {
+                graph.Nodes.Add(new GenNodeData(
+                    Guid.NewGuid().ToString(),
+                    typeof(SubGraphInputNode).FullName,
+                    SubGraphInputNode.DefaultNodeName,
+                    new Vector2(-AutoLayoutColumnSpacing, -80.0f)));
+            }
+
+            if (!hasOutputBoundary)
+            {
+                graph.Nodes.Add(new GenNodeData(
+                    Guid.NewGuid().ToString(),
+                    typeof(SubGraphOutputNode).FullName,
+                    SubGraphOutputNode.DefaultNodeName,
+                    new Vector2(AutoLayoutColumnSpacing, -80.0f)));
+            }
+
+            EditorUtility.SetDirty(graph);
+        }
+
+        private static bool IsSubGraphAsset(GenGraph graph)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(graph);
+            return !string.IsNullOrWhiteSpace(assetPath) &&
+                   assetPath.IndexOf("/SubGraphs/", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsSubGraphNodeData(GenNodeData nodeData)
+        {
+            return nodeData != null && string.Equals(nodeData.NodeTypeName, typeof(SubGraphNode).FullName, StringComparison.Ordinal);
+        }
+
+        private static bool IsSubGraphInputNodeData(GenNodeData nodeData)
+        {
+            return nodeData != null && string.Equals(nodeData.NodeTypeName, typeof(SubGraphInputNode).FullName, StringComparison.Ordinal);
+        }
+
+        private static bool IsSubGraphOutputNodeData(GenNodeData nodeData)
+        {
+            return nodeData != null && string.Equals(nodeData.NodeTypeName, typeof(SubGraphOutputNode).FullName, StringComparison.Ordinal);
+        }
+
         public bool CanGroupSelection()
         {
             return GetSelectedNodeViews().Count > 0;
@@ -1575,6 +2496,380 @@ namespace DynamicDungeon.Editor.Windows
         public bool CanAutoLayoutSelection()
         {
             return GetSelectedNodeViews().Count > 0 || GetSelectedGroupViews().Count > 0;
+        }
+
+        public bool CanConvertSelectionToSubGraph()
+        {
+            if (_graph == null || string.IsNullOrWhiteSpace(AssetDatabase.GetAssetPath(_graph)))
+            {
+                return false;
+            }
+
+            List<GenNodeView> selectedNodeViews = ResolveSubGraphConversionNodeSelection();
+            if (selectedNodeViews.Count == 0)
+            {
+                return false;
+            }
+
+            for (int nodeIndex = 0; nodeIndex < selectedNodeViews.Count; nodeIndex++)
+            {
+                GenNodeView nodeView = selectedNodeViews[nodeIndex];
+                if (nodeView != null && GraphOutputUtility.IsOutputNode(nodeView.NodeData))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public void ConvertSelectionToSubGraph()
+        {
+            if (_graph == null)
+            {
+                return;
+            }
+
+            List<GenNodeView> selectedNodeViews = ResolveSubGraphConversionNodeSelection();
+            if (selectedNodeViews.Count == 0)
+            {
+                return;
+            }
+
+            for (int nodeIndex = 0; nodeIndex < selectedNodeViews.Count; nodeIndex++)
+            {
+                GenNodeView nodeView = selectedNodeViews[nodeIndex];
+                if (nodeView != null && GraphOutputUtility.IsOutputNode(nodeView.NodeData))
+                {
+                    Debug.LogWarning("Cannot convert the graph output node into a sub-graph.");
+                    return;
+                }
+            }
+
+            string parentAssetPath = AssetDatabase.GetAssetPath(_graph);
+            if (string.IsNullOrWhiteSpace(parentAssetPath))
+            {
+                Debug.LogWarning("Save the graph asset before converting nodes into a sub-graph.");
+                return;
+            }
+
+            HashSet<string> selectedNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            for (int nodeIndex = 0; nodeIndex < selectedNodeViews.Count; nodeIndex++)
+            {
+                selectedNodeIds.Add(selectedNodeViews[nodeIndex].NodeData.NodeId ?? string.Empty);
+            }
+
+            List<GenConnectionData> internalConnections;
+            List<BoundaryInputDefinition> boundaryInputs;
+            List<BoundaryOutputDefinition> boundaryOutputs;
+            string boundaryError;
+            if (!TryBuildBoundaryDefinitions(selectedNodeIds, out internalConnections, out boundaryInputs, out boundaryOutputs, out boundaryError))
+            {
+                Debug.LogError(boundaryError);
+                return;
+            }
+
+            Undo.IncrementCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Convert Selection To Subgraph");
+
+            Rect selectionBounds = CalculateNodeViewsRect(selectedNodeViews);
+            string subGraphName = ResolveSubGraphName(selectedNodeViews);
+            string nestedGraphGuid;
+            string nestedGraphPath;
+            GenGraph nestedGraph = CreateNestedGraphAsset(parentAssetPath, subGraphName, out nestedGraphGuid, out nestedGraphPath);
+            if (nestedGraph == null)
+            {
+                Undo.CollapseUndoOperations(undoGroup);
+                return;
+            }
+
+            Undo.RegisterCreatedObjectUndo(nestedGraph, "Create Subgraph Asset");
+            Undo.RecordObject(_graph, "Convert Selection To Subgraph");
+            Undo.RecordObject(nestedGraph, "Populate Subgraph");
+
+            PopulateNestedGraph(nestedGraph, selectedNodeIds, internalConnections, boundaryInputs, boundaryOutputs, selectionBounds);
+
+            GenNodeData wrapperNode = CreateSubGraphWrapperNode(subGraphName, nestedGraph, nestedGraphGuid, nestedGraphPath, boundaryInputs, boundaryOutputs, selectionBounds);
+            RewriteParentGraphForSubGraph(selectedNodeIds, wrapperNode, boundaryInputs, boundaryOutputs);
+
+            EditorUtility.SetDirty(_graph);
+            EditorUtility.SetDirty(nestedGraph);
+            AssetDatabase.SaveAssets();
+
+            Vector3 scrollOffset;
+            float zoomScale;
+            GetViewportState(out scrollOffset, out zoomScale);
+            LoadGraph(_graph);
+            RestoreViewportState(scrollOffset, zoomScale);
+            SelectAndFrameNode(wrapperNode.NodeId);
+
+            NotifyGraphMutated();
+            _generationOrchestrator?.RequestPreviewRefresh();
+            Undo.CollapseUndoOperations(undoGroup);
+        }
+
+        private void CreateSubGraphNodeFromDroppedGraph(GenGraph nestedGraph, Vector2 graphLocalPosition)
+        {
+            if (_graph == null || nestedGraph == null)
+            {
+                return;
+            }
+
+            if (ReferenceEquals(_graph, nestedGraph))
+            {
+                Debug.LogWarning("Cannot add a graph as a sub-graph of itself.");
+                return;
+            }
+
+            if (WouldCreateRecursiveSubGraphReference(_graph, nestedGraph))
+            {
+                Debug.LogWarning("Cannot add '" + nestedGraph.name + "' as a sub-graph because it would create a recursive graph reference.");
+                return;
+            }
+
+            string nestedGraphPath = AssetDatabase.GetAssetPath(nestedGraph);
+            if (string.IsNullOrWhiteSpace(nestedGraphPath))
+            {
+                Debug.LogWarning("Save the graph asset before adding it as a sub-graph.");
+                return;
+            }
+
+            string nestedGraphGuid = AssetDatabase.AssetPathToGUID(nestedGraphPath);
+            if (string.IsNullOrWhiteSpace(nestedGraphGuid))
+            {
+                Debug.LogWarning("Cannot add '" + nestedGraph.name + "' as a sub-graph because its asset GUID could not be resolved.");
+                return;
+            }
+
+            Undo.IncrementCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Add Graph Asset As Subgraph");
+
+            Undo.RecordObject(nestedGraph, "Convert Graph Asset To Subgraph");
+            bool convertedNestedGraph = ConvertGraphAssetToSubGraphIfNeeded(nestedGraph);
+
+            Undo.RecordObject(_graph, "Add Subgraph Node");
+            Vector2 contentPosition = ConvertGraphLocalToContentPosition(graphLocalPosition);
+            string nodeName = string.IsNullOrWhiteSpace(nestedGraph.name) ? "Subgraph" : nestedGraph.name;
+            GenNodeData wrapperNode = new GenNodeData(
+                Guid.NewGuid().ToString(),
+                typeof(SubGraphNode).FullName,
+                nodeName,
+                contentPosition);
+            wrapperNode.Ports = BuildWrapperPortsFromNestedGraph(nestedGraph);
+            wrapperNode.Parameters.Add(new SerializedParameter(SubGraphNode.NestedGraphParameterName, nestedGraphGuid, nestedGraph));
+            wrapperNode.Parameters.Add(new SerializedParameter(SubGraphNode.NestedGraphPathParameterName, nestedGraphPath, nestedGraph));
+            _graph.Nodes.Add(wrapperNode);
+
+            EditorUtility.SetDirty(_graph);
+            if (convertedNestedGraph)
+            {
+                EditorUtility.SetDirty(nestedGraph);
+            }
+
+            AssetDatabase.SaveAssets();
+
+            Vector3 scrollOffset;
+            float zoomScale;
+            GetViewportState(out scrollOffset, out zoomScale);
+            LoadGraph(_graph);
+            RestoreViewportState(scrollOffset, zoomScale);
+            SelectAndFrameNode(wrapperNode.NodeId);
+
+            NotifyGraphMutated();
+            _generationOrchestrator?.RequestPreviewRefresh();
+            Undo.CollapseUndoOperations(undoGroup);
+        }
+
+        private static bool ConvertGraphAssetToSubGraphIfNeeded(GenGraph graph)
+        {
+            if (graph == null)
+            {
+                return false;
+            }
+
+            EnsureGraphCollections(graph);
+
+            bool hadBoundaryNodes = ContainsSubGraphBoundaryNode(graph);
+            bool changed = EnsureBoundaryNodes(graph);
+            if (hadBoundaryNodes)
+            {
+                return changed;
+            }
+
+            GenNodeData outputNode = GraphOutputUtility.FindOutputNode(graph);
+            GenNodeData subGraphOutputNode = EnsureSubGraphBoundaryNode(graph, false);
+            if (outputNode == null || subGraphOutputNode == null)
+            {
+                return true;
+            }
+
+            if (subGraphOutputNode.Ports == null)
+            {
+                subGraphOutputNode.Ports = new List<GenPortData>();
+            }
+
+            HashSet<string> usedOutputPortNames = CollectPortNames(subGraphOutputNode.Ports);
+            List<GenConnectionData> connections = graph.Connections;
+            for (int connectionIndex = 0; connectionIndex < connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection == null ||
+                    !string.Equals(connection.ToNodeId, outputNode.NodeId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                GenPortData outputInputPort = FindPortData(outputNode, connection.ToPortName);
+                string baseName = ResolveBoundaryPortBaseName(outputInputPort, connection.ToPortName);
+                string portName = CreateUniqueBoundaryPortName(baseName, usedOutputPortNames);
+                ChannelType portType = outputInputPort != null ? outputInputPort.Type : ChannelType.Int;
+                string displayName = outputInputPort != null && !string.IsNullOrWhiteSpace(outputInputPort.DisplayName)
+                    ? outputInputPort.DisplayName
+                    : portName;
+
+                subGraphOutputNode.Ports.Add(new GenPortData(portName, PortDirection.Input, portType, displayName));
+                connection.ToNodeId = subGraphOutputNode.NodeId;
+                connection.ToPortName = portName;
+            }
+
+            for (int connectionIndex = connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection != null &&
+                    (string.Equals(connection.FromNodeId, outputNode.NodeId, StringComparison.Ordinal) ||
+                     string.Equals(connection.ToNodeId, outputNode.NodeId, StringComparison.Ordinal)))
+                {
+                    connections.RemoveAt(connectionIndex);
+                }
+            }
+
+            graph.Nodes.Remove(outputNode);
+            return true;
+        }
+
+        private static bool EnsureBoundaryNodes(GenGraph graph)
+        {
+            if (graph == null)
+            {
+                return false;
+            }
+
+            EnsureGraphCollections(graph);
+
+            bool changed = false;
+            if (!HasSubGraphBoundaryNode(graph, true) && EnsureSubGraphBoundaryNode(graph, true) != null)
+            {
+                changed = true;
+            }
+
+            if (!HasSubGraphBoundaryNode(graph, false) && EnsureSubGraphBoundaryNode(graph, false) != null)
+            {
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private static bool HasSubGraphBoundaryNode(GenGraph graph, bool inputBoundary)
+        {
+            List<GenNodeData> nodes = graph != null ? graph.Nodes : null;
+            if (nodes == null)
+            {
+                return false;
+            }
+
+            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = nodes[nodeIndex];
+                if ((inputBoundary && IsSubGraphInputNodeData(node)) ||
+                    (!inputBoundary && IsSubGraphOutputNodeData(node)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void EnsureGraphCollections(GenGraph graph)
+        {
+            if (graph.Nodes == null)
+            {
+                graph.Nodes = new List<GenNodeData>();
+            }
+
+            if (graph.Connections == null)
+            {
+                graph.Connections = new List<GenConnectionData>();
+            }
+
+            if (graph.StickyNotes == null)
+            {
+                graph.StickyNotes = new List<GenStickyNoteData>();
+            }
+
+            if (graph.Groups == null)
+            {
+                graph.Groups = new List<GenGroupData>();
+            }
+
+            if (graph.ExposedProperties == null)
+            {
+                graph.ExposedProperties = new List<ExposedProperty>();
+            }
+        }
+
+        private static bool WouldCreateRecursiveSubGraphReference(GenGraph parentGraph, GenGraph nestedGraph)
+        {
+            if (parentGraph == null || nestedGraph == null)
+            {
+                return false;
+            }
+
+            return GraphReferencesGraph(nestedGraph, parentGraph, new HashSet<GenGraph>());
+        }
+
+        private static bool GraphReferencesGraph(GenGraph sourceGraph, GenGraph targetGraph, HashSet<GenGraph> visitedGraphs)
+        {
+            if (sourceGraph == null || targetGraph == null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(sourceGraph, targetGraph))
+            {
+                return true;
+            }
+
+            if (!visitedGraphs.Add(sourceGraph))
+            {
+                return false;
+            }
+
+            List<GenNodeData> nodes = sourceGraph.Nodes;
+            if (nodes == null)
+            {
+                return false;
+            }
+
+            for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = nodes[nodeIndex];
+                if (!IsSubGraphNodeData(node))
+                {
+                    continue;
+                }
+
+                GenGraph nestedGraph = ResolveNestedGraphForWrapper(sourceGraph, node);
+                if (GraphReferencesGraph(nestedGraph, targetGraph, visitedGraphs))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public void AutoLayoutSelection()
@@ -1760,6 +3055,664 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             return selectedGroups;
+        }
+
+        private sealed class BoundaryInputDefinition
+        {
+            public GenConnectionData ParentConnection;
+            public string PortName;
+            public string DisplayName;
+            public ChannelType Type;
+        }
+
+        private sealed class BoundaryOutputDefinition
+        {
+            public GenConnectionData SourceConnection;
+            public readonly List<GenConnectionData> ParentConnections = new List<GenConnectionData>();
+            public string PortName;
+            public string DisplayName;
+            public ChannelType Type;
+        }
+
+        private List<GenNodeView> ResolveSubGraphConversionNodeSelection()
+        {
+            HashSet<string> selectedNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            List<GenNodeView> selectedNodeViews = new List<GenNodeView>();
+
+            List<GenNodeView> directNodeViews = GetSelectedNodeViews();
+            for (int nodeIndex = 0; nodeIndex < directNodeViews.Count; nodeIndex++)
+            {
+                AddUniqueNodeView(directNodeViews[nodeIndex], selectedNodeIds, selectedNodeViews);
+            }
+
+            List<GroupView> selectedGroups = GetSelectedGroupViews();
+            for (int groupIndex = 0; groupIndex < selectedGroups.Count; groupIndex++)
+            {
+                GroupView groupView = selectedGroups[groupIndex];
+                if (groupView == null)
+                {
+                    continue;
+                }
+
+                foreach (GraphElement element in groupView.containedElements)
+                {
+                    AddUniqueNodeView(element as GenNodeView, selectedNodeIds, selectedNodeViews);
+                }
+            }
+
+            return selectedNodeViews;
+        }
+
+        private static void AddUniqueNodeView(GenNodeView nodeView, HashSet<string> selectedNodeIds, List<GenNodeView> selectedNodeViews)
+        {
+            if (nodeView == null || nodeView.NodeData == null)
+            {
+                return;
+            }
+
+            string nodeId = nodeView.NodeData.NodeId ?? string.Empty;
+            if (selectedNodeIds.Add(nodeId))
+            {
+                selectedNodeViews.Add(nodeView);
+            }
+        }
+
+        private bool TryBuildBoundaryDefinitions(
+            HashSet<string> selectedNodeIds,
+            out List<GenConnectionData> internalConnections,
+            out List<BoundaryInputDefinition> boundaryInputs,
+            out List<BoundaryOutputDefinition> boundaryOutputs,
+            out string errorMessage)
+        {
+            internalConnections = new List<GenConnectionData>();
+            boundaryInputs = new List<BoundaryInputDefinition>();
+            boundaryOutputs = new List<BoundaryOutputDefinition>();
+            errorMessage = null;
+
+            Dictionary<string, BoundaryOutputDefinition> boundaryOutputsBySource = new Dictionary<string, BoundaryOutputDefinition>(StringComparer.Ordinal);
+            HashSet<string> internallyConsumedOutputKeys = new HashSet<string>(StringComparer.Ordinal);
+            HashSet<string> usedInputPortNames = new HashSet<string>(StringComparer.Ordinal);
+            HashSet<string> usedOutputPortNames = new HashSet<string>(StringComparer.Ordinal);
+            List<GenConnectionData> connections = _graph.Connections ?? new List<GenConnectionData>();
+
+            for (int connectionIndex = 0; connectionIndex < connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                bool fromSelected = selectedNodeIds.Contains(connection.FromNodeId ?? string.Empty);
+                bool toSelected = selectedNodeIds.Contains(connection.ToNodeId ?? string.Empty);
+
+                if (fromSelected && toSelected)
+                {
+                    internalConnections.Add(CloneConnectionData(connection));
+                    internallyConsumedOutputKeys.Add(CreateSourcePortKey(connection.FromNodeId, connection.FromPortName));
+                    continue;
+                }
+
+                if (!fromSelected && toSelected)
+                {
+                    GenPortData targetPort = FindPortData(connection.ToNodeId, connection.ToPortName);
+                    if (targetPort == null)
+                    {
+                        errorMessage = "Could not resolve target port '" + connection.ToPortName + "' while converting selection to a sub-graph.";
+                        return false;
+                    }
+
+                    string portName = CreateUniqueBoundaryPortName("Input", usedInputPortNames);
+                    boundaryInputs.Add(new BoundaryInputDefinition
+                    {
+                        ParentConnection = CloneConnectionData(connection),
+                        PortName = portName,
+                        DisplayName = portName,
+                        Type = targetPort.Type
+                    });
+                    continue;
+                }
+
+                if (fromSelected && !toSelected)
+                {
+                    GenPortData sourcePort = FindPortData(connection.FromNodeId, connection.FromPortName);
+                    if (sourcePort == null)
+                    {
+                        errorMessage = "Could not resolve source port '" + connection.FromPortName + "' while converting selection to a sub-graph.";
+                        return false;
+                    }
+
+                    string key = CreateSourcePortKey(connection.FromNodeId, connection.FromPortName);
+                    BoundaryOutputDefinition outputDefinition;
+                    if (!boundaryOutputsBySource.TryGetValue(key, out outputDefinition))
+                    {
+                        string portName = CreateUniqueBoundaryPortName(ResolveBoundaryPortBaseName(sourcePort, "Output"), usedOutputPortNames);
+                        outputDefinition = new BoundaryOutputDefinition
+                        {
+                            SourceConnection = CloneConnectionData(connection),
+                            PortName = portName,
+                            DisplayName = portName,
+                            Type = sourcePort.Type
+                        };
+                        boundaryOutputsBySource.Add(key, outputDefinition);
+                        boundaryOutputs.Add(outputDefinition);
+                    }
+
+                    outputDefinition.ParentConnections.Add(CloneConnectionData(connection));
+                }
+            }
+
+            AddTerminalOutputDefinitions(
+                selectedNodeIds,
+                internallyConsumedOutputKeys,
+                boundaryOutputsBySource,
+                usedOutputPortNames,
+                boundaryOutputs);
+
+            return true;
+        }
+
+        private void AddTerminalOutputDefinitions(
+            HashSet<string> selectedNodeIds,
+            HashSet<string> internallyConsumedOutputKeys,
+            Dictionary<string, BoundaryOutputDefinition> boundaryOutputsBySource,
+            HashSet<string> usedOutputPortNames,
+            List<BoundaryOutputDefinition> boundaryOutputs)
+        {
+            foreach (string selectedNodeId in selectedNodeIds)
+            {
+                GenNodeData node = _graph.GetNode(selectedNodeId);
+                List<GenPortData> ports = node != null ? node.Ports : null;
+                if (ports == null)
+                {
+                    continue;
+                }
+
+                for (int portIndex = 0; portIndex < ports.Count; portIndex++)
+                {
+                    GenPortData port = ports[portIndex];
+                    if (port == null || port.Direction != PortDirection.Output)
+                    {
+                        continue;
+                    }
+
+                    string sourceKey = CreateSourcePortKey(selectedNodeId, port.PortName);
+                    if (internallyConsumedOutputKeys.Contains(sourceKey) ||
+                        boundaryOutputsBySource.ContainsKey(sourceKey))
+                    {
+                        continue;
+                    }
+
+                    string portName = CreateUniqueBoundaryPortName(ResolveBoundaryPortBaseName(port, "Output"), usedOutputPortNames);
+                    GenConnectionData sourceConnection = new GenConnectionData(selectedNodeId, port.PortName, string.Empty, string.Empty);
+                    BoundaryOutputDefinition outputDefinition = new BoundaryOutputDefinition
+                    {
+                        SourceConnection = sourceConnection,
+                        PortName = portName,
+                        DisplayName = portName,
+                        Type = port.Type
+                    };
+                    boundaryOutputsBySource.Add(sourceKey, outputDefinition);
+                    boundaryOutputs.Add(outputDefinition);
+                }
+            }
+        }
+
+        private GenGraph CreateNestedGraphAsset(string parentAssetPath, string subGraphName, out string nestedGraphGuid, out string nestedGraphPath)
+        {
+            nestedGraphGuid = string.Empty;
+            nestedGraphPath = string.Empty;
+
+            string parentFolder = Path.GetDirectoryName(parentAssetPath);
+            if (string.IsNullOrWhiteSpace(parentFolder))
+            {
+                parentFolder = "Assets";
+            }
+
+            parentFolder = parentFolder.Replace("\\", "/");
+            string subGraphsFolder = parentFolder + "/SubGraphs";
+            if (!AssetDatabase.IsValidFolder(subGraphsFolder))
+            {
+                AssetDatabase.CreateFolder(parentFolder, "SubGraphs");
+            }
+
+            string safeName = MakeSafeAssetFileName(subGraphName);
+            string assetPath = AssetDatabase.GenerateUniqueAssetPath(subGraphsFolder + "/" + safeName + ".asset");
+            nestedGraphPath = assetPath;
+            GenGraph nestedGraph = ScriptableObject.CreateInstance<GenGraph>();
+            nestedGraph.name = Path.GetFileNameWithoutExtension(assetPath);
+            CopyGraphSettings(_graph, nestedGraph);
+            AssetDatabase.CreateAsset(nestedGraph, assetPath);
+            AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceSynchronousImport);
+            nestedGraphGuid = AssetDatabase.AssetPathToGUID(assetPath);
+            if (string.IsNullOrWhiteSpace(nestedGraphGuid))
+            {
+                Debug.LogError("Failed to resolve GUID for generated sub-graph asset at '" + assetPath + "'.");
+                return null;
+            }
+
+            return nestedGraph;
+        }
+
+        private void PopulateNestedGraph(
+            GenGraph nestedGraph,
+            HashSet<string> selectedNodeIds,
+            List<GenConnectionData> internalConnections,
+            List<BoundaryInputDefinition> boundaryInputs,
+            List<BoundaryOutputDefinition> boundaryOutputs,
+            Rect selectionBounds)
+        {
+            nestedGraph.Nodes.Clear();
+            nestedGraph.Connections.Clear();
+            nestedGraph.Groups.Clear();
+            nestedGraph.StickyNotes.Clear();
+
+            List<GenNodeData> parentNodes = _graph.Nodes ?? new List<GenNodeData>();
+            for (int nodeIndex = 0; nodeIndex < parentNodes.Count; nodeIndex++)
+            {
+                GenNodeData node = parentNodes[nodeIndex];
+                if (node != null && selectedNodeIds.Contains(node.NodeId ?? string.Empty))
+                {
+                    nestedGraph.Nodes.Add(CloneNodeData(node));
+                }
+            }
+
+            GenNodeData inputNode = new GenNodeData(
+                Guid.NewGuid().ToString(),
+                typeof(SubGraphInputNode).FullName,
+                SubGraphInputNode.DefaultNodeName,
+                new Vector2(selectionBounds.xMin - AutoLayoutColumnSpacing, selectionBounds.center.y - 80.0f));
+
+            for (int inputIndex = 0; inputIndex < boundaryInputs.Count; inputIndex++)
+            {
+                BoundaryInputDefinition input = boundaryInputs[inputIndex];
+                inputNode.Ports.Add(new GenPortData(input.PortName, PortDirection.Output, input.Type, input.DisplayName));
+                GenConnectionData nestedConnection = new GenConnectionData(
+                    inputNode.NodeId,
+                    input.PortName,
+                    input.ParentConnection.ToNodeId,
+                    input.ParentConnection.ToPortName);
+                nestedGraph.Connections.Add(nestedConnection);
+            }
+
+            nestedGraph.Nodes.Add(inputNode);
+
+            GenNodeData outputNode = new GenNodeData(
+                Guid.NewGuid().ToString(),
+                typeof(SubGraphOutputNode).FullName,
+                SubGraphOutputNode.DefaultNodeName,
+                new Vector2(selectionBounds.xMax + AutoLayoutColumnSpacing, selectionBounds.center.y - 80.0f));
+
+            for (int outputIndex = 0; outputIndex < boundaryOutputs.Count; outputIndex++)
+            {
+                BoundaryOutputDefinition output = boundaryOutputs[outputIndex];
+                outputNode.Ports.Add(new GenPortData(output.PortName, PortDirection.Input, output.Type, output.DisplayName));
+                GenConnectionData nestedConnection = new GenConnectionData(
+                    output.SourceConnection.FromNodeId,
+                    output.SourceConnection.FromPortName,
+                    outputNode.NodeId,
+                    output.PortName);
+                nestedGraph.Connections.Add(nestedConnection);
+            }
+
+            nestedGraph.Nodes.Add(outputNode);
+
+            for (int connectionIndex = 0; connectionIndex < internalConnections.Count; connectionIndex++)
+            {
+                nestedGraph.Connections.Add(CloneConnectionData(internalConnections[connectionIndex]));
+            }
+
+            MoveFullySelectedGroupsToNestedGraph(nestedGraph, selectedNodeIds);
+        }
+
+        private GenNodeData CreateSubGraphWrapperNode(
+            string subGraphName,
+            GenGraph nestedGraph,
+            string nestedGraphGuid,
+            string nestedGraphPath,
+            List<BoundaryInputDefinition> boundaryInputs,
+            List<BoundaryOutputDefinition> boundaryOutputs,
+            Rect selectionBounds)
+        {
+            GenNodeData wrapperNode = new GenNodeData(
+                Guid.NewGuid().ToString(),
+                typeof(SubGraphNode).FullName,
+                subGraphName,
+                selectionBounds.center);
+
+            for (int inputIndex = 0; inputIndex < boundaryInputs.Count; inputIndex++)
+            {
+                BoundaryInputDefinition input = boundaryInputs[inputIndex];
+                wrapperNode.Ports.Add(new GenPortData(input.PortName, PortDirection.Input, input.Type, input.DisplayName));
+            }
+
+            for (int outputIndex = 0; outputIndex < boundaryOutputs.Count; outputIndex++)
+            {
+                BoundaryOutputDefinition output = boundaryOutputs[outputIndex];
+                wrapperNode.Ports.Add(new GenPortData(output.PortName, PortDirection.Output, output.Type, output.DisplayName));
+            }
+
+            wrapperNode.Parameters.Add(new SerializedParameter(SubGraphNode.NestedGraphParameterName, nestedGraphGuid, nestedGraph));
+            wrapperNode.Parameters.Add(new SerializedParameter(SubGraphNode.NestedGraphPathParameterName, nestedGraphPath, nestedGraph));
+            return wrapperNode;
+        }
+
+        private void RewriteParentGraphForSubGraph(
+            HashSet<string> selectedNodeIds,
+            GenNodeData wrapperNode,
+            List<BoundaryInputDefinition> boundaryInputs,
+            List<BoundaryOutputDefinition> boundaryOutputs)
+        {
+            for (int nodeIndex = _graph.Nodes.Count - 1; nodeIndex >= 0; nodeIndex--)
+            {
+                GenNodeData node = _graph.Nodes[nodeIndex];
+                if (node != null && selectedNodeIds.Contains(node.NodeId ?? string.Empty))
+                {
+                    _graph.Nodes.RemoveAt(nodeIndex);
+                }
+            }
+
+            for (int connectionIndex = _graph.Connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+            {
+                GenConnectionData connection = _graph.Connections[connectionIndex];
+                if (connection == null ||
+                    selectedNodeIds.Contains(connection.FromNodeId ?? string.Empty) ||
+                    selectedNodeIds.Contains(connection.ToNodeId ?? string.Empty))
+                {
+                    _graph.Connections.RemoveAt(connectionIndex);
+                }
+            }
+
+            _graph.Nodes.Add(wrapperNode);
+
+            for (int inputIndex = 0; inputIndex < boundaryInputs.Count; inputIndex++)
+            {
+                BoundaryInputDefinition input = boundaryInputs[inputIndex];
+                GenConnectionData parentConnection = new GenConnectionData(
+                    input.ParentConnection.FromNodeId,
+                    input.ParentConnection.FromPortName,
+                    wrapperNode.NodeId,
+                    input.PortName);
+                parentConnection.CastMode = input.ParentConnection.CastMode;
+                _graph.Connections.Add(parentConnection);
+            }
+
+            for (int outputIndex = 0; outputIndex < boundaryOutputs.Count; outputIndex++)
+            {
+                BoundaryOutputDefinition output = boundaryOutputs[outputIndex];
+                for (int connectionIndex = 0; connectionIndex < output.ParentConnections.Count; connectionIndex++)
+                {
+                    GenConnectionData originalConnection = output.ParentConnections[connectionIndex];
+                    GenConnectionData parentConnection = new GenConnectionData(
+                        wrapperNode.NodeId,
+                        output.PortName,
+                        originalConnection.ToNodeId,
+                        originalConnection.ToPortName);
+                    parentConnection.CastMode = originalConnection.CastMode;
+                    _graph.Connections.Add(parentConnection);
+                }
+            }
+
+            UpdateParentGroupsAfterSubGraphConversion(selectedNodeIds, wrapperNode.NodeId);
+        }
+
+        private void MoveFullySelectedGroupsToNestedGraph(GenGraph nestedGraph, HashSet<string> selectedNodeIds)
+        {
+            List<GenGroupData> groups = _graph.Groups ?? new List<GenGroupData>();
+            for (int groupIndex = 0; groupIndex < groups.Count; groupIndex++)
+            {
+                GenGroupData group = groups[groupIndex];
+                if (group == null || group.ContainedNodeIds == null || group.ContainedNodeIds.Count == 0)
+                {
+                    continue;
+                }
+
+                bool allSelected = true;
+                for (int nodeIndex = 0; nodeIndex < group.ContainedNodeIds.Count; nodeIndex++)
+                {
+                    if (!selectedNodeIds.Contains(group.ContainedNodeIds[nodeIndex] ?? string.Empty))
+                    {
+                        allSelected = false;
+                        break;
+                    }
+                }
+
+                if (allSelected)
+                {
+                    nestedGraph.Groups.Add(CloneGroupData(group));
+                }
+            }
+        }
+
+        private void UpdateParentGroupsAfterSubGraphConversion(HashSet<string> selectedNodeIds, string wrapperNodeId)
+        {
+            List<GenGroupData> groups = _graph.Groups ?? new List<GenGroupData>();
+            for (int groupIndex = groups.Count - 1; groupIndex >= 0; groupIndex--)
+            {
+                GenGroupData group = groups[groupIndex];
+                if (group == null || group.ContainedNodeIds == null)
+                {
+                    continue;
+                }
+
+                int originalCount = group.ContainedNodeIds.Count;
+                group.ContainedNodeIds.RemoveAll(nodeId => selectedNodeIds.Contains(nodeId ?? string.Empty));
+                if (group.ContainedNodeIds.Count == 0 && originalCount > 0)
+                {
+                    groups.RemoveAt(groupIndex);
+                }
+                else if (group.ContainedNodeIds.Count != originalCount && !group.ContainedNodeIds.Contains(wrapperNodeId))
+                {
+                    group.ContainedNodeIds.Add(wrapperNodeId);
+                }
+            }
+        }
+
+        private GenPortData FindPortData(string nodeId, string portName)
+        {
+            GenNodeData node = _graph.GetNode(nodeId);
+            return FindPortData(node, portName);
+        }
+
+        private static GenPortData FindPortData(GenNodeData node, string portName)
+        {
+            List<GenPortData> ports = node != null ? node.Ports : null;
+            if (ports == null)
+            {
+                return null;
+            }
+
+            for (int portIndex = 0; portIndex < ports.Count; portIndex++)
+            {
+                GenPortData port = ports[portIndex];
+                if (port != null && string.Equals(port.PortName, portName, StringComparison.Ordinal))
+                {
+                    return port;
+                }
+            }
+
+            return null;
+        }
+
+        private static string CreateUniqueBoundaryPortName(string prefix, HashSet<string> usedNames)
+        {
+            string safePrefix = string.IsNullOrWhiteSpace(prefix) ? "Port" : prefix.Trim();
+            if (usedNames.Add(safePrefix))
+            {
+                return safePrefix;
+            }
+
+            int index = 2;
+            string candidate;
+            do
+            {
+                candidate = safePrefix + " " + index.ToString();
+                index++;
+            }
+            while (!usedNames.Add(candidate));
+
+            return candidate;
+        }
+
+        private static string CreateSourcePortKey(string nodeId, string portName)
+        {
+            return (nodeId ?? string.Empty) + "\n" + (portName ?? string.Empty);
+        }
+
+        private static string ResolveBoundaryPortBaseName(GenPortData port, string fallback)
+        {
+            if (port == null)
+            {
+                return fallback;
+            }
+
+            if (!string.IsNullOrWhiteSpace(port.DisplayName))
+            {
+                return port.DisplayName;
+            }
+
+            return string.IsNullOrWhiteSpace(port.PortName) ? fallback : port.PortName;
+        }
+
+        private static string ResolveSubGraphName(IReadOnlyList<GenNodeView> selectedNodeViews)
+        {
+            if (selectedNodeViews != null && selectedNodeViews.Count == 1 && selectedNodeViews[0] != null)
+            {
+                string nodeName = selectedNodeViews[0].NodeData != null ? selectedNodeViews[0].NodeData.NodeName : selectedNodeViews[0].title;
+                if (!string.IsNullOrWhiteSpace(nodeName))
+                {
+                    return nodeName + " Subgraph";
+                }
+            }
+
+            return "Subgraph";
+        }
+
+        private static string MakeSafeAssetFileName(string name)
+        {
+            string safeName = string.IsNullOrWhiteSpace(name) ? "Subgraph" : name.Trim();
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            for (int charIndex = 0; charIndex < invalidChars.Length; charIndex++)
+            {
+                safeName = safeName.Replace(invalidChars[charIndex], '_');
+            }
+
+            return string.IsNullOrWhiteSpace(safeName) ? "Subgraph" : safeName;
+        }
+
+        private static void CopyGraphSettings(GenGraph source, GenGraph target)
+        {
+            target.SchemaVersion = source.SchemaVersion;
+            target.WorldWidth = source.WorldWidth;
+            target.WorldHeight = source.WorldHeight;
+            target.DefaultSeed = source.DefaultSeed;
+            target.DefaultSeedMode = source.DefaultSeedMode;
+            target.MaxValidationRetries = source.MaxValidationRetries;
+            target.Biome = source.Biome;
+            target.TileSemanticRegistry = source.TileSemanticRegistry;
+            target.PromoteBlackboardToParentScope = source.PromoteBlackboardToParentScope;
+            target.ExposedProperties = CloneExposedProperties(source.ExposedProperties);
+        }
+
+        private static List<ExposedProperty> CloneExposedProperties(IReadOnlyList<ExposedProperty> source)
+        {
+            List<ExposedProperty> properties = new List<ExposedProperty>();
+            if (source == null)
+            {
+                return properties;
+            }
+
+            for (int propertyIndex = 0; propertyIndex < source.Count; propertyIndex++)
+            {
+                ExposedProperty property = source[propertyIndex];
+                if (property == null)
+                {
+                    continue;
+                }
+
+                properties.Add(new ExposedProperty
+                {
+                    PropertyId = property.PropertyId,
+                    PropertyName = property.PropertyName,
+                    Type = property.Type,
+                    DefaultValue = property.DefaultValue,
+                    Description = property.Description
+                });
+            }
+
+            return properties;
+        }
+
+        private static GenNodeData CloneNodeData(GenNodeData source)
+        {
+            GenNodeData clone = new GenNodeData(source.NodeId, source.NodeTypeName, source.NodeName, source.Position);
+            clone.Ports = ClonePorts(source.Ports);
+            clone.Parameters = CloneParameters(source.Parameters);
+            return clone;
+        }
+
+        private static List<GenPortData> ClonePorts(IReadOnlyList<GenPortData> source)
+        {
+            List<GenPortData> ports = new List<GenPortData>();
+            if (source == null)
+            {
+                return ports;
+            }
+
+            for (int portIndex = 0; portIndex < source.Count; portIndex++)
+            {
+                GenPortData port = source[portIndex];
+                if (port != null)
+                {
+                    ports.Add(new GenPortData(port.PortName, port.Direction, port.Type, port.DisplayName));
+                }
+            }
+
+            return ports;
+        }
+
+        private static List<SerializedParameter> CloneParameters(IReadOnlyList<SerializedParameter> source)
+        {
+            List<SerializedParameter> parameters = new List<SerializedParameter>();
+            if (source == null)
+            {
+                return parameters;
+            }
+
+            for (int parameterIndex = 0; parameterIndex < source.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = source[parameterIndex];
+                if (parameter != null)
+                {
+                    parameters.Add(new SerializedParameter(parameter.Name, parameter.Value, parameter.ObjectReference));
+                }
+            }
+
+            return parameters;
+        }
+
+        private static GenConnectionData CloneConnectionData(GenConnectionData source)
+        {
+            GenConnectionData clone = new GenConnectionData(
+                source.FromNodeId,
+                source.FromPortName,
+                source.ToNodeId,
+                source.ToPortName);
+            clone.CastMode = source.CastMode;
+            return clone;
+        }
+
+        private static GenGroupData CloneGroupData(GenGroupData source)
+        {
+            GenGroupData clone = new GenGroupData();
+            clone.GroupId = source.GroupId;
+            clone.Title = source.Title;
+            clone.Position = source.Position;
+            clone.BackgroundColor = source.BackgroundColor;
+            clone.ContainedNodeIds = source.ContainedNodeIds != null
+                ? new List<string>(source.ContainedNodeIds)
+                : new List<string>();
+            return clone;
         }
 
         private List<GenNodeView> ResolveAutoLayoutNodeSelection()
@@ -2603,7 +4556,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnDragUpdated(DragUpdatedEvent dragUpdatedEvent)
         {
-            if (!HasBlackboardPropertyDrag())
+            if (!HasBlackboardPropertyDrag() && !HasGenGraphAssetDrag())
             {
                 return;
             }
@@ -2615,14 +4568,23 @@ namespace DynamicDungeon.Editor.Windows
         private void OnDragPerform(DragPerformEvent dragPerformEvent)
         {
             string propertyId = DragAndDrop.GetGenericData(BlackboardPropertyDragDataKey) as string;
-            if (string.IsNullOrWhiteSpace(propertyId))
+            if (!string.IsNullOrWhiteSpace(propertyId))
+            {
+                DragAndDrop.AcceptDrag();
+                CreateExposedPropertyNodeFromBlackboard(propertyId, dragPerformEvent.localMousePosition);
+                DragAndDrop.SetGenericData(BlackboardPropertyDragDataKey, null);
+                dragPerformEvent.StopPropagation();
+                return;
+            }
+
+            GenGraph draggedGraph = GetDraggedGenGraphAsset();
+            if (draggedGraph == null)
             {
                 return;
             }
 
             DragAndDrop.AcceptDrag();
-            CreateExposedPropertyNodeFromBlackboard(propertyId, dragPerformEvent.localMousePosition);
-            DragAndDrop.SetGenericData(BlackboardPropertyDragDataKey, null);
+            CreateSubGraphNodeFromDroppedGraph(draggedGraph, dragPerformEvent.localMousePosition);
             dragPerformEvent.StopPropagation();
         }
 
@@ -2630,6 +4592,31 @@ namespace DynamicDungeon.Editor.Windows
         {
             return !string.IsNullOrWhiteSpace(
                 DragAndDrop.GetGenericData(BlackboardPropertyDragDataKey) as string);
+        }
+
+        private static bool HasGenGraphAssetDrag()
+        {
+            return GetDraggedGenGraphAsset() != null;
+        }
+
+        private static GenGraph GetDraggedGenGraphAsset()
+        {
+            UnityEngine.Object[] objectReferences = DragAndDrop.objectReferences;
+            if (objectReferences == null)
+            {
+                return null;
+            }
+
+            for (int objectIndex = 0; objectIndex < objectReferences.Length; objectIndex++)
+            {
+                GenGraph graph = objectReferences[objectIndex] as GenGraph;
+                if (graph != null)
+                {
+                    return graph;
+                }
+            }
+
+            return null;
         }
 
         private void EnsureExpandedPreviewDeferredFitScheduled()
