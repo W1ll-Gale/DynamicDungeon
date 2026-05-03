@@ -59,12 +59,25 @@ MonoBehaviour:
     SpriteAsset: {fileID: 0}
     WeightedTiles: []
   - LogicalId: 17
-    TileType: 0
+    TileType: 1
     Tile: {fileID: 11400000, guid: 614a60597a668c148b12409a166557c8, type: 2}
     SpriteAsset: {fileID: 0}
-    WeightedTiles: []
+    WeightedTiles:
+    - Tile: {fileID: 11400000, guid: e9a2e54d776425d45b6c2b606586a5f5, type: 2}
+      Weight: 0.6
+    - Tile: {fileID: 11400000, guid: 614a60597a668c148b12409a166557c8, type: 2}
+      Weight: 0.4
   - LogicalId: 18
     TileType: 0
     Tile: {fileID: 11400000, guid: 614a60597a668c148b12409a166557c8, type: 2}
     SpriteAsset: {fileID: 0}
     WeightedTiles: []
+  - LogicalId: 19
+    TileType: 1
+    Tile: {fileID: 11400000, guid: e9a2e54d776425d45b6c2b606586a5f5, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles:
+    - Tile: {fileID: 11400000, guid: e9a2e54d776425d45b6c2b606586a5f5, type: 2}
+      Weight: 0.6
+    - Tile: {fileID: 11400000, guid: 614a60597a668c148b12409a166557c8, type: 2}
+      Weight: 0.4

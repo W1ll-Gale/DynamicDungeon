@@ -68,8 +68,13 @@ MonoBehaviour:
     DisplayName: Subsurface Ground Wall
     Tags:
     - Solid
+  - LogicalId: 19
+    DisplayName: Cave Background
+    Tags:
+    - Decorative
   AllTags:
   - Walkable
   - Solid
   - Liquid
   - Trigger
+  - Decorative

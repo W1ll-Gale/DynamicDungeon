@@ -189,6 +189,68 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task PerlinWormNodeCarvesDeterministicMaskInsideInput()
+        {
+            byte[] inputValues = new byte[16 * 16];
+            int y;
+            for (y = 4; y < 12; y++)
+            {
+                int x;
+                for (x = 4; x < 12; x++)
+                {
+                    inputValues[(y * 16) + x] = 1;
+                }
+            }
+
+            BoolMaskSourceNode maskNode = new BoolMaskSourceNode("mask-source", "Input", inputValues);
+            PerlinWormNode firstWormNode = new PerlinWormNode(
+                "worm-node",
+                "Perlin Worm",
+                "Input",
+                "Worms",
+                wormCount: 3,
+                lengthMin: 12,
+                lengthMax: 18,
+                radius: 1,
+                endRadius: 1,
+                turnFrequency: 0.08f,
+                turnStrength: 0.6f,
+                stepSize: 1.0f);
+            PerlinWormNode secondWormNode = new PerlinWormNode(
+                "worm-node",
+                "Perlin Worm",
+                "Input",
+                "Worms",
+                wormCount: 3,
+                lengthMin: 12,
+                lengthMax: 18,
+                radius: 1,
+                endRadius: 1,
+                turnFrequency: 0.08f,
+                turnStrength: 0.6f,
+                stepSize: 1.0f);
+
+            WorldSnapshot firstSnapshot = await ExecuteNodesAsync(new IGenNode[] { maskNode, firstWormNode }, 16, 16, 202605L);
+            WorldSnapshot secondSnapshot = await ExecuteNodesAsync(new IGenNode[] { new BoolMaskSourceNode("mask-source", "Input", inputValues), secondWormNode }, 16, 16, 202605L);
+            WorldSnapshot.BoolMaskChannelSnapshot firstOutput = GetBoolMaskChannel(firstSnapshot, "Worms");
+            WorldSnapshot.BoolMaskChannelSnapshot secondOutput = GetBoolMaskChannel(secondSnapshot, "Worms");
+
+            Assert.That(firstOutput, Is.Not.Null);
+            Assert.That(secondOutput, Is.Not.Null);
+            Assert.That(CountTrueTiles(firstOutput.Data), Is.GreaterThan(0));
+            CollectionAssert.AreEqual(firstOutput.Data, secondOutput.Data);
+
+            int index;
+            for (index = 0; index < firstOutput.Data.Length; index++)
+            {
+                if (firstOutput.Data[index] != 0)
+                {
+                    Assert.That(inputValues[index], Is.EqualTo(1));
+                }
+            }
+        }
+
+        [Test]
         public async Task MathNodeAddOutputsPerTileSum()
         {
             float[] valuesA =

@@ -68,3 +68,8 @@ MonoBehaviour:
     Tile: {fileID: 11400000, guid: ce40e9ec06dc35048a7a5cf4efbf385e, type: 2}
     SpriteAsset: {fileID: 0}
     WeightedTiles: []
+  - LogicalId: 19
+    TileType: 0
+    Tile: {fileID: 11400000, guid: ce40e9ec06dc35048a7a5cf4efbf385e, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
