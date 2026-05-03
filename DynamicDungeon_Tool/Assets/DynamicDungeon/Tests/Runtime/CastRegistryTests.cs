@@ -64,6 +64,37 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public void FloatToBoolMaskMarksOnlyValuesAbovePointFiveAsTrue()
+        {
+            NativeArray<float> input = new NativeArray<float>(new[] { 0.0f, 0.5f, 0.5001f, 1.0f }, Allocator.Temp);
+            NativeArray<byte> output = default;
+
+            try
+            {
+                output = CastRegistry.Cast<byte>(input, ChannelType.Float, ChannelType.BoolMask, CastMode.FloatToBoolMask, Allocator.Temp);
+
+                CollectionAssert.AreEqual(new byte[] { 0, 0, 1, 1 }, output.ToArray());
+            }
+            finally
+            {
+                if (output.IsCreated)
+                {
+                    output.Dispose();
+                }
+
+                input.Dispose();
+            }
+        }
+
+        [Test]
+        public void BoolMaskToFloatIsUnsupported()
+        {
+            bool canCast = CastRegistry.CanCast(ChannelType.BoolMask, ChannelType.Float);
+
+            Assert.That(canCast, Is.False);
+        }
+
+        [Test]
         public async Task CompiledGraphWithFloatToIntRoundConnectionProducesRoundedValues()
         {
             // Fill every cell with 0.5. After FloatToIntRound, each cell should equal 1

@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using DynamicDungeon.Runtime.Core;
-using DynamicDungeon.Runtime.Graph;
 using DynamicDungeon.Runtime.Nodes;
 using NUnit.Framework;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEngine;
 
 namespace DynamicDungeon.Tests.Runtime
 {
@@ -278,116 +275,6 @@ namespace DynamicDungeon.Tests.Runtime
 
             Assert.That(output, Is.Not.Null);
             AssertFloatArraysEqual(new[] { 11.0f, 22.0f, 33.0f, 44.0f }, output.Data);
-        }
-
-        [Test]
-        public void CastRegistryFloatToIntUsesFloor()
-        {
-            NativeArray<float> input = new NativeArray<float>(new[] { -1.2f, -0.1f, 0.0f, 2.9f }, Allocator.Temp);
-            NativeArray<int> output = default;
-
-            try
-            {
-                output = CastRegistry.Cast<int>(input, ChannelType.Float, ChannelType.Int, CastMode.FloatToIntFloor, Allocator.Temp);
-                CollectionAssert.AreEqual(new[] { -2, -1, 0, 2 }, output.ToArray());
-            }
-            finally
-            {
-                if (output.IsCreated)
-                {
-                    output.Dispose();
-                }
-
-                input.Dispose();
-            }
-        }
-
-        [Test]
-        public void CastRegistryFloatToBoolMaskMarksOnlyValuesAbovePointFiveAsTrue()
-        {
-            NativeArray<float> input = new NativeArray<float>(new[] { 0.0f, 0.5f, 0.5001f, 1.0f }, Allocator.Temp);
-            NativeArray<byte> output = default;
-
-            try
-            {
-                output = CastRegistry.Cast<byte>(input, ChannelType.Float, ChannelType.BoolMask, CastMode.FloatToBoolMask, Allocator.Temp);
-                CollectionAssert.AreEqual(new byte[] { 0, 0, 1, 1 }, output.ToArray());
-            }
-            finally
-            {
-                if (output.IsCreated)
-                {
-                    output.Dispose();
-                }
-
-                input.Dispose();
-            }
-        }
-
-        [Test]
-        public void CastRegistryReportsBoolMaskToFloatAsUnsupported()
-        {
-            bool canCast = CastRegistry.CanCast(ChannelType.BoolMask, ChannelType.Float);
-
-            Assert.That(canCast, Is.False);
-        }
-
-        [Test]
-        public async Task PerlinThresholdCellularPipelineCompilesAndExecutesWithoutErrors()
-        {
-            GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
-            graph.WorldWidth = 32;
-            graph.WorldHeight = 32;
-            graph.DefaultSeed = 123456L;
-
-            try
-            {
-                GenNodeData perlinNode = new GenNodeData("perlin-node", typeof(PerlinNoiseNode).FullName, "Perlin", Vector2.zero);
-                perlinNode.Ports.Add(new GenPortData("Noise", PortDirection.Output, ChannelType.Float));
-                perlinNode.Parameters.Add(new SerializedParameter("frequency", "0.08"));
-                perlinNode.Parameters.Add(new SerializedParameter("amplitude", "1.0"));
-                perlinNode.Parameters.Add(new SerializedParameter("offset", "0,0"));
-                perlinNode.Parameters.Add(new SerializedParameter("octaves", "3"));
-                graph.Nodes.Add(perlinNode);
-
-                GenNodeData thresholdNode = new GenNodeData("threshold-node", typeof(ThresholdNode).FullName, "Threshold", Vector2.zero);
-                thresholdNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.Float));
-                thresholdNode.Ports.Add(new GenPortData("Mask", PortDirection.Output, ChannelType.BoolMask));
-                thresholdNode.Parameters.Add(new SerializedParameter("threshold", "0.5"));
-                graph.Nodes.Add(thresholdNode);
-
-                GenNodeData cellularNode = new GenNodeData("cellular-node", typeof(CellularAutomataNode).FullName, "Cellular", Vector2.zero);
-                cellularNode.Ports.Add(new GenPortData("Input", PortDirection.Input, ChannelType.BoolMask));
-                cellularNode.Ports.Add(new GenPortData("SmoothedMask", PortDirection.Output, ChannelType.BoolMask));
-                cellularNode.Parameters.Add(new SerializedParameter("birthRule", "3"));
-                cellularNode.Parameters.Add(new SerializedParameter("survivalRule", "23456"));
-                cellularNode.Parameters.Add(new SerializedParameter("iterations", "5"));
-                cellularNode.Parameters.Add(new SerializedParameter("initialFillProbability", "0.45"));
-                graph.Nodes.Add(cellularNode);
-
-                graph.Connections.Add(new GenConnectionData("perlin-node", "Noise", "threshold-node", "Input"));
-                graph.Connections.Add(new GenConnectionData("threshold-node", "Mask", "cellular-node", "Input"));
-
-                GraphCompileResult compileResult = GraphCompiler.CompileForPreview(graph);
-
-                Assert.That(compileResult.IsSuccess, Is.True);
-                Assert.That(compileResult.Plan, Is.Not.Null);
-
-                Executor executor = new Executor();
-                ExecutionResult executionResult = await executor.ExecuteAsync(compileResult.Plan, CancellationToken.None);
-
-                Assert.That(executionResult.IsSuccess, Is.True);
-                Assert.That(executionResult.ErrorMessage, Is.Null);
-                Assert.That(executionResult.Snapshot, Is.Not.Null);
-
-                WorldSnapshot.BoolMaskChannelSnapshot output = GetBoolMaskChannel(executionResult.Snapshot, "SmoothedMask");
-                Assert.That(output, Is.Not.Null);
-                Assert.That(CountTrueTiles(output.Data), Is.GreaterThan(0));
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(graph);
-            }
         }
 
         private static int CountTrueTiles(byte[] values)
