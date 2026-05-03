@@ -1,0 +1,417 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: CaveHousePlacement
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 5
+  WorldWidth: 512
+  WorldHeight: 192
+  DefaultSeed: 246813579
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
+    NodeName: Cave House Anchors
+    Position: {x: 1893, y: 1994.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: HouseCandidatePoints
+      DisplayName: HouseCandidatePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: conditions
+      Value: '{"Entries":[{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":2,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":3,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
+    NodeName: House Candidate Mask
+    Position: {x: 2461, y: 2062.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: HouseCandidateMask
+      DisplayName: HouseCandidateMask
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: cave-house-depth-band
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Cave House Depth Band
+    Position: {x: 2461, y: 2222.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CaveHouseDepthMask
+      DisplayName: CaveHouseDepthMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 38
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 160
+      ObjectReference: {fileID: 0}
+  - NodeId: cave-house-depth-candidates
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave House Depth Candidates
+    Position: {x: 2776, y: 2222.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveHouseDepthCandidates
+      DisplayName: CaveHouseDepthCandidates
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: cave-house-room-candidates
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave House Room Candidates
+    Position: {x: 3096, y: 2222.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveHouseRoomCandidates
+      DisplayName: CaveHouseRoomCandidates
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
+    NodeName: House Candidate Weights
+    Position: {x: 2776, y: 1721.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: HouseWeightsBase
+      DisplayName: HouseWeightsBase
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: cdf66d27-6d46-44ed-97d5-101ecbe82a90
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: House Band
+    Position: {x: 2776, y: 1996.52}
+    Ports:
+    - PortName: HouseBand
+      DisplayName: HouseBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.55
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: House Weights
+    Position: {x: 3132, y: 2121.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: HouseWeights
+      DisplayName: HouseWeights
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.75
+      ObjectReference: {fileID: 0}
+  - NodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: House Eligibility Mask
+    Position: {x: 3416, y: 2170.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: HouseEligibilityMask
+      DisplayName: HouseEligibilityMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+  - NodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
+    NodeName: House Poisson
+    Position: {x: 3713, y: 2170.52}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SpacedHousePoints
+      DisplayName: SpacedHousePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: minDistance
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: maxAttempts
+      Value: 24
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 4
+      ObjectReference: {fileID: 0}
+  - NodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Cave House Prefabs
+    Position: {x: 4076, y: 2297.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    - PortName: CaveHouseReservedMask
+      DisplayName: ReservedMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: footprintMode
+      Value: CarveInterior
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: reservedMaskChannelName
+      Value: CaveHouseReservedMask
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"33b4e04847c26624186a988d845dfcdf","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: CaveHousePlacement-input
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
+    NodeName: Sub Graph Input
+    Position: {x: 1633, y: 2089.52}
+    Ports:
+    - PortName: TerrainMassMask
+      DisplayName: TerrainMassMask
+      Direction: 1
+      Type: 2
+    - PortName: CombinedAutomataCaves
+      DisplayName: CombinedAutomataCaves
+      Direction: 1
+      Type: 2
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    - PortName: OneFloat
+      DisplayName: OneFloat
+      Direction: 1
+      Type: 0
+    - PortName: ZeroFloat
+      DisplayName: ZeroFloat
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: CaveHousePlacement-output
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
+    NodeName: Sub Graph Output
+    Position: {x: 4556, y: 2089.52}
+    Ports:
+    - PortName: ReservedMask
+      DisplayName: ReservedMask
+      Direction: 0
+      Type: 2
+    Parameters: []
+  Connections:
+  - FromNodeId: CaveHousePlacement-input
+    FromPortName: TerrainMassMask
+    ToNodeId: cave-house-depth-band
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: CaveHousePlacement-input
+    FromPortName: CombinedAutomataCaves
+    ToNodeId: cave-house-room-candidates
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveHousePlacement-input
+    FromPortName: LogicalIds
+    ToNodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: CaveHousePlacement-input
+    FromPortName: OneFloat
+    ToNodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveHousePlacement-input
+    FromPortName: ZeroFloat
+    ToNodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
+    FromPortName: CaveHouseReservedMask
+    ToNodeId: CaveHousePlacement-output
+    ToPortName: ReservedMask
+    CastMode: 0
+  - FromNodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
+    FromPortName: HouseCandidatePoints
+    ToNodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    FromPortName: HouseCandidateMask
+    ToNodeId: cave-house-depth-candidates
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: cave-house-depth-band
+    FromPortName: CaveHouseDepthMask
+    ToNodeId: cave-house-depth-candidates
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: cave-house-depth-candidates
+    FromPortName: CaveHouseDepthCandidates
+    ToNodeId: cave-house-room-candidates
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: cave-house-room-candidates
+    FromPortName: CaveHouseRoomCandidates
+    ToNodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    FromPortName: HouseWeightsBase
+    ToNodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: cdf66d27-6d46-44ed-97d5-101ecbe82a90
+    FromPortName: HouseBand
+    ToNodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    FromPortName: HouseWeights
+    ToNodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
+    FromPortName: HouseEligibilityMask
+    ToNodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
+    FromPortName: SpacedHousePoints
+    ToNodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
+    ToPortName: Points
+    CastMode: 0
+  StickyNotes: []
+  Groups:
+  - GroupId: CaveHousePlacement-group
+    Title: Cave House Placement
+    Position:
+      serializedVersion: 2
+      x: 1773
+      y: 1601.52
+      width: 2643
+      height: 976
+    ContainedNodeIds:
+    - 49666b0d-cd49-4568-b6a9-cc45174cc315
+    - ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    - cave-house-depth-band
+    - cave-house-depth-candidates
+    - cave-house-room-candidates
+    - f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    - cdf66d27-6d46-44ed-97d5-101ecbe82a90
+    - 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    - 681448c3-fc8a-48ac-9237-e6a486c1e035
+    - 9bedff46-3f82-482d-b30a-caff2a462f45
+    - fac00bf5-5235-4ccb-8116-1fe0fd349484
+    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+  ExposedProperties: []

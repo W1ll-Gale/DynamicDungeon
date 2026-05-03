@@ -67,6 +67,120 @@ namespace DynamicDungeon.Runtime.Graph
             }
         }
 
+        private sealed class ExpandedSubGraphBoundary
+        {
+            private readonly Dictionary<string, List<ExpandedTargetEndpoint>> _inputTargetsByPort = new Dictionary<string, List<ExpandedTargetEndpoint>>(StringComparer.Ordinal);
+            private readonly Dictionary<string, List<ExpandedSourceEndpoint>> _outputSourcesByPort = new Dictionary<string, List<ExpandedSourceEndpoint>>(StringComparer.Ordinal);
+
+            public readonly string NodeId;
+
+            public ExpandedSubGraphBoundary(string nodeId)
+            {
+                NodeId = nodeId ?? string.Empty;
+            }
+
+            public void AddInputTarget(string portName, ExpandedTargetEndpoint target)
+            {
+                if (target == null)
+                {
+                    return;
+                }
+
+                List<ExpandedTargetEndpoint> targets;
+                string safePortName = portName ?? string.Empty;
+                if (!_inputTargetsByPort.TryGetValue(safePortName, out targets))
+                {
+                    targets = new List<ExpandedTargetEndpoint>();
+                    _inputTargetsByPort.Add(safePortName, targets);
+                }
+
+                targets.Add(target);
+            }
+
+            public void AddOutputSource(string portName, ExpandedSourceEndpoint source)
+            {
+                if (source == null)
+                {
+                    return;
+                }
+
+                List<ExpandedSourceEndpoint> sources;
+                string safePortName = portName ?? string.Empty;
+                if (!_outputSourcesByPort.TryGetValue(safePortName, out sources))
+                {
+                    sources = new List<ExpandedSourceEndpoint>();
+                    _outputSourcesByPort.Add(safePortName, sources);
+                }
+
+                sources.Add(source);
+            }
+
+            public IReadOnlyList<ExpandedTargetEndpoint> GetInputTargets(string portName)
+            {
+                List<ExpandedTargetEndpoint> targets;
+                return _inputTargetsByPort.TryGetValue(portName ?? string.Empty, out targets)
+                    ? targets
+                    : Array.Empty<ExpandedTargetEndpoint>();
+            }
+
+            public IReadOnlyList<ExpandedSourceEndpoint> GetOutputSources(string portName)
+            {
+                List<ExpandedSourceEndpoint> sources;
+                return _outputSourcesByPort.TryGetValue(portName ?? string.Empty, out sources)
+                    ? sources
+                    : Array.Empty<ExpandedSourceEndpoint>();
+            }
+        }
+
+        private sealed class ExpandedSourceEndpoint
+        {
+            public readonly string NodeId;
+            public readonly string PortName;
+            public readonly CastMode CastMode;
+            public readonly string PassthroughInputPort;
+
+            public bool IsPassthrough => !string.IsNullOrWhiteSpace(PassthroughInputPort);
+
+            private ExpandedSourceEndpoint(string nodeId, string portName, CastMode castMode, string passthroughInputPort)
+            {
+                NodeId = nodeId ?? string.Empty;
+                PortName = portName ?? string.Empty;
+                CastMode = castMode;
+                PassthroughInputPort = passthroughInputPort ?? string.Empty;
+            }
+
+            public static ExpandedSourceEndpoint CreateInternal(string nodeId, string portName, CastMode castMode)
+            {
+                return new ExpandedSourceEndpoint(nodeId, portName, castMode, string.Empty);
+            }
+
+            public static ExpandedSourceEndpoint CreatePassthrough(string inputPortName, CastMode castMode)
+            {
+                return new ExpandedSourceEndpoint(string.Empty, string.Empty, castMode, inputPortName);
+            }
+
+            public ExpandedSourceEndpoint WithCast(CastMode castMode)
+            {
+                return IsPassthrough
+                    ? CreatePassthrough(PassthroughInputPort, castMode)
+                    : CreateInternal(NodeId, PortName, castMode);
+            }
+        }
+
+        private sealed class ExpandedTargetEndpoint
+        {
+            public readonly string NodeId;
+            public readonly string PortName;
+            public readonly CastMode CastMode;
+
+            public ExpandedTargetEndpoint(string nodeId, string portName, CastMode castMode)
+            {
+                NodeId = nodeId ?? string.Empty;
+                PortName = portName ?? string.Empty;
+                CastMode = castMode;
+            }
+        }
+
         private sealed class ConstructorMatch
         {
             public readonly ConstructorInfo Constructor;
@@ -248,6 +362,7 @@ namespace DynamicDungeon.Runtime.Graph
             List<GenNodeData> nodes = graph.Nodes ?? new List<GenNodeData>();
             List<GenConnectionData> connections = graph.Connections ?? new List<GenConnectionData>();
             HashSet<string> subGraphNodeIds = new HashSet<string>(StringComparer.Ordinal);
+            Dictionary<string, ExpandedSubGraphBoundary> expandedSubGraphs = new Dictionary<string, ExpandedSubGraphBoundary>(StringComparer.Ordinal);
             bool success = true;
 
             for (int nodeIndex = 0; nodeIndex < nodes.Count; nodeIndex++)
@@ -296,7 +411,33 @@ namespace DynamicDungeon.Runtime.Graph
                     continue;
                 }
 
-                if (!TryExpandSubGraphNode(graph, node, expandedGraph, diagnostics, activeGraphIds))
+                ExpandedSubGraphBoundary expandedSubGraph;
+                if (!TryExpandSubGraphNode(graph, node, expandedGraph, diagnostics, activeGraphIds, out expandedSubGraph))
+                {
+                    success = false;
+                }
+
+                if (expandedSubGraph != null)
+                {
+                    expandedSubGraphs[node.NodeId ?? string.Empty] = expandedSubGraph;
+                }
+            }
+
+            for (int connectionIndex = 0; connectionIndex < connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = connections[connectionIndex];
+                if (connection == null)
+                {
+                    continue;
+                }
+
+                if (!subGraphNodeIds.Contains(connection.FromNodeId ?? string.Empty) &&
+                    !subGraphNodeIds.Contains(connection.ToNodeId ?? string.Empty))
+                {
+                    continue;
+                }
+
+                if (!TryExpandParentSubGraphConnection(connections, expandedSubGraphs, expandedGraph, connection, diagnostics))
                 {
                     success = false;
                 }
@@ -306,8 +447,9 @@ namespace DynamicDungeon.Runtime.Graph
             return success;
         }
 
-        private static bool TryExpandSubGraphNode(GenGraph parentGraph, GenNodeData subGraphNode, GenGraph expandedParent, List<GraphDiagnostic> diagnostics, HashSet<int> activeGraphIds)
+        private static bool TryExpandSubGraphNode(GenGraph parentGraph, GenNodeData subGraphNode, GenGraph expandedParent, List<GraphDiagnostic> diagnostics, HashSet<int> activeGraphIds, out ExpandedSubGraphBoundary expandedSubGraph)
         {
+            expandedSubGraph = null;
             GenGraph nestedGraph = ResolveNestedGraph(subGraphNode);
             if (nestedGraph == null)
             {
@@ -333,15 +475,13 @@ namespace DynamicDungeon.Runtime.Graph
                 return false;
             }
 
-            List<GenConnectionData> parentConnections = parentGraph.Connections ?? new List<GenConnectionData>();
-            List<GenConnectionData> incomingParentConnections = FindConnectionsToNode(parentConnections, subGraphNode.NodeId);
-            List<GenConnectionData> outgoingParentConnections = FindConnectionsFromNode(parentConnections, subGraphNode.NodeId);
             List<GenNodeData> nestedNodes = expandedNestedGraph.Nodes ?? new List<GenNodeData>();
             List<GenConnectionData> nestedConnections = expandedNestedGraph.Connections ?? new List<GenConnectionData>();
             HashSet<string> inputBoundaryNodeIds = new HashSet<string>(StringComparer.Ordinal);
             HashSet<string> outputBoundaryNodeIds = new HashSet<string>(StringComparer.Ordinal);
             Dictionary<string, string> internalNodeIdMap = new Dictionary<string, string>(StringComparer.Ordinal);
             string nestedPrefix = (subGraphNode.NodeId ?? string.Empty) + "::";
+            expandedSubGraph = new ExpandedSubGraphBoundary(subGraphNode.NodeId ?? string.Empty);
             bool success = true;
 
             for (int nodeIndex = 0; nodeIndex < nestedNodes.Count; nodeIndex++)
@@ -388,7 +528,9 @@ namespace DynamicDungeon.Runtime.Graph
                 if (fromInputBoundary && toOutputBoundary)
                 {
                     producedOutputPorts.Add(nestedConnection.ToPortName ?? string.Empty);
-                    AddPassthroughBoundaryConnections(expandedParent, incomingParentConnections, outgoingParentConnections, nestedConnection);
+                    expandedSubGraph.AddOutputSource(
+                        nestedConnection.ToPortName,
+                        ExpandedSourceEndpoint.CreatePassthrough(nestedConnection.FromPortName, nestedConnection.CastMode));
                     continue;
                 }
 
@@ -402,7 +544,9 @@ namespace DynamicDungeon.Runtime.Graph
                         continue;
                     }
 
-                    AddIncomingBoundaryConnections(expandedParent, incomingParentConnections, nestedConnection, mappedTargetNodeId);
+                    expandedSubGraph.AddInputTarget(
+                        nestedConnection.FromPortName,
+                        new ExpandedTargetEndpoint(mappedTargetNodeId, nestedConnection.ToPortName, nestedConnection.CastMode));
                     continue;
                 }
 
@@ -417,7 +561,9 @@ namespace DynamicDungeon.Runtime.Graph
                     }
 
                     producedOutputPorts.Add(nestedConnection.ToPortName ?? string.Empty);
-                    AddOutgoingBoundaryConnections(expandedParent, outgoingParentConnections, nestedConnection, mappedSourceNodeId);
+                    expandedSubGraph.AddOutputSource(
+                        nestedConnection.ToPortName,
+                        ExpandedSourceEndpoint.CreateInternal(mappedSourceNodeId, nestedConnection.FromPortName, nestedConnection.CastMode));
                     continue;
                 }
 
@@ -434,17 +580,159 @@ namespace DynamicDungeon.Runtime.Graph
                 expandedParent.Connections.Add(CloneConnectionData(nestedConnection, mappedFromNodeId, mappedToNodeId));
             }
 
-            for (int connectionIndex = 0; connectionIndex < outgoingParentConnections.Count; connectionIndex++)
+            return success;
+        }
+
+        private static bool TryExpandParentSubGraphConnection(
+            IReadOnlyList<GenConnectionData> parentConnections,
+            IReadOnlyDictionary<string, ExpandedSubGraphBoundary> expandedSubGraphs,
+            GenGraph expandedParent,
+            GenConnectionData parentConnection,
+            List<GraphDiagnostic> diagnostics)
+        {
+            List<ExpandedSourceEndpoint> sources = ResolveParentConnectionSources(
+                parentConnections,
+                expandedSubGraphs,
+                parentConnection,
+                diagnostics,
+                new HashSet<string>(StringComparer.Ordinal));
+            List<ExpandedTargetEndpoint> targets = ResolveParentConnectionTargets(expandedSubGraphs, parentConnection, diagnostics);
+
+            if (sources.Count == 0 || targets.Count == 0)
             {
-                GenConnectionData outgoingConnection = outgoingParentConnections[connectionIndex];
-                if (!producedOutputPorts.Contains(outgoingConnection.FromPortName ?? string.Empty))
+                return false;
+            }
+
+            for (int sourceIndex = 0; sourceIndex < sources.Count; sourceIndex++)
+            {
+                ExpandedSourceEndpoint source = sources[sourceIndex];
+                if (source.IsPassthrough)
                 {
-                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph output port '" + outgoingConnection.FromPortName + "' is connected in the parent graph but is not wired inside the nested graph.", subGraphNode.NodeId, outgoingConnection.FromPortName));
-                    success = false;
+                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph output port '" + parentConnection.FromPortName + "' resolves to an unexpanded passthrough input.", parentConnection.FromNodeId, parentConnection.FromPortName));
+                    return false;
+                }
+
+                for (int targetIndex = 0; targetIndex < targets.Count; targetIndex++)
+                {
+                    ExpandedTargetEndpoint target = targets[targetIndex];
+                    GenConnectionData expandedConnection = new GenConnectionData(
+                        source.NodeId,
+                        source.PortName,
+                        target.NodeId,
+                        target.PortName);
+                    expandedConnection.CastMode = ResolveBoundaryCast(parentConnection.CastMode, ResolveBoundaryCast(source.CastMode, target.CastMode));
+                    expandedParent.Connections.Add(expandedConnection);
                 }
             }
 
-            return success;
+            return true;
+        }
+
+        private static List<ExpandedSourceEndpoint> ResolveParentConnectionSources(
+            IReadOnlyList<GenConnectionData> parentConnections,
+            IReadOnlyDictionary<string, ExpandedSubGraphBoundary> expandedSubGraphs,
+            GenConnectionData parentConnection,
+            List<GraphDiagnostic> diagnostics,
+            HashSet<string> resolvingPassthroughInputs)
+        {
+            ExpandedSubGraphBoundary expandedSubGraph;
+            if (!expandedSubGraphs.TryGetValue(parentConnection.FromNodeId ?? string.Empty, out expandedSubGraph))
+            {
+                return new List<ExpandedSourceEndpoint>
+                {
+                    ExpandedSourceEndpoint.CreateInternal(parentConnection.FromNodeId, parentConnection.FromPortName, CastMode.None)
+                };
+            }
+
+            IReadOnlyList<ExpandedSourceEndpoint> wrapperSources = expandedSubGraph.GetOutputSources(parentConnection.FromPortName);
+            if (wrapperSources.Count == 0)
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph output port '" + parentConnection.FromPortName + "' is connected in the parent graph but is not wired inside the nested graph.", parentConnection.FromNodeId, parentConnection.FromPortName));
+                return new List<ExpandedSourceEndpoint>();
+            }
+
+            List<ExpandedSourceEndpoint> resolvedSources = new List<ExpandedSourceEndpoint>();
+            for (int sourceIndex = 0; sourceIndex < wrapperSources.Count; sourceIndex++)
+            {
+                ExpandedSourceEndpoint wrapperSource = wrapperSources[sourceIndex];
+                if (!wrapperSource.IsPassthrough)
+                {
+                    resolvedSources.Add(wrapperSource.WithCast(ResolveBoundaryCast(parentConnection.CastMode, wrapperSource.CastMode)));
+                    continue;
+                }
+
+                string passthroughKey = (parentConnection.FromNodeId ?? string.Empty) + "\n" + (wrapperSource.PassthroughInputPort ?? string.Empty);
+                if (!resolvingPassthroughInputs.Add(passthroughKey))
+                {
+                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Recursive sub-graph passthrough boundary detected.", parentConnection.FromNodeId, parentConnection.FromPortName));
+                    continue;
+                }
+
+                bool foundIncoming = false;
+                for (int connectionIndex = 0; connectionIndex < parentConnections.Count; connectionIndex++)
+                {
+                    GenConnectionData incomingConnection = parentConnections[connectionIndex];
+                    if (incomingConnection == null ||
+                        !string.Equals(incomingConnection.ToNodeId, parentConnection.FromNodeId, StringComparison.Ordinal) ||
+                        !string.Equals(incomingConnection.ToPortName, wrapperSource.PassthroughInputPort, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    foundIncoming = true;
+                    List<ExpandedSourceEndpoint> incomingSources = ResolveParentConnectionSources(
+                        parentConnections,
+                        expandedSubGraphs,
+                        incomingConnection,
+                        diagnostics,
+                        resolvingPassthroughInputs);
+                    for (int incomingIndex = 0; incomingIndex < incomingSources.Count; incomingIndex++)
+                    {
+                        ExpandedSourceEndpoint incomingSource = incomingSources[incomingIndex];
+                        resolvedSources.Add(incomingSource.WithCast(ResolveBoundaryCast(parentConnection.CastMode, ResolveBoundaryCast(wrapperSource.CastMode, incomingSource.CastMode))));
+                    }
+                }
+
+                if (!foundIncoming)
+                {
+                    diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph passthrough output port '" + parentConnection.FromPortName + "' has no parent input connection for '" + wrapperSource.PassthroughInputPort + "'.", parentConnection.FromNodeId, parentConnection.FromPortName));
+                }
+
+                resolvingPassthroughInputs.Remove(passthroughKey);
+            }
+
+            return resolvedSources;
+        }
+
+        private static List<ExpandedTargetEndpoint> ResolveParentConnectionTargets(
+            IReadOnlyDictionary<string, ExpandedSubGraphBoundary> expandedSubGraphs,
+            GenConnectionData parentConnection,
+            List<GraphDiagnostic> diagnostics)
+        {
+            ExpandedSubGraphBoundary expandedSubGraph;
+            if (!expandedSubGraphs.TryGetValue(parentConnection.ToNodeId ?? string.Empty, out expandedSubGraph))
+            {
+                return new List<ExpandedTargetEndpoint>
+                {
+                    new ExpandedTargetEndpoint(parentConnection.ToNodeId, parentConnection.ToPortName, CastMode.None)
+                };
+            }
+
+            IReadOnlyList<ExpandedTargetEndpoint> targets = expandedSubGraph.GetInputTargets(parentConnection.ToPortName);
+            if (targets.Count == 0)
+            {
+                diagnostics.Add(new GraphDiagnostic(DiagnosticSeverity.Error, "Sub-graph input port '" + parentConnection.ToPortName + "' is connected in the parent graph but is not wired inside the nested graph.", parentConnection.ToNodeId, parentConnection.ToPortName));
+                return new List<ExpandedTargetEndpoint>();
+            }
+
+            List<ExpandedTargetEndpoint> resolvedTargets = new List<ExpandedTargetEndpoint>(targets.Count);
+            for (int targetIndex = 0; targetIndex < targets.Count; targetIndex++)
+            {
+                ExpandedTargetEndpoint target = targets[targetIndex];
+                resolvedTargets.Add(new ExpandedTargetEndpoint(target.NodeId, target.PortName, ResolveBoundaryCast(parentConnection.CastMode, target.CastMode)));
+            }
+
+            return resolvedTargets;
         }
 
         private static void AddIncomingBoundaryConnections(GenGraph expandedParent, IReadOnlyList<GenConnectionData> incomingParentConnections, GenConnectionData nestedConnection, string mappedTargetNodeId)
@@ -647,13 +935,13 @@ namespace DynamicDungeon.Runtime.Graph
             string parentAssetPath = AssetDatabase.GetAssetPath(parentGraph);
             if (string.IsNullOrWhiteSpace(parentAssetPath))
             {
-                return ResolveNestedGraphByNameSearch(subGraphNode.NodeName);
+                return ResolveNestedGraphByNameSearch(subGraphNode.NodeName, null);
             }
 
             string parentFolder = System.IO.Path.GetDirectoryName(parentAssetPath);
             if (string.IsNullOrWhiteSpace(parentFolder))
             {
-                return ResolveNestedGraphByNameSearch(subGraphNode.NodeName);
+                return ResolveNestedGraphByNameSearch(subGraphNode.NodeName, null);
             }
 
             string candidatePath = (parentFolder.Replace("\\", "/") + "/SubGraphs/" + subGraphNode.NodeName + ".asset").Replace("\\", "/");
@@ -663,18 +951,31 @@ namespace DynamicDungeon.Runtime.Graph
                 return graph;
             }
 
-            AssetDatabase.ImportAsset(candidatePath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
-            graph = AssetDatabase.LoadAssetAtPath<GenGraph>(candidatePath);
-            return graph != null ? graph : ResolveNestedGraphByNameSearch(subGraphNode.NodeName);
+            if (System.IO.File.Exists(candidatePath))
+            {
+                AssetDatabase.ImportAsset(candidatePath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+                graph = AssetDatabase.LoadAssetAtPath<GenGraph>(candidatePath);
+                if (graph != null)
+                {
+                    return graph;
+                }
+            }
+
+            string subGraphsFolder = (parentFolder.Replace("\\", "/") + "/SubGraphs").Replace("\\", "/");
+            graph = ResolveNestedGraphByNameSearch(subGraphNode.NodeName, subGraphsFolder);
+            return graph != null ? graph : ResolveNestedGraphByNameSearch(subGraphNode.NodeName, null);
 #else
             return null;
 #endif
         }
 
 #if UNITY_EDITOR
-        private static GenGraph ResolveNestedGraphByNameSearch(string graphName)
+        private static GenGraph ResolveNestedGraphByNameSearch(string graphName, string searchFolder)
         {
-            string[] guids = AssetDatabase.FindAssets("t:GenGraph " + graphName);
+            string[] guids = string.IsNullOrWhiteSpace(searchFolder)
+                ? AssetDatabase.FindAssets("t:GenGraph")
+                : AssetDatabase.FindAssets("t:GenGraph", new[] { searchFolder });
+            string normalizedGraphName = NormalizeGraphAssetName(graphName);
             for (int guidIndex = 0; guidIndex < guids.Length; guidIndex++)
             {
                 string assetPath = AssetDatabase.GUIDToAssetPath(guids[guidIndex]);
@@ -685,13 +986,23 @@ namespace DynamicDungeon.Runtime.Graph
                 }
 
                 GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
-                if (graph != null)
+                if (graph != null && string.Equals(NormalizeGraphAssetName(graph.name), normalizedGraphName, StringComparison.OrdinalIgnoreCase))
                 {
                     return graph;
                 }
             }
 
             return null;
+        }
+
+        private static string NormalizeGraphAssetName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return value.Replace(" ", string.Empty).Replace("_", string.Empty).Replace("-", string.Empty);
         }
 #endif
 
