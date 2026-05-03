@@ -3038,6 +3038,14 @@ namespace DynamicDungeon.Editor.Windows
                 }
             }
 
+            foreach (GenNodeView nodeView in graphElements.OfType<GenNodeView>())
+            {
+                if (nodeView != null && nodeView.selected && !selectedNodeViews.Contains(nodeView))
+                {
+                    selectedNodeViews.Add(nodeView);
+                }
+            }
+
             return selectedNodeViews;
         }
 
@@ -3049,6 +3057,14 @@ namespace DynamicDungeon.Editor.Windows
             {
                 GroupView groupView = selectable as GroupView;
                 if (groupView != null && !selectedGroups.Contains(groupView))
+                {
+                    selectedGroups.Add(groupView);
+                }
+            }
+
+            foreach (GroupView groupView in graphElements.OfType<GroupView>())
+            {
+                if (groupView != null && groupView.selected && !selectedGroups.Contains(groupView))
                 {
                     selectedGroups.Add(groupView);
                 }

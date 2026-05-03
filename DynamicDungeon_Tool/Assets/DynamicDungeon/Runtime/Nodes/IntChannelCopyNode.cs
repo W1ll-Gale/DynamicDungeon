@@ -9,7 +9,7 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Utility")]
+    [NodeCategory("Math")]
     [NodeDisplayName("Copy Int Channel")]
     [Description("Copies an int channel to a named output channel so later graph stages can preserve an intermediate result.")]
     public sealed class IntChannelCopyNode : IGenNode, IInputConnectionReceiver, IParameterReceiver

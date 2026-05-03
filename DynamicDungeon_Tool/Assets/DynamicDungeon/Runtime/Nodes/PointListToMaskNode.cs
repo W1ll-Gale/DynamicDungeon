@@ -9,7 +9,7 @@ using Unity.Mathematics;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Utility")]
+    [NodeCategory("Point Generation")]
     [NodeDisplayName("Point List To Mask")]
     [Description("Converts a point list into a bool mask by marking every referenced tile as true.")]
     public sealed class PointListToMaskNode : IGenNode, IInputConnectionReceiver, IParameterReceiver

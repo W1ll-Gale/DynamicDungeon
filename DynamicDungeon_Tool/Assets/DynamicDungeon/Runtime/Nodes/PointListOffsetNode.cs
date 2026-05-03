@@ -9,7 +9,7 @@ using Unity.Mathematics;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
-    [NodeCategory("Utility")]
+    [NodeCategory("Point Generation")]
     [NodeDisplayName("Point List Offset")]
     [Description("Copies a point list while applying a tile offset and dropping points that move out of bounds.")]
     public sealed class PointListOffsetNode : IGenNode, IInputConnectionReceiver, IParameterReceiver

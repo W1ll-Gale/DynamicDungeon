@@ -355,6 +355,14 @@ namespace DynamicDungeon.Editor.Utilities
                     continue;
                 }
 
+                object prototypeArgument;
+                if (CanUsePrototypeArgumentForGraphData(parameter) &&
+                    TryGetPrototypeArgumentValue(constructor.DeclaringType, nodeData.NodeId ?? string.Empty, parameter, out prototypeArgument))
+                {
+                    arguments[parameterIndex] = prototypeArgument;
+                    continue;
+                }
+
                 if (parameter.HasDefaultValue)
                 {
                     arguments[parameterIndex] = parameter.DefaultValue;
@@ -367,6 +375,19 @@ namespace DynamicDungeon.Editor.Utilities
 
             constructorMatch = new ConstructorMatch(constructor, arguments, score + parameters.Length);
             return true;
+        }
+
+        private static bool CanUsePrototypeArgumentForGraphData(ParameterInfo parameter)
+        {
+            if (parameter == null || parameter.ParameterType != typeof(string))
+            {
+                return false;
+            }
+
+            string parameterName = parameter.Name ?? string.Empty;
+            return GetPreferredDirection(parameterName) == PortDirection.Output &&
+                (parameterName.EndsWith("ChannelName", StringComparison.OrdinalIgnoreCase) ||
+                 parameterName.EndsWith("PortName", StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool TryBindPrototypeConstructor(ConstructorInfo constructor, string nodeId, string nodeName, out ConstructorMatch constructorMatch)
@@ -849,6 +870,14 @@ namespace DynamicDungeon.Editor.Utilities
             if (nodeType == null || string.IsNullOrWhiteSpace(parameterName))
             {
                 return false;
+            }
+
+            SubGraphNodeAttribute subGraphAttribute = Attribute.GetCustomAttribute(nodeType, typeof(SubGraphNodeAttribute)) as SubGraphNodeAttribute;
+            if (subGraphAttribute != null &&
+                (string.Equals(parameterName, subGraphAttribute.NestedGraphParameterName, StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(parameterName, SubGraphNode.NestedGraphPathParameterName, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
             }
 
             ConstructorInfo[] constructors = nodeType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
