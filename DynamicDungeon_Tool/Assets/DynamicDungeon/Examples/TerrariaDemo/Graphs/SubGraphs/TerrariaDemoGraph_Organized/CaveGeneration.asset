@@ -259,59 +259,13 @@ MonoBehaviour:
     - Name: inputMode
       Value: RandomFillInsideInputMask
       ObjectReference: {fileID: 0}
-  - NodeId: biome-deep-cave-automata-a
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Biome Deep Cave Automata A
-    Position: {x: -3040, y: 283.47998}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: BiomeDeepAutomataA
-      DisplayName: BiomeDeepAutomataA
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: OR
-      ObjectReference: {fileID: 0}
-  - NodeId: biome-deep-cave-automata-b
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Biome Deep Cave Automata B
-    Position: {x: -3040, y: 603.48}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: BiomeDeepAutomataB
-      DisplayName: BiomeDeepAutomataB
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: OR
-      ObjectReference: {fileID: 0}
   - NodeId: biome-deep-cave-automata
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Biome Deep Cave Automata
     Position: {x: -2720, y: 363.47998}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: BiomeDeepAutomataCaves
@@ -321,6 +275,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: BiomeDeepAutomataCaves
       ObjectReference: {fileID: 0}
   - NodeId: combined-automata-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
@@ -372,38 +332,13 @@ MonoBehaviour:
     - Name: minClusterSeparation
       Value: 18
       ObjectReference: {fileID: 0}
-  - NodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Primary Open Caves
-    Position: {x: -3226.5737, y: -244.50635}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: PrimaryOpenCaves
-      DisplayName: PrimaryOpenCaves
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: OR
-      ObjectReference: {fileID: 0}
   - NodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Base Open Caves
     Position: {x: -2906.5737, y: -244.50635}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: BaseOpenCaves
@@ -413,6 +348,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: BaseOpenCaves
       ObjectReference: {fileID: 0}
   - NodeId: upper-underground-cave-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
@@ -512,38 +453,13 @@ MonoBehaviour:
     - Name: minClusterSeparation
       Value: 7
       ObjectReference: {fileID: 0}
-  - NodeId: staged-underground-pockets
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Staged Underground Pockets
-    Position: {x: -1760, y: -636.52}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: StagedUndergroundPockets
-      DisplayName: StagedUndergroundPockets
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: OR
-      ObjectReference: {fileID: 0}
   - NodeId: staged-base-open-caves
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Staged Base Open Caves
     Position: {x: -1440, y: -636.52}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: StagedBaseOpenCaves
@@ -553,6 +469,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: StagedBaseOpenCaves
       ObjectReference: {fileID: 0}
   - NodeId: surface-entrance-worms
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
@@ -612,27 +534,6 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
     - Name: seedOffset
       Value: 7
-      ObjectReference: {fileID: 0}
-  - NodeId: surface-access-open-caves
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Surface Access Open Caves
-    Position: {x: -2080, y: -456.52002}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: SurfaceAccessOpenCaves
-      DisplayName: SurfaceAccessOpenCaves
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: OR
       ObjectReference: {fileID: 0}
   - NodeId: shallow-perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
@@ -694,16 +595,12 @@ MonoBehaviour:
       Value: 0
       ObjectReference: {fileID: 0}
   - NodeId: shallow-worm-open-caves
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Shallow Worm Open Caves
     Position: {x: -1760, y: -236.52002}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: ShallowWormOpenCaves
@@ -713,6 +610,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: ShallowWormOpenCaves
       ObjectReference: {fileID: 0}
   - NodeId: perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
@@ -774,16 +677,12 @@ MonoBehaviour:
       Value: 0
       ObjectReference: {fileID: 0}
   - NodeId: worm-open-caves
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Worm Open Caves
     Position: {x: -2080, y: 123.47998}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: WormOpenCaves
@@ -793,6 +692,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: WormOpenCaves
       ObjectReference: {fileID: 0}
   - NodeId: large-deep-perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
@@ -853,59 +758,13 @@ MonoBehaviour:
     - Name: biasFadeSteps
       Value: 0
       ObjectReference: {fileID: 0}
-  - NodeId: combined-deep-worm-caves
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Combined Deep Worm Caves
-    Position: {x: -2080, y: 343.47998}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: CombinedDeepWormCaves
-      DisplayName: CombinedDeepWormCaves
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: OR
-      ObjectReference: {fileID: 0}
-  - NodeId: moss-feature-open-caves
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Moss Feature Open Caves
-    Position: {x: -2586.5737, y: -244.50635}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: MossFeatureOpenCaves
-      DisplayName: MossFeatureOpenCaves
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: OR
-      ObjectReference: {fileID: 0}
   - NodeId: feature-open-caves
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Open Caves
     Position: {x: -2266.5737, y: -244.50635}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: OpenCaves
@@ -915,6 +774,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: OpenCaves
       ObjectReference: {fileID: 0}
   - NodeId: ice-feature-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
@@ -946,18 +811,6 @@ MonoBehaviour:
       DisplayName: ForestDeepCaveRegion
       Direction: 1
       Type: 2
-    - PortName: FinalJungleBiomeMask
-      DisplayName: FinalJungleBiomeMask
-      Direction: 1
-      Type: 2
-    - PortName: DesertBiomeMask
-      DisplayName: DesertBiomeMask
-      Direction: 1
-      Type: 2
-    - PortName: FinalIceBiomeMask
-      DisplayName: FinalIceBiomeMask
-      Direction: 1
-      Type: 2
     - PortName: MossPockets
       DisplayName: MossPockets
       Direction: 1
@@ -968,6 +821,18 @@ MonoBehaviour:
       Type: 2
     - PortName: IcePockets
       DisplayName: IcePockets
+      Direction: 1
+      Type: 2
+    - PortName: FinalJungleBiomeMask
+      DisplayName: FinalJungleBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: DesertBiomeMask
+      DisplayName: DesertBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: FinalIceBiomeMask
+      DisplayName: FinalIceBiomeMask
       Direction: 1
       Type: 2
     - PortName: ShallowCaveRegion
@@ -1008,6 +873,11 @@ MonoBehaviour:
     ToPortName: Input
     CastMode: 0
   - FromNodeId: CaveGeneration-input
+    FromPortName: IcePockets
+    ToNodeId: ice-feature-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
     FromPortName: FinalJungleBiomeMask
     ToNodeId: jungle-deep-cave-region
     ToPortName: B
@@ -1020,21 +890,6 @@ MonoBehaviour:
   - FromNodeId: CaveGeneration-input
     FromPortName: FinalIceBiomeMask
     ToNodeId: ice-deep-cave-region
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: CaveGeneration-input
-    FromPortName: MossPockets
-    ToNodeId: moss-feature-open-caves
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: CaveGeneration-input
-    FromPortName: CrystalPockets
-    ToNodeId: feature-open-caves
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: CaveGeneration-input
-    FromPortName: IcePockets
-    ToNodeId: ice-feature-open-caves
     ToPortName: B
     CastMode: 0
   - FromNodeId: CaveGeneration-input
@@ -1122,36 +977,6 @@ MonoBehaviour:
     ToNodeId: ice-deep-cave-automata
     ToPortName: Input
     CastMode: 0
-  - FromNodeId: forest-deep-cave-automata
-    FromPortName: ForestDeepAutomataCaves
-    ToNodeId: biome-deep-cave-automata-a
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: jungle-deep-cave-automata
-    FromPortName: JungleDeepAutomataCaves
-    ToNodeId: biome-deep-cave-automata-a
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: desert-deep-cave-automata
-    FromPortName: DesertDeepAutomataCaves
-    ToNodeId: biome-deep-cave-automata-b
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: ice-deep-cave-automata
-    FromPortName: IceDeepAutomataCaves
-    ToNodeId: biome-deep-cave-automata-b
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: biome-deep-cave-automata-a
-    FromPortName: BiomeDeepAutomataA
-    ToNodeId: biome-deep-cave-automata
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: biome-deep-cave-automata-b
-    FromPortName: BiomeDeepAutomataB
-    ToNodeId: biome-deep-cave-automata
-    ToPortName: B
-    CastMode: 0
   - FromNodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
     FromPortName: AutomataCaves
     ToNodeId: combined-automata-caves
@@ -1160,26 +985,6 @@ MonoBehaviour:
   - FromNodeId: biome-deep-cave-automata
     FromPortName: BiomeDeepAutomataCaves
     ToNodeId: combined-automata-caves
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: combined-automata-caves
-    FromPortName: CombinedAutomataCaves
-    ToNodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
-    FromPortName: DeepCaverns
-    ToNodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
-    FromPortName: PrimaryOpenCaves
-    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
-    FromPortName: ShallowCavePockets
-    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
     ToPortName: B
     CastMode: 0
   - FromNodeId: upper-underground-cave-band
@@ -1192,85 +997,110 @@ MonoBehaviour:
     ToNodeId: mid-underground-cave-pockets
     ToPortName: Mask
     CastMode: 0
-  - FromNodeId: upper-underground-cave-pockets
-    FromPortName: UpperUndergroundSmallCaves
-    ToNodeId: staged-underground-pockets
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: mid-underground-cave-pockets
-    FromPortName: MidUndergroundGrowingCaves
-    ToNodeId: staged-underground-pockets
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
-    FromPortName: BaseOpenCaves
-    ToNodeId: staged-base-open-caves
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: staged-underground-pockets
-    FromPortName: StagedUndergroundPockets
-    ToNodeId: staged-base-open-caves
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: staged-base-open-caves
-    FromPortName: StagedBaseOpenCaves
-    ToNodeId: surface-access-open-caves
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: surface-entrance-worms
-    FromPortName: SurfaceEntranceWorms
-    ToNodeId: surface-access-open-caves
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: surface-access-open-caves
-    FromPortName: SurfaceAccessOpenCaves
-    ToNodeId: shallow-worm-open-caves
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: shallow-perlin-worm-caves
-    FromPortName: ShallowPerlinWormCaves
-    ToNodeId: shallow-worm-open-caves
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: perlin-worm-caves
-    FromPortName: PerlinWormCaves
-    ToNodeId: combined-deep-worm-caves
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: large-deep-perlin-worm-caves
-    FromPortName: LargeDeepPerlinWormCaves
-    ToNodeId: combined-deep-worm-caves
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: shallow-worm-open-caves
-    FromPortName: ShallowWormOpenCaves
-    ToNodeId: worm-open-caves
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: combined-deep-worm-caves
-    FromPortName: CombinedDeepWormCaves
-    ToNodeId: worm-open-caves
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: worm-open-caves
-    FromPortName: WormOpenCaves
-    ToNodeId: moss-feature-open-caves
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: moss-feature-open-caves
-    FromPortName: MossFeatureOpenCaves
-    ToNodeId: feature-open-caves
-    ToPortName: A
-    CastMode: 0
   - FromNodeId: feature-open-caves
     FromPortName: OpenCaves
     ToNodeId: ice-feature-open-caves
     ToPortName: A
     CastMode: 0
+  - FromNodeId: forest-deep-cave-automata
+    FromPortName: ForestDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: jungle-deep-cave-automata
+    FromPortName: JungleDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: desert-deep-cave-automata
+    FromPortName: DesertDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: ice-deep-cave-automata
+    FromPortName: IceDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: combined-automata-caves
+    FromPortName: CombinedAutomataCaves
+    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
+    FromPortName: DeepCaverns
+    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    FromPortName: ShallowCavePockets
+    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    FromPortName: BaseOpenCaves
+    ToNodeId: staged-base-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: upper-underground-cave-pockets
+    FromPortName: UpperUndergroundSmallCaves
+    ToNodeId: staged-base-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: mid-underground-cave-pockets
+    FromPortName: MidUndergroundGrowingCaves
+    ToNodeId: staged-base-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: staged-base-open-caves
+    FromPortName: StagedBaseOpenCaves
+    ToNodeId: shallow-worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: surface-entrance-worms
+    FromPortName: SurfaceEntranceWorms
+    ToNodeId: shallow-worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: shallow-perlin-worm-caves
+    FromPortName: ShallowPerlinWormCaves
+    ToNodeId: shallow-worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: shallow-worm-open-caves
+    FromPortName: ShallowWormOpenCaves
+    ToNodeId: worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: perlin-worm-caves
+    FromPortName: PerlinWormCaves
+    ToNodeId: worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: large-deep-perlin-worm-caves
+    FromPortName: LargeDeepPerlinWormCaves
+    ToNodeId: worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: worm-open-caves
+    FromPortName: WormOpenCaves
+    ToNodeId: feature-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: MossPockets
+    ToNodeId: feature-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: CrystalPockets
+    ToNodeId: feature-open-caves
+    ToPortName: Masks
+    CastMode: 0
   StickyNotes: []
   Groups:
   - GroupId: CaveGeneration-group
-    Title: Cave Generation
+    Title: Cave Masks
     Position:
       serializedVersion: 2
       x: -4034.5737
@@ -1287,28 +1117,21 @@ MonoBehaviour:
     - desert-deep-cave-automata
     - ice-deep-cave-region
     - ice-deep-cave-automata
-    - biome-deep-cave-automata-a
-    - biome-deep-cave-automata-b
     - biome-deep-cave-automata
     - combined-automata-caves
     - 38ae7165-dbb6-4aa0-9718-2724031e98af
-    - c7b9cacb-aa1f-432d-bf37-24a13f9fd773
     - 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
     - upper-underground-cave-band
     - upper-underground-cave-pockets
     - mid-underground-cave-band
     - mid-underground-cave-pockets
-    - staged-underground-pockets
     - staged-base-open-caves
     - surface-entrance-worms
-    - surface-access-open-caves
     - shallow-perlin-worm-caves
     - shallow-worm-open-caves
     - perlin-worm-caves
     - worm-open-caves
     - large-deep-perlin-worm-caves
-    - combined-deep-worm-caves
-    - moss-feature-open-caves
     - feature-open-caves
     - ice-feature-open-caves
     BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}

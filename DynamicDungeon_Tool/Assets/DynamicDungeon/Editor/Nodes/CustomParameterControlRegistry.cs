@@ -92,6 +92,13 @@ namespace DynamicDungeon.Editor.Nodes
                 return control != null;
             }
 
+            if (context.NodeType == typeof(MaskExpressionNode) &&
+                string.Equals(context.ParameterName, "rules", StringComparison.OrdinalIgnoreCase))
+            {
+                control = StackRuleParameterControls.CreateMaskExpressionRulesControl(context);
+                return control != null;
+            }
+
             if (context.NodeType == typeof(PrefabStamperNode) &&
                 string.Equals(context.ParameterName, "prefabVariants", StringComparison.OrdinalIgnoreCase))
             {

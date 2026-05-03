@@ -22,14 +22,14 @@ namespace DynamicDungeon.Editor
 
         private static readonly SubGraphSpec[] _specs =
         {
-            new SubGraphSpec("TerrainShape", "Terrain Shape", new Vector2(0.0f, 0.0f)),
-            new SubGraphSpec("CaveGeneration", "Cave Generation", new Vector2(WrapperColumnSpacing, 0.0f)),
-            new SubGraphSpec("MaterialContext", "Material Context", new Vector2(WrapperColumnSpacing * 2.0f, 0.0f)),
-            new SubGraphSpec("BiomeLayout", "Biome Layout", new Vector2(WrapperColumnSpacing * 2.0f, WrapperRowSpacing)),
-            new SubGraphSpec("CaveFeatureOverrides", "Cave Feature Overrides", new Vector2(WrapperColumnSpacing * 3.0f, 0.0f)),
-            new SubGraphSpec("OreFeatureOverrides", "Ore Feature Overrides", new Vector2(WrapperColumnSpacing * 4.0f, 0.0f)),
-            new SubGraphSpec("SurfacePropPlacement", "Surface Prop Placement", new Vector2(WrapperColumnSpacing * 5.0f, 0.0f)),
-            new SubGraphSpec("CaveHousePlacement", "Cave House Placement", new Vector2(WrapperColumnSpacing * 5.0f, WrapperRowSpacing))
+            new SubGraphSpec("BiomeLayout", "Biome Layout", new Vector2(0.0f, 0.0f)),
+            new SubGraphSpec("TerrainShape", "Terrain Profile", new Vector2(WrapperColumnSpacing, 0.0f)),
+            new SubGraphSpec("CaveGeneration", "Cave Masks", new Vector2(WrapperColumnSpacing * 2.0f, 0.0f)),
+            new SubGraphSpec("MaterialContext", "Material IDs", new Vector2(WrapperColumnSpacing * 3.0f, 0.0f)),
+            new SubGraphSpec("CaveFeatureOverrides", "Feature Overrides", new Vector2(WrapperColumnSpacing * 4.0f, 0.0f)),
+            new SubGraphSpec("OreFeatureOverrides", "Ore Overrides", new Vector2(WrapperColumnSpacing * 5.0f, 0.0f)),
+            new SubGraphSpec("SurfacePropPlacement", "Surface Placement", new Vector2(WrapperColumnSpacing * 6.0f, 0.0f)),
+            new SubGraphSpec("CaveHousePlacement", "Structure Placement", new Vector2(WrapperColumnSpacing * 6.0f, WrapperRowSpacing))
         };
 
         [MenuItem("DynamicDungeon/Examples/Rebuild Organized Terraria Graph")]
@@ -224,6 +224,7 @@ namespace DynamicDungeon.Editor
             AssetDatabase.ImportAsset(nestedGraphPath, ImportAssetOptions.ForceSynchronousImport);
 
             PopulateNestedGraph(parentGraph, nestedGraph, spec, selectedNodeIds, boundaries, bounds);
+            OptimiseNestedGraph(nestedGraph);
 
             string nestedGraphGuid = AssetDatabase.AssetPathToGUID(nestedGraphPath);
             GenNodeData wrapper = CreateWrapperNode(spec, nestedGraph, nestedGraphGuid, nestedGraphPath, boundaries);
@@ -499,6 +500,384 @@ namespace DynamicDungeon.Editor
             }
         }
 
+        private static void OptimiseNestedGraph(GenGraph graph)
+        {
+            if (graph == null)
+            {
+                return;
+            }
+
+            bool changed;
+            do
+            {
+                changed = CollapseAssociativeMaskStacks(graph);
+            }
+            while (changed);
+
+            ConvertInvertedBinaryMasksToExpressions(graph);
+            ConvertLogicalIdRuleOverlaysToStacks(graph);
+        }
+
+        private static bool CollapseAssociativeMaskStacks(GenGraph graph)
+        {
+            Dictionary<string, GenNodeData> nodesById = BuildNodeLookup(graph);
+            Dictionary<string, int> outgoingCounts = BuildOutgoingConnectionCounts(graph);
+
+            for (int nodeIndex = 0; nodeIndex < graph.Nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = graph.Nodes[nodeIndex];
+                if (!IsNodeType(node, typeof(CombineMasksNode)) || !TryGetMaskOperation(node, out MaskOperation operation) || !IsAssociativeMaskOperation(operation))
+                {
+                    continue;
+                }
+
+                List<GenConnectionData> leafConnections = new List<GenConnectionData>();
+                HashSet<string> nodesToRemove = new HashSet<string>(StringComparer.Ordinal);
+                if (!CollectAssociativeMaskLeaves(graph, node, operation, nodesById, outgoingCounts, leafConnections, nodesToRemove) ||
+                    leafConnections.Count < 3 ||
+                    nodesToRemove.Count == 0)
+                {
+                    continue;
+                }
+
+                RewriteMaskTreeAsStack(graph, node, operation, leafConnections, nodesToRemove);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool CollectAssociativeMaskLeaves(
+            GenGraph graph,
+            GenNodeData node,
+            MaskOperation operation,
+            IReadOnlyDictionary<string, GenNodeData> nodesById,
+            IReadOnlyDictionary<string, int> outgoingCounts,
+            List<GenConnectionData> leafConnections,
+            HashSet<string> nodesToRemove)
+        {
+            if (node == null)
+            {
+                return false;
+            }
+
+            GenConnectionData inputA = FindIncomingConnection(graph, node.NodeId, "A");
+            GenConnectionData inputB = FindIncomingConnection(graph, node.NodeId, "B");
+            if (inputA == null || inputB == null)
+            {
+                return false;
+            }
+
+            AddMaskLeafOrNestedTree(graph, inputA, operation, nodesById, outgoingCounts, leafConnections, nodesToRemove);
+            AddMaskLeafOrNestedTree(graph, inputB, operation, nodesById, outgoingCounts, leafConnections, nodesToRemove);
+            return true;
+        }
+
+        private static void AddMaskLeafOrNestedTree(
+            GenGraph graph,
+            GenConnectionData input,
+            MaskOperation operation,
+            IReadOnlyDictionary<string, GenNodeData> nodesById,
+            IReadOnlyDictionary<string, int> outgoingCounts,
+            List<GenConnectionData> leafConnections,
+            HashSet<string> nodesToRemove)
+        {
+            GenNodeData sourceNode;
+            int outgoingCount;
+            if (nodesById.TryGetValue(input.FromNodeId ?? string.Empty, out sourceNode) &&
+                IsNodeType(sourceNode, typeof(CombineMasksNode)) &&
+                outgoingCounts.TryGetValue(sourceNode.NodeId ?? string.Empty, out outgoingCount) &&
+                outgoingCount == 1 &&
+                TryGetMaskOperation(sourceNode, out MaskOperation sourceOperation) &&
+                sourceOperation == operation &&
+                CollectAssociativeMaskLeaves(graph, sourceNode, operation, nodesById, outgoingCounts, leafConnections, nodesToRemove))
+            {
+                nodesToRemove.Add(sourceNode.NodeId ?? string.Empty);
+                return;
+            }
+
+            leafConnections.Add(CloneConnection(input));
+        }
+
+        private static void RewriteMaskTreeAsStack(
+            GenGraph graph,
+            GenNodeData root,
+            MaskOperation operation,
+            IReadOnlyList<GenConnectionData> leafConnections,
+            HashSet<string> nodesToRemove)
+        {
+            string outputPortName = ResolveFirstOutputPortName(root, "Mask");
+            for (int connectionIndex = graph.Connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+            {
+                GenConnectionData connection = graph.Connections[connectionIndex];
+                if (connection == null)
+                {
+                    graph.Connections.RemoveAt(connectionIndex);
+                    continue;
+                }
+
+                bool touchesRemovedNode = nodesToRemove.Contains(connection.FromNodeId ?? string.Empty) ||
+                                          nodesToRemove.Contains(connection.ToNodeId ?? string.Empty);
+                bool isOldRootInput = string.Equals(connection.ToNodeId, root.NodeId, StringComparison.Ordinal) &&
+                                      (string.Equals(connection.ToPortName, "A", StringComparison.Ordinal) ||
+                                       string.Equals(connection.ToPortName, "B", StringComparison.Ordinal));
+                if (touchesRemovedNode || isOldRootInput)
+                {
+                    graph.Connections.RemoveAt(connectionIndex);
+                }
+            }
+
+            for (int nodeIndex = graph.Nodes.Count - 1; nodeIndex >= 0; nodeIndex--)
+            {
+                GenNodeData node = graph.Nodes[nodeIndex];
+                if (node != null && nodesToRemove.Contains(node.NodeId ?? string.Empty))
+                {
+                    graph.Nodes.RemoveAt(nodeIndex);
+                }
+            }
+
+            RemoveNodeIdsFromGroups(graph, nodesToRemove);
+
+            root.NodeTypeName = typeof(MaskStackNode).FullName;
+            root.Ports = new List<GenPortData>
+            {
+                new GenPortData("Masks", PortDirection.Input, ChannelType.BoolMask),
+                new GenPortData(outputPortName, PortDirection.Output, ChannelType.BoolMask)
+            };
+            SetParameter(root, "operation", operation.ToString());
+            SetParameter(root, "invertOutput", "False");
+            SetParameter(root, "outputChannelName", outputPortName);
+
+            for (int leafIndex = 0; leafIndex < leafConnections.Count; leafIndex++)
+            {
+                GenConnectionData leaf = leafConnections[leafIndex];
+                GenConnectionData connection = new GenConnectionData(leaf.FromNodeId, leaf.FromPortName, root.NodeId, "Masks");
+                connection.CastMode = leaf.CastMode;
+                graph.Connections.Add(connection);
+            }
+        }
+
+        private static void ConvertLogicalIdRuleOverlaysToStacks(GenGraph graph)
+        {
+            for (int nodeIndex = 0; nodeIndex < graph.Nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = graph.Nodes[nodeIndex];
+                if (!IsNodeType(node, typeof(LogicalIdRuleOverlayNode)))
+                {
+                    continue;
+                }
+
+                string outputPortName = ResolveFirstOutputPortName(node, GraphOutputUtility.OutputInputPortName);
+                List<GenConnectionData> maskConnections = new List<GenConnectionData>();
+                for (int slot = 1; slot <= 4; slot++)
+                {
+                    GenConnectionData connection = FindIncomingConnection(graph, node.NodeId, "Mask " + slot.ToString());
+                    if (connection != null)
+                    {
+                        maskConnections.Add(CloneConnection(connection));
+                    }
+                }
+
+                for (int connectionIndex = graph.Connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+                {
+                    GenConnectionData connection = graph.Connections[connectionIndex];
+                    if (connection != null &&
+                        string.Equals(connection.ToNodeId, node.NodeId, StringComparison.Ordinal) &&
+                        connection.ToPortName != null &&
+                        connection.ToPortName.StartsWith("Mask ", StringComparison.Ordinal))
+                    {
+                        graph.Connections.RemoveAt(connectionIndex);
+                    }
+                }
+
+                node.NodeTypeName = typeof(LogicalIdRuleStackNode).FullName;
+                node.Ports = new List<GenPortData>
+                {
+                    new GenPortData("Base", PortDirection.Input, ChannelType.Int),
+                    new GenPortData("Masks", PortDirection.Input, ChannelType.BoolMask),
+                    new GenPortData(outputPortName, PortDirection.Output, ChannelType.Int)
+                };
+                SetParameter(node, "outputChannelName", outputPortName);
+
+                for (int maskIndex = 0; maskIndex < maskConnections.Count; maskIndex++)
+                {
+                    GenConnectionData original = maskConnections[maskIndex];
+                    GenConnectionData connection = new GenConnectionData(original.FromNodeId, original.FromPortName, node.NodeId, "Masks");
+                    connection.CastMode = original.CastMode;
+                    graph.Connections.Add(connection);
+                }
+            }
+        }
+
+        private static void ConvertInvertedBinaryMasksToExpressions(GenGraph graph)
+        {
+            Dictionary<string, GenNodeData> nodesById = BuildNodeLookup(graph);
+            Dictionary<string, int> outgoingCounts = BuildOutgoingConnectionCounts(graph);
+
+            for (int nodeIndex = 0; nodeIndex < graph.Nodes.Count; nodeIndex++)
+            {
+                GenNodeData node = graph.Nodes[nodeIndex];
+                if (!IsNodeType(node, typeof(CombineMasksNode)) ||
+                    !TryGetMaskOperation(node, out MaskOperation operation) ||
+                    !IsAssociativeMaskOperation(operation))
+                {
+                    continue;
+                }
+
+                GenConnectionData inputA = FindIncomingConnection(graph, node.NodeId, "A");
+                GenConnectionData inputB = FindIncomingConnection(graph, node.NodeId, "B");
+                if (inputA == null || inputB == null)
+                {
+                    continue;
+                }
+
+                bool invertA = TryResolveInvertSource(graph, inputA, nodesById, outgoingCounts, out GenConnectionData sourceA, out string invertNodeA);
+                bool invertB = TryResolveInvertSource(graph, inputB, nodesById, outgoingCounts, out GenConnectionData sourceB, out string invertNodeB);
+                if (!invertA && !invertB)
+                {
+                    continue;
+                }
+
+                string outputPortName = ResolveFirstOutputPortName(node, "Mask");
+                for (int connectionIndex = graph.Connections.Count - 1; connectionIndex >= 0; connectionIndex--)
+                {
+                    GenConnectionData connection = graph.Connections[connectionIndex];
+                    if (connection == null)
+                    {
+                        graph.Connections.RemoveAt(connectionIndex);
+                        continue;
+                    }
+
+                    bool isOldRootInput = string.Equals(connection.ToNodeId, node.NodeId, StringComparison.Ordinal) &&
+                                          (string.Equals(connection.ToPortName, "A", StringComparison.Ordinal) ||
+                                           string.Equals(connection.ToPortName, "B", StringComparison.Ordinal));
+                    bool touchesRemovedInvert = (!string.IsNullOrWhiteSpace(invertNodeA) &&
+                                                 (string.Equals(connection.FromNodeId, invertNodeA, StringComparison.Ordinal) ||
+                                                  string.Equals(connection.ToNodeId, invertNodeA, StringComparison.Ordinal))) ||
+                                                (!string.IsNullOrWhiteSpace(invertNodeB) &&
+                                                 !string.Equals(invertNodeA, invertNodeB, StringComparison.Ordinal) &&
+                                                 (string.Equals(connection.FromNodeId, invertNodeB, StringComparison.Ordinal) ||
+                                                  string.Equals(connection.ToNodeId, invertNodeB, StringComparison.Ordinal)));
+                    if (isOldRootInput || touchesRemovedInvert)
+                    {
+                        graph.Connections.RemoveAt(connectionIndex);
+                    }
+                }
+
+                HashSet<string> removedNodes = new HashSet<string>(StringComparer.Ordinal);
+                if (!string.IsNullOrWhiteSpace(invertNodeA))
+                {
+                    removedNodes.Add(invertNodeA);
+                }
+
+                if (!string.IsNullOrWhiteSpace(invertNodeB))
+                {
+                    removedNodes.Add(invertNodeB);
+                }
+
+                for (int removeIndex = graph.Nodes.Count - 1; removeIndex >= 0; removeIndex--)
+                {
+                    GenNodeData candidate = graph.Nodes[removeIndex];
+                    if (candidate != null && removedNodes.Contains(candidate.NodeId ?? string.Empty))
+                    {
+                        graph.Nodes.RemoveAt(removeIndex);
+                    }
+                }
+
+                RemoveNodeIdsFromGroups(graph, removedNodes);
+                node.NodeTypeName = typeof(MaskExpressionNode).FullName;
+                node.Ports = new List<GenPortData>
+                {
+                    new GenPortData("Masks", PortDirection.Input, ChannelType.BoolMask),
+                    new GenPortData(outputPortName, PortDirection.Output, ChannelType.BoolMask)
+                };
+                SetParameter(node, "outputChannelName", outputPortName);
+                SetParameter(node, "rules", JsonUtility.ToJson(new MaskExpressionRuleSet
+                {
+                    Rules = new[]
+                    {
+                        new MaskExpressionRule { Enabled = true, MaskSlot = 1, Operation = MaskExpressionOperation.Replace, Invert = invertA },
+                        new MaskExpressionRule { Enabled = true, MaskSlot = 2, Operation = ConvertMaskOperation(operation), Invert = invertB }
+                    }
+                }));
+
+                GenConnectionData newInputA = new GenConnectionData(sourceA.FromNodeId, sourceA.FromPortName, node.NodeId, "Masks");
+                newInputA.CastMode = sourceA.CastMode;
+                graph.Connections.Add(newInputA);
+                GenConnectionData newInputB = new GenConnectionData(sourceB.FromNodeId, sourceB.FromPortName, node.NodeId, "Masks");
+                newInputB.CastMode = sourceB.CastMode;
+                graph.Connections.Add(newInputB);
+            }
+        }
+
+        private static bool TryResolveInvertSource(
+            GenGraph graph,
+            GenConnectionData input,
+            IReadOnlyDictionary<string, GenNodeData> nodesById,
+            IReadOnlyDictionary<string, int> outgoingCounts,
+            out GenConnectionData sourceConnection,
+            out string invertNodeId)
+        {
+            sourceConnection = input;
+            invertNodeId = string.Empty;
+
+            GenNodeData sourceNode;
+            int outgoingCount;
+            if (!nodesById.TryGetValue(input.FromNodeId ?? string.Empty, out sourceNode) ||
+                !IsNodeType(sourceNode, typeof(InvertNode)) ||
+                !outgoingCounts.TryGetValue(sourceNode.NodeId ?? string.Empty, out outgoingCount) ||
+                outgoingCount != 1)
+            {
+                return false;
+            }
+
+            GenPortData outputPort = FindPort(sourceNode, input.FromPortName);
+            if (outputPort == null || outputPort.Type != ChannelType.BoolMask)
+            {
+                return false;
+            }
+
+            GenConnectionData invertInput = FindIncomingConnection(graph, sourceNode.NodeId, "Input");
+            if (invertInput == null)
+            {
+                return false;
+            }
+
+            sourceConnection = CloneConnection(invertInput);
+            invertNodeId = sourceNode.NodeId ?? string.Empty;
+            return true;
+        }
+
+        private static MaskExpressionOperation ConvertMaskOperation(MaskOperation operation)
+        {
+            switch (operation)
+            {
+                case MaskOperation.AND:
+                    return MaskExpressionOperation.AND;
+                case MaskOperation.XOR:
+                    return MaskExpressionOperation.XOR;
+                default:
+                    return MaskExpressionOperation.OR;
+            }
+        }
+
+        private static void RemoveNodeIdsFromGroups(GenGraph graph, HashSet<string> nodeIds)
+        {
+            if (graph == null || graph.Groups == null || nodeIds == null || nodeIds.Count == 0)
+            {
+                return;
+            }
+
+            for (int groupIndex = 0; groupIndex < graph.Groups.Count; groupIndex++)
+            {
+                GenGroupData group = graph.Groups[groupIndex];
+                if (group != null && group.ContainedNodeIds != null)
+                {
+                    group.ContainedNodeIds.RemoveAll(nodeId => nodeIds.Contains(nodeId ?? string.Empty));
+                }
+            }
+        }
+
         private static void LayoutTopLevelGraph(GenGraph graph)
         {
             Dictionary<string, GenNodeData> nodesById = BuildNodeLookup(graph);
@@ -515,24 +894,24 @@ namespace DynamicDungeon.Editor
             GenNodeData prefabReserved;
             if (nodesById.TryGetValue(PrefabReservedVoidNodeId, out prefabReserved))
             {
-                prefabReserved.Position = new Vector2(WrapperColumnSpacing * 6.0f, 0.0f);
+                prefabReserved.Position = new Vector2(WrapperColumnSpacing * 7.0f, 0.0f);
             }
 
             GenNodeData output = GraphOutputUtility.FindOutputNode(graph);
             if (output != null)
             {
-                output.Position = new Vector2(WrapperColumnSpacing * 7.0f, 0.0f);
+                output.Position = new Vector2(WrapperColumnSpacing * 8.0f, 0.0f);
             }
 
             graph.Groups.Clear();
-            graph.Groups.Add(CreateTopLevelGroup("organized-core-generation", "Core Generation", -80.0f, -80.0f, WrapperColumnSpacing * 3.0f + 260.0f, WrapperRowSpacing + 200.0f, "TerrainShape", "CaveGeneration", "MaterialContext", "BiomeLayout"));
-            graph.Groups.Add(CreateTopLevelGroup("organized-features", "Feature Overrides", WrapperColumnSpacing * 3.0f - 80.0f, -80.0f, WrapperColumnSpacing * 2.0f + 260.0f, 200.0f, "CaveFeatureOverrides", "OreFeatureOverrides"));
-            graph.Groups.Add(CreateTopLevelGroup("organized-placement", "Placement", WrapperColumnSpacing * 5.0f - 80.0f, -80.0f, 280.0f, WrapperRowSpacing + 200.0f, "SurfacePropPlacement", "CaveHousePlacement"));
+            graph.Groups.Add(CreateTopLevelGroup("organized-core-generation", "World Shape", -80.0f, -80.0f, WrapperColumnSpacing * 4.0f + 260.0f, WrapperRowSpacing + 200.0f, "BiomeLayout", "TerrainShape", "CaveGeneration", "MaterialContext"));
+            graph.Groups.Add(CreateTopLevelGroup("organized-features", "Feature Overrides", WrapperColumnSpacing * 4.0f - 80.0f, -80.0f, WrapperColumnSpacing * 2.0f + 260.0f, 200.0f, "CaveFeatureOverrides", "OreFeatureOverrides"));
+            graph.Groups.Add(CreateTopLevelGroup("organized-placement", "Placement", WrapperColumnSpacing * 6.0f - 80.0f, -80.0f, 280.0f, WrapperRowSpacing + 200.0f, "SurfacePropPlacement", "CaveHousePlacement"));
             graph.Groups.Add(new GenGroupData
             {
                 GroupId = "organized-output",
                 Title = "Output",
-                Position = new Rect(WrapperColumnSpacing * 6.0f - 80.0f, -80.0f, WrapperColumnSpacing + 280.0f, 200.0f),
+                Position = new Rect(WrapperColumnSpacing * 7.0f - 80.0f, -80.0f, WrapperColumnSpacing + 280.0f, 200.0f),
                 ContainedNodeIds = new List<string> { PrefabReservedVoidNodeId, output != null ? output.NodeId : string.Empty }
             });
         }
@@ -662,6 +1041,140 @@ namespace DynamicDungeon.Editor
             }
 
             return nodesById;
+        }
+
+        private static Dictionary<string, int> BuildOutgoingConnectionCounts(GenGraph graph)
+        {
+            Dictionary<string, int> counts = new Dictionary<string, int>(StringComparer.Ordinal);
+            if (graph == null || graph.Connections == null)
+            {
+                return counts;
+            }
+
+            for (int connectionIndex = 0; connectionIndex < graph.Connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = graph.Connections[connectionIndex];
+                if (connection == null || string.IsNullOrWhiteSpace(connection.FromNodeId))
+                {
+                    continue;
+                }
+
+                int count;
+                counts.TryGetValue(connection.FromNodeId, out count);
+                counts[connection.FromNodeId] = count + 1;
+            }
+
+            return counts;
+        }
+
+        private static bool IsNodeType(GenNodeData node, Type nodeType)
+        {
+            return node != null &&
+                   nodeType != null &&
+                   string.Equals(node.NodeTypeName, nodeType.FullName, StringComparison.Ordinal);
+        }
+
+        private static bool TryGetMaskOperation(GenNodeData node, out MaskOperation operation)
+        {
+            operation = MaskOperation.AND;
+            string rawValue = GetParameterValue(node, "operation");
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return true;
+            }
+
+            return Enum.TryParse(rawValue, true, out operation);
+        }
+
+        private static bool IsAssociativeMaskOperation(MaskOperation operation)
+        {
+            return operation == MaskOperation.AND ||
+                   operation == MaskOperation.OR ||
+                   operation == MaskOperation.XOR;
+        }
+
+        private static GenConnectionData FindIncomingConnection(GenGraph graph, string nodeId, string portName)
+        {
+            if (graph == null || graph.Connections == null)
+            {
+                return null;
+            }
+
+            for (int connectionIndex = 0; connectionIndex < graph.Connections.Count; connectionIndex++)
+            {
+                GenConnectionData connection = graph.Connections[connectionIndex];
+                if (connection != null &&
+                    string.Equals(connection.ToNodeId, nodeId, StringComparison.Ordinal) &&
+                    string.Equals(connection.ToPortName, portName, StringComparison.Ordinal))
+                {
+                    return connection;
+                }
+            }
+
+            return null;
+        }
+
+        private static string ResolveFirstOutputPortName(GenNodeData node, string fallback)
+        {
+            List<GenPortData> ports = node != null ? node.Ports : null;
+            if (ports != null)
+            {
+                for (int portIndex = 0; portIndex < ports.Count; portIndex++)
+                {
+                    GenPortData port = ports[portIndex];
+                    if (port != null && port.Direction == PortDirection.Output && !string.IsNullOrWhiteSpace(port.PortName))
+                    {
+                        return port.PortName;
+                    }
+                }
+            }
+
+            return string.IsNullOrWhiteSpace(fallback) ? "Output" : fallback;
+        }
+
+        private static string GetParameterValue(GenNodeData node, string parameterName)
+        {
+            List<SerializedParameter> parameters = node != null ? node.Parameters : null;
+            if (parameters == null)
+            {
+                return string.Empty;
+            }
+
+            for (int parameterIndex = 0; parameterIndex < parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = parameters[parameterIndex];
+                if (parameter != null && string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return parameter.Value ?? string.Empty;
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static void SetParameter(GenNodeData node, string parameterName, string value)
+        {
+            if (node == null || string.IsNullOrWhiteSpace(parameterName))
+            {
+                return;
+            }
+
+            if (node.Parameters == null)
+            {
+                node.Parameters = new List<SerializedParameter>();
+            }
+
+            for (int parameterIndex = 0; parameterIndex < node.Parameters.Count; parameterIndex++)
+            {
+                SerializedParameter parameter = node.Parameters[parameterIndex];
+                if (parameter != null && string.Equals(parameter.Name, parameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    parameter.Value = value ?? string.Empty;
+                    return;
+                }
+            }
+
+            node.Parameters.Add(new SerializedParameter(parameterName, value ?? string.Empty));
         }
 
         private static Rect CalculateBounds(GenGraph graph, HashSet<string> selectedNodeIds)

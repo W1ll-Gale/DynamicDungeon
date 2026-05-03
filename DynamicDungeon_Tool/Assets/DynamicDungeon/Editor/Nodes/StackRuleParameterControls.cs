@@ -22,6 +22,11 @@ namespace DynamicDungeon.Editor.Nodes
             return new PlacementSetRulesField(context);
         }
 
+        public static VisualElement CreateMaskExpressionRulesControl(CustomParameterControlContext context)
+        {
+            return new MaskExpressionRulesField(context);
+        }
+
         public static bool HasMissingBiomeAssets(BiomeOverrideStackRuleSet ruleSet)
         {
             BiomeOverrideStackRule[] rules = ruleSet != null && ruleSet.Rules != null
@@ -33,6 +38,25 @@ namespace DynamicDungeon.Editor.Nodes
             {
                 BiomeOverrideStackRule rule = rules[ruleIndex];
                 if (rule != null && rule.Enabled && LoadAsset<BiomeAsset>(rule.OverrideBiome) == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool HasInvalidMaskExpressionSlots(MaskExpressionRuleSet ruleSet)
+        {
+            MaskExpressionRule[] rules = ruleSet != null && ruleSet.Rules != null
+                ? ruleSet.Rules
+                : Array.Empty<MaskExpressionRule>();
+
+            int ruleIndex;
+            for (ruleIndex = 0; ruleIndex < rules.Length; ruleIndex++)
+            {
+                MaskExpressionRule rule = rules[ruleIndex];
+                if (rule != null && rule.Enabled && rule.MaskSlot <= 0)
                 {
                     return true;
                 }
@@ -366,6 +390,134 @@ namespace DynamicDungeon.Editor.Nodes
             }
         }
 
+        private sealed class MaskExpressionRulesField : VisualElement, ICustomParameterValueControl
+        {
+            private readonly string _parameterName;
+            private readonly Action<string, string> _onValueChanged;
+            private readonly Label _summaryLabel;
+            private readonly VisualElement _ruleList;
+            private MaskExpressionRuleSet _ruleSet;
+            private bool _isRefreshing;
+
+            public MaskExpressionRulesField(CustomParameterControlContext context)
+            {
+                _parameterName = context.ParameterName;
+                _onValueChanged = context.OnValueChanged;
+                _ruleSet = ParseMaskExpressionRules(context.ParameterValue);
+
+                style.flexDirection = FlexDirection.Column;
+                style.flexGrow = 1.0f;
+
+                VisualElement header = CreateHeader(context.LabelText, "Add Step", AddRule);
+                _summaryLabel = CreateSummaryLabel();
+                header.Insert(1, _summaryLabel);
+                Add(header);
+
+                _ruleList = CreateList();
+                Add(_ruleList);
+                Refresh();
+            }
+
+            public void SetValueWithoutNotify(string value)
+            {
+                _ruleSet = ParseMaskExpressionRules(value);
+                Refresh();
+            }
+
+            private void AddRule()
+            {
+                List<MaskExpressionRule> rules = GetRules();
+                rules.Add(new MaskExpressionRule { Enabled = true, MaskSlot = 1, Operation = rules.Count == 0 ? MaskExpressionOperation.Replace : MaskExpressionOperation.OR });
+                _ruleSet.Rules = rules.ToArray();
+                ApplyChanges();
+            }
+
+            private void Refresh()
+            {
+                _isRefreshing = true;
+                _ruleList.Clear();
+                MaskExpressionRule[] rules = _ruleSet != null && _ruleSet.Rules != null
+                    ? _ruleSet.Rules
+                    : Array.Empty<MaskExpressionRule>();
+
+                int ruleIndex;
+                for (ruleIndex = 0; ruleIndex < rules.Length; ruleIndex++)
+                {
+                    _ruleList.Add(CreateRuleRow(ruleIndex, rules[ruleIndex]));
+                }
+
+                if (rules.Length == 0)
+                {
+                    _ruleList.Add(CreateEmptyLabel("No mask expression steps configured."));
+                }
+
+                string suffix = HasInvalidMaskExpressionSlots(_ruleSet) ? " - invalid slots" : string.Empty;
+                _summaryLabel.text = rules.Length.ToString(CultureInfo.InvariantCulture) + " expression steps" + suffix;
+                _summaryLabel.style.color = HasInvalidMaskExpressionSlots(_ruleSet)
+                    ? new Color(1.0f, 0.48f, 0.32f, 1.0f)
+                    : new Color(0.76f, 0.76f, 0.76f, 1.0f);
+                _isRefreshing = false;
+            }
+
+            private VisualElement CreateRuleRow(int ruleIndex, MaskExpressionRule rule)
+            {
+                MaskExpressionRule safeRule = rule ?? new MaskExpressionRule();
+                VisualElement row = CreateRow();
+
+                row.Add(CreateEnabledToggle(safeRule.Enabled, value =>
+                {
+                    safeRule.Enabled = value;
+                    ApplyChanges();
+                }));
+
+                IntegerField maskField = CreateIntegerField("Mask", Mathf.Max(1, safeRule.MaskSlot), 92.0f, value =>
+                {
+                    safeRule.MaskSlot = Mathf.Max(1, value);
+                    ApplyChanges();
+                });
+                maskField.tooltip = "One-based mask input slot.";
+                row.Add(maskField);
+
+                EnumField operationField = new EnumField(safeRule.Operation);
+                operationField.style.width = 116.0f;
+                operationField.style.minWidth = 116.0f;
+                operationField.tooltip = "How this mask step combines with the current expression result.";
+                operationField.RegisterValueChangedCallback(evt =>
+                {
+                    safeRule.Operation = (MaskExpressionOperation)evt.newValue;
+                    ApplyChanges();
+                });
+                row.Add(operationField);
+
+                row.Add(CreateToggle("Invert", safeRule.Invert, value =>
+                {
+                    safeRule.Invert = value;
+                    ApplyChanges();
+                }));
+
+                AddMoveRemoveButtons(row, ruleIndex, GetRules, rules => _ruleSet.Rules = rules.ToArray(), ApplyChanges);
+                return row;
+            }
+
+            private List<MaskExpressionRule> GetRules()
+            {
+                return new List<MaskExpressionRule>(_ruleSet != null && _ruleSet.Rules != null
+                    ? _ruleSet.Rules
+                    : Array.Empty<MaskExpressionRule>());
+            }
+
+            private void ApplyChanges()
+            {
+                if (_isRefreshing)
+                {
+                    return;
+                }
+
+                _onValueChanged?.Invoke(_parameterName, JsonUtility.ToJson(_ruleSet ?? new MaskExpressionRuleSet()));
+                Refresh();
+            }
+        }
+
         private static VisualElement CreateHeader(string labelText, string buttonText, Action onAdd)
         {
             VisualElement header = new VisualElement();
@@ -549,6 +701,23 @@ namespace DynamicDungeon.Editor.Nodes
             catch
             {
                 return new PlacementSetRuleSet();
+            }
+        }
+
+        private static MaskExpressionRuleSet ParseMaskExpressionRules(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return new MaskExpressionRuleSet();
+            }
+
+            try
+            {
+                return JsonUtility.FromJson<MaskExpressionRuleSet>(value) ?? new MaskExpressionRuleSet();
+            }
+            catch
+            {
+                return new MaskExpressionRuleSet();
             }
         }
 

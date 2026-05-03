@@ -170,14 +170,6 @@ MonoBehaviour:
       DisplayName: ForestBiomeMask
       Direction: 0
       Type: 0
-    - PortName: JungleBiomeMask
-      DisplayName: JungleBiomeMask
-      Direction: 0
-      Type: 0
-    - PortName: IceBiomeMask
-      DisplayName: IceBiomeMask
-      Direction: 0
-      Type: 0
     - PortName: FinalJungleBiomeMask
       DisplayName: FinalJungleBiomeMask
       Direction: 0
@@ -190,6 +182,14 @@ MonoBehaviour:
       DisplayName: FinalIceBiomeMask
       Direction: 0
       Type: 0
+    - PortName: JungleBiomeMask
+      DisplayName: JungleBiomeMask
+      Direction: 0
+      Type: 0
+    - PortName: IceBiomeMask
+      DisplayName: IceBiomeMask
+      Direction: 0
+      Type: 0
     - PortName: BiomeChannel
       DisplayName: BiomeChannel
       Direction: 0
@@ -200,16 +200,6 @@ MonoBehaviour:
     FromPortName: ForestBiomeMask
     ToNodeId: BiomeLayout-output
     ToPortName: ForestBiomeMask
-    CastMode: 0
-  - FromNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
-    FromPortName: JungleBiomeMask
-    ToNodeId: BiomeLayout-output
-    ToPortName: JungleBiomeMask
-    CastMode: 0
-  - FromNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
-    FromPortName: IceBiomeMask
-    ToNodeId: BiomeLayout-output
-    ToPortName: IceBiomeMask
     CastMode: 0
   - FromNodeId: 8104437b-0d86-42e7-b702-88b0035651e6
     FromPortName: FinalJungleBiomeMask
@@ -225,6 +215,16 @@ MonoBehaviour:
     FromPortName: FinalIceBiomeMask
     ToNodeId: BiomeLayout-output
     ToPortName: FinalIceBiomeMask
+    CastMode: 0
+  - FromNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    FromPortName: JungleBiomeMask
+    ToNodeId: BiomeLayout-output
+    ToPortName: JungleBiomeMask
+    CastMode: 0
+  - FromNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    FromPortName: IceBiomeMask
+    ToNodeId: BiomeLayout-output
+    ToPortName: IceBiomeMask
     CastMode: 0
   - FromNodeId: biome-layout-randomized
     FromPortName: BiomeChannel

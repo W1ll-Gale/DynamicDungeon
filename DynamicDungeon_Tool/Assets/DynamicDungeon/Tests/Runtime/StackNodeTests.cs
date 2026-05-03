@@ -68,6 +68,83 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task MaskExpressionNodeAppliesMixedOperationsInOrder()
+        {
+            BoolMaskSourceNode sourceA = new BoolMaskSourceNode("a", "A", new byte[] { 1, 1, 1, 0 });
+            BoolMaskSourceNode sourceB = new BoolMaskSourceNode("b", "B", new byte[] { 1, 0, 1, 1 });
+            BoolMaskSourceNode sourceC = new BoolMaskSourceNode("c", "C", new byte[] { 0, 1, 0, 1 });
+            MaskExpressionNode expression = new MaskExpressionNode("expr", "Expression", "Out");
+            expression.ReceiveParameter("rules", JsonUtility.ToJson(new MaskExpressionRuleSet
+            {
+                Rules = new[]
+                {
+                    new MaskExpressionRule { Enabled = true, MaskSlot = 1, Operation = MaskExpressionOperation.Replace },
+                    new MaskExpressionRule { Enabled = true, MaskSlot = 2, Operation = MaskExpressionOperation.AND },
+                    new MaskExpressionRule { Enabled = true, MaskSlot = 3, Operation = MaskExpressionOperation.OR }
+                }
+            }));
+            InputConnectionMap connections = new InputConnectionMap();
+            connections.SetConnections("Masks", new[] { "A", "B", "C" });
+            expression.ReceiveInputConnections(connections);
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { sourceA, sourceB, sourceC, expression }, 4, 1, 99L);
+            WorldSnapshot.BoolMaskChannelSnapshot output = GetBoolMaskChannel(snapshot, "Out");
+
+            Assert.That(output, Is.Not.Null);
+            CollectionAssert.AreEqual(new byte[] { 1, 1, 1, 1 }, output.Data);
+        }
+
+        [Test]
+        public async Task MaskExpressionNodeSupportsSubtractAndInvertedInputs()
+        {
+            BoolMaskSourceNode sourceA = new BoolMaskSourceNode("a", "A", new byte[] { 1, 1, 1, 1 });
+            BoolMaskSourceNode sourceB = new BoolMaskSourceNode("b", "B", new byte[] { 1, 0, 1, 0 });
+            BoolMaskSourceNode sourceC = new BoolMaskSourceNode("c", "C", new byte[] { 1, 1, 0, 0 });
+            MaskExpressionNode expression = new MaskExpressionNode("expr", "Expression", "Out");
+            expression.ReceiveParameter("rules", JsonUtility.ToJson(new MaskExpressionRuleSet
+            {
+                Rules = new[]
+                {
+                    new MaskExpressionRule { Enabled = true, MaskSlot = 1, Operation = MaskExpressionOperation.Replace },
+                    new MaskExpressionRule { Enabled = true, MaskSlot = 2, Operation = MaskExpressionOperation.Subtract },
+                    new MaskExpressionRule { Enabled = true, MaskSlot = 3, Operation = MaskExpressionOperation.AND, Invert = true }
+                }
+            }));
+            InputConnectionMap connections = new InputConnectionMap();
+            connections.SetConnections("Masks", new[] { "A", "B", "C" });
+            expression.ReceiveInputConnections(connections);
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { sourceA, sourceB, sourceC, expression }, 4, 1, 99L);
+            WorldSnapshot.BoolMaskChannelSnapshot output = GetBoolMaskChannel(snapshot, "Out");
+
+            Assert.That(output, Is.Not.Null);
+            CollectionAssert.AreEqual(new byte[] { 0, 0, 0, 1 }, output.Data);
+        }
+
+        [Test]
+        public async Task MaskExpressionNodeClearsOutputForEmptyOrMissingRows()
+        {
+            BoolMaskSourceNode sourceA = new BoolMaskSourceNode("a", "A", new byte[] { 1, 1, 1, 1 });
+            MaskExpressionNode expression = new MaskExpressionNode("expr", "Expression", "Out");
+            expression.ReceiveParameter("rules", JsonUtility.ToJson(new MaskExpressionRuleSet
+            {
+                Rules = new[]
+                {
+                    new MaskExpressionRule { Enabled = true, MaskSlot = 2, Operation = MaskExpressionOperation.Replace }
+                }
+            }));
+            InputConnectionMap connections = new InputConnectionMap();
+            connections.SetConnections("Masks", new[] { "A" });
+            expression.ReceiveInputConnections(connections);
+
+            WorldSnapshot snapshot = await ExecuteNodesAsync(new IGenNode[] { sourceA, expression }, 4, 1, 99L);
+            WorldSnapshot.BoolMaskChannelSnapshot output = GetBoolMaskChannel(snapshot, "Out");
+
+            Assert.That(output, Is.Not.Null);
+            CollectionAssert.AreEqual(new byte[] { 0, 0, 0, 0 }, output.Data);
+        }
+
+        [Test]
         public async Task LogicalIdRuleStackNodeAppliesOrderedMaskRows()
         {
             IntSourceNode baseIds = new IntSourceNode("base", "Base", new[] { 1, 1, 2, 2 });

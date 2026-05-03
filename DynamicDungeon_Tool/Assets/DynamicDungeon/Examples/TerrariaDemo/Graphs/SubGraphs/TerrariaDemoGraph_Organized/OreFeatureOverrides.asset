@@ -63,34 +63,13 @@ MonoBehaviour:
     - Name: maxDepth
       Value: 20
       ObjectReference: {fileID: 0}
-  - NodeId: e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
-    NodeName: Ore Depth Mask
-    Position: {x: 1891, y: -1715.3999}
-    Ports:
-    - PortName: Input
-      DisplayName: Input
-      Direction: 0
-      Type: 2
-    - PortName: OreDepthMask
-      DisplayName: OreDepthMask
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: inputType
-      Value: BoolMask
-      ObjectReference: {fileID: 0}
   - NodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskExpressionNode
     NodeName: Ore Wall Mask
     Position: {x: 2223, y: -1805}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: OreWallMask
@@ -100,6 +79,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: OreWallMask
+      ObjectReference: {fileID: 0}
+    - Name: rules
+      Value: '{"Rules":[{"Enabled":true,"MaskSlot":1,"Operation":0,"Invert":false},{"Enabled":true,"MaskSlot":2,"Operation":2,"Invert":true}]}'
       ObjectReference: {fileID: 0}
   - NodeId: 4978ff0f-b00f-40ef-8464-ceeb214dec50
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
@@ -726,16 +711,16 @@ MonoBehaviour:
     NodeName: Sub Graph Input
     Position: {x: -3940, y: -720.76013}
     Ports:
+    - PortName: ForestBiomeMask
+      DisplayName: ForestBiomeMask
+      Direction: 1
+      Type: 2
     - PortName: DeepBand
       DisplayName: DeepBand
       Direction: 1
       Type: 2
     - PortName: TerrainMassMask
       DisplayName: TerrainMassMask
-      Direction: 1
-      Type: 2
-    - PortName: ForestBiomeMask
-      DisplayName: ForestBiomeMask
       Direction: 1
       Type: 2
     - PortName: WallMask
@@ -763,6 +748,11 @@ MonoBehaviour:
     Parameters: []
   Connections:
   - FromNodeId: OreFeatureOverrides-input
+    FromPortName: ForestBiomeMask
+    ToNodeId: forest-deep-cave-region
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: OreFeatureOverrides-input
     FromPortName: DeepBand
     ToNodeId: forest-deep-cave-region
     ToPortName: A
@@ -771,16 +761,6 @@ MonoBehaviour:
     FromPortName: TerrainMassMask
     ToNodeId: 246c68d4-6427-4de7-8e42-3859c3a495fb
     ToPortName: Input
-    CastMode: 0
-  - FromNodeId: OreFeatureOverrides-input
-    FromPortName: ForestBiomeMask
-    ToNodeId: forest-deep-cave-region
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: OreFeatureOverrides-input
-    FromPortName: WallMask
-    ToNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
-    ToPortName: A
     CastMode: 0
   - FromNodeId: OreFeatureOverrides-input
     FromPortName: VisualBiomeChannel
@@ -796,16 +776,6 @@ MonoBehaviour:
     FromPortName: BiomeChannel
     ToNodeId: OreFeatureOverrides-output
     ToPortName: BiomeChannel
-    CastMode: 0
-  - FromNodeId: 246c68d4-6427-4de7-8e42-3859c3a495fb
-    FromPortName: OreSurfaceBuffer
-    ToNodeId: e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
-    ToPortName: Input
-    CastMode: 0
-  - FromNodeId: e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
-    FromPortName: OreDepthMask
-    ToNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
-    ToPortName: B
     CastMode: 0
   - FromNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
     FromPortName: OreWallMask
@@ -962,10 +932,20 @@ MonoBehaviour:
     ToNodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
     ToPortName: Biome Input
     CastMode: 0
+  - FromNodeId: OreFeatureOverrides-input
+    FromPortName: WallMask
+    ToNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 246c68d4-6427-4de7-8e42-3859c3a495fb
+    FromPortName: OreSurfaceBuffer
+    ToNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    ToPortName: Masks
+    CastMode: 0
   StickyNotes: []
   Groups:
   - GroupId: OreFeatureOverrides-group
-    Title: Ore Feature Overrides
+    Title: Ore Overrides
     Position:
       serializedVersion: 2
       x: -3800
@@ -975,7 +955,6 @@ MonoBehaviour:
     ContainedNodeIds:
     - forest-deep-cave-region
     - 246c68d4-6427-4de7-8e42-3859c3a495fb
-    - e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
     - 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
     - 4978ff0f-b00f-40ef-8464-ceeb214dec50
     - 7c2aced2-da86-4c3d-ade5-719168a576fc

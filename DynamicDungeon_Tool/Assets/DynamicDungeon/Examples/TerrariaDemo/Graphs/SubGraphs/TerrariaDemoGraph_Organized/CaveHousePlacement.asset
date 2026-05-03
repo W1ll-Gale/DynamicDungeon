@@ -73,38 +73,13 @@ MonoBehaviour:
     - Name: maxDepth
       Value: 160
       ObjectReference: {fileID: 0}
-  - NodeId: cave-house-depth-candidates
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Cave House Depth Candidates
-    Position: {x: 2776, y: 2222.52}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: CaveHouseDepthCandidates
-      DisplayName: CaveHouseDepthCandidates
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: AND
-      ObjectReference: {fileID: 0}
   - NodeId: cave-house-room-candidates
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Cave House Room Candidates
     Position: {x: 3096, y: 2222.52}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: CaveHouseRoomCandidates
@@ -114,6 +89,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: CaveHouseRoomCandidates
       ObjectReference: {fileID: 0}
   - NodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
@@ -317,11 +298,6 @@ MonoBehaviour:
     ToPortName: Input
     CastMode: 0
   - FromNodeId: CaveHousePlacement-input
-    FromPortName: CombinedAutomataCaves
-    ToNodeId: cave-house-room-candidates
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: CaveHousePlacement-input
     FromPortName: LogicalIds
     ToNodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
     ToPortName: Input
@@ -345,21 +321,6 @@ MonoBehaviour:
     FromPortName: HouseCandidatePoints
     ToNodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
     ToPortName: Points
-    CastMode: 0
-  - FromNodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
-    FromPortName: HouseCandidateMask
-    ToNodeId: cave-house-depth-candidates
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: cave-house-depth-band
-    FromPortName: CaveHouseDepthMask
-    ToNodeId: cave-house-depth-candidates
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: cave-house-depth-candidates
-    FromPortName: CaveHouseDepthCandidates
-    ToNodeId: cave-house-room-candidates
-    ToPortName: A
     CastMode: 0
   - FromNodeId: cave-house-room-candidates
     FromPortName: CaveHouseRoomCandidates
@@ -391,10 +352,25 @@ MonoBehaviour:
     ToNodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
     ToPortName: Points
     CastMode: 0
+  - FromNodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    FromPortName: HouseCandidateMask
+    ToNodeId: cave-house-room-candidates
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: cave-house-depth-band
+    FromPortName: CaveHouseDepthMask
+    ToNodeId: cave-house-room-candidates
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: CaveHousePlacement-input
+    FromPortName: CombinedAutomataCaves
+    ToNodeId: cave-house-room-candidates
+    ToPortName: Masks
+    CastMode: 0
   StickyNotes: []
   Groups:
   - GroupId: CaveHousePlacement-group
-    Title: Cave House Placement
+    Title: Structure Placement
     Position:
       serializedVersion: 2
       x: 1773
@@ -405,7 +381,6 @@ MonoBehaviour:
     - 49666b0d-cd49-4568-b6a9-cc45174cc315
     - ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
     - cave-house-depth-band
-    - cave-house-depth-candidates
     - cave-house-room-candidates
     - f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
     - cdf66d27-6d46-44ed-97d5-101ecbe82a90

@@ -599,6 +599,18 @@ MonoBehaviour:
       DisplayName: BiomeChannel
       Direction: 1
       Type: 1
+    - PortName: JungleBiomeMask
+      DisplayName: JungleBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: IceBiomeMask
+      DisplayName: IceBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: BiomeChannel 2
+      DisplayName: BiomeChannel 2
+      Direction: 1
+      Type: 1
     - PortName: CaveAllowedDepth
       DisplayName: CaveAllowedDepth
       Direction: 1
@@ -615,18 +627,6 @@ MonoBehaviour:
       DisplayName: DeepUndergroundBand
       Direction: 1
       Type: 2
-    - PortName: JungleBiomeMask
-      DisplayName: JungleBiomeMask
-      Direction: 1
-      Type: 2
-    - PortName: IceBiomeMask
-      DisplayName: IceBiomeMask
-      Direction: 1
-      Type: 2
-    - PortName: BiomeChannel 2
-      DisplayName: BiomeChannel 2
-      Direction: 1
-      Type: 1
     Parameters: []
   - NodeId: CaveFeatureOverrides-output
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
@@ -658,6 +658,21 @@ MonoBehaviour:
   - FromNodeId: CaveFeatureOverrides-input
     FromPortName: BiomeChannel
     ToNodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: JungleBiomeMask
+    ToNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: IceBiomeMask
+    ToNodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: BiomeChannel 2
+    ToNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
     ToPortName: Biome Input
     CastMode: 0
   - FromNodeId: CaveFeatureOverrides-input
@@ -699,21 +714,6 @@ MonoBehaviour:
     FromPortName: DeepUndergroundBand
     ToNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
     ToPortName: A
-    CastMode: 0
-  - FromNodeId: CaveFeatureOverrides-input
-    FromPortName: JungleBiomeMask
-    ToNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: CaveFeatureOverrides-input
-    FromPortName: IceBiomeMask
-    ToNodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: CaveFeatureOverrides-input
-    FromPortName: BiomeChannel 2
-    ToNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
-    ToPortName: Biome Input
     CastMode: 0
   - FromNodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
     FromPortName: WallMask
@@ -858,7 +858,7 @@ MonoBehaviour:
   StickyNotes: []
   Groups:
   - GroupId: CaveFeatureOverrides-group
-    Title: Cave Feature Overrides
+    Title: Feature Overrides
     Position:
       serializedVersion: 2
       x: 491

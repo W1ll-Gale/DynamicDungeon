@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
-  m_Name: TerrariaDemoGraph
+  m_Name: SingleTerrariaDemoGraphArchive
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
   SchemaVersion: 5
   WorldWidth: 512

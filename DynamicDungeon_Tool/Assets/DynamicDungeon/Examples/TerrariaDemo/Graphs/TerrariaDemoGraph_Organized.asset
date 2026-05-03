@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Output
-    Position: {x: 2240, y: 0}
+    Position: {x: 2560, y: 0}
     Ports:
     - PortName: LogicalIds
       DisplayName: LogicalIds
@@ -43,7 +43,7 @@ MonoBehaviour:
   - NodeId: prefab-reserved-void-overlay
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
     NodeName: Prefab Reserved Void
-    Position: {x: 1920, y: 0}
+    Position: {x: 2240, y: 0}
     Ports:
     - PortName: Base
       DisplayName: Base
@@ -76,10 +76,50 @@ MonoBehaviour:
     - Name: outputChannelName
       Value: FinalLogicalIds
       ObjectReference: {fileID: 0}
+  - NodeId: organized-subgraph-BiomeLayout
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
+    NodeName: Biome Layout
+    Position: {x: 0, y: 0}
+    Ports:
+    - PortName: ForestBiomeMask
+      DisplayName: ForestBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: FinalJungleBiomeMask
+      DisplayName: FinalJungleBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: DesertBiomeMask
+      DisplayName: DesertBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: FinalIceBiomeMask
+      DisplayName: FinalIceBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: JungleBiomeMask
+      DisplayName: JungleBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: IceBiomeMask
+      DisplayName: IceBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: NestedGraph
+      Value: b061ddf37e88abd43be552fa7dc7e90e
+      ObjectReference: {fileID: 11400000, guid: b061ddf37e88abd43be552fa7dc7e90e, type: 2}
+    - Name: NestedGraphPath
+      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/BiomeLayout.asset
+      ObjectReference: {fileID: 11400000, guid: b061ddf37e88abd43be552fa7dc7e90e, type: 2}
   - NodeId: organized-subgraph-TerrainShape
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
-    NodeName: Terrain Shape
-    Position: {x: 0, y: 0}
+    NodeName: Terrain Profile
+    Position: {x: 320, y: 0}
     Ports:
     - PortName: FeatureOpenCavesWithIce
       DisplayName: FeatureOpenCavesWithIce
@@ -113,26 +153,20 @@ MonoBehaviour:
       DisplayName: SkyBand
       Direction: 1
       Type: 0
-    Parameters: []
+    Parameters:
+    - Name: NestedGraph
+      Value: 30580ef9e0d5ed746932aa58f422cb46
+      ObjectReference: {fileID: 11400000, guid: 30580ef9e0d5ed746932aa58f422cb46, type: 2}
+    - Name: NestedGraphPath
+      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/TerrainShape.asset
+      ObjectReference: {fileID: 11400000, guid: 30580ef9e0d5ed746932aa58f422cb46, type: 2}
   - NodeId: organized-subgraph-CaveGeneration
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
-    NodeName: Cave Generation
-    Position: {x: 320, y: 0}
+    NodeName: Cave Masks
+    Position: {x: 640, y: 0}
     Ports:
     - PortName: ForestDeepCaveRegion
       DisplayName: ForestDeepCaveRegion
-      Direction: 0
-      Type: 2
-    - PortName: FinalJungleBiomeMask
-      DisplayName: FinalJungleBiomeMask
-      Direction: 0
-      Type: 2
-    - PortName: DesertBiomeMask
-      DisplayName: DesertBiomeMask
-      Direction: 0
-      Type: 2
-    - PortName: FinalIceBiomeMask
-      DisplayName: FinalIceBiomeMask
       Direction: 0
       Type: 2
     - PortName: MossPockets
@@ -145,6 +179,18 @@ MonoBehaviour:
       Type: 2
     - PortName: IcePockets
       DisplayName: IcePockets
+      Direction: 0
+      Type: 2
+    - PortName: FinalJungleBiomeMask
+      DisplayName: FinalJungleBiomeMask
+      Direction: 0
+      Type: 2
+    - PortName: DesertBiomeMask
+      DisplayName: DesertBiomeMask
+      Direction: 0
+      Type: 2
+    - PortName: FinalIceBiomeMask
+      DisplayName: FinalIceBiomeMask
       Direction: 0
       Type: 2
     - PortName: ShallowCaveRegion
@@ -171,11 +217,17 @@ MonoBehaviour:
       DisplayName: FeatureOpenCavesWithIce
       Direction: 1
       Type: 2
-    Parameters: []
+    Parameters:
+    - Name: NestedGraph
+      Value: 54e9765c99bd8e046aeb4fafcb1f873f
+      ObjectReference: {fileID: 11400000, guid: 54e9765c99bd8e046aeb4fafcb1f873f, type: 2}
+    - Name: NestedGraphPath
+      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/CaveGeneration.asset
+      ObjectReference: {fileID: 11400000, guid: 54e9765c99bd8e046aeb4fafcb1f873f, type: 2}
   - NodeId: organized-subgraph-MaterialContext
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
-    NodeName: Material Context
-    Position: {x: 640, y: 0}
+    NodeName: Material IDs
+    Position: {x: 960, y: 0}
     Ports:
     - PortName: CaveAllowedDepth
       DisplayName: CaveAllowedDepth
@@ -213,48 +265,32 @@ MonoBehaviour:
       DisplayName: MaterialContextLogicalIds
       Direction: 1
       Type: 1
-    Parameters: []
-  - NodeId: organized-subgraph-BiomeLayout
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
-    NodeName: Biome Layout
-    Position: {x: 640, y: 210}
-    Ports:
-    - PortName: ForestBiomeMask
-      DisplayName: ForestBiomeMask
-      Direction: 1
-      Type: 0
-    - PortName: JungleBiomeMask
-      DisplayName: JungleBiomeMask
-      Direction: 1
-      Type: 0
-    - PortName: IceBiomeMask
-      DisplayName: IceBiomeMask
-      Direction: 1
-      Type: 0
-    - PortName: FinalJungleBiomeMask
-      DisplayName: FinalJungleBiomeMask
-      Direction: 1
-      Type: 0
-    - PortName: DesertBiomeMask
-      DisplayName: DesertBiomeMask
-      Direction: 1
-      Type: 0
-    - PortName: FinalIceBiomeMask
-      DisplayName: FinalIceBiomeMask
-      Direction: 1
-      Type: 0
-    - PortName: BiomeChannel
-      DisplayName: BiomeChannel
-      Direction: 1
-      Type: 1
-    Parameters: []
+    Parameters:
+    - Name: NestedGraph
+      Value: f43cc08ed65bb064a8ddc94baf6d58d5
+      ObjectReference: {fileID: 11400000, guid: f43cc08ed65bb064a8ddc94baf6d58d5, type: 2}
+    - Name: NestedGraphPath
+      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/MaterialContext.asset
+      ObjectReference: {fileID: 11400000, guid: f43cc08ed65bb064a8ddc94baf6d58d5, type: 2}
   - NodeId: organized-subgraph-CaveFeatureOverrides
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
-    NodeName: Cave Feature Overrides
-    Position: {x: 960, y: 0}
+    NodeName: Feature Overrides
+    Position: {x: 1280, y: 0}
     Ports:
     - PortName: BiomeChannel
       DisplayName: BiomeChannel
+      Direction: 0
+      Type: 1
+    - PortName: JungleBiomeMask
+      DisplayName: JungleBiomeMask
+      Direction: 0
+      Type: 2
+    - PortName: IceBiomeMask
+      DisplayName: IceBiomeMask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel 2
+      DisplayName: BiomeChannel 2
       Direction: 0
       Type: 1
     - PortName: CaveAllowedDepth
@@ -273,18 +309,6 @@ MonoBehaviour:
       DisplayName: DeepUndergroundBand
       Direction: 0
       Type: 2
-    - PortName: JungleBiomeMask
-      DisplayName: JungleBiomeMask
-      Direction: 0
-      Type: 2
-    - PortName: IceBiomeMask
-      DisplayName: IceBiomeMask
-      Direction: 0
-      Type: 2
-    - PortName: BiomeChannel 2
-      DisplayName: BiomeChannel 2
-      Direction: 0
-      Type: 1
     - PortName: WallMask
       DisplayName: WallMask
       Direction: 1
@@ -305,22 +329,28 @@ MonoBehaviour:
       DisplayName: IcePockets
       Direction: 1
       Type: 2
-    Parameters: []
+    Parameters:
+    - Name: NestedGraph
+      Value: 2106ebf857d9be144a1dcb1887b6d01a
+      ObjectReference: {fileID: 11400000, guid: 2106ebf857d9be144a1dcb1887b6d01a, type: 2}
+    - Name: NestedGraphPath
+      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/CaveFeatureOverrides.asset
+      ObjectReference: {fileID: 11400000, guid: 2106ebf857d9be144a1dcb1887b6d01a, type: 2}
   - NodeId: organized-subgraph-OreFeatureOverrides
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
-    NodeName: Ore Feature Overrides
-    Position: {x: 1280, y: 0}
+    NodeName: Ore Overrides
+    Position: {x: 1600, y: 0}
     Ports:
+    - PortName: ForestBiomeMask
+      DisplayName: ForestBiomeMask
+      Direction: 0
+      Type: 2
     - PortName: DeepBand
       DisplayName: DeepBand
       Direction: 0
       Type: 2
     - PortName: TerrainMassMask
       DisplayName: TerrainMassMask
-      Direction: 0
-      Type: 2
-    - PortName: ForestBiomeMask
-      DisplayName: ForestBiomeMask
       Direction: 0
       Type: 2
     - PortName: WallMask
@@ -339,24 +369,18 @@ MonoBehaviour:
       DisplayName: BiomeChannel
       Direction: 1
       Type: 1
-    Parameters: []
+    Parameters:
+    - Name: NestedGraph
+      Value: a3950c27ba01739478c79144a79558c0
+      ObjectReference: {fileID: 11400000, guid: a3950c27ba01739478c79144a79558c0, type: 2}
+    - Name: NestedGraphPath
+      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/OreFeatureOverrides.asset
+      ObjectReference: {fileID: 11400000, guid: a3950c27ba01739478c79144a79558c0, type: 2}
   - NodeId: organized-subgraph-SurfacePropPlacement
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
-    NodeName: Surface Prop Placement
-    Position: {x: 1600, y: 0}
+    NodeName: Surface Placement
+    Position: {x: 1920, y: 0}
     Ports:
-    - PortName: SkyBand
-      DisplayName: SkyBand
-      Direction: 0
-      Type: 0
-    - PortName: SurfaceFloorMask
-      DisplayName: SurfaceFloorMask
-      Direction: 0
-      Type: 2
-    - PortName: BaseLogicalIds
-      DisplayName: BaseLogicalIds
-      Direction: 0
-      Type: 1
     - PortName: ForestBiomeMask
       DisplayName: ForestBiomeMask
       Direction: 0
@@ -373,6 +397,18 @@ MonoBehaviour:
       DisplayName: FinalIceBiomeMask
       Direction: 0
       Type: 0
+    - PortName: SkyBand
+      DisplayName: SkyBand
+      Direction: 0
+      Type: 0
+    - PortName: SurfaceFloorMask
+      DisplayName: SurfaceFloorMask
+      Direction: 0
+      Type: 2
+    - PortName: BaseLogicalIds
+      DisplayName: BaseLogicalIds
+      Direction: 0
+      Type: 1
     - PortName: OneFloat
       DisplayName: OneFloat
       Direction: 1
@@ -381,11 +417,17 @@ MonoBehaviour:
       DisplayName: ZeroFloat
       Direction: 1
       Type: 0
-    Parameters: []
+    Parameters:
+    - Name: NestedGraph
+      Value: 6d9f0ce7c018d2d46aee4332f3ca9d93
+      ObjectReference: {fileID: 11400000, guid: 6d9f0ce7c018d2d46aee4332f3ca9d93, type: 2}
+    - Name: NestedGraphPath
+      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/SurfacePropPlacement.asset
+      ObjectReference: {fileID: 11400000, guid: 6d9f0ce7c018d2d46aee4332f3ca9d93, type: 2}
   - NodeId: organized-subgraph-CaveHousePlacement
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
-    NodeName: Cave House Placement
-    Position: {x: 1600, y: 210}
+    NodeName: Structure Placement
+    Position: {x: 1920, y: 210}
     Ports:
     - PortName: TerrainMassMask
       DisplayName: TerrainMassMask
@@ -411,13 +453,34 @@ MonoBehaviour:
       DisplayName: ReservedMask
       Direction: 1
       Type: 2
-    Parameters: []
+    Parameters:
+    - Name: NestedGraph
+      Value: feef017809148ad43a55a348f723ec6f
+      ObjectReference: {fileID: 11400000, guid: feef017809148ad43a55a348f723ec6f, type: 2}
+    - Name: NestedGraphPath
+      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/CaveHousePlacement.asset
+      ObjectReference: {fileID: 11400000, guid: feef017809148ad43a55a348f723ec6f, type: 2}
   Connections:
   - FromNodeId: prefab-reserved-void-overlay
     FromPortName: FinalLogicalIds
     ToNodeId: graph-output-node
     ToPortName: LogicalIds
     CastMode: 0
+  - FromNodeId: organized-subgraph-BiomeLayout
+    FromPortName: FinalJungleBiomeMask
+    ToNodeId: organized-subgraph-CaveGeneration
+    ToPortName: FinalJungleBiomeMask
+    CastMode: 3
+  - FromNodeId: organized-subgraph-BiomeLayout
+    FromPortName: DesertBiomeMask
+    ToNodeId: organized-subgraph-CaveGeneration
+    ToPortName: DesertBiomeMask
+    CastMode: 3
+  - FromNodeId: organized-subgraph-BiomeLayout
+    FromPortName: FinalIceBiomeMask
+    ToNodeId: organized-subgraph-CaveGeneration
+    ToPortName: FinalIceBiomeMask
+    CastMode: 3
   - FromNodeId: organized-subgraph-TerrainShape
     FromPortName: ShallowCaveRegion
     ToNodeId: organized-subgraph-CaveGeneration
@@ -469,20 +532,20 @@ MonoBehaviour:
     ToPortName: Base
     CastMode: 0
   - FromNodeId: organized-subgraph-BiomeLayout
-    FromPortName: FinalJungleBiomeMask
-    ToNodeId: organized-subgraph-CaveGeneration
-    ToPortName: FinalJungleBiomeMask
+    FromPortName: JungleBiomeMask
+    ToNodeId: organized-subgraph-CaveFeatureOverrides
+    ToPortName: JungleBiomeMask
     CastMode: 3
   - FromNodeId: organized-subgraph-BiomeLayout
-    FromPortName: DesertBiomeMask
-    ToNodeId: organized-subgraph-CaveGeneration
-    ToPortName: DesertBiomeMask
+    FromPortName: IceBiomeMask
+    ToNodeId: organized-subgraph-CaveFeatureOverrides
+    ToPortName: IceBiomeMask
     CastMode: 3
   - FromNodeId: organized-subgraph-BiomeLayout
-    FromPortName: FinalIceBiomeMask
-    ToNodeId: organized-subgraph-CaveGeneration
-    ToPortName: FinalIceBiomeMask
-    CastMode: 3
+    FromPortName: BiomeChannel
+    ToNodeId: organized-subgraph-CaveFeatureOverrides
+    ToPortName: BiomeChannel 2
+    CastMode: 0
   - FromNodeId: organized-subgraph-TerrainShape
     FromPortName: CaveAllowedDepth
     ToNodeId: organized-subgraph-CaveFeatureOverrides
@@ -503,21 +566,6 @@ MonoBehaviour:
     ToNodeId: organized-subgraph-CaveFeatureOverrides
     ToPortName: DeepUndergroundBand
     CastMode: 3
-  - FromNodeId: organized-subgraph-BiomeLayout
-    FromPortName: JungleBiomeMask
-    ToNodeId: organized-subgraph-CaveFeatureOverrides
-    ToPortName: JungleBiomeMask
-    CastMode: 3
-  - FromNodeId: organized-subgraph-BiomeLayout
-    FromPortName: IceBiomeMask
-    ToNodeId: organized-subgraph-CaveFeatureOverrides
-    ToPortName: IceBiomeMask
-    CastMode: 3
-  - FromNodeId: organized-subgraph-BiomeLayout
-    FromPortName: BiomeChannel
-    ToNodeId: organized-subgraph-CaveFeatureOverrides
-    ToPortName: BiomeChannel 2
-    CastMode: 0
   - FromNodeId: organized-subgraph-CaveFeatureOverrides
     FromPortName: MossPockets
     ToNodeId: organized-subgraph-CaveGeneration
@@ -533,6 +581,11 @@ MonoBehaviour:
     ToNodeId: organized-subgraph-CaveGeneration
     ToPortName: IcePockets
     CastMode: 0
+  - FromNodeId: organized-subgraph-BiomeLayout
+    FromPortName: ForestBiomeMask
+    ToNodeId: organized-subgraph-OreFeatureOverrides
+    ToPortName: ForestBiomeMask
+    CastMode: 3
   - FromNodeId: organized-subgraph-TerrainShape
     FromPortName: DeepBand
     ToNodeId: organized-subgraph-OreFeatureOverrides
@@ -543,11 +596,6 @@ MonoBehaviour:
     ToNodeId: organized-subgraph-OreFeatureOverrides
     ToPortName: TerrainMassMask
     CastMode: 0
-  - FromNodeId: organized-subgraph-BiomeLayout
-    FromPortName: ForestBiomeMask
-    ToNodeId: organized-subgraph-OreFeatureOverrides
-    ToPortName: ForestBiomeMask
-    CastMode: 3
   - FromNodeId: organized-subgraph-CaveFeatureOverrides
     FromPortName: WallMask
     ToNodeId: organized-subgraph-OreFeatureOverrides
@@ -568,21 +616,6 @@ MonoBehaviour:
     ToNodeId: organized-subgraph-CaveFeatureOverrides
     ToPortName: BiomeChannel
     CastMode: 0
-  - FromNodeId: organized-subgraph-TerrainShape
-    FromPortName: SkyBand
-    ToNodeId: organized-subgraph-SurfacePropPlacement
-    ToPortName: SkyBand
-    CastMode: 0
-  - FromNodeId: organized-subgraph-MaterialContext
-    FromPortName: SurfaceFloorMask
-    ToNodeId: organized-subgraph-SurfacePropPlacement
-    ToPortName: SurfaceFloorMask
-    CastMode: 0
-  - FromNodeId: organized-subgraph-MaterialContext
-    FromPortName: BaseLogicalIds
-    ToNodeId: organized-subgraph-SurfacePropPlacement
-    ToPortName: BaseLogicalIds
-    CastMode: 0
   - FromNodeId: organized-subgraph-BiomeLayout
     FromPortName: ForestBiomeMask
     ToNodeId: organized-subgraph-SurfacePropPlacement
@@ -602,6 +635,21 @@ MonoBehaviour:
     FromPortName: FinalIceBiomeMask
     ToNodeId: organized-subgraph-SurfacePropPlacement
     ToPortName: FinalIceBiomeMask
+    CastMode: 0
+  - FromNodeId: organized-subgraph-TerrainShape
+    FromPortName: SkyBand
+    ToNodeId: organized-subgraph-SurfacePropPlacement
+    ToPortName: SkyBand
+    CastMode: 0
+  - FromNodeId: organized-subgraph-MaterialContext
+    FromPortName: SurfaceFloorMask
+    ToNodeId: organized-subgraph-SurfacePropPlacement
+    ToPortName: SurfaceFloorMask
+    CastMode: 0
+  - FromNodeId: organized-subgraph-MaterialContext
+    FromPortName: BaseLogicalIds
+    ToNodeId: organized-subgraph-SurfacePropPlacement
+    ToPortName: BaseLogicalIds
     CastMode: 0
   - FromNodeId: organized-subgraph-TerrainShape
     FromPortName: TerrainMassMask
@@ -636,24 +684,24 @@ MonoBehaviour:
   StickyNotes: []
   Groups:
   - GroupId: organized-core-generation
-    Title: Core Generation
+    Title: World Shape
     Position:
       serializedVersion: 2
       x: -80
       y: -80
-      width: 1220
+      width: 1540
       height: 410
     ContainedNodeIds:
+    - organized-subgraph-BiomeLayout
     - organized-subgraph-TerrainShape
     - organized-subgraph-CaveGeneration
     - organized-subgraph-MaterialContext
-    - organized-subgraph-BiomeLayout
     BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
   - GroupId: organized-features
     Title: Feature Overrides
     Position:
       serializedVersion: 2
-      x: 880
+      x: 1200
       y: -80
       width: 900
       height: 200
@@ -665,7 +713,7 @@ MonoBehaviour:
     Title: Placement
     Position:
       serializedVersion: 2
-      x: 1520
+      x: 1840
       y: -80
       width: 280
       height: 410
@@ -677,7 +725,7 @@ MonoBehaviour:
     Title: Output
     Position:
       serializedVersion: 2
-      x: 1840
+      x: 2160
       y: -80
       width: 600
       height: 200

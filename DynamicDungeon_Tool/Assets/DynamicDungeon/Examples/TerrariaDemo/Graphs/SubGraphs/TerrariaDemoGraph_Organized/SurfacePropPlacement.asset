@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: One
-    Position: {x: 1788, y: 898.52}
+    Position: {x: 1540.5026, y: 823.5001}
     Ports:
     - PortName: OneFloat
       DisplayName: OneFloat
@@ -44,7 +44,7 @@ MonoBehaviour:
   - NodeId: 6999daac-7624-464b-9308-87663f179e01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: Zero
-    Position: {x: 1816, y: 1266.52}
+    Position: {x: 1781.0002, y: 1130}
     Ports:
     - PortName: ZeroFloat
       DisplayName: ZeroFloat
@@ -63,7 +63,7 @@ MonoBehaviour:
   - NodeId: ced59584-f592-4d05-b4b5-487143502736
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
     NodeName: Surface Floor Weights
-    Position: {x: 2136, y: 951.52}
+    Position: {x: 2149.9995, y: 951.9998}
     Ports:
     - PortName: A
       DisplayName: A
@@ -116,7 +116,7 @@ MonoBehaviour:
   - NodeId: surface-prop-surface-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Surface Prop Surface Mask
-    Position: {x: 2426, y: 1646.52}
+    Position: {x: 2604, y: 1829.505}
     Ports:
     - PortName: A
       DisplayName: A
@@ -137,7 +137,7 @@ MonoBehaviour:
   - NodeId: surface-prop-placement-weights
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
     NodeName: Surface Prop Placement Weights
-    Position: {x: 2563, y: 1463.52}
+    Position: {x: 1219.8549, y: 1429}
     Ports:
     - PortName: A
       DisplayName: A
@@ -207,7 +207,7 @@ MonoBehaviour:
   - NodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Jungle Tree Weight
-    Position: {x: 2776, y: 911.52}
+    Position: {x: 3067.646, y: 859.99994}
     Ports:
     - PortName: A
       DisplayName: A
@@ -227,7 +227,7 @@ MonoBehaviour:
   - NodeId: ceb72be0-5035-400a-a151-3a859daedd51
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Desert Cactus Weight Base
-    Position: {x: 2164, y: 1253.52}
+    Position: {x: 2088.9998, y: 1232}
     Ports:
     - PortName: A
       DisplayName: A
@@ -271,7 +271,7 @@ MonoBehaviour:
   - NodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Ice Tree Weight Base
-    Position: {x: 2484, y: 1721.52}
+    Position: {x: 1815.9998, y: 2102}
     Ports:
     - PortName: A
       DisplayName: A
@@ -295,7 +295,7 @@ MonoBehaviour:
   - NodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
     NodeName: Ice Tree Weight
-    Position: {x: 3200, y: 1388.52}
+    Position: {x: 2776, y: 2229}
     Ports:
     - PortName: A
       DisplayName: A
@@ -651,7 +651,7 @@ MonoBehaviour:
   - NodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
     NodeName: Cloud Scatter
-    Position: {x: 3476, y: 887.52}
+    Position: {x: 1823.0052, y: 528.31213}
     Ports:
     - PortName: Weights
       DisplayName: Weights
@@ -712,20 +712,8 @@ MonoBehaviour:
   - NodeId: SurfacePropPlacement-input
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
     NodeName: Sub Graph Input
-    Position: {x: 1499, y: 1606.52}
+    Position: {x: 575.78705, y: 1316.9998}
     Ports:
-    - PortName: SkyBand
-      DisplayName: SkyBand
-      Direction: 1
-      Type: 0
-    - PortName: SurfaceFloorMask
-      DisplayName: SurfaceFloorMask
-      Direction: 1
-      Type: 2
-    - PortName: BaseLogicalIds
-      DisplayName: BaseLogicalIds
-      Direction: 1
-      Type: 1
     - PortName: ForestBiomeMask
       DisplayName: ForestBiomeMask
       Direction: 1
@@ -742,6 +730,18 @@ MonoBehaviour:
       DisplayName: FinalIceBiomeMask
       Direction: 1
       Type: 0
+    - PortName: SkyBand
+      DisplayName: SkyBand
+      Direction: 1
+      Type: 0
+    - PortName: SurfaceFloorMask
+      DisplayName: SurfaceFloorMask
+      Direction: 1
+      Type: 2
+    - PortName: BaseLogicalIds
+      DisplayName: BaseLogicalIds
+      Direction: 1
+      Type: 1
     Parameters: []
   - NodeId: SurfacePropPlacement-output
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
@@ -758,26 +758,6 @@ MonoBehaviour:
       Type: 0
     Parameters: []
   Connections:
-  - FromNodeId: SurfacePropPlacement-input
-    FromPortName: SkyBand
-    ToNodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
-    ToPortName: Weights
-    CastMode: 0
-  - FromNodeId: SurfacePropPlacement-input
-    FromPortName: SurfaceFloorMask
-    ToNodeId: ced59584-f592-4d05-b4b5-487143502736
-    ToPortName: Mask
-    CastMode: 0
-  - FromNodeId: SurfacePropPlacement-input
-    FromPortName: SurfaceFloorMask
-    ToNodeId: surface-prop-surface-mask
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: SurfacePropPlacement-input
-    FromPortName: BaseLogicalIds
-    ToNodeId: surface-prop-placement-points
-    ToPortName: Input
-    CastMode: 0
   - FromNodeId: SurfacePropPlacement-input
     FromPortName: ForestBiomeMask
     ToNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
@@ -797,6 +777,26 @@ MonoBehaviour:
     FromPortName: FinalIceBiomeMask
     ToNodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
     ToPortName: B
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: SkyBand
+    ToNodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: SurfaceFloorMask
+    ToNodeId: ced59584-f592-4d05-b4b5-487143502736
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: SurfaceFloorMask
+    ToNodeId: surface-prop-surface-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: BaseLogicalIds
+    ToNodeId: surface-prop-placement-points
+    ToPortName: Input
     CastMode: 0
   - FromNodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
     FromPortName: OneFloat
@@ -946,7 +946,7 @@ MonoBehaviour:
   StickyNotes: []
   Groups:
   - GroupId: SurfacePropPlacement-group
-    Title: Surface Prop Placement
+    Title: Surface Placement
     Position:
       serializedVersion: 2
       x: 1639

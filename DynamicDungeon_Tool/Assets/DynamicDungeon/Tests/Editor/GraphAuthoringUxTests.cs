@@ -146,6 +146,45 @@ namespace DynamicDungeon.Tests.Editor
             Assert.That(StackRuleParameterControls.HasMissingPlacementPrefabs(placementRules), Is.True);
         }
 
+        [Test]
+        public void MaskExpressionNodeAppearsInCompatibleNodeSearch()
+        {
+            DynamicDungeonGraphView graphView = new DynamicDungeonGraphView();
+            GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
+            NodeSearchWindow searchWindow = ScriptableObject.CreateInstance<NodeSearchWindow>();
+
+            try
+            {
+                graph.SchemaVersion = GraphSchemaVersion.Current;
+                graphView.LoadGraph(graph);
+                searchWindow.Initialise(graphView);
+                searchWindow.SetChannelTypeFilter(ChannelType.BoolMask, PortDirection.Input);
+
+                List<SearchTreeEntry> entries = searchWindow.CreateSearchTree(new SearchWindowContext(Vector2.zero));
+
+                Assert.That(ContainsEntry(entries, "Mask Expression"), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(searchWindow);
+                UnityEngine.Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
+        public void MaskExpressionRuleValidationReportsInvalidSlots()
+        {
+            MaskExpressionRuleSet rules = new MaskExpressionRuleSet
+            {
+                Rules = new[]
+                {
+                    new MaskExpressionRule { Enabled = true, MaskSlot = 0, Operation = MaskExpressionOperation.Replace }
+                }
+            };
+
+            Assert.That(StackRuleParameterControls.HasInvalidMaskExpressionSlots(rules), Is.True);
+        }
+
         private static void AddConstantNode(GenGraph graph, string nodeId, string nodeName, string outputChannelName, Vector2 position)
         {
             GenNodeData node = new GenNodeData(nodeId, typeof(ConstantNode).FullName, nodeName, position);

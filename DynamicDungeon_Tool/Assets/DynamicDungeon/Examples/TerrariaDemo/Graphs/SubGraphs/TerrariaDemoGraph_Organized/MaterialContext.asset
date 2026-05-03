@@ -140,38 +140,13 @@ MonoBehaviour:
     - Name: outputChannelName
       Value: SubsurfaceBiomeTransition
       ObjectReference: {fileID: 0}
-  - NodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Surface Crust Shape
-    Position: {x: -3333.0002, y: 1621.0002}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: SurfaceCrustShapeMask
-      DisplayName: SurfaceCrustShapeMask
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: AND
-      ObjectReference: {fileID: 0}
   - NodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Surface Crust Mask
     Position: {x: -3363.0005, y: 1891.0004}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: SurfaceCrustMask
@@ -181,6 +156,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: SurfaceCrustMask
       ObjectReference: {fileID: 0}
   - NodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
@@ -277,16 +258,12 @@ MonoBehaviour:
       Value: 0.45
       ObjectReference: {fileID: 0}
   - NodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Cave Material Region
     Position: {x: -2693, y: 2166}
     Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: CaveMaterialRegion
@@ -296,6 +273,12 @@ MonoBehaviour:
     Parameters:
     - Name: operation
       Value: AND
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: CaveMaterialRegion
       ObjectReference: {fileID: 0}
   - NodeId: cave-material-depth-transition
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceTransitionMaskNode
@@ -323,29 +306,8 @@ MonoBehaviour:
     - Name: outputChannelName
       Value: CaveMaterialDepthTransition
       ObjectReference: {fileID: 0}
-  - NodeId: cave-material-depth-gate
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Cave Material Depth Gate
-    Position: {x: -3333, y: 2426}
-    Ports:
-    - PortName: A
-      DisplayName: A
-      Direction: 0
-      Type: 2
-    - PortName: B
-      DisplayName: B
-      Direction: 0
-      Type: 2
-    - PortName: CaveMaterialDepthGate
-      DisplayName: CaveMaterialDepthGate
-      Direction: 1
-      Type: 2
-    Parameters:
-    - Name: operation
-      Value: AND
-      ObjectReference: {fileID: 0}
   - NodeId: logical-id-material-context
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleStackNode
     NodeName: Material Context IDs
     Position: {x: -2721, y: 1322.0002}
     Ports:
@@ -353,20 +315,8 @@ MonoBehaviour:
       DisplayName: Base
       Direction: 0
       Type: 1
-    - PortName: Mask 1
-      DisplayName: Mask 1
-      Direction: 0
-      Type: 2
-    - PortName: Mask 2
-      DisplayName: Mask 2
-      Direction: 0
-      Type: 2
-    - PortName: Mask 3
-      DisplayName: Mask 3
-      Direction: 0
-      Type: 2
-    - PortName: Mask 4
-      DisplayName: Mask 4
+    - PortName: Masks
+      DisplayName: Masks
       Direction: 0
       Type: 2
     - PortName: MaterialContextLogicalIds
@@ -430,11 +380,6 @@ MonoBehaviour:
     Parameters: []
   Connections:
   - FromNodeId: MaterialContext-input
-    FromPortName: CaveAllowedDepth
-    ToNodeId: cave-material-depth-gate
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: MaterialContext-input
     FromPortName: FinalSolid
     ToNodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
     ToPortName: Input
@@ -451,18 +396,8 @@ MonoBehaviour:
     CastMode: 0
   - FromNodeId: MaterialContext-input
     FromPortName: FinalSolid
-    ToNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: MaterialContext-input
-    FromPortName: FinalSolid
     ToNodeId: cave-material-depth-transition
     ToPortName: Input
-    CastMode: 0
-  - FromNodeId: MaterialContext-input
-    FromPortName: SurfaceCrustBand
-    ToNodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
-    ToPortName: B
     CastMode: 0
   - FromNodeId: MaterialContext-input
     FromPortName: FeatureOpenCavesWithIce
@@ -514,16 +449,6 @@ MonoBehaviour:
     ToNodeId: 9e1054e5-cc0d-4368-8e22-7164072c9b7e
     ToPortName: B
     CastMode: 0
-  - FromNodeId: ea8ac51f-ba19-44df-977c-899da7d0deca
-    FromPortName: SurfaceCrustDepthMask
-    ToNodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
-    FromPortName: SurfaceCrustShapeMask
-    ToNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
-    ToPortName: B
-    CastMode: 0
   - FromNodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
     FromPortName: BaseLogicalIds
     ToNodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
@@ -544,50 +469,65 @@ MonoBehaviour:
     ToNodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
     ToPortName: Input
     CastMode: 0
-  - FromNodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
-    FromPortName: CaveMaterialProximityMask
-    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
-    ToPortName: A
-    CastMode: 0
-  - FromNodeId: cave-material-depth-transition
-    FromPortName: CaveMaterialDepthTransition
-    ToNodeId: cave-material-depth-gate
-    ToPortName: B
-    CastMode: 0
-  - FromNodeId: cave-material-depth-gate
-    FromPortName: CaveMaterialDepthGate
-    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
-    ToPortName: B
-    CastMode: 0
   - FromNodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
     FromPortName: LogicalIds
     ToNodeId: logical-id-material-context
     ToPortName: Base
     CastMode: 0
+  - FromNodeId: MaterialContext-input
+    FromPortName: FinalSolid
+    ToNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: ea8ac51f-ba19-44df-977c-899da7d0deca
+    FromPortName: SurfaceCrustDepthMask
+    ToNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: MaterialContext-input
+    FromPortName: SurfaceCrustBand
+    ToNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
+    FromPortName: CaveMaterialProximityMask
+    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: MaterialContext-input
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: cave-material-depth-transition
+    FromPortName: CaveMaterialDepthTransition
+    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    ToPortName: Masks
+    CastMode: 0
   - FromNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
     FromPortName: SurfaceCrustMask
     ToNodeId: logical-id-material-context
-    ToPortName: Mask 1
+    ToPortName: Masks
     CastMode: 0
   - FromNodeId: subsurface-biome-transition
     FromPortName: SubsurfaceBiomeTransition
     ToNodeId: logical-id-material-context
-    ToPortName: Mask 2
+    ToPortName: Masks
     CastMode: 0
   - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
     FromPortName: DeepUndergroundBand
     ToNodeId: logical-id-material-context
-    ToPortName: Mask 3
+    ToPortName: Masks
     CastMode: 3
   - FromNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
     FromPortName: CaveMaterialRegion
     ToNodeId: logical-id-material-context
-    ToPortName: Mask 4
+    ToPortName: Masks
     CastMode: 0
   StickyNotes: []
   Groups:
   - GroupId: MaterialContext-group
-    Title: Material Context
+    Title: Material IDs
     Position:
       serializedVersion: 2
       x: -4213
@@ -601,7 +541,6 @@ MonoBehaviour:
     - 9e1054e5-cc0d-4368-8e22-7164072c9b7e
     - ea8ac51f-ba19-44df-977c-899da7d0deca
     - subsurface-biome-transition
-    - bc7383e3-b531-4f40-bd6d-40c60d3f078d
     - 78481ce6-80f1-4922-9248-42531f3b19b2
     - 75c243e1-f40e-4bf9-99e5-ebccd3334959
     - e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
@@ -610,7 +549,6 @@ MonoBehaviour:
     - 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
     - 10ea94de-cb91-4c82-b307-5787df60dcca
     - cave-material-depth-transition
-    - cave-material-depth-gate
     - logical-id-material-context
     BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
   ExposedProperties: []

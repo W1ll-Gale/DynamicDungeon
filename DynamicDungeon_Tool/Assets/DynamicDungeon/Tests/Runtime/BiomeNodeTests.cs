@@ -886,9 +886,9 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
-        public async Task TerrariaDemoGraphCompilesAndExecutesWithRefactoredBiomeLayout()
+        public async Task OrganizedTerrariaDemoGraphCompilesAndExecutesWithRefactoredBiomeLayout()
         {
-            const string graphPath = "Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/TerrariaDemoGraph.asset";
+            const string graphPath = "Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/TerrariaDemoGraph_Organized.asset";
             const string baseLogicalChannelName = "BaseLogicalIds";
             const string outputLogicalChannelName = "FinalLogicalIds";
             GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(graphPath);
