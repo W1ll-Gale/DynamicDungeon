@@ -8,7 +8,6 @@ namespace DynamicDungeon.ConstraintDungeon
     {
         private const double ProgressRevealDelaySeconds = 0.25d;
 
-        [Header("Dungeon Settings")]
         public DungeonGenerationMode generationMode = DungeonGenerationMode.FlowGraph;
         public DungeonFlow dungeonFlow;
         public OrganicGenerationSettings organicSettings = new OrganicGenerationSettings();

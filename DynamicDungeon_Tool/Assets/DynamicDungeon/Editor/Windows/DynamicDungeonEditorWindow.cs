@@ -14,7 +14,7 @@ namespace DynamicDungeon.Editor.Windows
     public sealed class DynamicDungeonEditorWindow : EditorWindow
     {
         private const string IdleStatusText = "Idle";
-        private const string WindowTitle = "Dynamic Dungeon Graph";
+        private const string WindowTitle = "Tilemap World Graph";
         private const float DiagnosticsPanelHeight = 120.0f;
         private const double AutoSaveDebounceSeconds = 1.0;
         private const double AutoSaveGeneratingRetrySeconds = 0.25;

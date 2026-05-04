@@ -1,6 +1,7 @@
 ﻿<Solution>
   <Project Path="DynamicDungeon.Runtime.csproj" />
   <Project Path="DynamicDungeon.Tests.csproj" />
+  <Project Path="DynamicDungeon.Editor.Shared.csproj" />
   <Project Path="DynamicDungeon.Editor.csproj" />
   <Project Path="DynamicDungeon.ConstraintDungeon.Runtime.csproj" />
   <Project Path="DynamicDungeon.ConstraintDungeon.Editor.csproj" />

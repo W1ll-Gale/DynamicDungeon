@@ -14,6 +14,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
     {
         private DungeonGraphView graphView;
         private DungeonFlow activeFlow;
+        private ObjectField flowAssetField;
 
         [MenuItem(ConstraintDungeonMenuPaths.DungeonDesigner)]
         public static void Open()
@@ -21,10 +22,33 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             GetWindow<DungeonDesignerWindow>("Dungeon Designer");
         }
 
+        public static void Open(DungeonFlow flow)
+        {
+            DungeonDesignerWindow window = GetWindow<DungeonDesignerWindow>("Dungeon Designer");
+            window.LoadFlow(flow);
+            window.Focus();
+        }
+
         private void OnEnable()
         {
             GenerateLayout();
             GenerateToolbar();
+            LoadFlow(activeFlow);
+        }
+
+        public void LoadFlow(DungeonFlow flow)
+        {
+            activeFlow = flow;
+
+            if (flowAssetField != null)
+            {
+                flowAssetField.SetValueWithoutNotify(activeFlow);
+            }
+
+            if (graphView != null)
+            {
+                graphView.LoadFlow(activeFlow);
+            }
         }
 
         private void GenerateLayout()
@@ -226,18 +250,17 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
         {
             Toolbar toolbar = new Toolbar();
             
-            ObjectField assetField = new ObjectField("Dungeon Flow")
+            flowAssetField = new ObjectField("Dungeon Flow")
             {
                 objectType = typeof(DungeonFlow),
                 allowSceneObjects = false
             };
-            assetField.RegisterValueChangedCallback(evt =>
+            flowAssetField.RegisterValueChangedCallback(evt =>
             {
-                activeFlow = evt.newValue as DungeonFlow;
-                graphView.LoadFlow(activeFlow);
+                LoadFlow(evt.newValue as DungeonFlow);
             });
             
-            toolbar.Add(assetField);
+            toolbar.Add(flowAssetField);
             
             Button saveButton = new Button(() => {
                 if (activeFlow != null) {

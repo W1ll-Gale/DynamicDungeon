@@ -1,4 +1,5 @@
 using System.Globalization;
+using DynamicDungeon.Editor.Shared;
 using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Editor.Windows;
 using DynamicDungeon.Runtime.Component;
@@ -16,10 +17,9 @@ namespace DynamicDungeon.Editor.Inspectors
     public sealed class TilemapWorldGeneratorEditor : UnityEditor.Editor
     {
         private const float CompactButtonWidth = 118.0f;
-        private const float StatusBannerHeight = 24.0f;
-        private const float LargeActionButtonHeight = 30.0f;
         private const float InlineInspectorPadding = 6.0f;
         private const float InlineInspectorSpacing = 4.0f;
+        private const string HeaderTitle = "Tilemap World Generator";
 
         private SerializedProperty _generateOnStartProperty;
         private SerializedProperty _seedModeProperty;
@@ -40,11 +40,14 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private SerializedObject _graphSerializedObject;
         private ReorderableList _layerDefinitionsList;
-        private GUIStyle _sectionTitleStyle;
-        private GUIStyle _statusBannerTextStyle;
         private GUIStyle _mutedMiniLabelStyle;
 
         private GenGraph _previousGraph;
+
+        protected override void OnHeaderGUI()
+        {
+            ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle);
+        }
 
         private void OnEnable()
         {
@@ -108,8 +111,9 @@ namespace DynamicDungeon.Editor.Inspectors
             bool clearBakeRequested;
             DrawBakingSection(component, out bakeRequested, out clearBakeRequested);
             bool generateRequested;
+            bool clearGeneratedOutputRequested;
             bool cancelRequested;
-            DrawStatusSection(component, out generateRequested, out cancelRequested);
+            DrawGenerationSection(component, out generateRequested, out clearGeneratedOutputRequested, out cancelRequested);
 
             serializedObject.ApplyModifiedProperties();
             _graphSerializedObject?.ApplyModifiedProperties();
@@ -156,6 +160,11 @@ namespace DynamicDungeon.Editor.Inspectors
                 component.Generate();
             }
 
+            if (clearGeneratedOutputRequested)
+            {
+                component.Clear();
+            }
+
             if (cancelRequested)
             {
                 component.CancelGeneration();
@@ -164,19 +173,6 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void EnsureStyles()
         {
-            if (_sectionTitleStyle == null)
-            {
-                _sectionTitleStyle = new GUIStyle(EditorStyles.boldLabel);
-                _sectionTitleStyle.fontSize = 11;
-            }
-
-            if (_statusBannerTextStyle == null)
-            {
-                _statusBannerTextStyle = new GUIStyle(EditorStyles.boldLabel);
-                _statusBannerTextStyle.alignment = TextAnchor.MiddleCenter;
-                _statusBannerTextStyle.normal.textColor = Color.white;
-            }
-
             if (_mutedMiniLabelStyle == null)
             {
                 _mutedMiniLabelStyle = new GUIStyle(EditorStyles.miniLabel);
@@ -186,21 +182,18 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private bool DrawGraphSection()
         {
-            BeginSection("Graph");
-
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PropertyField(_graphProperty, new GUIContent("Gen Graph"));
+            EditorGUILayout.PropertyField(_graphProperty, new GUIContent("Tilemap World Graph"));
             EditorGUI.BeginDisabledGroup(_graphProperty.objectReferenceValue == null);
-            bool openGraphRequested = GUILayout.Button("Open in Editor", GUILayout.Width(CompactButtonWidth));
+            bool openGraphRequested = GUILayout.Button("Open Graph", GUILayout.Width(CompactButtonWidth));
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
 
             if (_graphProperty.objectReferenceValue == null)
             {
-                EditorGUILayout.HelpBox("Assign a GenGraph asset to enable generation and graph editing.", MessageType.Warning);
+                EditorGUILayout.HelpBox("Assign a Tilemap World Graph asset to enable generation and graph editing.", MessageType.Warning);
             }
 
-            EndSection();
             return openGraphRequested;
         }
 
@@ -213,7 +206,11 @@ namespace DynamicDungeon.Editor.Inspectors
                 return;
             }
 
-            BeginSection("Exposed Properties");
+            if (!BeginSection("Exposed Properties"))
+            {
+                return;
+            }
+
             EditorGUILayout.LabelField("Override per-instance values for this component.", _mutedMiniLabelStyle);
             GUILayout.Space(2.0f);
 
@@ -301,7 +298,10 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void DrawGenerationSettingsSection()
         {
-            BeginSection("Generation Settings");
+            if (!BeginSection("Generation Settings"))
+            {
+                return;
+            }
 
             EditorGUILayout.PropertyField(_generateOnStartProperty, new GUIContent("Generate On Start"));
 
@@ -348,7 +348,10 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void DrawOutputSection()
         {
-            BeginSection("Output");
+            if (!BeginSection("Output"))
+            {
+                return;
+            }
 
             EditorGUILayout.PropertyField(_tilemapOffsetProperty, new GUIContent("Tilemap Offset"));
 
@@ -384,7 +387,11 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private bool DrawAutomationSection()
         {
-            BeginSection("Automation");
+            if (!BeginSection("Automation"))
+            {
+                return false;
+            }
+
             EditorGUILayout.LabelField("Rebuild or reconcile the Grid child Tilemap hierarchy without running generation.", _mutedMiniLabelStyle);
             GUILayout.Space(2.0f);
             bool applyLayerStructureRequested = GUILayout.Button("Apply Layer Structure");
@@ -395,7 +402,13 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void DrawBakingSection(TilemapWorldGenerator component, out bool bakeRequested, out bool clearBakeRequested)
         {
-            BeginSection("Baking");
+            bakeRequested = false;
+            clearBakeRequested = false;
+
+            if (!BeginSection("Baking"))
+            {
+                return;
+            }
 
             EditorGUILayout.BeginHorizontal();
             bakeRequested = GUILayout.Button("Bake");
@@ -420,35 +433,41 @@ namespace DynamicDungeon.Editor.Inspectors
             EndSection();
         }
 
-        private void DrawStatusSection(TilemapWorldGenerator component, out bool generateRequested, out bool cancelRequested)
+        private void DrawGenerationSection(
+            TilemapWorldGenerator component,
+            out bool generateRequested,
+            out bool clearGeneratedOutputRequested,
+            out bool cancelRequested)
         {
-            BeginSection("Status");
+            generateRequested = false;
+            clearGeneratedOutputRequested = false;
+            cancelRequested = false;
 
-            DrawStatusBanner(component.StatusLabel);
-            GUILayout.Space(4.0f);
+            if (!BeginSection("Generation"))
+            {
+                return;
+            }
 
-            EditorGUILayout.BeginHorizontal();
-            EditorGUI.BeginDisabledGroup(_graphProperty.objectReferenceValue == null);
-            generateRequested = GUILayout.Button("Generate", GUILayout.Height(LargeActionButtonHeight));
-            EditorGUI.EndDisabledGroup();
+            GenerationInspectorAction action = GenerationInspectorControls.Draw(
+                new GenerationInspectorOptions
+                {
+                    GenerateLabel = "GENERATE WORLD",
+                    GeneratingLabel = "GENERATING...",
+                    ClearLabel = "CLEAR WORLD",
+                    Status = component.GenerationStatus,
+                    Progress = component.GenerationProgress,
+                    CanGenerate = _graphProperty.objectReferenceValue != null && !component.IsGenerating,
+                    CanClear = !component.IsGenerating,
+                    IsGenerating = component.IsGenerating,
+                    ShouldShowProgress = component.ShouldShowGenerationProgress
+                });
 
-            EditorGUI.BeginDisabledGroup(!component.IsGenerating);
-            cancelRequested = GUILayout.Button("Cancel", GUILayout.Height(LargeActionButtonHeight));
-            EditorGUI.EndDisabledGroup();
-            EditorGUILayout.EndHorizontal();
+            generateRequested = action == GenerationInspectorAction.Generate;
+            clearGeneratedOutputRequested = action == GenerationInspectorAction.Clear;
+            cancelRequested = action == GenerationInspectorAction.Cancel;
 
             EditorGUILayout.LabelField(BuildStatusHint(component), _mutedMiniLabelStyle);
             EndSection();
-        }
-
-        private void DrawStatusBanner(string statusLabel)
-        {
-            Rect statusRect = EditorGUILayout.GetControlRect(false, StatusBannerHeight);
-            Color bannerColour = GetStatusColour(statusLabel);
-
-            EditorGUI.DrawRect(statusRect, bannerColour);
-            GUI.Box(statusRect, GUIContent.none, EditorStyles.helpBox);
-            EditorGUI.LabelField(statusRect, statusLabel, _statusBannerTextStyle);
         }
 
         private void DrawReadOnlyRow(string label, string value)
@@ -457,26 +476,6 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.PrefixLabel(label);
             EditorGUILayout.SelectableLabel(value, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
             EditorGUILayout.EndHorizontal();
-        }
-
-        private static Color GetStatusColour(string statusLabel)
-        {
-            if (string.Equals(statusLabel, "Generating...", System.StringComparison.Ordinal))
-            {
-                return new Color(0.80f, 0.58f, 0.16f, 1.0f);
-            }
-
-            if (string.Equals(statusLabel, "Done", System.StringComparison.Ordinal))
-            {
-                return new Color(0.21f, 0.58f, 0.28f, 1.0f);
-            }
-
-            if (string.Equals(statusLabel, "Failed", System.StringComparison.Ordinal))
-            {
-                return new Color(0.70f, 0.22f, 0.22f, 1.0f);
-            }
-
-            return new Color(0.33f, 0.33f, 0.33f, 1.0f);
         }
 
         private static string GetBakeTimestampLabel(BakedWorldSnapshot bakedSnapshot)
@@ -493,7 +492,7 @@ namespace DynamicDungeon.Editor.Inspectors
         {
             if (component.IsGenerating)
             {
-                return "Generation is running asynchronously. You can cancel it at any time.";
+                return "Generation is running asynchronously. Progress and cancel controls appear if it takes more than a moment.";
             }
 
             if (component.IsBaked)
@@ -593,17 +592,14 @@ namespace DynamicDungeon.Editor.Inspectors
             return baseHeight + InlineInspectorSpacing + (InlineInspectorPadding * 2.0f) + contentHeight;
         }
 
-        private void BeginSection(string title)
+        private bool BeginSection(string title)
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField(title, _sectionTitleStyle);
-            GUILayout.Space(2.0f);
+            return CollapsibleInspectorSection.Begin("DynamicDungeon.TilemapWorldGenerator." + title, title);
         }
 
         private static void EndSection()
         {
-            GUILayout.Space(6.0f);
-            EditorGUILayout.EndVertical();
+            CollapsibleInspectorSection.End();
         }
 
         private void OpenAssignedGraph()

@@ -16,7 +16,7 @@ namespace DynamicDungeon.Editor
         [MenuItem(DynamicDungeonMenuPaths.GenerationGraphAsset)]
         public static void CreateGenerationGraph()
         {
-            DynamicDungeonEditorAssetUtility.CreateAssetInSelectedFolder<GenGraph>("GenerationGraph.asset");
+            DynamicDungeonEditorAssetUtility.CreateAssetInSelectedFolder<GenGraph>("TilemapWorldGraph.asset");
         }
 
         [MenuItem(DynamicDungeonMenuPaths.BiomeAsset)]

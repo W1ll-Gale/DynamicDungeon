@@ -9,6 +9,59 @@ using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Core
 {
+    public enum ExecutionProgressStage
+    {
+        NodeStarted,
+        NodeCompleted,
+        CreatingSnapshot
+    }
+
+    public readonly struct ExecutionProgress
+    {
+        public int CompletedNodeCount { get; }
+        public int CurrentNodeNumber { get; }
+        public int TotalNodeCount { get; }
+        public string NodeId { get; }
+        public string NodeName { get; }
+        public bool IsNodeComplete { get; }
+        public float NormalizedProgress { get; }
+        public ExecutionProgressStage Stage { get; }
+
+        internal ExecutionProgress(
+            int completedNodeCount,
+            int currentNodeNumber,
+            int totalNodeCount,
+            string nodeId,
+            string nodeName,
+            bool isNodeComplete,
+            ExecutionProgressStage stage)
+        {
+            CompletedNodeCount = completedNodeCount;
+            CurrentNodeNumber = currentNodeNumber;
+            TotalNodeCount = totalNodeCount;
+            NodeId = nodeId ?? string.Empty;
+            NodeName = nodeName ?? string.Empty;
+            IsNodeComplete = isNodeComplete;
+            NormalizedProgress = totalNodeCount > 0 ? Clamp01((float)completedNodeCount / totalNodeCount) : 1.0f;
+            Stage = stage;
+        }
+
+        private static float Clamp01(float value)
+        {
+            if (value < 0.0f)
+            {
+                return 0.0f;
+            }
+
+            if (value > 1.0f)
+            {
+                return 1.0f;
+            }
+
+            return value;
+        }
+    }
+
     public sealed class Executor
     {
         private const int MinimumNativeMapCapacity = 1;
@@ -20,7 +73,8 @@ namespace DynamicDungeon.Runtime.Core
             CancellationToken cancellationToken,
             IProgress<float> progress = null,
             bool disposePlanOnCompletion = true,
-            Action<int> jobCompleted = null)
+            Action<int> jobCompleted = null,
+            IProgress<ExecutionProgress> nodeProgress = null)
         {
             if (plan == null)
             {
@@ -34,7 +88,7 @@ namespace DynamicDungeon.Runtime.Core
 
             try
             {
-                return ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion, jobCompleted);
+                return ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion, jobCompleted, nodeProgress);
             }
             finally
             {
@@ -47,7 +101,8 @@ namespace DynamicDungeon.Runtime.Core
             CancellationToken cancellationToken,
             IProgress<float> progress = null,
             bool disposePlanOnCompletion = true,
-            Action<int> jobCompleted = null)
+            Action<int> jobCompleted = null,
+            IProgress<ExecutionProgress> nodeProgress = null)
         {
             if (plan == null)
             {
@@ -61,7 +116,7 @@ namespace DynamicDungeon.Runtime.Core
 
             try
             {
-                return await Task.Run(() => ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion, jobCompleted)).ConfigureAwait(false);
+                return await Task.Run(() => ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion, jobCompleted, nodeProgress)).ConfigureAwait(false);
             }
             finally
             {
@@ -162,7 +217,8 @@ namespace DynamicDungeon.Runtime.Core
             CancellationToken cancellationToken,
             IProgress<float> progress,
             bool disposePlanOnCompletion,
-            Action<int> jobCompleted)
+            Action<int> jobCompleted,
+            IProgress<ExecutionProgress> nodeProgress)
         {
             NumericBlackboard numericBlackboard = null;
             ManagedBlackboard managedBlackboard = null;
@@ -202,10 +258,12 @@ namespace DynamicDungeon.Runtime.Core
 
                 int dirtyJobCount = CountDirtyJobs(plan);
                 int completedDirtyJobs = 0;
+                int currentDirtyJobNumber = 0;
 
                 if (dirtyJobCount == 0)
                 {
                     progress?.Report(1.0f);
+                    ReportSnapshotProgress(nodeProgress, 0, 0);
                     return CreateSuccessResult(
                         WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes, plan.PrefabPlacementPrefabs, plan.PrefabPlacementTemplates),
                         ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
@@ -222,6 +280,8 @@ namespace DynamicDungeon.Runtime.Core
                         continue;
                     }
 
+                    currentDirtyJobNumber++;
+
                     if (cancellationToken.IsCancellationRequested)
                     {
                         if (hasScheduledHandle)
@@ -231,6 +291,8 @@ namespace DynamicDungeon.Runtime.Core
 
                         return CreateCancelledResult(ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
                     }
+
+                    ReportNodeProgress(nodeProgress, completedDirtyJobs, currentDirtyJobNumber, dirtyJobCount, job, false);
 
                     NodeChannelBindings channelBindings = default;
 
@@ -266,12 +328,19 @@ namespace DynamicDungeon.Runtime.Core
                     combinedHandle.Complete();
                     hasScheduledHandle = false;
 
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return CreateCancelledResult(ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
+                    }
+
                     plan.SetJobDirtyState(index, false);
                     jobCompleted?.Invoke(index);
                     completedDirtyJobs++;
                     progress?.Report((float)completedDirtyJobs / dirtyJobCount);
+                    ReportNodeProgress(nodeProgress, completedDirtyJobs, currentDirtyJobNumber, dirtyJobCount, job, true);
                 }
 
+                ReportSnapshotProgress(nodeProgress, completedDirtyJobs, dirtyJobCount);
                 return CreateSuccessResult(
                     WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes, plan.PrefabPlacementPrefabs, plan.PrefabPlacementTemplates),
                     ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
@@ -302,6 +371,53 @@ namespace DynamicDungeon.Runtime.Core
                     plan.Dispose();
                 }
             }
+        }
+
+        private static void ReportNodeProgress(
+            IProgress<ExecutionProgress> nodeProgress,
+            int completedDirtyJobs,
+            int currentDirtyJobNumber,
+            int dirtyJobCount,
+            NodeJobDescriptor job,
+            bool isNodeComplete)
+        {
+            if (nodeProgress == null)
+            {
+                return;
+            }
+
+            IGenNode node = job.Node;
+            ExecutionProgressStage stage = isNodeComplete
+                ? ExecutionProgressStage.NodeCompleted
+                : ExecutionProgressStage.NodeStarted;
+            nodeProgress.Report(new ExecutionProgress(
+                completedDirtyJobs,
+                currentDirtyJobNumber,
+                dirtyJobCount,
+                node.NodeId,
+                node.NodeName,
+                isNodeComplete,
+                stage));
+        }
+
+        private static void ReportSnapshotProgress(
+            IProgress<ExecutionProgress> nodeProgress,
+            int completedDirtyJobs,
+            int dirtyJobCount)
+        {
+            if (nodeProgress == null)
+            {
+                return;
+            }
+
+            nodeProgress.Report(new ExecutionProgress(
+                completedDirtyJobs,
+                dirtyJobCount,
+                dirtyJobCount,
+                string.Empty,
+                string.Empty,
+                true,
+                ExecutionProgressStage.CreatingSnapshot));
         }
     }
 }

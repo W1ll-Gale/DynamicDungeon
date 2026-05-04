@@ -2,6 +2,7 @@
     "name": "DynamicDungeon.Editor",
     "rootNamespace": "DynamicDungeon.Editor",
     "references": [
+        "DynamicDungeon.Editor.Shared",
         "DynamicDungeon.Runtime",
         "Unity.Collections",
         "Unity.Mathematics",

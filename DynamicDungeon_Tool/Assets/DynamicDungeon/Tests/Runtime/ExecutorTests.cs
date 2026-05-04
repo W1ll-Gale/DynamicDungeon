@@ -78,6 +78,45 @@ namespace DynamicDungeon.Tests.Runtime
         }
 
         [Test]
+        public async Task CancelledDuringFinalNodeReturnsNoSnapshotAndDisposesAllocatedWorld()
+        {
+            ManualResetEventSlim enteredGate = new ManualResetEventSlim(false);
+            ManualResetEventSlim releaseGate = new ManualResetEventSlim(false);
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Executor executor = new Executor();
+            ExecutionPlan plan = null;
+
+            try
+            {
+                BlockingNode blockingNode = new BlockingNode("blocking-node", BlockingOutputChannelName, enteredGate, releaseGate);
+                plan = ExecutionPlan.Build(new IGenNode[] { blockingNode }, 4, 4, 99L);
+
+                LogAssert.NoUnexpectedReceived();
+                Task<ExecutionResult> executionTask = executor.ExecuteAsync(plan, cancellationTokenSource.Token);
+
+                Assert.That(enteredGate.Wait(WaitTimeoutMilliseconds), Is.True);
+                cancellationTokenSource.Cancel();
+                releaseGate.Set();
+
+                ExecutionResult result = await executionTask;
+
+                Assert.That(result.IsSuccess, Is.False);
+                Assert.That(result.WasCancelled, Is.True);
+                Assert.That(result.ErrorMessage, Is.Null);
+                Assert.That(result.Snapshot, Is.Null);
+                Assert.Throws<ObjectDisposedException>(() => plan.AllocatedWorld.GetFloatChannel(BlockingOutputChannelName));
+                LogAssert.NoUnexpectedReceived();
+            }
+            finally
+            {
+                releaseGate.Set();
+                cancellationTokenSource.Dispose();
+                enteredGate.Dispose();
+                releaseGate.Dispose();
+            }
+        }
+
+        [Test]
         public async Task ScheduleExceptionReturnsFailureAndStopsFurtherExecution()
         {
             Executor executor = new Executor();
@@ -118,6 +157,53 @@ namespace DynamicDungeon.Tests.Runtime
             }
 
             Assert.That(reportedValues[reportedValues.Length - 1], Is.EqualTo(1.0f));
+        }
+
+        [Test]
+        public async Task NodeProgressReportsNodeCountsAndNames()
+        {
+            FlatFillNode firstNode = new FlatFillNode("first-node", "First Fill", 1.0f);
+            FlatFillNode secondNode = new FlatFillNode("second-node", "Second Fill", 2.0f);
+            Executor executor = new Executor();
+            ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { firstNode, secondNode }, 5, 2, 678L);
+            ExecutionProgressRecorder progressRecorder = new ExecutionProgressRecorder();
+
+            ExecutionResult result = await executor.ExecuteAsync(plan, CancellationToken.None, nodeProgress: progressRecorder);
+            ExecutionProgress[] reportedValues = progressRecorder.GetValues();
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(reportedValues.Length, Is.GreaterThanOrEqualTo(4));
+            Assert.That(reportedValues[0].CurrentNodeNumber, Is.EqualTo(1));
+            Assert.That(reportedValues[0].TotalNodeCount, Is.EqualTo(2));
+            Assert.That(reportedValues[0].CompletedNodeCount, Is.EqualTo(0));
+            Assert.That(reportedValues[0].NodeName, Is.EqualTo("First Fill"));
+            Assert.That(reportedValues[0].IsNodeComplete, Is.False);
+            Assert.That(reportedValues[0].Stage, Is.EqualTo(ExecutionProgressStage.NodeStarted));
+
+            ExecutionProgress finalNodeProgress = default;
+            bool foundFinalNodeProgress = false;
+            int index;
+            for (index = 0; index < reportedValues.Length; index++)
+            {
+                if (reportedValues[index].Stage == ExecutionProgressStage.NodeCompleted &&
+                    reportedValues[index].CurrentNodeNumber == 2)
+                {
+                    finalNodeProgress = reportedValues[index];
+                    foundFinalNodeProgress = true;
+                }
+            }
+
+            Assert.That(foundFinalNodeProgress, Is.True);
+            Assert.That(finalNodeProgress.TotalNodeCount, Is.EqualTo(2));
+            Assert.That(finalNodeProgress.CompletedNodeCount, Is.EqualTo(2));
+            Assert.That(finalNodeProgress.NodeName, Is.EqualTo("Second Fill"));
+            Assert.That(finalNodeProgress.IsNodeComplete, Is.True);
+            Assert.That(finalNodeProgress.NormalizedProgress, Is.EqualTo(1.0f));
+
+            ExecutionProgress finalProgress = reportedValues[reportedValues.Length - 1];
+            Assert.That(finalProgress.Stage, Is.EqualTo(ExecutionProgressStage.CreatingSnapshot));
+            Assert.That(finalProgress.TotalNodeCount, Is.EqualTo(2));
+            Assert.That(finalProgress.CompletedNodeCount, Is.EqualTo(2));
         }
 
         [Test]
@@ -321,6 +407,34 @@ namespace DynamicDungeon.Tests.Runtime
             {
                 Interlocked.Increment(ref _scheduleCallCount);
                 return default;
+            }
+        }
+
+        private sealed class ExecutionProgressRecorder : IProgress<ExecutionProgress>
+        {
+            private readonly List<ExecutionProgress> _values;
+            private readonly object _syncRoot;
+
+            public ExecutionProgressRecorder()
+            {
+                _values = new List<ExecutionProgress>();
+                _syncRoot = new object();
+            }
+
+            public void Report(ExecutionProgress value)
+            {
+                lock (_syncRoot)
+                {
+                    _values.Add(value);
+                }
+            }
+
+            public ExecutionProgress[] GetValues()
+            {
+                lock (_syncRoot)
+                {
+                    return _values.ToArray();
+                }
             }
         }
 

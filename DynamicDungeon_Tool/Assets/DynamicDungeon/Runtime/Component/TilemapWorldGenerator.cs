@@ -28,8 +28,16 @@ namespace DynamicDungeon.Runtime.Component
         private const string BakedSnapshotMissingDataMessage = "Assigned baked world snapshot is missing snapshot data.";
         private const string BakedSnapshotPathFormat = "Assets/{0}_BakedSnapshot.asset";
         private const string BakedSnapshotDimensionMismatchMessageFormat = "Baked world snapshot dimension mismatch: snapshot is {0}x{1}, current world is {2}x{3}.";
-        private const string MissingGraphMessage = "World generation failed: no GenGraph is assigned.";
+        private const string MissingGraphMessage = "World generation failed: no Tilemap World Graph asset is assigned.";
         private const string GraphCompilationFailedMessage = "Graph compilation failed.";
+        private const double ProgressRevealDelaySeconds = 0.25d;
+        private const float ExecutionProgressStart = 0.35f;
+        private const float ExecutionProgressEnd = 0.70f;
+        private const float SnapshotProgress = 0.78f;
+        private const float OutputStartProgress = 0.82f;
+        private const float OutputTilemapProgress = 0.88f;
+        private const float OutputBackgroundProgress = 0.92f;
+        private const float OutputPrefabProgress = 0.96f;
 
         [SerializeField]
         private bool _generateOnStart;
@@ -90,7 +98,12 @@ namespace DynamicDungeon.Runtime.Component
         private CancellationTokenSource _generationCancellationSource;
         private Task _currentGenerationTask = Task.CompletedTask;
         private string _statusLabel = IdleStatusLabel;
+        private string _generationStatus = IdleStatusLabel;
+        private float _generationProgress;
+        private double _generationStartedAt;
         private long _lastUsedSeed;
+        private int _mainThreadId;
+        private bool _generationCancelRequested;
 
         public event Action OnGenerationStarted;
         public event Action<GenerationCompletedArgs> OnGenerationCompleted;
@@ -108,6 +121,30 @@ namespace DynamicDungeon.Runtime.Component
             get
             {
                 return _statusLabel;
+            }
+        }
+
+        public float GenerationProgress
+        {
+            get
+            {
+                return _generationProgress;
+            }
+        }
+
+        public string GenerationStatus
+        {
+            get
+            {
+                return _generationStatus;
+            }
+        }
+
+        public bool ShouldShowGenerationProgress
+        {
+            get
+            {
+                return IsGenerating && Time.realtimeSinceStartupAsDouble - _generationStartedAt >= ProgressRevealDelaySeconds;
             }
         }
 
@@ -196,10 +233,30 @@ namespace DynamicDungeon.Runtime.Component
 
         public void CancelGeneration()
         {
-            if (_generationCancellationSource != null)
+            if (_generationCancellationSource != null && !_generationCancellationSource.IsCancellationRequested)
             {
+                _generationCancelRequested = true;
+                SetGenerationProgress(_generationProgress, "Cancellation requested...");
                 _generationCancellationSource.Cancel();
             }
+        }
+
+        public void Clear()
+        {
+            if (IsGenerating)
+            {
+                Debug.LogWarning("Cannot clear generated world output while generation is running.", this);
+                return;
+            }
+
+            ClearTilemapsIfPossible();
+            _statusLabel = IdleStatusLabel;
+            SetGenerationProgress(0.0f, "Cleared generated world output.");
+
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(this);
+            EditorSceneManager.MarkSceneDirty(gameObject.scene);
+#endif
         }
 
         public void Bake()
@@ -279,6 +336,11 @@ namespace DynamicDungeon.Runtime.Component
             }
 
             await generationTask;
+        }
+
+        private void Awake()
+        {
+            CaptureMainThreadIdIfNeeded();
         }
 
         private void OnDestroy()
@@ -426,29 +488,47 @@ namespace DynamicDungeon.Runtime.Component
 
         private async Task RunGenerationAsync(CancellationToken cancellationToken)
         {
+            CaptureMainThreadIdIfNeeded();
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            ExecutionPlan undisposedPlan = null;
             _statusLabel = GeneratingStatusLabel;
+            _generationCancelRequested = false;
+            _generationStartedAt = Time.realtimeSinceStartupAsDouble;
+            SetGenerationProgress(0.0f, "Preparing world generation...");
             RaiseGenerationStarted();
 
             try
             {
                 ValidateConfiguration();
+                cancellationToken.ThrowIfCancellationRequested();
 
+                SetGenerationProgress(0.1f, "Compiling generation graph...");
                 long seed = GetSeedForRun();
                 GraphCompileResult compileResult;
                 string compileErrorMessage;
                 if (!TryCompileGraph(seed, out compileResult, out compileErrorMessage))
                 {
                     _statusLabel = FailedStatusLabel;
+                    SetGenerationProgress(0.0f, compileErrorMessage ?? GraphCompilationFailedMessage);
                     RaiseGenerationCompleted(CreateFailureArgs(compileErrorMessage));
                     return;
                 }
 
+                undisposedPlan = compileResult.Plan;
                 ApplyPropertyOverrides(compileResult.Plan);
-                ExecutionResult executionResult = await _executor.ExecuteAsync(compileResult.Plan, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                SetGenerationProgress(ExecutionProgressStart, "Executing generation graph...");
+                IProgress<ExecutionProgress> nodeProgress = new ExecutionProgressReporter(SetGenerationProgressFromExecution);
+                ExecutionResult executionResult = await _executor.ExecuteAsync(
+                    compileResult.Plan,
+                    cancellationToken,
+                    nodeProgress: nodeProgress);
+                undisposedPlan = null;
 
                 if (executionResult.WasCancelled)
                 {
                     _statusLabel = IdleStatusLabel;
+                    SetGenerationProgress(0.0f, "Generation cancelled.");
 
                     GenerationCompletedArgs cancelledArgs = new GenerationCompletedArgs();
                     cancelledArgs.Snapshot = null;
@@ -459,18 +539,28 @@ namespace DynamicDungeon.Runtime.Component
                     return;
                 }
 
+                cancellationToken.ThrowIfCancellationRequested();
+
                 if (!executionResult.IsSuccess || executionResult.Snapshot == null)
                 {
                     string executionError = string.IsNullOrWhiteSpace(executionResult.ErrorMessage) ? "Generation failed." : executionResult.ErrorMessage;
                     Debug.LogError("World generation failed: " + executionError, this);
                     _statusLabel = FailedStatusLabel;
+                    SetGenerationProgress(0.0f, executionError);
                     RaiseGenerationCompleted(CreateFailureArgs(executionError));
                     return;
                 }
 
                 if (compileResult.HasConnectedOutput)
                 {
-                    WriteSnapshotToTilemaps(executionResult.Snapshot, compileResult.OutputChannelName);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await SetGenerationProgressAndYield(OutputStartProgress, "Graph executed. Preparing generated tilemaps and prefabs...", cancellationToken);
+                    await WriteSnapshotToTilemapsAsync(executionResult.Snapshot, compileResult.OutputChannelName, cancellationToken);
+                }
+                else
+                {
+                    await SetGenerationProgressAndYield(OutputStartProgress, "Graph executed. Clearing generated output because the graph has no connected output.", cancellationToken);
+                    ClearTilemapsIfPossible();
                 }
 
                 GenerationCompletedArgs completedArgs = new GenerationCompletedArgs();
@@ -480,14 +570,198 @@ namespace DynamicDungeon.Runtime.Component
                 completedArgs.ErrorMessage = null;
 
                 _statusLabel = DoneStatusLabel;
+                SetGenerationProgress(1.0f, BuildGenerationCompleteStatus(executionResult.Snapshot, seed, stopwatch.ElapsedMilliseconds, compileResult.HasConnectedOutput));
                 RaiseGenerationCompleted(completedArgs);
+            }
+            catch (OperationCanceledException)
+            {
+                _statusLabel = IdleStatusLabel;
+                SetGenerationProgress(0.0f, "Generation cancelled.");
+
+                GenerationCompletedArgs cancelledArgs = new GenerationCompletedArgs();
+                cancelledArgs.Snapshot = null;
+                cancelledArgs.IsSuccess = false;
+                cancelledArgs.WasBakedFallback = false;
+                cancelledArgs.ErrorMessage = "Generation cancelled.";
+                RaiseGenerationCompleted(cancelledArgs);
             }
             catch (Exception exception)
             {
                 Debug.LogError("World generation failed: " + exception, this);
                 _statusLabel = FailedStatusLabel;
+                SetGenerationProgress(0.0f, exception.Message);
                 RaiseGenerationCompleted(CreateFailureArgs(exception.Message));
             }
+            finally
+            {
+                if (undisposedPlan != null)
+                {
+                    undisposedPlan.Dispose();
+                }
+            }
+        }
+
+        private void SetGenerationProgress(float progress, string status)
+        {
+            _generationProgress = Clamp01(progress);
+            _generationStatus = string.IsNullOrWhiteSpace(status) ? _statusLabel : status;
+#if UNITY_EDITOR
+            if (IsOnMainThread())
+            {
+                EditorApplication.QueuePlayerLoopUpdate();
+            }
+#endif
+        }
+
+        private async Task SetGenerationProgressAndYield(float progress, string status, CancellationToken cancellationToken)
+        {
+            SetGenerationProgress(progress, status);
+            await Task.Yield();
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        private void SetGenerationProgressFromExecution(ExecutionProgress progress)
+        {
+            if (!IsGenerating || _generationCancelRequested)
+            {
+                return;
+            }
+
+            if (progress.Stage == ExecutionProgressStage.CreatingSnapshot)
+            {
+                SetGenerationProgress(SnapshotProgress, BuildSnapshotProgressStatus(progress));
+                return;
+            }
+
+            if (progress.TotalNodeCount <= 0)
+            {
+                SetGenerationProgress(ExecutionProgressEnd, "Executed 0/0 graph nodes.");
+                return;
+            }
+
+            int nodeNumber = Clamp(progress.CurrentNodeNumber, 1, progress.TotalNodeCount);
+            float nodeProgress = progress.IsNodeComplete
+                ? progress.NormalizedProgress
+                : (float)(nodeNumber - 1) / progress.TotalNodeCount;
+            float overallProgress = Lerp(ExecutionProgressStart, ExecutionProgressEnd, nodeProgress);
+            string nodeProgressLabel = nodeNumber.ToString(CultureInfo.InvariantCulture) + "/" + progress.TotalNodeCount.ToString(CultureInfo.InvariantCulture);
+            string verb = progress.IsNodeComplete ? "Executed" : "Executing";
+
+            SetGenerationProgress(
+                overallProgress,
+                verb + " node " + nodeProgressLabel + ": " + GetNodeDisplayName(progress));
+        }
+
+        private static string BuildSnapshotProgressStatus(ExecutionProgress progress)
+        {
+            if (progress.TotalNodeCount <= 0)
+            {
+                return "Executed 0/0 graph nodes. Building world snapshot...";
+            }
+
+            string nodeProgressLabel = progress.CompletedNodeCount.ToString(CultureInfo.InvariantCulture) +
+                "/" +
+                progress.TotalNodeCount.ToString(CultureInfo.InvariantCulture);
+            return "Executed " + nodeProgressLabel + " graph nodes. Building world snapshot...";
+        }
+
+        private static float Clamp01(float value)
+        {
+            if (value < 0.0f)
+            {
+                return 0.0f;
+            }
+
+            if (value > 1.0f)
+            {
+                return 1.0f;
+            }
+
+            return value;
+        }
+
+        private static int Clamp(int value, int minimum, int maximum)
+        {
+            if (value < minimum)
+            {
+                return minimum;
+            }
+
+            if (value > maximum)
+            {
+                return maximum;
+            }
+
+            return value;
+        }
+
+        private static float Lerp(float from, float to, float t)
+        {
+            return from + ((to - from) * Clamp01(t));
+        }
+
+        private static string GetNodeDisplayName(ExecutionProgress progress)
+        {
+            if (!string.IsNullOrWhiteSpace(progress.NodeName))
+            {
+                return progress.NodeName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(progress.NodeId))
+            {
+                return progress.NodeId;
+            }
+
+            return "Unknown node";
+        }
+
+        private sealed class ExecutionProgressReporter : IProgress<ExecutionProgress>
+        {
+            private readonly Action<ExecutionProgress> _report;
+
+            public ExecutionProgressReporter(Action<ExecutionProgress> report)
+            {
+                _report = report;
+            }
+
+            public void Report(ExecutionProgress value)
+            {
+                if (_report != null)
+                {
+                    _report(value);
+                }
+            }
+        }
+
+        private void CaptureMainThreadIdIfNeeded()
+        {
+            if (_mainThreadId == 0)
+            {
+                _mainThreadId = Thread.CurrentThread.ManagedThreadId;
+            }
+        }
+
+        private bool IsOnMainThread()
+        {
+            return _mainThreadId != 0 && Thread.CurrentThread.ManagedThreadId == _mainThreadId;
+        }
+
+        private static string BuildGenerationCompleteStatus(WorldSnapshot snapshot, long seed, long elapsedMilliseconds, bool renderedOutput)
+        {
+            if (snapshot == null)
+            {
+                return "Generation completed.";
+            }
+
+            string action = renderedOutput ? "Generated" : "Executed";
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "{0} {1}x{2} world. Seed {3}, {4}ms.",
+                action,
+                snapshot.Width,
+                snapshot.Height,
+                seed,
+                elapsedMilliseconds);
         }
 
         private void ValidateConfiguration()
@@ -547,6 +821,11 @@ namespace DynamicDungeon.Runtime.Component
                 compileResult = GraphCompiler.Compile(_graph);
                 if (!compileResult.IsSuccess || compileResult.Plan == null)
                 {
+                    if (compileResult.Plan != null)
+                    {
+                        compileResult.Plan.Dispose();
+                    }
+
                     LogCompileDiagnostics(compileResult.Diagnostics);
                     errorMessage = GraphCompilationFailedMessage;
                     return false;
@@ -633,8 +912,21 @@ namespace DynamicDungeon.Runtime.Component
 
             outputChannelName = compileResult.OutputChannelName;
             hasConnectedOutput = compileResult.HasConnectedOutput;
-            ApplyPropertyOverrides(compileResult.Plan);
-            ExecutionResult executionResult = _executor.Execute(compileResult.Plan, CancellationToken.None);
+            ExecutionPlan undisposedPlan = compileResult.Plan;
+            ExecutionResult executionResult;
+            try
+            {
+                ApplyPropertyOverrides(compileResult.Plan);
+                executionResult = _executor.Execute(compileResult.Plan, CancellationToken.None);
+                undisposedPlan = null;
+            }
+            finally
+            {
+                if (undisposedPlan != null)
+                {
+                    undisposedPlan.Dispose();
+                }
+            }
 
             if (executionResult.WasCancelled)
             {
@@ -726,31 +1018,111 @@ namespace DynamicDungeon.Runtime.Component
             return true;
         }
 
-        private void WriteSnapshotToTilemaps(WorldSnapshot snapshot, string outputChannelName)
+        private void WriteSnapshotToTilemaps(
+            WorldSnapshot snapshot,
+            string outputChannelName,
+            CancellationToken cancellationToken = default,
+            bool reportProgress = false)
         {
+            if (reportProgress)
+            {
+                SetGenerationProgress(OutputStartProgress, "Preparing generated tilemaps and prefabs...");
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
             Grid resolvedGrid = ResolveGrid(true);
             _generatedPrefabWriter.EnsureRoot(transform);
             _generatedPrefabWriter.ClearAll();
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (!string.IsNullOrWhiteSpace(outputChannelName))
             {
                 TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
 
+                if (reportProgress)
+                {
+                    SetGenerationProgress(OutputTilemapProgress, "Writing generated tilemaps...");
+                }
+
                 _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
                 _tilemapLayerWriter.ClearAll();
+                cancellationToken.ThrowIfCancellationRequested();
                 _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (_renderBackgroundFromFloorTiles)
                 {
+                    if (reportProgress)
+                    {
+                        SetGenerationProgress(OutputBackgroundProgress, "Writing generated background tilemap...");
+                    }
+
                     ushort backgroundLogicalId = unchecked((ushort)Mathf.Max(0, _backgroundLogicalId));
                     _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, _tilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
             }
             else
             {
+                if (reportProgress)
+                {
+                    SetGenerationProgress(OutputStartProgress, "Clearing generated output because the graph has no connected output.");
+                }
+
                 ClearTilemapsIfPossible();
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            if (reportProgress)
+            {
+                SetGenerationProgress(OutputPrefabProgress, "Placing generated prefabs...");
             }
 
             _prefabPlacementOutputPass.Execute(snapshot, resolvedGrid, _generatedPrefabWriter, _tilemapOffset);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        private async Task WriteSnapshotToTilemapsAsync(
+            WorldSnapshot snapshot,
+            string outputChannelName,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Grid resolvedGrid = ResolveGrid(true);
+
+            await SetGenerationProgressAndYield(OutputStartProgress, "Clearing previous generated prefabs...", cancellationToken);
+            _generatedPrefabWriter.EnsureRoot(transform);
+            _generatedPrefabWriter.ClearAll();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!string.IsNullOrWhiteSpace(outputChannelName))
+            {
+                TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
+
+                await SetGenerationProgressAndYield(OutputTilemapProgress, "Writing generated tilemaps...", cancellationToken);
+                _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
+                _tilemapLayerWriter.ClearAll();
+                cancellationToken.ThrowIfCancellationRequested();
+                _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (_renderBackgroundFromFloorTiles)
+                {
+                    await SetGenerationProgressAndYield(OutputBackgroundProgress, "Writing generated background tilemap...", cancellationToken);
+                    ushort backgroundLogicalId = unchecked((ushort)Mathf.Max(0, _backgroundLogicalId));
+                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, _tilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            }
+            else
+            {
+                await SetGenerationProgressAndYield(OutputStartProgress, "Clearing generated output because the graph has no connected output.", cancellationToken);
+                ClearTilemapsIfPossible();
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            await SetGenerationProgressAndYield(OutputPrefabProgress, "Placing generated prefabs...", cancellationToken);
+            _prefabPlacementOutputPass.Execute(snapshot, resolvedGrid, _generatedPrefabWriter, _tilemapOffset);
+            cancellationToken.ThrowIfCancellationRequested();
         }
 
         private void ApplyPropertyOverrides(ExecutionPlan plan)

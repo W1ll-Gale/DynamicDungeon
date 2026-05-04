@@ -1,44 +1,40 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
+using DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner;
+using DynamicDungeon.Editor.Shared;
 
 namespace DynamicDungeon.ConstraintDungeon
 {
     [CustomEditor(typeof(DungeonGenerator))]
     public class DungeonGeneratorEditor : UnityEditor.Editor
     {
-        private string _newName;
+        private const float CompactButtonWidth = 118.0f;
+        private const string HeaderTitle = "Constraint Dungeon Generator";
+        private GUIStyle _mutedMiniLabelStyle;
+
+        protected override void OnHeaderGUI()
+        {
+            ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle);
+        }
 
         public override void OnInspectorGUI()
         {
             DungeonGenerator gen = (DungeonGenerator)target;
 
+            EnsureStyles();
             serializedObject.Update();
-            
-            // Draw mode selection explicitly
+
+            DrawFlowAssetSection(gen);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("generationMode"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("layoutAttempts"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("maxSearchSteps"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("generateOnStart"));
-            
-            GUILayout.Space(10);
+            DrawGenerationSettingsSection();
 
             if (gen.generationMode == DungeonGenerationMode.FlowGraph)
             {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("useRandomFlowSeed"));
-                using (new EditorGUI.DisabledScope(serializedObject.FindProperty("useRandomFlowSeed").boolValue))
-                {
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("flowSeed"));
-                }
+                DrawFlowGraphSettingsSection(gen);
 
-                if (gen.dungeonFlow == null)
+                if (gen.dungeonFlow != null)
                 {
-                    EditorGUILayout.HelpBox("No Dungeon Flow assigned! Use the Flow Designer or create one below.", MessageType.Error);
-                    if (GUILayout.Button("Create New Dungeon Flow", GUILayout.Height(30))) CreateDungeonFlow(gen);
-                }
-                else
-                {
-                    DrawAssetRenaming(gen);
                     DrawInlineDefaults(gen);
                 }
             }
@@ -47,23 +43,90 @@ namespace DynamicDungeon.ConstraintDungeon
                 DrawOrganicSettings();
             }
 
-            GUILayout.Space(20);
-
-            DrawGenerationControls(gen);
-
-            GUI.backgroundColor = new Color(1f, 0.4f, 0.4f);
-            if (GUILayout.Button("CLEAR DUNGEON", GUILayout.Height(30)) && !gen.IsGenerating)
+            GenerationInspectorAction generationAction = DrawGenerationControls(gen);
+            if (generationAction == GenerationInspectorAction.Generate)
+            {
+                gen.Generate();
+            }
+            else if (generationAction == GenerationInspectorAction.Clear)
             {
                 gen.Clear();
             }
-            GUI.backgroundColor = Color.white;
-
-            if (GUILayout.Button("Open Dungeon Designer"))
+            else if (generationAction == GenerationInspectorAction.Cancel)
             {
-                EditorApplication.ExecuteMenuItem(ConstraintDungeonMenuPaths.DungeonDesigner);
+                gen.CancelGeneration();
             }
-            
+
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void EnsureStyles()
+        {
+            if (_mutedMiniLabelStyle == null)
+            {
+                _mutedMiniLabelStyle = new GUIStyle(EditorStyles.miniLabel);
+                _mutedMiniLabelStyle.normal.textColor = new Color(0.72f, 0.72f, 0.72f, 1.0f);
+            }
+        }
+
+        private void DrawFlowAssetSection(DungeonGenerator gen)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("dungeonFlow"), new GUIContent("Dungeon Flow"));
+
+            using (new EditorGUI.DisabledScope(gen.dungeonFlow == null))
+            {
+                if (GUILayout.Button("Open Designer", GUILayout.Width(CompactButtonWidth)))
+                {
+                    DungeonDesignerWindow.Open(gen.dungeonFlow);
+                }
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            if (gen.dungeonFlow == null)
+            {
+                if (GUILayout.Button("Create New Dungeon Flow", GUILayout.Height(30)))
+                {
+                    CreateDungeonFlow(gen);
+                }
+            }
+        }
+
+        private void DrawGenerationSettingsSection()
+        {
+            if (!BeginSection("Generation Settings"))
+            {
+                return;
+            }
+
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("layoutAttempts"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("maxSearchSteps"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("generateOnStart"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("enableDiagnostics"));
+
+            EndSection();
+        }
+
+        private void DrawFlowGraphSettingsSection(DungeonGenerator gen)
+        {
+            if (!BeginSection("Flow Graph Settings"))
+            {
+                return;
+            }
+
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("useRandomFlowSeed"));
+            using (new EditorGUI.DisabledScope(serializedObject.FindProperty("useRandomFlowSeed").boolValue))
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("flowSeed"));
+            }
+
+            if (gen.dungeonFlow == null)
+            {
+                EditorGUILayout.HelpBox("Assign a Dungeon Flow asset to enable flow graph generation.", MessageType.Error);
+            }
+
+            EndSection();
         }
 
         public override bool RequiresConstantRepaint()
@@ -72,37 +135,30 @@ namespace DynamicDungeon.ConstraintDungeon
             return gen != null && gen.IsGenerating;
         }
 
-        private void DrawGenerationControls(DungeonGenerator gen)
+        private GenerationInspectorAction DrawGenerationControls(DungeonGenerator gen)
         {
-            if (gen.ShouldShowGenerationProgress)
+            if (!BeginSection("Generation"))
             {
-                GUI.backgroundColor = new Color(1f, 0.85f, 0.35f);
-                using (new EditorGUI.DisabledScope(true))
-                {
-                    GUILayout.Button("GENERATING...", GUILayout.Height(40));
-                }
-                GUI.backgroundColor = Color.white;
-
-                EditorGUILayout.HelpBox(gen.GenerationStatus, MessageType.Info);
-                Rect progressRect = GUILayoutUtility.GetRect(18f, 18f, "TextField");
-                EditorGUI.ProgressBar(progressRect, gen.GenerationProgress, $"{Mathf.RoundToInt(gen.GenerationProgress * 100f)}%");
-
-                GUI.backgroundColor = new Color(1f, 0.6f, 0.35f);
-                if (GUILayout.Button("CANCEL GENERATION", GUILayout.Height(30)))
-                {
-                    gen.CancelGeneration();
-                }
-                GUI.backgroundColor = Color.white;
-
-                return;
+                return GenerationInspectorAction.None;
             }
 
-            GUI.backgroundColor = new Color(0.4f, 1f, 0.4f);
-            if (GUILayout.Button("GENERATE DUNGEON", GUILayout.Height(40)) && !gen.IsGenerating)
-            {
-                gen.Generate();
-            }
-            GUI.backgroundColor = Color.white;
+            GenerationInspectorAction action = GenerationInspectorControls.Draw(
+                new GenerationInspectorOptions
+                {
+                    GenerateLabel = "GENERATE DUNGEON",
+                    GeneratingLabel = "GENERATING...",
+                    ClearLabel = "CLEAR DUNGEON",
+                    Status = gen.GenerationStatus,
+                    Progress = gen.GenerationProgress,
+                    CanGenerate = !gen.IsGenerating,
+                    CanClear = !gen.IsGenerating,
+                    IsGenerating = gen.IsGenerating,
+                    ShouldShowProgress = gen.ShouldShowGenerationProgress
+                });
+
+            EditorGUILayout.LabelField(BuildStatusHint(gen), _mutedMiniLabelStyle);
+            EndSection();
+            return action;
         }
 
         private void DrawOrganicSettings()
@@ -113,8 +169,10 @@ namespace DynamicDungeon.ConstraintDungeon
                 return;
             }
 
-            EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Organic Random Growth Settings", EditorStyles.boldLabel);
+            if (!BeginSection("Organic Growth Settings"))
+            {
+                return;
+            }
 
             EditorGUILayout.PropertyField(organicProp.FindPropertyRelative("useRoomCountRange"), new GUIContent("Use Room Count Range"));
             if (organicProp.FindPropertyRelative("useRoomCountRange").boolValue)
@@ -160,7 +218,7 @@ namespace DynamicDungeon.ConstraintDungeon
             GUILayout.Space(8);
             DrawOrganicTemplateEntries(organicProp.FindPropertyRelative("templates"));
 
-            EditorGUILayout.EndVertical();
+            EndSection();
         }
 
         private void DrawOrganicTemplateEntries(SerializedProperty templatesProp)
@@ -247,37 +305,12 @@ namespace DynamicDungeon.ConstraintDungeon
             }
         }
 
-        private void DrawAssetRenaming(DungeonGenerator gen)
-        {
-            EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Asset Management", EditorStyles.boldLabel);
-            
-            if (string.IsNullOrEmpty(_newName)) _newName = gen.dungeonFlow.name;
-
-            EditorGUILayout.BeginHorizontal();
-            _newName = EditorGUILayout.TextField("Flow Asset Name", _newName);
-            if (GUILayout.Button("Rename", GUILayout.Width(60)))
-            {
-                string path = AssetDatabase.GetAssetPath(gen.dungeonFlow);
-                string result = AssetDatabase.RenameAsset(path, _newName);
-                if (!string.IsNullOrEmpty(result))
-                {
-                    Debug.LogError($"[DungeonGenerator] Rename failed: {result}");
-                }
-                else
-                {
-                    AssetDatabase.SaveAssets();
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
-        }
-
         private void DrawInlineDefaults(DungeonGenerator gen)
         {
-            EditorGUILayout.Space(5);
-            EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Shared Templates (Global Defaults)", EditorStyles.boldLabel);
+            if (!BeginSection("Shared Templates"))
+            {
+                return;
+            }
             
             SerializedObject flowSO = new SerializedObject(gen.dungeonFlow);
             flowSO.Update();
@@ -289,7 +322,27 @@ namespace DynamicDungeon.ConstraintDungeon
             }
             
             flowSO.ApplyModifiedProperties();
-            EditorGUILayout.EndVertical();
+            EndSection();
+        }
+
+        private static string BuildStatusHint(DungeonGenerator gen)
+        {
+            if (gen.IsGenerating)
+            {
+                return "Generation is running asynchronously. Progress and cancel controls appear if it takes more than a moment.";
+            }
+
+            return "Use Generate for an editor-time run, or enable Generate On Start for runtime generation.";
+        }
+
+        private static bool BeginSection(string title)
+        {
+            return CollapsibleInspectorSection.Begin("DynamicDungeon.ConstraintDungeonGenerator." + title, title);
+        }
+
+        private static void EndSection()
+        {
+            CollapsibleInspectorSection.End();
         }
 
         private void CreateDungeonFlow(DungeonGenerator gen)
@@ -308,7 +361,6 @@ namespace DynamicDungeon.ConstraintDungeon
 
             gen.dungeonFlow = asset;
             EditorUtility.SetDirty(gen);
-            _newName = asset.name;
             
             EditorGUIUtility.PingObject(asset);
         }
