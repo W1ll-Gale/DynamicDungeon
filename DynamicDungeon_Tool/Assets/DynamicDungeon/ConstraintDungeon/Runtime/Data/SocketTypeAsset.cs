@@ -2,7 +2,7 @@
 
 namespace DynamicDungeon.ConstraintDungeon
 {
-    [CreateAssetMenu(fileName = "New Socket Type", menuName = "Dynamic Dungeon/Constraint Dungeon/Socket Type")]
+    [CreateAssetMenu(fileName = "New Socket Type", menuName = ConstraintDungeonMenuPaths.SocketTypeAssetMenu)]
     public class SocketTypeAsset : ScriptableObject
     {
 

@@ -331,7 +331,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
 
         private void CreateAndAssignNewSocket()
         {
-            string path = "Assets/DynamicDungeon/ConstraintDungeon/Samples/Data/Sockets";
+            string path = ConstraintDungeonAssetPaths.SocketFolder;
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);

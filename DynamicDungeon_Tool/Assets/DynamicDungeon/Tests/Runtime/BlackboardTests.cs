@@ -88,9 +88,9 @@ namespace DynamicDungeon.Tests.Runtime
         [Test]
         public void ReconcilePropertyOverridesKeepsOverrideBoundByPropertyIdAfterRename()
         {
-            GameObject gameObject = new GameObject("DungeonGeneratorTest");
+            GameObject gameObject = new GameObject("TilemapWorldGeneratorTest");
             GenGraph graph = ScriptableObject.CreateInstance<GenGraph>();
-            DungeonGeneratorComponent component = gameObject.AddComponent<DungeonGeneratorComponent>();
+            TilemapWorldGenerator component = gameObject.AddComponent<TilemapWorldGenerator>();
 
             try
             {

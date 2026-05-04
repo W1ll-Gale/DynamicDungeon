@@ -15,7 +15,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
         private DungeonGraphView graphView;
         private DungeonFlow activeFlow;
 
-        [MenuItem("Window/Dynamic Dungeon/Constraint Dungeon/Dungeon Designer")]
+        [MenuItem(ConstraintDungeonMenuPaths.DungeonDesigner)]
         public static void Open()
         {
             GetWindow<DungeonDesignerWindow>("Dungeon Designer");

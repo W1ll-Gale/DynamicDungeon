@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using DynamicDungeon.Runtime;
 using UnityEditor;
 using UnityEditor.ProjectWindowCallback;
 using UnityEngine;
@@ -9,9 +10,7 @@ namespace DynamicDungeon.Editor
 {
     public static class NodeScaffolder
     {
-        private const string MenuItemPath = "Assets/Create/DynamicDungeon/Custom Node Script";
-
-        [MenuItem(MenuItemPath)]
+        [MenuItem(DynamicDungeonMenuPaths.CustomNodeScriptAsset)]
         public static void CreateCustomNodeScript()
         {
             string selectedFolderPath = DynamicDungeonEditorAssetUtility.GetSelectedFolderPath();

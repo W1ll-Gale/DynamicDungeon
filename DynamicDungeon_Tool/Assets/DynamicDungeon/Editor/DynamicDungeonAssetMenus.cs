@@ -1,3 +1,4 @@
+using DynamicDungeon.Runtime;
 using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Graph;
 using DynamicDungeon.Runtime.Placement;
@@ -10,22 +11,21 @@ namespace DynamicDungeon.Editor
 {
     public static class DynamicDungeonAssetMenus
     {
-        private const string MenuRoot = "Assets/Create/DynamicDungeon/";
         private const string RegistryAssetPath = "Assets/DynamicDungeon/TileSemanticRegistry.asset";
 
-        [MenuItem(MenuRoot + "Generation Graph")]
+        [MenuItem(DynamicDungeonMenuPaths.GenerationGraphAsset)]
         public static void CreateGenerationGraph()
         {
             DynamicDungeonEditorAssetUtility.CreateAssetInSelectedFolder<GenGraph>("GenerationGraph.asset");
         }
 
-        [MenuItem(MenuRoot + "Biome")]
+        [MenuItem(DynamicDungeonMenuPaths.BiomeAsset)]
         public static void CreateBiome()
         {
             DynamicDungeonEditorAssetUtility.CreateAssetInSelectedFolder<BiomeAsset>("Biome.asset");
         }
 
-        [MenuItem(MenuRoot + "Tile Semantic Registry")]
+        [MenuItem(DynamicDungeonMenuPaths.TileSemanticRegistryAsset)]
         public static void CreateTileSemanticRegistry()
         {
             DynamicDungeonEditorAssetUtility.EnsureFolderPath("Assets/DynamicDungeon");
@@ -51,13 +51,13 @@ namespace DynamicDungeon.Editor
             ProjectWindowUtil.ShowCreatedAsset(registry);
         }
 
-        [MenuItem(MenuRoot + "Tilemap Layer Definition")]
+        [MenuItem(DynamicDungeonMenuPaths.TilemapLayerDefinitionAsset)]
         public static void CreateTilemapLayerDefinition()
         {
             DynamicDungeonEditorAssetUtility.CreateAssetInSelectedFolder<TilemapLayerDefinition>("TilemapLayerDefinition.asset");
         }
 
-        [MenuItem(MenuRoot + "Stampable Prefab")]
+        [MenuItem(DynamicDungeonMenuPaths.StampablePrefabAsset)]
         public static void CreateStampablePrefab()
         {
             string folderPath = DynamicDungeonEditorAssetUtility.GetSelectedFolderPath();

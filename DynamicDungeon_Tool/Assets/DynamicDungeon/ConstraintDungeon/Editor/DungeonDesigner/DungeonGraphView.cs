@@ -25,7 +25,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
         public DungeonGraphView(EditorWindow window)
         {
             _editorWindow = window;
-            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/DynamicDungeon/ConstraintDungeon/Editor/DungeonDesigner/DungeonGraph.uss"));
+            styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(ConstraintDungeonAssetPaths.DungeonGraphStylesheet));
             
             SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
             

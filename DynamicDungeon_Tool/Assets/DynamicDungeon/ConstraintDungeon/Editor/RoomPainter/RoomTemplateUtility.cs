@@ -9,7 +9,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
 {
     public static class RoomTemplateUtility
     {
-        [MenuItem("Tools/Dynamic Dungeon/Constraint Dungeon/Rooms/Validate All Room Prefabs")]
+        [MenuItem(ConstraintDungeonMenuPaths.ValidateRoomPrefabs)]
         public static void ValidateAllRoomPrefabs()
         {
             int validCount = 0;
@@ -31,7 +31,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
             Debug.Log($"[RoomTemplateUtility] Room validation complete. Valid: {validCount}, Invalid: {invalidCount}.");
         }
 
-        [MenuItem("Tools/Dynamic Dungeon/Constraint Dungeon/Rooms/Bake All Room Prefabs")]
+        [MenuItem(ConstraintDungeonMenuPaths.BakeRoomPrefabs)]
         public static void BakeAllRoomPrefabs()
         {
             int bakedCount = 0;
@@ -69,7 +69,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
             return rooms.ToArray();
         }
 
-        [MenuItem("Assets/Create/Dynamic Dungeon/Constraint Dungeon/New Room Prefab", false, 10)]
+        [MenuItem(ConstraintDungeonMenuPaths.NewRoomPrefab, false, 10)]
         public static void CreateNewRoomPrefab()
         {
             string path = EditorUtility.SaveFilePanelInProject("Create Room Prefab", "NewRoomPrefab", "prefab", "Select where to save the room prefab");
@@ -116,10 +116,10 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
             Debug.Log($"[RoomTemplateUtility] Created new room prefab at {path} with RoomTemplateComponent linked.");
         }
 
-        [MenuItem("GameObject/Dynamic Dungeon/Constraint Dungeon/Dungeon Manager", false, 10)]
-        public static void CreateDungeonManager(MenuCommand menuCommand)
+        [MenuItem(ConstraintDungeonMenuPaths.DungeonGeneratorSetup, false, 10)]
+        public static void CreateConstraintDungeonGenerator(MenuCommand menuCommand)
         {
-            GameObject go = new GameObject("Dungeon Manager");
+            GameObject go = new GameObject("Constraint Dungeon Generator");
             DungeonGenerator gen = go.AddComponent<DungeonGenerator>();
 
             string[] guids = AssetDatabase.FindAssets("t:DungeonFlow");
@@ -128,7 +128,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
                 string flowPath = AssetDatabase.GUIDToAssetPath(guids[0]);
                 DungeonFlow flow = AssetDatabase.LoadAssetAtPath<DungeonFlow>(flowPath);
                 gen.dungeonFlow = flow;
-                Debug.Log($"[RoomTemplateUtility] Automatically linked '{flow.name}' to the new Dungeon Manager.");
+                Debug.Log($"[RoomTemplateUtility] Automatically linked '{flow.name}' to the new Constraint Dungeon Generator.");
             }
 
             GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);

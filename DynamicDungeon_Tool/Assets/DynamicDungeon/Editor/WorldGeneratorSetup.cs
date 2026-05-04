@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DynamicDungeon.Runtime;
 using DynamicDungeon.Runtime.Component;
 using DynamicDungeon.Runtime.Output;
 using DynamicDungeon.Runtime.Semantic;
@@ -12,25 +13,25 @@ namespace DynamicDungeon.Editor
 {
     public static class WorldGeneratorSetup
     {
-        private const string UndoOperationName = "New World Generator Setup";
+        private const string UndoOperationName = "New Tilemap World Generator Setup";
         private const string ApplyLayerStructureUndoOperationName = "Apply Layer Structure";
 
-        [MenuItem("DynamicDungeon/New World Generator Setup")]
+        [MenuItem(DynamicDungeonMenuPaths.NewTilemapWorldGeneratorSetup)]
         public static void CreateWorldGenerator()
         {
             CreateWorldGeneratorInternal(null);
         }
 
-        [MenuItem("GameObject/DynamicDungeon/World Generator Setup", false, 10)]
+        [MenuItem(DynamicDungeonMenuPaths.GameObjectTilemapWorldGeneratorSetup, false, 10)]
         public static void CreateWorldGeneratorFromHierarchy(MenuCommand menuCommand)
         {
             CreateWorldGeneratorInternal(menuCommand);
         }
 
-        [MenuItem("GameObject/DynamicDungeon/Apply Layer Structure", false, 11)]
+        [MenuItem(DynamicDungeonMenuPaths.GameObjectApplyLayerStructure, false, 11)]
         public static void ApplyLayerStructureFromHierarchy(MenuCommand menuCommand)
         {
-            DungeonGeneratorComponent component = GetSelectedGenerator(menuCommand);
+            TilemapWorldGenerator component = GetSelectedGenerator(menuCommand);
             if (component == null)
             {
                 return;
@@ -39,16 +40,16 @@ namespace DynamicDungeon.Editor
             ApplyLayerStructure(component);
         }
 
-        [MenuItem("GameObject/DynamicDungeon/Apply Layer Structure", true)]
+        [MenuItem(DynamicDungeonMenuPaths.GameObjectApplyLayerStructure, true)]
         public static bool ValidateApplyLayerStructureFromHierarchy(MenuCommand menuCommand)
         {
             return GetSelectedGenerator(menuCommand) != null;
         }
 
-        [MenuItem("GameObject/DynamicDungeon/Open Generator Graph", false, 12)]
+        [MenuItem(DynamicDungeonMenuPaths.GameObjectOpenGeneratorGraph, false, 12)]
         public static void OpenGeneratorGraphFromHierarchy(MenuCommand menuCommand)
         {
-            DungeonGeneratorComponent component = GetSelectedGenerator(menuCommand);
+            TilemapWorldGenerator component = GetSelectedGenerator(menuCommand);
             if (component == null || component.Graph == null)
             {
                 return;
@@ -57,14 +58,14 @@ namespace DynamicDungeon.Editor
             DynamicDungeonEditorWindow.OpenGraph(component.Graph);
         }
 
-        [MenuItem("GameObject/DynamicDungeon/Open Generator Graph", true)]
+        [MenuItem(DynamicDungeonMenuPaths.GameObjectOpenGeneratorGraph, true)]
         public static bool ValidateOpenGeneratorGraphFromHierarchy(MenuCommand menuCommand)
         {
-            DungeonGeneratorComponent component = GetSelectedGenerator(menuCommand);
+            TilemapWorldGenerator component = GetSelectedGenerator(menuCommand);
             return component != null && component.Graph != null;
         }
 
-        public static void ApplyLayerStructure(DungeonGeneratorComponent component)
+        public static void ApplyLayerStructure(TilemapWorldGenerator component)
         {
             if (component == null)
             {
@@ -77,14 +78,14 @@ namespace DynamicDungeon.Editor
             Grid grid = ResolveGrid(component, componentObject, gridProperty);
             if (grid == null)
             {
-                Debug.LogError("Apply Layer Structure failed: DungeonGeneratorComponent requires a Grid reference.", component);
+                Debug.LogError("Apply Layer Structure failed: TilemapWorldGenerator requires a Grid reference.", component);
                 return;
             }
 
             List<TilemapLayerDefinition> layerDefinitions = GetAssignedLayerDefinitions(layerDefinitionsProperty);
             if (layerDefinitions.Count == 0)
             {
-                Debug.LogError("Apply Layer Structure failed: DungeonGeneratorComponent requires at least one TilemapLayerDefinition.", component);
+                Debug.LogError("Apply Layer Structure failed: TilemapWorldGenerator requires at least one TilemapLayerDefinition.", component);
                 return;
             }
 
@@ -107,9 +108,9 @@ namespace DynamicDungeon.Editor
             List<TilemapLayerDefinition> layerDefinitions = DynamicDungeonBuiltInLayerDefaults.CreateOrLoadDefaultLayerAssets();
             IReadOnlyList<DynamicDungeonBuiltInLayerDefaults.LayerPreset> presets = DynamicDungeonBuiltInLayerDefaults.Presets;
 
-            GameObject worldGeneratorObject = new GameObject("World Generator");
+            GameObject worldGeneratorObject = new GameObject("Tilemap World Generator");
             GameObjectUtility.SetParentAndAlign(worldGeneratorObject, menuCommand != null ? menuCommand.context as GameObject : null);
-            DungeonGeneratorComponent component = worldGeneratorObject.AddComponent<DungeonGeneratorComponent>();
+            TilemapWorldGenerator component = worldGeneratorObject.AddComponent<TilemapWorldGenerator>();
 
             GameObject gridObject = new GameObject("Grid");
             gridObject.transform.SetParent(worldGeneratorObject.transform, false);
@@ -140,7 +141,7 @@ namespace DynamicDungeon.Editor
             Undo.CollapseUndoOperations(undoGroup);
         }
 
-        private static DungeonGeneratorComponent GetSelectedGenerator(MenuCommand menuCommand)
+        private static TilemapWorldGenerator GetSelectedGenerator(MenuCommand menuCommand)
         {
             GameObject contextObject = menuCommand != null ? menuCommand.context as GameObject : null;
             if (contextObject == null)
@@ -153,7 +154,7 @@ namespace DynamicDungeon.Editor
                 return null;
             }
 
-            return contextObject.GetComponentInParent<DungeonGeneratorComponent>();
+            return contextObject.GetComponentInParent<TilemapWorldGenerator>();
         }
 
         private static List<TilemapLayerDefinition> GetAssignedLayerDefinitions(SerializedProperty layerDefinitionsProperty)
@@ -178,7 +179,7 @@ namespace DynamicDungeon.Editor
             return layerDefinitions;
         }
 
-        private static Grid ResolveGrid(DungeonGeneratorComponent component, SerializedObject componentObject, SerializedProperty gridProperty)
+        private static Grid ResolveGrid(TilemapWorldGenerator component, SerializedObject componentObject, SerializedProperty gridProperty)
         {
             Grid grid = gridProperty != null ? gridProperty.objectReferenceValue as Grid : null;
             if (grid != null)
@@ -196,7 +197,7 @@ namespace DynamicDungeon.Editor
             return grid;
         }
 
-        private static void AssignComponentReferences(DungeonGeneratorComponent component, Grid grid, List<TilemapLayerDefinition> layerDefinitions)
+        private static void AssignComponentReferences(TilemapWorldGenerator component, Grid grid, List<TilemapLayerDefinition> layerDefinitions)
         {
             SerializedObject componentObject = new SerializedObject(component);
             SerializedProperty gridProperty = componentObject.FindProperty("_grid");

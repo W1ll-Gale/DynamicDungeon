@@ -382,7 +382,7 @@ TilemapRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
@@ -401,6 +401,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3019545155434343791}
   - component: {fileID: 29247679268771986}
+  - component: {fileID: 2531303244631423929}
   m_Layer: 0
   m_Name: Demo_StandardRoom
   m_TagString: Untagged
@@ -610,6 +611,18 @@ MonoBehaviour:
       originalCell: {x: 0, y: 0}
     allowRotation: 1
     allowMirroring: 1
+--- !u!156049354 &2531303244631423929
+Grid:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4731777390107429886}
+  m_Enabled: 1
+  m_CellSize: {x: 1, y: 1, z: 1}
+  m_CellGap: {x: 0, y: 0, z: 0}
+  m_CellLayout: 0
+  m_CellSwizzle: 0
 --- !u!1 &7530447859737894660
 GameObject:
   m_ObjectHideFlags: 0
@@ -1002,7 +1015,7 @@ TilemapRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}

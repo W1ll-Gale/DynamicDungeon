@@ -242,7 +242,7 @@ TilemapRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
@@ -261,6 +261,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5349744945657818346}
   - component: {fileID: 5899313276506881509}
+  - component: {fileID: 3556206019267613166}
   m_Layer: 0
   m_Name: Demo_Corridor
   m_TagString: Untagged
@@ -374,6 +375,18 @@ MonoBehaviour:
       originalCell: {x: 0, y: 0}
     allowRotation: 1
     allowMirroring: 1
+--- !u!156049354 &3556206019267613166
+Grid:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6432150833363729143}
+  m_Enabled: 1
+  m_CellSize: {x: 1, y: 1, z: 1}
+  m_CellGap: {x: 0, y: 0, z: 0}
+  m_CellLayout: 0
+  m_CellSwizzle: 0
 --- !u!1 &8255532634097282804
 GameObject:
   m_ObjectHideFlags: 0
@@ -566,7 +579,7 @@ TilemapRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}

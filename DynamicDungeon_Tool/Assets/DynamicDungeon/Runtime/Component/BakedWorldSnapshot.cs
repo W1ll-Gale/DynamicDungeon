@@ -1,10 +1,11 @@
 using System;
+using DynamicDungeon.Runtime;
 using DynamicDungeon.Runtime.Core;
 using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Component
 {
-    [CreateAssetMenu(fileName = "BakedWorldSnapshot", menuName = "DynamicDungeon/Baked World Snapshot")]
+    [CreateAssetMenu(fileName = "BakedWorldSnapshot", menuName = DynamicDungeonMenuPaths.BakedWorldSnapshotAssetMenu)]
     public sealed class BakedWorldSnapshot : ScriptableObject
     {
         public WorldSnapshot Snapshot;

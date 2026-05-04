@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using DynamicDungeon.Runtime;
 using DynamicDungeon.Runtime.Graph;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -99,7 +100,7 @@ namespace DynamicDungeon.Editor.Windows
             }
         }
 
-        [MenuItem("DynamicDungeon/Graph Editor")]
+        [MenuItem(DynamicDungeonMenuPaths.GraphEditor)]
         public static void OpenWindow()
         {
             DynamicDungeonEditorWindow window = GetWindow<DynamicDungeonEditorWindow>();

@@ -43,7 +43,7 @@ namespace DynamicDungeon.ConstraintDungeon
         public List<GameObject> templates = new List<GameObject>(); // Changed from RoomTemplate to GameObject
     }
 
-    [CreateAssetMenu(fileName = "NewDungeonFlow", menuName = "Dynamic Dungeon/Constraint Dungeon/Dungeon Flow")]
+    [CreateAssetMenu(fileName = "NewDungeonFlow", menuName = ConstraintDungeonMenuPaths.DungeonFlowAssetMenu)]
     public class DungeonFlow : ScriptableObject
     {
         public List<RoomNode> nodes = new List<RoomNode>();

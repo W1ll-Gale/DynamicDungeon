@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using System.IO;
 
 namespace DynamicDungeon.ConstraintDungeon
 {
@@ -59,7 +60,7 @@ namespace DynamicDungeon.ConstraintDungeon
 
             if (GUILayout.Button("Open Dungeon Designer"))
             {
-                EditorApplication.ExecuteMenuItem("Window/Dynamic Dungeon/Constraint Dungeon/Dungeon Designer");
+                EditorApplication.ExecuteMenuItem(ConstraintDungeonMenuPaths.DungeonDesigner);
             }
             
             serializedObject.ApplyModifiedProperties();
@@ -293,10 +294,11 @@ namespace DynamicDungeon.ConstraintDungeon
 
         private void CreateDungeonFlow(DungeonGenerator gen)
         {
-            string folder = "Assets/DynamicDungeon/ConstraintDungeon/Samples/Data/Dungeons";
-            if (!AssetDatabase.IsValidFolder(folder))
+            string folder = ConstraintDungeonAssetPaths.DungeonFlowFolder;
+            if (!Directory.Exists(folder))
             {
-                AssetDatabase.CreateFolder("Assets", "Dungeons");
+                Directory.CreateDirectory(folder);
+                AssetDatabase.Refresh();
             }
 
             string path = AssetDatabase.GenerateUniqueAssetPath($"{folder}/NewDungeonFlow.asset");
