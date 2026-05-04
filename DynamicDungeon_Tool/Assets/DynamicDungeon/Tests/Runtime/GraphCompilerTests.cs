@@ -132,11 +132,11 @@ namespace DynamicDungeon.Tests.Runtime
             GenGraph graph = CreateGraph();
             try
             {
-                string firstInternalOutputName = GraphPortNameUtility.CreateGeneratedOutputPortName("fill-a", GraphPortNameUtility.LegacyGenericOutputDisplayName);
-                string secondInternalOutputName = GraphPortNameUtility.CreateGeneratedOutputPortName("fill-b", GraphPortNameUtility.LegacyGenericOutputDisplayName);
+                string firstInternalOutputName = GraphPortNameUtility.CreateGeneratedOutputPortName("fill-a", GraphPortNameUtility.DefaultGenericOutputDisplayName);
+                string secondInternalOutputName = GraphPortNameUtility.CreateGeneratedOutputPortName("fill-b", GraphPortNameUtility.DefaultGenericOutputDisplayName);
 
-                AddIntFillNode(graph, "fill-a", "Fill A", firstInternalOutputName, 1, GraphPortNameUtility.LegacyGenericOutputDisplayName);
-                AddIntFillNode(graph, "fill-b", "Fill B", secondInternalOutputName, 2, GraphPortNameUtility.LegacyGenericOutputDisplayName);
+                AddIntFillNode(graph, "fill-a", "Fill A", firstInternalOutputName, 1, GraphPortNameUtility.DefaultGenericOutputDisplayName);
+                AddIntFillNode(graph, "fill-b", "Fill B", secondInternalOutputName, 2, GraphPortNameUtility.DefaultGenericOutputDisplayName);
                 AddMergeNode(graph, "merge-node", "Merge", MergeOutputChannelName);
                 graph.Connections.Add(new GenConnectionData("fill-a", firstInternalOutputName, "merge-node", "Left"));
                 graph.Connections.Add(new GenConnectionData("fill-b", secondInternalOutputName, "merge-node", "Right"));

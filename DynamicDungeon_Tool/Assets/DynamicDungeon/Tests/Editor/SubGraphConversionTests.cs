@@ -51,6 +51,7 @@ namespace DynamicDungeon.Tests.Editor
 
             GenGraph nestedGraph = wrapper.Parameters.Single(parameter => parameter.Name == SubGraphNode.NestedGraphParameterName).ObjectReference as GenGraph;
             Assert.That(nestedGraph, Is.Not.Null);
+            Assert.That(wrapper.Parameters.Any(parameter => parameter.Name == "NestedGraphPath"), Is.False);
             Assert.That(nestedGraph.Nodes.Any(node => node.NodeId == "mask"), Is.True);
             Assert.That(nestedGraph.Nodes.Any(node => node.NodeTypeName == typeof(SubGraphInputNode).FullName), Is.True);
             Assert.That(nestedGraph.Nodes.Any(node => node.NodeTypeName == typeof(SubGraphOutputNode).FullName), Is.True);
@@ -82,6 +83,7 @@ namespace DynamicDungeon.Tests.Editor
             Assert.That(graph.Connections.Count(connection => connection.FromNodeId == wrapper.NodeId), Is.EqualTo(2));
 
             GenGraph nestedGraph = wrapper.Parameters.Single(parameter => parameter.Name == SubGraphNode.NestedGraphParameterName).ObjectReference as GenGraph;
+            Assert.That(wrapper.Parameters.Any(parameter => parameter.Name == "NestedGraphPath"), Is.False);
             GenNodeData outputBoundary = nestedGraph.Nodes.Single(node => node.NodeTypeName == typeof(SubGraphOutputNode).FullName);
             Assert.That(outputBoundary.Ports.Count, Is.EqualTo(1));
         }

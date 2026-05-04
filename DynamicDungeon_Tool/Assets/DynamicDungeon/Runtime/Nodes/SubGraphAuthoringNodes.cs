@@ -11,7 +11,6 @@ namespace DynamicDungeon.Runtime.Nodes
     public sealed class SubGraphNode : IGenNode
     {
         public const string NestedGraphParameterName = "NestedGraph";
-        public const string NestedGraphPathParameterName = "NestedGraphPath";
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -67,8 +66,7 @@ namespace DynamicDungeon.Runtime.Nodes
                     continue;
                 }
 
-                if (string.Equals(parameter.Name, NestedGraphParameterName, StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(parameter.Name, NestedGraphPathParameterName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(parameter.Name, NestedGraphParameterName, StringComparison.OrdinalIgnoreCase))
                 {
                     GenGraph graph = parameter.ObjectReference as GenGraph;
                     if (graph != null)

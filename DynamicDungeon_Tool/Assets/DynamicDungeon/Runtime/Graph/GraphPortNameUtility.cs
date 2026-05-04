@@ -6,11 +6,11 @@ namespace DynamicDungeon.Runtime.Graph
 {
     public static class GraphPortNameUtility
     {
-        public const string LegacyGenericOutputDisplayName = "Output";
+        public const string DefaultGenericOutputDisplayName = "Output";
 
         public static string CreateGeneratedOutputPortName(string nodeId, string displayName)
         {
-            string safeDisplayName = NormaliseDisplayName(displayName, LegacyGenericOutputDisplayName);
+            string safeDisplayName = NormaliseDisplayName(displayName, DefaultGenericOutputDisplayName);
             if (string.IsNullOrWhiteSpace(nodeId))
             {
                 return safeDisplayName;
@@ -37,12 +37,12 @@ namespace DynamicDungeon.Runtime.Graph
             }
 
             string desiredName = ResolveDesiredName(parameterName);
-            return NormaliseDisplayName(desiredName, LegacyGenericOutputDisplayName);
+            return NormaliseDisplayName(desiredName, DefaultGenericOutputDisplayName);
         }
 
         public static string ResolveOutputDisplayName(string nodeId, string outputChannelName, string preferredDisplayName)
         {
-            string normalPreferredDisplayName = NormaliseDisplayName(preferredDisplayName, LegacyGenericOutputDisplayName);
+            string normalPreferredDisplayName = NormaliseDisplayName(preferredDisplayName, DefaultGenericOutputDisplayName);
             string safeOutputChannelName = outputChannelName ?? string.Empty;
 
             if (IsNamedOutput(safeOutputChannelName, nodeId, normalPreferredDisplayName))
@@ -84,7 +84,7 @@ namespace DynamicDungeon.Runtime.Graph
 
         private static bool IsNamedOutput(string outputChannelName, string nodeId, string displayName)
         {
-            string safeDisplayName = NormaliseDisplayName(displayName, LegacyGenericOutputDisplayName);
+            string safeDisplayName = NormaliseDisplayName(displayName, DefaultGenericOutputDisplayName);
             return string.Equals(outputChannelName, safeDisplayName, StringComparison.Ordinal) ||
                    string.Equals(outputChannelName, CreateGeneratedOutputPortName(nodeId, safeDisplayName), StringComparison.Ordinal);
         }
@@ -112,7 +112,7 @@ namespace DynamicDungeon.Runtime.Graph
 
             if (string.IsNullOrWhiteSpace(safeName))
             {
-                return LegacyGenericOutputDisplayName;
+                return DefaultGenericOutputDisplayName;
             }
 
             if (safeName.Length == 1)

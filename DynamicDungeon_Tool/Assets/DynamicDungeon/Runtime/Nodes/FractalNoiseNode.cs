@@ -20,7 +20,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string DefaultNodeName = "Fractal Noise";
         private const int DefaultBatchSize = 64;
         private const string InputPortName = "Input";
-        private const string PreferredOutputDisplayName = GraphPortNameUtility.LegacyGenericOutputDisplayName;
+        private const string PreferredOutputDisplayName = GraphPortNameUtility.DefaultGenericOutputDisplayName;
         private const int MaxOctaves = 8;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();

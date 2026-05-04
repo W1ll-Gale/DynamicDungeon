@@ -55,9 +55,9 @@ namespace DynamicDungeon.Tests.Editor
             try
             {
                 string constantNodeId = "constant-node";
-                string constantOutputPortName = GraphPortNameUtility.CreateGeneratedOutputPortName(constantNodeId, GraphPortNameUtility.LegacyGenericOutputDisplayName);
+                string constantOutputPortName = GraphPortNameUtility.CreateGeneratedOutputPortName(constantNodeId, GraphPortNameUtility.DefaultGenericOutputDisplayName);
                 GenNodeData constantNode = new GenNodeData(constantNodeId, typeof(ConstantNode).FullName, "Constant", Vector2.zero);
-                constantNode.Ports.Add(new GenPortData(constantOutputPortName, PortDirection.Output, ChannelType.Float, GraphPortNameUtility.LegacyGenericOutputDisplayName));
+                constantNode.Ports.Add(new GenPortData(constantOutputPortName, PortDirection.Output, ChannelType.Float, GraphPortNameUtility.DefaultGenericOutputDisplayName));
                 constantNode.Parameters.Add(new SerializedParameter("outputType", "Float"));
                 constantNode.Parameters.Add(new SerializedParameter("floatValue", "1"));
                 graph.Nodes.Add(constantNode);

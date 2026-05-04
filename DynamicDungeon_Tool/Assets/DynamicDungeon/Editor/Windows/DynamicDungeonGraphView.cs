@@ -2253,14 +2253,7 @@ namespace DynamicDungeon.Editor.Windows
         private static GenGraph ResolveNestedGraphForWrapper(GenGraph parentGraph, GenNodeData wrapperNode)
         {
             List<SerializedParameter> parameters = wrapperNode != null ? wrapperNode.Parameters : null;
-            GenGraph nestedGraph = ResolveNestedGraphFromParameter(parameters, SubGraphNode.NestedGraphParameterName);
-            if (nestedGraph != null)
-            {
-                return nestedGraph;
-            }
-
-            nestedGraph = ResolveNestedGraphFromParameter(parameters, SubGraphNode.NestedGraphPathParameterName);
-            return nestedGraph != null ? nestedGraph : ResolveNestedGraphByParentLocation(parentGraph, wrapperNode);
+            return ResolveNestedGraphFromParameter(parameters, SubGraphNode.NestedGraphParameterName);
         }
 
         private static GenGraph ResolveNestedGraphFromParameter(IReadOnlyList<SerializedParameter> parameters, string parameterName)
@@ -2313,51 +2306,7 @@ namespace DynamicDungeon.Editor.Windows
                 return guidPath;
             }
 
-            return trimmedValue.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase)
-                ? trimmedValue
-                : string.Empty;
-        }
-
-        private static GenGraph ResolveNestedGraphByParentLocation(GenGraph parentGraph, GenNodeData wrapperNode)
-        {
-            if (parentGraph == null || wrapperNode == null || string.IsNullOrWhiteSpace(wrapperNode.NodeName))
-            {
-                return null;
-            }
-
-            string parentAssetPath = AssetDatabase.GetAssetPath(parentGraph);
-            if (!string.IsNullOrWhiteSpace(parentAssetPath))
-            {
-                string parentFolder = Path.GetDirectoryName(parentAssetPath);
-                if (!string.IsNullOrWhiteSpace(parentFolder))
-                {
-                    string candidatePath = (parentFolder.Replace("\\", "/") + "/SubGraphs/" + wrapperNode.NodeName + ".asset").Replace("\\", "/");
-                    GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(candidatePath);
-                    if (graph != null)
-                    {
-                        return graph;
-                    }
-                }
-            }
-
-            string[] guids = AssetDatabase.FindAssets("t:GenGraph " + wrapperNode.NodeName);
-            for (int guidIndex = 0; guidIndex < guids.Length; guidIndex++)
-            {
-                string assetPath = AssetDatabase.GUIDToAssetPath(guids[guidIndex]);
-                if (string.IsNullOrWhiteSpace(assetPath) ||
-                    assetPath.IndexOf("/SubGraphs/", StringComparison.OrdinalIgnoreCase) < 0)
-                {
-                    continue;
-                }
-
-                GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
-                if (graph != null)
-                {
-                    return graph;
-                }
-            }
-
-            return null;
+            return string.Empty;
         }
 
         private static bool ContainsSubGraphBoundaryNode(GenGraph graph)
@@ -2590,7 +2539,7 @@ namespace DynamicDungeon.Editor.Windows
 
             PopulateNestedGraph(nestedGraph, selectedNodeIds, internalConnections, boundaryInputs, boundaryOutputs, selectionBounds);
 
-            GenNodeData wrapperNode = CreateSubGraphWrapperNode(subGraphName, nestedGraph, nestedGraphGuid, nestedGraphPath, boundaryInputs, boundaryOutputs, selectionBounds);
+            GenNodeData wrapperNode = CreateSubGraphWrapperNode(subGraphName, nestedGraph, nestedGraphGuid, boundaryInputs, boundaryOutputs, selectionBounds);
             RewriteParentGraphForSubGraph(selectedNodeIds, wrapperNode, boundaryInputs, boundaryOutputs);
 
             EditorUtility.SetDirty(_graph);
@@ -2659,7 +2608,6 @@ namespace DynamicDungeon.Editor.Windows
                 contentPosition);
             wrapperNode.Ports = BuildWrapperPortsFromNestedGraph(nestedGraph);
             wrapperNode.Parameters.Add(new SerializedParameter(SubGraphNode.NestedGraphParameterName, nestedGraphGuid, nestedGraph));
-            wrapperNode.Parameters.Add(new SerializedParameter(SubGraphNode.NestedGraphPathParameterName, nestedGraphPath, nestedGraph));
             _graph.Nodes.Add(wrapperNode);
 
             EditorUtility.SetDirty(_graph);
@@ -3385,7 +3333,6 @@ namespace DynamicDungeon.Editor.Windows
             string subGraphName,
             GenGraph nestedGraph,
             string nestedGraphGuid,
-            string nestedGraphPath,
             List<BoundaryInputDefinition> boundaryInputs,
             List<BoundaryOutputDefinition> boundaryOutputs,
             Rect selectionBounds)
@@ -3409,7 +3356,6 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             wrapperNode.Parameters.Add(new SerializedParameter(SubGraphNode.NestedGraphParameterName, nestedGraphGuid, nestedGraph));
-            wrapperNode.Parameters.Add(new SerializedParameter(SubGraphNode.NestedGraphPathParameterName, nestedGraphPath, nestedGraph));
             return wrapperNode;
         }
 

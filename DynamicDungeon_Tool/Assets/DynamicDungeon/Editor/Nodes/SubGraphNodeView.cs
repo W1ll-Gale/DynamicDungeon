@@ -205,21 +205,7 @@ namespace DynamicDungeon.Editor.Nodes
                 return nestedGraph;
             }
 
-            nestedGraphParameter = FindParameter(SubGraphNode.NestedGraphPathParameterName);
-            nestedGraph = ResolveNestedGraphParameter(nestedGraphParameter);
-            if (nestedGraph != null)
-            {
-                return nestedGraph;
-            }
-
-            nestedGraphParameter = FindParameterOnGraphModel(SubGraphNode.NestedGraphPathParameterName);
-            nestedGraph = ResolveNestedGraphParameter(nestedGraphParameter);
-            if (nestedGraph != null)
-            {
-                return nestedGraph;
-            }
-
-            return ResolveByGeneratedAssetName();
+            return null;
         }
 
         private GenGraph ResolveNestedGraphParameter(SerializedParameter nestedGraphParameter)
@@ -274,7 +260,7 @@ namespace DynamicDungeon.Editor.Nodes
                 return guidPath;
             }
 
-            return value.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase) ? value : string.Empty;
+            return string.Empty;
         }
 
         private SerializedParameter FindNestedGraphParameter()
@@ -338,34 +324,6 @@ namespace DynamicDungeon.Editor.Nodes
             return null;
         }
 
-        private GenGraph ResolveByGeneratedAssetName()
-        {
-            if (string.IsNullOrWhiteSpace(title))
-            {
-                return null;
-            }
-
-            string[] graphGuids = AssetDatabase.FindAssets("t:GenGraph " + title);
-            for (int guidIndex = 0; guidIndex < graphGuids.Length; guidIndex++)
-            {
-                string assetPath = AssetDatabase.GUIDToAssetPath(graphGuids[guidIndex]);
-                if (string.IsNullOrWhiteSpace(assetPath) ||
-                    assetPath.IndexOf("/SubGraphs/", StringComparison.OrdinalIgnoreCase) < 0)
-                {
-                    continue;
-                }
-
-                GenGraph graph = AssetDatabase.LoadAssetAtPath<GenGraph>(assetPath);
-                if (graph != null)
-                {
-                    RepairNestedGraphReference(graph);
-                    return graph;
-                }
-            }
-
-            return null;
-        }
-
         private void RepairNestedGraphReference(GenGraph nestedGraph)
         {
             if (nestedGraph == null || NodeData == null || string.IsNullOrWhiteSpace(NodeData.NodeId))
@@ -393,9 +351,7 @@ namespace DynamicDungeon.Editor.Nodes
                 return;
             }
 
-            bool needsRepair =
-                NeedsParameterRepair(graphNode, _nestedGraphParameterName, assetGuid, nestedGraph) ||
-                NeedsParameterRepair(graphNode, SubGraphNode.NestedGraphPathParameterName, assetPath, nestedGraph);
+            bool needsRepair = NeedsParameterRepair(graphNode, _nestedGraphParameterName, assetGuid, nestedGraph);
             if (!needsRepair)
             {
                 return;
@@ -407,12 +363,10 @@ namespace DynamicDungeon.Editor.Nodes
             }
 
             EnsureParameter(graphNode, _nestedGraphParameterName, assetGuid, nestedGraph);
-            EnsureParameter(graphNode, SubGraphNode.NestedGraphPathParameterName, assetPath, nestedGraph);
 
             if (!ReferenceEquals(graphNode, NodeData))
             {
                 EnsureParameter(NodeData, _nestedGraphParameterName, assetGuid, nestedGraph);
-                EnsureParameter(NodeData, SubGraphNode.NestedGraphPathParameterName, assetPath, nestedGraph);
             }
 
             if (graph != null)

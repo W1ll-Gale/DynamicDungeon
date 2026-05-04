@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
-  m_Name: TerrariaDemoGraph_Organized
+  m_Name: TerrariaDemoGraph
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
   SchemaVersion: 5
   WorldWidth: 512
@@ -113,9 +113,6 @@ MonoBehaviour:
     - Name: NestedGraph
       Value: b061ddf37e88abd43be552fa7dc7e90e
       ObjectReference: {fileID: 11400000, guid: b061ddf37e88abd43be552fa7dc7e90e, type: 2}
-    - Name: NestedGraphPath
-      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/BiomeLayout.asset
-      ObjectReference: {fileID: 11400000, guid: b061ddf37e88abd43be552fa7dc7e90e, type: 2}
   - NodeId: organized-subgraph-TerrainShape
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Terrain Profile
@@ -156,9 +153,6 @@ MonoBehaviour:
     Parameters:
     - Name: NestedGraph
       Value: 30580ef9e0d5ed746932aa58f422cb46
-      ObjectReference: {fileID: 11400000, guid: 30580ef9e0d5ed746932aa58f422cb46, type: 2}
-    - Name: NestedGraphPath
-      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/TerrainShape.asset
       ObjectReference: {fileID: 11400000, guid: 30580ef9e0d5ed746932aa58f422cb46, type: 2}
   - NodeId: organized-subgraph-CaveGeneration
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
@@ -221,9 +215,6 @@ MonoBehaviour:
     - Name: NestedGraph
       Value: 54e9765c99bd8e046aeb4fafcb1f873f
       ObjectReference: {fileID: 11400000, guid: 54e9765c99bd8e046aeb4fafcb1f873f, type: 2}
-    - Name: NestedGraphPath
-      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/CaveGeneration.asset
-      ObjectReference: {fileID: 11400000, guid: 54e9765c99bd8e046aeb4fafcb1f873f, type: 2}
   - NodeId: organized-subgraph-MaterialContext
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Material IDs
@@ -268,9 +259,6 @@ MonoBehaviour:
     Parameters:
     - Name: NestedGraph
       Value: f43cc08ed65bb064a8ddc94baf6d58d5
-      ObjectReference: {fileID: 11400000, guid: f43cc08ed65bb064a8ddc94baf6d58d5, type: 2}
-    - Name: NestedGraphPath
-      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/MaterialContext.asset
       ObjectReference: {fileID: 11400000, guid: f43cc08ed65bb064a8ddc94baf6d58d5, type: 2}
   - NodeId: organized-subgraph-CaveFeatureOverrides
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
@@ -333,9 +321,6 @@ MonoBehaviour:
     - Name: NestedGraph
       Value: 2106ebf857d9be144a1dcb1887b6d01a
       ObjectReference: {fileID: 11400000, guid: 2106ebf857d9be144a1dcb1887b6d01a, type: 2}
-    - Name: NestedGraphPath
-      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/CaveFeatureOverrides.asset
-      ObjectReference: {fileID: 11400000, guid: 2106ebf857d9be144a1dcb1887b6d01a, type: 2}
   - NodeId: organized-subgraph-OreFeatureOverrides
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Ore Overrides
@@ -372,9 +357,6 @@ MonoBehaviour:
     Parameters:
     - Name: NestedGraph
       Value: a3950c27ba01739478c79144a79558c0
-      ObjectReference: {fileID: 11400000, guid: a3950c27ba01739478c79144a79558c0, type: 2}
-    - Name: NestedGraphPath
-      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/OreFeatureOverrides.asset
       ObjectReference: {fileID: 11400000, guid: a3950c27ba01739478c79144a79558c0, type: 2}
   - NodeId: organized-subgraph-SurfacePropPlacement
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
@@ -421,9 +403,6 @@ MonoBehaviour:
     - Name: NestedGraph
       Value: 6d9f0ce7c018d2d46aee4332f3ca9d93
       ObjectReference: {fileID: 11400000, guid: 6d9f0ce7c018d2d46aee4332f3ca9d93, type: 2}
-    - Name: NestedGraphPath
-      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/SurfacePropPlacement.asset
-      ObjectReference: {fileID: 11400000, guid: 6d9f0ce7c018d2d46aee4332f3ca9d93, type: 2}
   - NodeId: organized-subgraph-CaveHousePlacement
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Structure Placement
@@ -456,9 +435,6 @@ MonoBehaviour:
     Parameters:
     - Name: NestedGraph
       Value: feef017809148ad43a55a348f723ec6f
-      ObjectReference: {fileID: 11400000, guid: feef017809148ad43a55a348f723ec6f, type: 2}
-    - Name: NestedGraphPath
-      Value: Assets/DynamicDungeon/Examples/TerrariaDemo/Graphs/SubGraphs/TerrariaDemoGraph_Organized/CaveHousePlacement.asset
       ObjectReference: {fileID: 11400000, guid: feef017809148ad43a55a348f723ec6f, type: 2}
   Connections:
   - FromNodeId: prefab-reserved-void-overlay

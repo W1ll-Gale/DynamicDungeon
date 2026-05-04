@@ -18,7 +18,7 @@ namespace DynamicDungeon.Runtime.Nodes
     {
         private const string DefaultNodeName = "Simplex Noise";
         private const int DefaultBatchSize = 64;
-        private const string PreferredOutputDisplayName = GraphPortNameUtility.LegacyGenericOutputDisplayName;
+        private const string PreferredOutputDisplayName = GraphPortNameUtility.DefaultGenericOutputDisplayName;
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
