@@ -1,0 +1,150 @@
+GridBackground {
+    --grid-background-color: #2b2b2b;
+    --line-color: rgba(193, 196, 192, 0.1);
+    --thick-line-color: rgba(193, 196, 192, 0.2);
+}
+
+/* Simplified Node Style */
+.dungeon-node #title {
+    height: 0;
+    min-height: 0;
+    display: none;
+}
+
+.dungeon-node #node-border {
+    background-color: #383838;
+    border-radius: 6px;
+    border-width: 3px;
+    border-color: #1a1a1a;
+    width: 390px;
+    height: 180px;
+}
+
+.dungeon-node:selected #node-border {
+    border-color: #44c0ff;
+    border-width: 4px;
+}
+
+/* Room Color Classes */
+.room-entrance #node-border {
+    background-color: #1b5e20; /* Deep Green */
+    border-color: #81c784;    /* Light Green Border */
+    border-width: 2px;
+}
+
+.room-exit #node-border {
+    background-color: #1a1a1a; /* Deep Dark */
+    border-color: #ef5350;    /* Muted Red Border */
+    border-width: 2px;
+}
+
+.room-bossfoyer #node-border {
+    background-color: #424242; /* Medium Grey */
+}
+
+.room-reward #node-border, .room-shop #node-border, .room-hub #node-border {
+    background-color: #4a148c; /* Deep Purple */
+    border-color: #ab47bc;    /* Light Purple Border */
+}
+
+.room-boss #node-border {
+    background-color: #8e0000; /* Dark Red */
+    border-color: #ff5252;    /* Bright Red Border */
+    border-width: 2px;
+}
+
+.room-normal #node-border {
+    background-color: #37474f; /* Blue-Grey */
+    border-color: #1a1a1a;
+}
+
+#node-top-area {
+    background-color: rgba(0, 0, 0, 0.45);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.dungeon-node-footer {
+    height: 105px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    justify-content: center;
+    align-items: center;
+}
+
+.dungeon-node-label {
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
+    -unity-font-style: bold !important;
+    color: #ffffff;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    /* High-contrast define */
+    text-shadow: 2px 2px 0px #000000;
+}
+
+/* Smart Edge Bridge Box */
+#edge-box {
+    background-color: #1a1a1a;
+    border-width: 1px;
+    border-color: #44c0ff;
+    border-radius: 3px;
+    width: 18px;
+    height: 18px;
+    justify-content: center;
+    align-items: center;
+}
+
+#edge-box Label {
+    color: #44c0ff;
+    font-size: 10px;
+    -unity-font-style: bold;
+    margin: 0;
+    padding: 0;
+}
+
+/* Floating Settings Panel */
+.settings-panel {
+    position: absolute;
+    left: 15px;
+    top: 15px;
+    width: 300px;
+    background-color: rgba(45, 45, 45, 0.95);
+    border-width: 1px;
+    border-color: #1a1a1a;
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+}
+
+.settings-panel-header {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
+    border-bottom-width: 1px;
+    border-bottom-color: #555555;
+    padding-bottom: 5px;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.settings-type-group {
+    margin-bottom: 15px;
+    padding: 5px;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+
+.settings-type-header {
+    -unity-font-style: bold;
+    color: #44c0ff;
+    margin-bottom: 5px;
+}
+
+.mixed-value {
+    -unity-font-style: italic;
+    opacity: 0.6;
+}
+

@@ -1,0 +1,21 @@
+﻿{
+    "name": "DynamicDungeon.ConstraintDungeon.Tests.EditMode",
+    "rootNamespace": "DynamicDungeon.ConstraintDungeon.Tests.EditMode",
+    "references": [
+        "DynamicDungeon.ConstraintDungeon.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
