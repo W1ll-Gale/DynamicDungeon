@@ -191,6 +191,55 @@ namespace DynamicDungeon.Runtime.Nodes
 
                 NativeArray<float> weights = hasWeights ? context.GetFloatChannel(_inputWeightChannelNames[rule.WeightSlot - 1]) : default;
                 NativeArray<byte> mask = hasMask ? context.GetBoolMaskChannel(_inputMaskChannelNames[rule.MaskSlot - 1]) : default;
+
+                if (hasWeights && !hasMask)
+                {
+                    WeightedPlacementSetRuleJob weightedJob = new WeightedPlacementSetRuleJob
+                    {
+                        Weights = weights,
+                        Placements = placements,
+                        Width = context.Width,
+                        Height = context.Height,
+                        LocalSeed = context.LocalSeed + ruleIndex * 130363L,
+                        TemplateIndex = rule.TemplateIndex,
+                        Threshold = rule.Threshold,
+                        Density = rule.Density,
+                        PointCount = rule.PointCount,
+                        OffsetX = rule.OffsetX,
+                        OffsetY = rule.OffsetY,
+                        MirrorX = rule.MirrorX,
+                        MirrorY = rule.MirrorY,
+                        AllowRotation = rule.AllowRotation
+                    };
+
+                    dependency = weightedJob.Schedule(dependency);
+                    continue;
+                }
+
+                if (!hasWeights && hasMask)
+                {
+                    MaskedPlacementSetRuleJob maskedJob = new MaskedPlacementSetRuleJob
+                    {
+                        Mask = mask,
+                        Placements = placements,
+                        Width = context.Width,
+                        Height = context.Height,
+                        LocalSeed = context.LocalSeed + ruleIndex * 130363L,
+                        TemplateIndex = rule.TemplateIndex,
+                        Threshold = rule.Threshold,
+                        Density = rule.Density,
+                        PointCount = rule.PointCount,
+                        OffsetX = rule.OffsetX,
+                        OffsetY = rule.OffsetY,
+                        MirrorX = rule.MirrorX,
+                        MirrorY = rule.MirrorY,
+                        AllowRotation = rule.AllowRotation
+                    };
+
+                    dependency = maskedJob.Schedule(dependency);
+                    continue;
+                }
+
                 PlacementSetRuleJob job = new PlacementSetRuleJob
                 {
                     Weights = weights,
@@ -302,6 +351,145 @@ namespace DynamicDungeon.Runtime.Nodes
 
                     float baseWeight = HasWeights ? Weights[index] : 1.0f;
                     float weight = math.saturate(baseWeight * Density);
+                    if (weight < Threshold)
+                    {
+                        continue;
+                    }
+
+                    int x = index % Width;
+                    int y = index / Width;
+                    if (HashToUnitFloat(x, y, 0xA53D2E4Fu) > weight)
+                    {
+                        continue;
+                    }
+
+                    int placementX = x + OffsetX;
+                    int placementY = y + OffsetY;
+                    if (placementX < 0 || placementX >= Width || placementY < 0 || placementY >= Height)
+                    {
+                        continue;
+                    }
+
+                    bool mirrorX = MirrorX && HashToUnitFloat(x, y, 0xB5297A4Du) >= 0.5f;
+                    bool mirrorY = MirrorY && HashToUnitFloat(x, y, 0x68E31DA4u) >= 0.5f;
+                    byte rotation = AllowRotation ? (byte)math.min(3, (int)(HashToUnitFloat(x, y, 0x1B56C4E9u) * 4.0f)) : (byte)0;
+                    Placements.Add(new PrefabPlacementRecord(TemplateIndex, placementX, placementY, rotation, mirrorX, mirrorY));
+                    emitted++;
+
+                    if (PointCount > 0 && emitted >= PointCount)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            private float HashToUnitFloat(int x, int y, uint salt)
+            {
+                uint seedLow = unchecked((uint)LocalSeed);
+                uint seedHigh = unchecked((uint)(LocalSeed >> 32));
+                uint hash = math.hash(new uint4(unchecked((uint)x), unchecked((uint)y), seedLow ^ salt, seedHigh));
+                return (float)(hash / 4294967296.0d);
+            }
+        }
+
+        [BurstCompile]
+        private struct WeightedPlacementSetRuleJob : IJob
+        {
+            [ReadOnly]
+            public NativeArray<float> Weights;
+
+            public NativeList<PrefabPlacementRecord> Placements;
+            public int Width;
+            public int Height;
+            public long LocalSeed;
+            public int TemplateIndex;
+            public float Threshold;
+            public float Density;
+            public int PointCount;
+            public int OffsetX;
+            public int OffsetY;
+            public bool MirrorX;
+            public bool MirrorY;
+            public bool AllowRotation;
+
+            public void Execute()
+            {
+                int emitted = 0;
+                for (int index = 0; index < Weights.Length; index++)
+                {
+                    float weight = math.saturate(Weights[index] * Density);
+                    if (weight < Threshold)
+                    {
+                        continue;
+                    }
+
+                    int x = index % Width;
+                    int y = index / Width;
+                    if (HashToUnitFloat(x, y, 0xA53D2E4Fu) > weight)
+                    {
+                        continue;
+                    }
+
+                    int placementX = x + OffsetX;
+                    int placementY = y + OffsetY;
+                    if (placementX < 0 || placementX >= Width || placementY < 0 || placementY >= Height)
+                    {
+                        continue;
+                    }
+
+                    bool mirrorX = MirrorX && HashToUnitFloat(x, y, 0xB5297A4Du) >= 0.5f;
+                    bool mirrorY = MirrorY && HashToUnitFloat(x, y, 0x68E31DA4u) >= 0.5f;
+                    byte rotation = AllowRotation ? (byte)math.min(3, (int)(HashToUnitFloat(x, y, 0x1B56C4E9u) * 4.0f)) : (byte)0;
+                    Placements.Add(new PrefabPlacementRecord(TemplateIndex, placementX, placementY, rotation, mirrorX, mirrorY));
+                    emitted++;
+
+                    if (PointCount > 0 && emitted >= PointCount)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            private float HashToUnitFloat(int x, int y, uint salt)
+            {
+                uint seedLow = unchecked((uint)LocalSeed);
+                uint seedHigh = unchecked((uint)(LocalSeed >> 32));
+                uint hash = math.hash(new uint4(unchecked((uint)x), unchecked((uint)y), seedLow ^ salt, seedHigh));
+                return (float)(hash / 4294967296.0d);
+            }
+        }
+
+        [BurstCompile]
+        private struct MaskedPlacementSetRuleJob : IJob
+        {
+            [ReadOnly]
+            public NativeArray<byte> Mask;
+
+            public NativeList<PrefabPlacementRecord> Placements;
+            public int Width;
+            public int Height;
+            public long LocalSeed;
+            public int TemplateIndex;
+            public float Threshold;
+            public float Density;
+            public int PointCount;
+            public int OffsetX;
+            public int OffsetY;
+            public bool MirrorX;
+            public bool MirrorY;
+            public bool AllowRotation;
+
+            public void Execute()
+            {
+                int emitted = 0;
+                for (int index = 0; index < Mask.Length; index++)
+                {
+                    if (Mask[index] == 0)
+                    {
+                        continue;
+                    }
+
+                    float weight = math.saturate(Density);
                     if (weight < Threshold)
                     {
                         continue;

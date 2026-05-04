@@ -11,7 +11,7 @@ namespace DynamicDungeon.Runtime.Graph
     public sealed class GenGraph : ScriptableObject
     {
         // Graph identity
-        public int SchemaVersion;
+        public int SchemaVersion = GraphSchemaVersion.Current;
 
         // World settings
         public int WorldWidth = 128;

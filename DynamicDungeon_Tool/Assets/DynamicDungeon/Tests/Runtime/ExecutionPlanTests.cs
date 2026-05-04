@@ -12,23 +12,22 @@ namespace DynamicDungeon.Tests.Runtime
 {
     public sealed class ExecutionPlanTests
     {
-        private const string FlatOutputChannelName = "FlatOutput";
-
         [Test]
         public void BuildWithSingleFlatFillNodeAllocatesExpectedWorldChannel()
         {
             FlatFillNode node = new FlatFillNode("node-flat", 2.5f);
+            string outputChannelName = GetSingleOutputChannelName(node);
 
             using (ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { node }, 5, 4, 1234L))
             {
                 Assert.That(plan.Jobs.Count, Is.EqualTo(1));
                 Assert.That(plan.AllocatedWorld.Width, Is.EqualTo(5));
                 Assert.That(plan.AllocatedWorld.Height, Is.EqualTo(4));
-                Assert.That(plan.AllocatedWorld.HasFloatChannel(FlatOutputChannelName), Is.True);
-                Assert.That(plan.AllocatedWorld.HasIntChannel(FlatOutputChannelName), Is.False);
-                Assert.That(plan.AllocatedWorld.HasBoolMaskChannel(FlatOutputChannelName), Is.False);
+                Assert.That(plan.AllocatedWorld.HasFloatChannel(outputChannelName), Is.True);
+                Assert.That(plan.AllocatedWorld.HasIntChannel(outputChannelName), Is.False);
+                Assert.That(plan.AllocatedWorld.HasBoolMaskChannel(outputChannelName), Is.False);
 
-                NativeArray<float> outputChannel = plan.AllocatedWorld.GetFloatChannel(FlatOutputChannelName);
+                NativeArray<float> outputChannel = plan.AllocatedWorld.GetFloatChannel(outputChannelName);
                 Assert.That(outputChannel.IsCreated, Is.True);
                 Assert.That(outputChannel.Length, Is.EqualTo(20));
             }
@@ -38,6 +37,7 @@ namespace DynamicDungeon.Tests.Runtime
         public void SchedulingFlatFillNodeWritesFillValueToEveryTile()
         {
             FlatFillNode node = new FlatFillNode("node-flat", -3.75f);
+            string outputChannelName = GetSingleOutputChannelName(node);
             ExecutionPlan plan = null;
             NodeChannelBindings channelBindings = default;
             NumericBlackboard numericBlackboard = null;
@@ -50,8 +50,8 @@ namespace DynamicDungeon.Tests.Runtime
                 numericBlackboard = new NumericBlackboard(1, Allocator.TempJob);
                 managedBlackboard = new ManagedBlackboard();
 
-                NativeArray<float> outputChannel = plan.AllocatedWorld.GetFloatChannel(FlatOutputChannelName);
-                channelBindings.BindFloatChannel(FlatOutputChannelName, outputChannel);
+                NativeArray<float> outputChannel = plan.AllocatedWorld.GetFloatChannel(outputChannelName);
+                channelBindings.BindFloatChannel(outputChannelName, outputChannel);
 
                 NodeExecutionContext context = new NodeExecutionContext(
                     channelBindings,
@@ -95,12 +95,13 @@ namespace DynamicDungeon.Tests.Runtime
         public void DisposingPlanDisposesAllocatedWorldWithoutLeakWarnings()
         {
             FlatFillNode node = new FlatFillNode("node-flat", 1.0f);
+            string outputChannelName = GetSingleOutputChannelName(node);
             ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { node }, 2, 2, 99L);
 
             LogAssert.NoUnexpectedReceived();
             Assert.DoesNotThrow(() => plan.Dispose());
             Assert.DoesNotThrow(() => plan.Dispose());
-            Assert.Throws<ObjectDisposedException>(() => plan.AllocatedWorld.GetFloatChannel(FlatOutputChannelName));
+            Assert.Throws<ObjectDisposedException>(() => plan.AllocatedWorld.GetFloatChannel(outputChannelName));
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -212,6 +213,14 @@ namespace DynamicDungeon.Tests.Runtime
                 job.IsDirty = isDirty;
                 jobs[index] = job;
             }
+        }
+
+        private static string GetSingleOutputChannelName(IGenNode node)
+        {
+            Assert.That(node.ChannelDeclarations.Count, Is.EqualTo(1));
+            Assert.That(node.ChannelDeclarations[0].IsWrite, Is.True);
+            Assert.That(node.ChannelDeclarations[0].Type, Is.EqualTo(ChannelType.Float));
+            return node.ChannelDeclarations[0].ChannelName;
         }
 
         private sealed class TestNode : IGenNode

@@ -14,13 +14,13 @@ namespace DynamicDungeon.Tests.Runtime
     public sealed class ExecutorTests
     {
         private const string BlockingOutputChannelName = "BlockingOutput";
-        private const string FlatOutputChannelName = "FlatOutput";
         private const int WaitTimeoutMilliseconds = 5000;
 
         [Test]
         public async Task SuccessfulRunProducesSnapshotMatchingNodeOutput()
         {
             FlatFillNode node = new FlatFillNode("flat-fill", 4.25f);
+            string outputChannelName = GetSingleOutputChannelName(node);
             Executor executor = new Executor();
             ExecutionPlan plan = ExecutionPlan.Build(new IGenNode[] { node }, 4, 3, 1234L);
 
@@ -33,7 +33,7 @@ namespace DynamicDungeon.Tests.Runtime
             Assert.That(result.Snapshot.Width, Is.EqualTo(4));
             Assert.That(result.Snapshot.Height, Is.EqualTo(3));
             Assert.That(result.Snapshot.FloatChannels.Length, Is.EqualTo(1));
-            Assert.That(result.Snapshot.FloatChannels[0].Name, Is.EqualTo(FlatOutputChannelName));
+            Assert.That(result.Snapshot.FloatChannels[0].Name, Is.EqualTo(outputChannelName));
             AssertAllValuesEqual(result.Snapshot.FloatChannels[0].Data, node.FillValue);
         }
 
@@ -166,6 +166,14 @@ namespace DynamicDungeon.Tests.Runtime
             {
                 Assert.That(values[index], Is.EqualTo(expectedValue));
             }
+        }
+
+        private static string GetSingleOutputChannelName(IGenNode node)
+        {
+            Assert.That(node.ChannelDeclarations.Count, Is.EqualTo(1));
+            Assert.That(node.ChannelDeclarations[0].IsWrite, Is.True);
+            Assert.That(node.ChannelDeclarations[0].Type, Is.EqualTo(ChannelType.Float));
+            return node.ChannelDeclarations[0].ChannelName;
         }
 
         private sealed class BlockingNode : IGenNode
