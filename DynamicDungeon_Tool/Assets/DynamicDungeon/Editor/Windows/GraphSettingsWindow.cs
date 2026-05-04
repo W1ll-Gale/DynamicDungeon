@@ -1,4 +1,5 @@
 using System;
+using DynamicDungeon.Editor.Shared;
 using DynamicDungeon.Runtime.Graph;
 
 namespace DynamicDungeon.Editor.Windows

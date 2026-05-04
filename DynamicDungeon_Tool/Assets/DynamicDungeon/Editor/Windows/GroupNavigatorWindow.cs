@@ -1,5 +1,7 @@
 using DynamicDungeon.Runtime.Graph;
 
+using DynamicDungeon.Editor.Shared;
+
 namespace DynamicDungeon.Editor.Windows
 {
     internal sealed class GroupNavigatorWindow : FloatingPanelWindow

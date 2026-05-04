@@ -22,8 +22,17 @@ namespace DynamicDungeon.Editor.Shared
             EditorGUI.DrawRect(headerRect, HeaderBackground);
             EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1.0f, headerRect.width, 1.0f), HeaderBorder);
 
-            Rect foldoutRect = new Rect(headerRect.x + 4.0f, headerRect.y, headerRect.width - 4.0f, headerRect.height);
-            expanded = EditorGUI.Foldout(foldoutRect, expanded, title, true, EditorStyles.foldout);
+            Rect clickRect = new Rect(headerRect.x, headerRect.y, headerRect.width, headerRect.height);
+            if (GUI.Button(clickRect, GUIContent.none, GUIStyle.none))
+            {
+                expanded = !expanded;
+            }
+
+            Rect arrowRect = new Rect(headerRect.x + 5.0f, headerRect.y, 16.0f, headerRect.height);
+            GUI.Label(arrowRect, expanded ? "\u25BE" : "\u25B8", EditorStyles.label);
+
+            Rect labelRect = new Rect(headerRect.x + 20.0f, headerRect.y, headerRect.width - 20.0f, headerRect.height);
+            EditorGUI.LabelField(labelRect, title, EditorStyles.boldLabel);
             SessionState.SetBool(key, expanded);
 
             if (!expanded)

@@ -3,6 +3,7 @@
     "rootNamespace": "DynamicDungeon.Tests",
     "references": [
         "DynamicDungeon.Editor",
+        "DynamicDungeon.Editor.Shared",
         "DynamicDungeon.Runtime",
         "Unity.Burst",
         "Unity.Collections",

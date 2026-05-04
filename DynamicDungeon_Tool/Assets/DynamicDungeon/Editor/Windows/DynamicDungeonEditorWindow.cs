@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using DynamicDungeon.Editor.Nodes;
+using DynamicDungeon.Editor.Shared;
 using DynamicDungeon.Runtime;
 using DynamicDungeon.Runtime.Graph;
 using UnityEditor;
 using UnityEditor.Callbacks;
+using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -209,7 +212,7 @@ namespace DynamicDungeon.Editor.Windows
             _groupNavigatorWindow.SetCollapsed(_panelViewSettings.IsGroupNavigatorCollapsed);
             _graphView.Add(_groupNavigatorWindow);
 
-            _miniMapWindow = new MiniMapWindow(_miniMapLayout, _graphView);
+            _miniMapWindow = new MiniMapWindow(_miniMapLayout, _graphView, CreateMiniMapCallbacks());
             _miniMapWindow.SetLayoutChangedCallback(SavePanelState);
             _miniMapWindow.SetCollapsed(_panelViewSettings.IsMiniMapCollapsed);
             _graphView.Add(_miniMapWindow);
@@ -231,7 +234,7 @@ namespace DynamicDungeon.Editor.Windows
             else
             {
                 _generationOrchestrator.SetGraph(null);
-                _diagnosticsPanel.SetGraphContext(_graphView, null);
+                _diagnosticsPanel.SetContext(ResolveDiagnosticElementName, FocusDiagnosticElement);
                 _blackboardWindow.SetGraph(null);
                 _graphSettingsWindow.SetGraph(null);
                 _groupNavigatorWindow.SetGraph(null);
@@ -343,42 +346,42 @@ namespace DynamicDungeon.Editor.Windows
             panelToggleGroup.style.alignItems = Align.Center;
             toolbar.Add(panelToggleGroup);
 
-            _blackboardToggle = BuildPanelToggle(
+            _blackboardToggle = GraphEditorToolbarControls.BuildPanelToggle(
                 LoadBlackboardIcon(),
                 "Toggle Blackboard window",
                 _panelViewSettings.IsBlackboardVisible,
                 OnBlackboardToggleChanged);
             panelToggleGroup.Add(_blackboardToggle);
 
-            _settingsToggle = BuildPanelToggle(
+            _settingsToggle = GraphEditorToolbarControls.BuildPanelToggle(
                 LoadInspectorIcon(),
                 "Toggle Graph Settings window",
                 _panelViewSettings.IsGraphSettingsVisible,
                 OnSettingsToggleChanged);
             panelToggleGroup.Add(_settingsToggle);
 
-            _groupNavigatorToggle = BuildPanelToggle(
+            _groupNavigatorToggle = GraphEditorToolbarControls.BuildPanelToggle(
                 LoadGroupNavigatorIcon(),
                 "Toggle Groups window",
                 _panelViewSettings.IsGroupNavigatorVisible,
                 OnGroupNavigatorToggleChanged);
             panelToggleGroup.Add(_groupNavigatorToggle);
 
-            _miniMapToggle = BuildPanelToggle(
+            _miniMapToggle = GraphEditorToolbarControls.BuildPanelToggle(
                 LoadMiniMapIcon(),
                 "Toggle MiniMap window",
                 _panelViewSettings.IsMiniMapVisible,
                 OnMiniMapToggleChanged);
             panelToggleGroup.Add(_miniMapToggle);
 
-            _diagnosticsToggle = BuildPanelToggle(
+            _diagnosticsToggle = GraphEditorToolbarControls.BuildPanelToggle(
                 LoadDiagnosticsIcon(),
                 "Toggle Diagnostics panel",
                 _panelViewSettings.IsDiagnosticsVisible,
                 OnDiagnosticsToggleChanged);
             panelToggleGroup.Add(_diagnosticsToggle);
 
-            _docsButton = BuildIconButton(
+            _docsButton = GraphEditorToolbarControls.BuildIconButton(
                 LoadDocsIcon(),
                 "Documentation (coming later)",
                 OnDocsButtonClicked);
@@ -387,94 +390,10 @@ namespace DynamicDungeon.Editor.Windows
             return toolbar;
         }
 
-        private ToolbarToggle BuildPanelToggle(Texture icon, string tooltip, bool initialValue, EventCallback<ChangeEvent<bool>> callback)
-        {
-            ToolbarToggle toggle = new ToolbarToggle();
-            toggle.text = string.Empty;
-            toggle.tooltip = tooltip;
-            toggle.style.width = 24.0f;
-            toggle.style.minWidth = 24.0f;
-            toggle.style.height = 20.0f;
-            toggle.style.justifyContent = Justify.Center;
-            toggle.style.alignItems = Align.Center;
-            toggle.style.paddingLeft = 0.0f;
-            toggle.style.paddingRight = 0.0f;
-            toggle.style.paddingTop = 0.0f;
-            toggle.style.paddingBottom = 0.0f;
-            toggle.style.marginLeft = 3.0f;
-            toggle.style.marginRight = 0.0f;
-            toggle.style.borderLeftWidth = 0.0f;
-            toggle.style.borderTopWidth = 0.0f;
-            toggle.style.borderRightWidth = 0.0f;
-            toggle.style.borderBottomWidth = 0.0f;
-            toggle.style.backgroundColor = Color.clear;
-            toggle.style.unityBackgroundImageTintColor = Color.clear;
-            toggle.style.borderTopLeftRadius = 0.0f;
-            toggle.style.borderTopRightRadius = 0.0f;
-            toggle.style.borderBottomLeftRadius = 0.0f;
-            toggle.style.borderBottomRightRadius = 0.0f;
-
-            Image image = new Image();
-            image.image = icon;
-            image.scaleMode = ScaleMode.ScaleToFit;
-            image.style.width = 16.0f;
-            image.style.height = 16.0f;
-            image.pickingMode = PickingMode.Ignore;
-            toggle.Add(image);
-
-            toggle.SetValueWithoutNotify(initialValue);
-            ApplyPanelToggleVisualState(toggle, image, initialValue);
-            toggle.RegisterValueChangedCallback(
-                evt => ApplyPanelToggleVisualState(toggle, image, evt.newValue));
-            toggle.RegisterValueChangedCallback(callback);
-            return toggle;
-        }
-
-        private ToolbarButton BuildIconButton(Texture icon, string tooltip, System.Action clicked)
-        {
-            ToolbarButton button = new ToolbarButton(clicked);
-            button.text = string.Empty;
-            button.tooltip = tooltip;
-            button.style.width = 24.0f;
-            button.style.minWidth = 24.0f;
-            button.style.height = 20.0f;
-            button.style.justifyContent = Justify.Center;
-            button.style.alignItems = Align.Center;
-            button.style.paddingLeft = 0.0f;
-            button.style.paddingRight = 0.0f;
-            button.style.paddingTop = 0.0f;
-            button.style.paddingBottom = 0.0f;
-            button.style.marginLeft = 3.0f;
-            button.style.marginRight = 0.0f;
-            button.style.borderLeftWidth = 0.0f;
-            button.style.borderTopWidth = 0.0f;
-            button.style.borderRightWidth = 0.0f;
-            button.style.borderBottomWidth = 0.0f;
-            button.style.backgroundColor = Color.clear;
-            button.style.unityBackgroundImageTintColor = Color.clear;
-
-            Image image = new Image();
-            image.image = icon;
-            image.scaleMode = ScaleMode.ScaleToFit;
-            image.style.width = 16.0f;
-            image.style.height = 16.0f;
-            image.pickingMode = PickingMode.Ignore;
-            image.tintColor = new Color(0.72f, 0.72f, 0.72f, 1.0f);
-            button.Add(image);
-            return button;
-        }
-
-        private static void ApplyPanelToggleVisualState(ToolbarToggle toggle, Image image, bool isActive)
-        {
-            toggle.style.opacity = isActive ? 1.0f : 0.65f;
-            image.tintColor = isActive
-                ? new Color(0.92f, 0.92f, 0.92f, 1.0f)
-                : new Color(0.72f, 0.72f, 0.72f, 1.0f);
-        }
-
         private DiagnosticsPanel BuildDiagnosticsPanel()
         {
             DiagnosticsPanel diagnosticsPanel = new DiagnosticsPanel();
+            diagnosticsPanel.SetContext(ResolveDiagnosticElementName, FocusDiagnosticElement);
             diagnosticsPanel.style.flexShrink = 0.0f;
             diagnosticsPanel.style.borderTopWidth = 1.0f;
             diagnosticsPanel.style.borderTopColor = new Color(0.18f, 0.18f, 0.18f, 1.0f);
@@ -486,6 +405,73 @@ namespace DynamicDungeon.Editor.Windows
             diagnosticsPanel.SetExpandedHeight(_diagnosticsPanelExpandedHeight);
             diagnosticsPanel.SetCollapsed(_isDiagnosticsPanelCollapsed);
             return diagnosticsPanel;
+        }
+
+        private MiniMapGraphCallbacks CreateMiniMapCallbacks()
+        {
+            return new MiniMapGraphCallbacks
+            {
+                RegisterViewTransformChanged = callback => _graphView.SetViewTransformChangedCallback(callback),
+                GetViewportState = _graphView.GetViewportState,
+                GetElementId = GetMiniMapElementId,
+                FocusElement = FocusMiniMapElement
+            };
+        }
+
+        private static string GetMiniMapElementId(GraphElement element)
+        {
+            GenNodeView nodeView = element as GenNodeView;
+            return nodeView != null ? nodeView.NodeData.NodeId : null;
+        }
+
+        private bool FocusMiniMapElement(string elementId)
+        {
+            return _graphView != null && _graphView.SelectAndFrameNode(elementId);
+        }
+
+        private string ResolveDiagnosticElementName(string elementId)
+        {
+            GenGraph graph = GetCurrentGraphForSaveState();
+            if (graph == null || string.IsNullOrWhiteSpace(elementId))
+            {
+                return "Graph";
+            }
+
+            GenNodeData nodeData = graph.GetNode(elementId);
+            if (nodeData == null)
+            {
+                return "Graph";
+            }
+
+            if (!string.IsNullOrWhiteSpace(nodeData.NodeName))
+            {
+                return nodeData.NodeName;
+            }
+
+            return nodeData.NodeTypeName ?? "Graph";
+        }
+
+        private bool FocusDiagnosticElement(string elementId)
+        {
+            return _graphView != null && _graphView.SelectAndFrameNode(elementId);
+        }
+
+        private static IReadOnlyList<SharedGraphDiagnostic> ConvertDiagnostics(IReadOnlyList<GraphDiagnostic> diagnostics)
+        {
+            IReadOnlyList<GraphDiagnostic> safeDiagnostics = diagnostics ?? Array.Empty<GraphDiagnostic>();
+            List<SharedGraphDiagnostic> convertedDiagnostics = new List<SharedGraphDiagnostic>(safeDiagnostics.Count);
+
+            int diagnosticIndex;
+            for (diagnosticIndex = 0; diagnosticIndex < safeDiagnostics.Count; diagnosticIndex++)
+            {
+                GraphDiagnostic diagnostic = safeDiagnostics[diagnosticIndex];
+                SharedDiagnosticSeverity severity = diagnostic.Severity == DiagnosticSeverity.Error
+                    ? SharedDiagnosticSeverity.Error
+                    : SharedDiagnosticSeverity.Warning;
+                convertedDiagnostics.Add(new SharedGraphDiagnostic(severity, diagnostic.Message, diagnostic.NodeId, diagnostic.PortName));
+            }
+
+            return convertedDiagnostics;
         }
 
         private void CancelGeneration()
@@ -577,8 +563,8 @@ namespace DynamicDungeon.Editor.Windows
 
             if (_diagnosticsPanel != null)
             {
-                _diagnosticsPanel.SetGraphContext(_graphView, graph);
-                _diagnosticsPanel.Populate(Array.Empty<GraphDiagnostic>());
+                _diagnosticsPanel.SetContext(ResolveDiagnosticElementName, FocusDiagnosticElement);
+                _diagnosticsPanel.Populate(Array.Empty<SharedGraphDiagnostic>());
             }
 
             SetStatus(IdleStatusText);
@@ -671,7 +657,7 @@ namespace DynamicDungeon.Editor.Windows
         {
             if (_diagnosticsPanel != null)
             {
-                _diagnosticsPanel.Populate(diagnostics);
+                _diagnosticsPanel.Populate(ConvertDiagnostics(diagnostics));
                 _diagnosticsPanelExpandedHeight = _diagnosticsPanel.GetExpandedHeight();
                 _isDiagnosticsPanelCollapsed = _diagnosticsPanel.IsCollapsed();
             }

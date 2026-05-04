@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using DynamicDungeon.Editor.Nodes;
+using DynamicDungeon.Editor.Shared;
 using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Editor.Windows;
 using DynamicDungeon.Runtime.Core;
@@ -89,7 +90,12 @@ namespace DynamicDungeon.Tests.Editor
             DynamicDungeonGraphView graphView = new DynamicDungeonGraphView();
             MiniMapWindow miniMapWindow = new MiniMapWindow(
                 DynamicDungeonEditorWindow.CreateDefaultMiniMapLayoutForTesting(),
-                graphView);
+                graphView,
+                new MiniMapGraphCallbacks
+                {
+                    RegisterViewTransformChanged = callback => graphView.SetViewTransformChangedCallback(callback),
+                    GetViewportState = graphView.GetViewportState
+                });
             int refreshCountAfterConstruction = miniMapWindow.RefreshCountForTesting;
 
             yield return null;

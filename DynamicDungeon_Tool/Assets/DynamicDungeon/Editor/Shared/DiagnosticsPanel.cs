@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using DynamicDungeon.Runtime.Graph;
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace DynamicDungeon.Editor.Windows
+namespace DynamicDungeon.Editor.Shared
 {
     public sealed class DiagnosticsPanel : VisualElement
     {
@@ -21,8 +21,8 @@ namespace DynamicDungeon.Editor.Windows
         private readonly VisualElement _contentContainer;
         private readonly VisualElement _resizeHandle;
 
-        private DynamicDungeonGraphView _graphView;
-        private GenGraph _graph;
+        private Func<string, string> _resolveElementName;
+        private Func<string, bool> _focusElement;
         private bool _isCollapsed;
         private bool _isResizing;
         private float _expandedHeight;
@@ -84,14 +84,14 @@ namespace DynamicDungeon.Editor.Windows
             _emptyLabel = new Label("No issues");
             _emptyLabel.style.color = new Color(0.6f, 0.6f, 0.6f, 1.0f);
 
-            Populate(System.Array.Empty<GraphDiagnostic>());
+            Populate(Array.Empty<SharedGraphDiagnostic>());
             ApplyPanelHeight();
         }
 
-        public void SetGraphContext(DynamicDungeonGraphView graphView, GenGraph graph)
+        public void SetContext(Func<string, string> resolveElementName, Func<string, bool> focusElement)
         {
-            _graphView = graphView;
-            _graph = graph;
+            _resolveElementName = resolveElementName;
+            _focusElement = focusElement;
         }
 
         public void SetExpandedHeight(float height)
@@ -116,11 +116,11 @@ namespace DynamicDungeon.Editor.Windows
             return _isCollapsed;
         }
 
-        public void Populate(IReadOnlyList<GraphDiagnostic> diagnostics)
+        public void Populate(IReadOnlyList<SharedGraphDiagnostic> diagnostics)
         {
             _scrollView.Clear();
 
-            IReadOnlyList<GraphDiagnostic> safeDiagnostics = diagnostics ?? System.Array.Empty<GraphDiagnostic>();
+            IReadOnlyList<SharedGraphDiagnostic> safeDiagnostics = diagnostics ?? Array.Empty<SharedGraphDiagnostic>();
             if (safeDiagnostics.Count == 0)
             {
                 _scrollView.Add(_emptyLabel);
@@ -130,24 +130,24 @@ namespace DynamicDungeon.Editor.Windows
             int diagnosticIndex;
             for (diagnosticIndex = 0; diagnosticIndex < safeDiagnostics.Count; diagnosticIndex++)
             {
-                GraphDiagnostic diagnostic = safeDiagnostics[diagnosticIndex];
+                SharedGraphDiagnostic diagnostic = safeDiagnostics[diagnosticIndex];
                 _scrollView.Add(CreateDiagnosticEntry(diagnostic));
             }
         }
 
-        private Button CreateDiagnosticEntry(GraphDiagnostic diagnostic)
+        private Button CreateDiagnosticEntry(SharedGraphDiagnostic diagnostic)
         {
-            string nodeName = ResolveNodeName(diagnostic.NodeId);
-            string entryText = string.IsNullOrWhiteSpace(nodeName)
+            string elementName = ResolveElementName(diagnostic.ElementId);
+            string entryText = string.IsNullOrWhiteSpace(elementName)
                 ? diagnostic.Message ?? string.Empty
-                : (diagnostic.Message ?? string.Empty) + " [" + nodeName + "]";
+                : (diagnostic.Message ?? string.Empty) + " [" + elementName + "]";
 
             Button entryButton = new Button(
                 () =>
                 {
-                    if (_graphView != null && !string.IsNullOrWhiteSpace(diagnostic.NodeId))
+                    if (_focusElement != null && !string.IsNullOrWhiteSpace(diagnostic.ElementId))
                     {
-                        _graphView.SelectAndFrameNode(diagnostic.NodeId);
+                        _focusElement(diagnostic.ElementId);
                     }
                 });
 
@@ -267,34 +267,29 @@ namespace DynamicDungeon.Editor.Windows
             _resizeHandle.style.backgroundColor = ResizeHandleDefaultColour;
         }
 
-        private string ResolveNodeName(string nodeId)
+        private string ResolveElementName(string elementId)
         {
-            if (_graph == null || string.IsNullOrWhiteSpace(nodeId))
+            if (string.IsNullOrWhiteSpace(elementId))
             {
                 return "Graph";
             }
 
-            GenNodeData nodeData = _graph.GetNode(nodeId);
-            if (nodeData == null)
+            if (_resolveElementName == null)
             {
                 return "Graph";
             }
 
-            if (!string.IsNullOrWhiteSpace(nodeData.NodeName))
-            {
-                return nodeData.NodeName;
-            }
-
-            return nodeData.NodeTypeName ?? "Graph";
+            string resolvedName = _resolveElementName(elementId);
+            return string.IsNullOrWhiteSpace(resolvedName) ? "Graph" : resolvedName;
         }
 
-        private static Color ResolveSeverityColour(DiagnosticSeverity severity)
+        private static Color ResolveSeverityColour(SharedDiagnosticSeverity severity)
         {
             switch (severity)
             {
-                case DiagnosticSeverity.Error:
+                case SharedDiagnosticSeverity.Error:
                     return new Color(0.82f, 0.24f, 0.24f, 1.0f);
-                case DiagnosticSeverity.Warning:
+                case SharedDiagnosticSeverity.Warning:
                     return new Color(0.91f, 0.73f, 0.19f, 1.0f);
                 default:
                     return new Color(0.28f, 0.72f, 0.38f, 1.0f);

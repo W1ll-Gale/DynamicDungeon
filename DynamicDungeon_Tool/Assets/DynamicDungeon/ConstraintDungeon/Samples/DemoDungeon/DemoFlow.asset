@@ -21,7 +21,7 @@ MonoBehaviour:
     - {fileID: 7044713205017155395, guid: 802fc1dc85dc497409005a1e947261eb, type: 3}
   - id: HUB
     displayName: Catacomb Junction
-    position: {x: 164, y: -590}
+    position: {x: 164, y: -592}
     type: 6
     allowedTemplates:
     - {fileID: 1116707898338037279, guid: 77782bd2933875d47af645963f918f73, type: 3}

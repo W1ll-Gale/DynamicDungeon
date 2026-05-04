@@ -1,3 +1,4 @@
+using DynamicDungeon.Editor.Shared;
 using DynamicDungeon.Editor.Windows;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;

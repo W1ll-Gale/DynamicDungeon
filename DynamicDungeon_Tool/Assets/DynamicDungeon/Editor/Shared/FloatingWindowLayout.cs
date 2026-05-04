@@ -1,10 +1,10 @@
 using System;
 using UnityEngine;
 
-namespace DynamicDungeon.Editor.Windows
+namespace DynamicDungeon.Editor.Shared
 {
     [Serializable]
-    internal sealed class FloatingWindowLayout
+    public sealed class FloatingWindowLayout
     {
         public bool DockToLeft = true;
         public bool DockToTop = true;

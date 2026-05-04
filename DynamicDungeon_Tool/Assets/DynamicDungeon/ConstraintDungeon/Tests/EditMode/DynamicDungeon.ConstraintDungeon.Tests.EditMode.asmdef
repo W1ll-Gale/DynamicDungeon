@@ -2,7 +2,9 @@
     "name": "DynamicDungeon.ConstraintDungeon.Tests.EditMode",
     "rootNamespace": "DynamicDungeon.ConstraintDungeon.Tests.EditMode",
     "references": [
-        "DynamicDungeon.ConstraintDungeon.Runtime"
+        "DynamicDungeon.ConstraintDungeon.Runtime",
+        "DynamicDungeon.ConstraintDungeon.Editor",
+        "DynamicDungeon.Editor.Shared"
     ],
     "includePlatforms": [
         "Editor"

@@ -2,9 +2,9 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace DynamicDungeon.Editor.Windows
+namespace DynamicDungeon.Editor.Shared
 {
-    internal class FloatingPanelWindow : VisualElement
+    public class FloatingPanelWindow : VisualElement
     {
         private const float HeaderHeight = 28.0f;
         private const float MinimumWidth = 220.0f;
@@ -123,7 +123,7 @@ namespace DynamicDungeon.Editor.Windows
             ApplyCollapsedState();
         }
 
-        internal FloatingWindowLayout LayoutState
+        public FloatingWindowLayout LayoutState
         {
             get
             {
@@ -131,7 +131,7 @@ namespace DynamicDungeon.Editor.Windows
             }
         }
 
-        internal bool IsVisibleForTesting
+        public bool IsVisibleForTesting
         {
             get
             {
@@ -139,12 +139,12 @@ namespace DynamicDungeon.Editor.Windows
             }
         }
 
-        internal Rect GetWindowRectForTesting()
+        public Rect GetWindowRectForTesting()
         {
             return GetWindowRect();
         }
 
-        internal bool IsCollapsedForTesting
+        public bool IsCollapsedForTesting
         {
             get
             {

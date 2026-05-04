@@ -14,13 +14,11 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
         public DungeonFlow activeFlow;
         public bool IsLoading;
         public Action<List<RoomNode>, DungeonEdge> OnSelectionChanged;
-        public Blackboard Blackboard { get; private set; }
-        public Blackboard ValidationBlackboard { get; private set; }
         private Node _lastSelectedNode;
-        private bool _hasPositioned;
         private DungeonSearchWindowProvider _searchWindow;
         private EditorWindow _editorWindow;
-        public Blackboard SettingsBlackboard { get; private set; }
+        private Action _afterMutation;
+        private Action _viewTransformChanged;
 
         public DungeonGraphView(EditorWindow window)
         {
@@ -39,117 +37,43 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
 
             AddSearchWindow();
 
-            SettingsBlackboard = new Blackboard(this)
-            {
-                title = "Dungeon Defaults",
-                subTitle = "Global settings",
-                scrollable = true
-            };
-            SettingsBlackboard.SetPosition(new Rect(15, 15, 300, 400));
-            SettingsBlackboard.capabilities |= Capabilities.Resizable;
-            SettingsBlackboard.Add(new Resizer());
-            
-            VisualElement settingsAddBtn = SettingsBlackboard.Q("addButton");
-            if (settingsAddBtn != null) settingsAddBtn.style.display = DisplayStyle.None;
-
-            VisualElement settingsHeader = SettingsBlackboard.Q("header");
-            Button settingsCollapseBtn = new Button(() => ToggleBlackboardCollapse(SettingsBlackboard)) { text = "▼", name = "collapseButton" };
-            SetupBlackboardButton(settingsCollapseBtn);
-            settingsHeader.Add(settingsCollapseBtn);
-            Add(SettingsBlackboard);
-
-            Blackboard = new Blackboard(this)
-            {
-                title = "Node Settings",
-                subTitle = "Details",
-                scrollable = true
-            };
-            Blackboard.SetPosition(new Rect(0, 0, 350, 270));
-            Blackboard.capabilities |= Capabilities.Resizable;
-            Blackboard.Add(new Resizer());
-            
-            VisualElement inspectorAddBtn = Blackboard.Q("addButton");
-            if (inspectorAddBtn != null) inspectorAddBtn.style.display = DisplayStyle.None;
-
-            VisualElement inspectorHeader = Blackboard.Q("header");
-            Button inspectorCollapseBtn = new Button(() => ToggleBlackboardCollapse(Blackboard)) { text = "▼", name = "collapseButton" };
-            SetupBlackboardButton(inspectorCollapseBtn);
-            inspectorHeader.Add(inspectorCollapseBtn);
-            Add(Blackboard);
-
-            ValidationBlackboard = new Blackboard(this)
-            {
-                title = "Validation",
-                subTitle = "Run validation",
-                scrollable = true
-            };
-            ValidationBlackboard.SetPosition(new Rect(15, 430, 380, 260));
-            ValidationBlackboard.capabilities |= Capabilities.Resizable;
-            ValidationBlackboard.Add(new Resizer());
-
-            VisualElement validationAddBtn = ValidationBlackboard.Q("addButton");
-            if (validationAddBtn != null) validationAddBtn.style.display = DisplayStyle.None;
-
-            VisualElement validationHeader = ValidationBlackboard.Q("header");
-            Button validationCollapseBtn = new Button(() => ToggleBlackboardCollapse(ValidationBlackboard)) { text = "▼", name = "collapseButton" };
-            SetupBlackboardButton(validationCollapseBtn);
-            validationHeader.Add(validationCollapseBtn);
-            Add(ValidationBlackboard);
-
-            // Position Panels after layout (Inspector to right)
-            RegisterCallback<GeometryChangedEvent>(evt =>
-            {
-                if (!_hasPositioned && Blackboard.parent != null)
-                {
-                    Rect bRect = Blackboard.GetPosition();
-                    Blackboard.SetPosition(new Rect(evt.newRect.width - bRect.width - 15, 15, bRect.width, bRect.height));
-                    _hasPositioned = true;
-                }
-            });
-
             RegisterCallback<PointerDownEvent>(OnPointerDown);
 
             graphViewChanged = OnGraphViewChanged;
+            viewTransformChanged = OnViewTransformChanged;
         }
 
-        private void SetupBlackboardButton(Button btn)
+        public void SetAfterMutationCallback(Action afterMutation)
         {
-            btn.style.width = 20;
-            btn.style.height = 20;
-            btn.style.paddingLeft = btn.style.paddingRight = 0;
-            btn.style.paddingTop = btn.style.paddingBottom = 0;
-            btn.style.fontSize = 10;
-            btn.style.marginLeft = 5;
-            btn.style.backgroundColor = new Color(0, 0, 0, 0); 
-            btn.style.borderTopWidth = 0;
-            btn.style.borderBottomWidth = 0;
-            btn.style.borderLeftWidth = 0;
-            btn.style.borderRightWidth = 0;
+            _afterMutation = afterMutation;
         }
 
-        private void ToggleBlackboardCollapse(Blackboard target)
+        public void SetViewTransformChangedCallback(Action viewTransformChanged)
         {
-            VisualElement container = target.Q("contentContainer");
-            Resizer resizer = target.Q<Resizer>();
-            Button collapseBtn = target.Q<Button>("collapseButton");
-            Rect rect = target.GetPosition();
-            
-            if (container.style.display == DisplayStyle.None)
-            {
-                container.style.display = DisplayStyle.Flex;
-                if (resizer != null) resizer.style.display = DisplayStyle.Flex;
-                target.SetPosition(new Rect(rect.x, rect.y, rect.width, 300));
-                collapseBtn.text = "▼";
-            }
-            else
-            {
-                container.style.display = DisplayStyle.None;
-                if (resizer != null) resizer.style.display = DisplayStyle.None;
-                target.SetPosition(new Rect(rect.x, rect.y, rect.width, 55));
-                collapseBtn.text = "►";
-            }
+            _viewTransformChanged = viewTransformChanged;
         }
 
+        public void GetViewportState(out Vector3 scrollOffset, out float zoomScale)
+        {
+            scrollOffset = contentViewContainer.resolvedStyle.translate;
+            zoomScale = contentViewContainer.resolvedStyle.scale.value.x;
+        }
+
+        private void OnViewTransformChanged(GraphView graphView)
+        {
+            _viewTransformChanged?.Invoke();
+        }
+
+        private void MarkActiveFlowDirty()
+        {
+            if (activeFlow != null)
+            {
+                EditorUtility.SetDirty(activeFlow);
+            }
+
+            _afterMutation?.Invoke();
+            _viewTransformChanged?.Invoke();
+        }
 
         public override void AddToSelection(ISelectable selectable)
         {
@@ -193,11 +117,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
                 }
             }
 
-            // Sticky Selection: Only update if there is a new selection
-            if (selectedItems.Count > 0 || selectedEdge != null)
-            {
-                OnSelectionChanged?.Invoke(selectedItems, selectedEdge);
-            }
+            OnSelectionChanged?.Invoke(selectedItems, selectedEdge);
         }
 
 
@@ -264,7 +184,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
                             activeFlow.nodes.Remove(roomNode);
                             // Also remove edges connected to this node
                             activeFlow.edges.RemoveAll(e => e.fromId == roomNode.id || e.toId == roomNode.id);
-                            EditorUtility.SetDirty(activeFlow);
+                            MarkActiveFlowDirty();
                         }
                     }
                     else if (element is DungeonEdge dungeonEdge)
@@ -279,7 +199,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
                             corridorIds.Contains(e.toId) ||
                             (e.fromId == dungeonEdge.fromRoomId && e.toId == dungeonEdge.toRoomId) ||
                             (e.fromId == dungeonEdge.toRoomId && e.toId == dungeonEdge.fromRoomId));
-                        EditorUtility.SetDirty(activeFlow);
+                        MarkActiveFlowDirty();
                     }
                     else if (element is Edge rawEdge)
                     {
@@ -287,7 +207,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
                         string fromId = rawEdge.output?.node?.viewDataKey;
                         string toId = rawEdge.input?.node?.viewDataKey;
                         activeFlow.edges.RemoveAll(e => e.fromId == fromId && e.toId == toId);
-                        EditorUtility.SetDirty(activeFlow);
+                        MarkActiveFlowDirty();
                     }
                 }
             }
@@ -310,7 +230,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
 
                     Undo.RecordObject(activeFlow, "Move Node");
                     roomNode.position = node.GetPosition().position;
-                    EditorUtility.SetDirty(activeFlow);
+                    MarkActiveFlowDirty();
                 }
             }
 
@@ -465,8 +385,6 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
                 return;
             }
 
-            PopulateSettingsPanel();
-
             Dictionary<string, Node> nodeMap = new Dictionary<string, Node>();
 
             foreach (RoomNode roomNode in flow.nodes.Where(n => n.type != RoomType.Corridor))
@@ -522,56 +440,6 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             IsLoading = false;
         }
 
-        public void ShowValidationResults(DungeonFlowValidator.Result result)
-        {
-            if (ValidationBlackboard == null)
-            {
-                return;
-            }
-
-            ValidationBlackboard.Clear();
-            ValidationBlackboard.subTitle = result == null
-                ? "No results"
-                : $"{result.Errors.Count} errors, {result.Warnings.Count} warnings";
-
-            VisualElement container = new VisualElement
-            {
-                style =
-                {
-                    paddingLeft = 8,
-                    paddingRight = 8,
-                    paddingTop = 6,
-                    paddingBottom = 8
-                }
-            };
-            ValidationBlackboard.Add(container);
-
-            if (result == null || result.Issues.Count == 0)
-            {
-                Label okLabel = new Label("No validation issues.");
-                okLabel.style.color = new Color(0.55f, 1f, 0.65f);
-                okLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-                container.Add(okLabel);
-                return;
-            }
-
-            foreach (DungeonFlowValidator.Issue issue in result.Issues)
-            {
-                Button row = new Button(() => FocusValidationIssue(issue))
-                {
-                    text = (issue.IsError ? "ERROR: " : "WARN: ") + issue.Message
-                };
-                row.style.whiteSpace = WhiteSpace.Normal;
-                row.style.unityTextAlign = TextAnchor.MiddleLeft;
-                row.style.marginBottom = 4;
-                row.style.paddingTop = 5;
-                row.style.paddingBottom = 5;
-                row.style.color = issue.IsError ? new Color(1f, 0.45f, 0.45f) : new Color(1f, 0.82f, 0.35f);
-                row.tooltip = "Click to select the related graph item.";
-                container.Add(row);
-            }
-        }
-
         private void FocusValidationIssue(DungeonFlowValidator.Issue issue)
         {
             if (issue == null)
@@ -591,6 +459,91 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             target.BringToFront();
             FrameSelection();
             NotifySelectionChanged();
+        }
+
+        public bool FocusElement(string elementId)
+        {
+            if (string.IsNullOrWhiteSpace(elementId))
+            {
+                return false;
+            }
+
+            GraphElement target = FindElementBySharedId(elementId);
+            if (target == null)
+            {
+                return false;
+            }
+
+            ClearSelection();
+            AddToSelection(target);
+            target.BringToFront();
+            FrameSelection();
+            NotifySelectionChanged();
+            return true;
+        }
+
+        public string ResolveElementName(string elementId)
+        {
+            if (activeFlow == null || string.IsNullOrWhiteSpace(elementId))
+            {
+                return "Dungeon Flow";
+            }
+
+            if (TryParseLinkElementId(elementId, out string fromId, out string toId))
+            {
+                RoomNode from = activeFlow.nodes.Find(n => n.id == fromId);
+                RoomNode to = activeFlow.nodes.Find(n => n.id == toId);
+                string fromName = from != null && !string.IsNullOrWhiteSpace(from.displayName) ? from.displayName : fromId;
+                string toName = to != null && !string.IsNullOrWhiteSpace(to.displayName) ? to.displayName : toId;
+                return fromName + " -> " + toName;
+            }
+
+            RoomNode node = activeFlow.nodes.Find(n => n.id == elementId);
+            if (node == null)
+            {
+                return "Dungeon Flow";
+            }
+
+            return string.IsNullOrWhiteSpace(node.displayName) ? node.id : node.displayName;
+        }
+
+        public static string BuildLinkElementId(string fromId, string toId)
+        {
+            return "link:" + LinkKey(fromId ?? string.Empty, toId ?? string.Empty);
+        }
+
+        private GraphElement FindElementBySharedId(string elementId)
+        {
+            if (TryParseLinkElementId(elementId, out string fromId, out string toId))
+            {
+                return graphElements
+                    .OfType<DungeonEdge>()
+                    .FirstOrDefault(e => LinkKey(e.fromRoomId, e.toRoomId) == LinkKey(fromId, toId));
+            }
+
+            return GetNodeByGuid(elementId) ?? FindVisibleNodeNear(elementId);
+        }
+
+        private static bool TryParseLinkElementId(string elementId, out string fromId, out string toId)
+        {
+            fromId = null;
+            toId = null;
+
+            if (string.IsNullOrWhiteSpace(elementId) || !elementId.StartsWith("link:", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            string payload = elementId.Substring("link:".Length);
+            int separatorIndex = payload.IndexOf('|');
+            if (separatorIndex < 0)
+            {
+                return false;
+            }
+
+            fromId = payload.Substring(0, separatorIndex);
+            toId = payload.Substring(separatorIndex + 1);
+            return !string.IsNullOrWhiteSpace(fromId) && !string.IsNullOrWhiteSpace(toId);
         }
 
         private GraphElement FindIssueTarget(DungeonFlowValidator.Issue issue)
@@ -817,7 +770,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             
             activeFlow.nodes.Add(newNode);
             LoadFlow(activeFlow);
-            EditorUtility.SetDirty(activeFlow);
+            MarkActiveFlowDirty();
         }
     
         public void ConnectNodes(Node from, Node to)
@@ -833,7 +786,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             CreateCorridorChain(roomA, roomB, activeFlow.GetCorridorCountForConnection(roomA.position, roomB.position));
 
             LoadFlow(activeFlow);
-            EditorUtility.SetDirty(activeFlow);
+            MarkActiveFlowDirty();
         }
 
         public void SetCorridorLinkCount(DungeonEdge edge, int corridorCount)
@@ -855,7 +808,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
 
             ReplaceCorridorChain(roomA, roomB, currentCorridors, corridorCount);
             LoadFlow(activeFlow);
-            EditorUtility.SetDirty(activeFlow);
+            MarkActiveFlowDirty();
         }
 
         public void ApplyDynamicCorridorCount(DungeonEdge edge)
@@ -868,7 +821,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             SetCorridorLinkCount(edge, activeFlow.GetDynamicCorridorCount(roomA.position, roomB.position));
         }
 
-        private void ApplyCurrentCorridorPlacementToAllLinks()
+        public void ApplyCurrentCorridorPlacementToAllLinks()
         {
             if (activeFlow == null) return;
 
@@ -931,158 +884,5 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             activeFlow.edges.Add(new RoomEdge(previousId, roomB.id));
         }
 
-        private void PopulateSettingsPanel()
-        {
-            if (activeFlow == null || SettingsBlackboard == null) return;
-            SettingsBlackboard.Clear();
-
-            VisualElement corridorSettings = new VisualElement();
-            corridorSettings.AddToClassList("settings-type-group");
-            corridorSettings.style.marginBottom = 10;
-
-            Label corridorHeader = new Label("CORRIDOR LINKS");
-            corridorHeader.AddToClassList("settings-type-header");
-            corridorSettings.Add(corridorHeader);
-
-            UnityEngine.UIElements.EnumField modeField = new UnityEngine.UIElements.EnumField("Placement", activeFlow.corridorPlacementMode);
-            corridorSettings.Add(modeField);
-
-            UnityEngine.UIElements.IntegerField fixedCountField = new UnityEngine.UIElements.IntegerField("Fixed Count") { value = activeFlow.fixedCorridorCount };
-            corridorSettings.Add(fixedCountField);
-
-            UnityEngine.UIElements.FloatField dynamicSpacingField = new UnityEngine.UIElements.FloatField("Dynamic Spacing") { value = activeFlow.dynamicCorridorSpacing };
-            corridorSettings.Add(dynamicSpacingField);
-
-            UnityEngine.UIElements.IntegerField dynamicMaxField = new UnityEngine.UIElements.IntegerField("Dynamic Max") { value = activeFlow.maxDynamicCorridorCount };
-            corridorSettings.Add(dynamicMaxField);
-
-            Action refreshCorridorFieldState = () =>
-            {
-                bool fixedMode = activeFlow.corridorPlacementMode == CorridorPlacementMode.Fixed;
-                fixedCountField.SetEnabled(fixedMode);
-                dynamicSpacingField.SetEnabled(!fixedMode);
-                dynamicMaxField.SetEnabled(!fixedMode);
-            };
-
-            modeField.RegisterValueChangedCallback(evt =>
-            {
-                Undo.RecordObject(activeFlow, "Change Corridor Placement");
-                activeFlow.corridorPlacementMode = (CorridorPlacementMode)evt.newValue;
-                ApplyCurrentCorridorPlacementToAllLinks();
-                refreshCorridorFieldState();
-                LoadFlow(activeFlow);
-                EditorUtility.SetDirty(activeFlow);
-            });
-
-            fixedCountField.RegisterValueChangedCallback(evt =>
-            {
-                Undo.RecordObject(activeFlow, "Change Fixed Corridor Count");
-                activeFlow.fixedCorridorCount = Mathf.Max(0, evt.newValue);
-                fixedCountField.SetValueWithoutNotify(activeFlow.fixedCorridorCount);
-                if (activeFlow.corridorPlacementMode == CorridorPlacementMode.Fixed)
-                {
-                    ApplyCurrentCorridorPlacementToAllLinks();
-                    LoadFlow(activeFlow);
-                }
-                EditorUtility.SetDirty(activeFlow);
-            });
-
-            dynamicSpacingField.RegisterValueChangedCallback(evt =>
-            {
-                Undo.RecordObject(activeFlow, "Change Dynamic Corridor Spacing");
-                activeFlow.dynamicCorridorSpacing = Mathf.Max(1f, evt.newValue);
-                dynamicSpacingField.SetValueWithoutNotify(activeFlow.dynamicCorridorSpacing);
-                if (activeFlow.corridorPlacementMode == CorridorPlacementMode.Dynamic)
-                {
-                    ApplyCurrentCorridorPlacementToAllLinks();
-                    LoadFlow(activeFlow);
-                }
-                EditorUtility.SetDirty(activeFlow);
-            });
-
-            dynamicMaxField.RegisterValueChangedCallback(evt =>
-            {
-                Undo.RecordObject(activeFlow, "Change Dynamic Corridor Max");
-                activeFlow.maxDynamicCorridorCount = Mathf.Max(0, evt.newValue);
-                dynamicMaxField.SetValueWithoutNotify(activeFlow.maxDynamicCorridorCount);
-                if (activeFlow.corridorPlacementMode == CorridorPlacementMode.Dynamic)
-                {
-                    ApplyCurrentCorridorPlacementToAllLinks();
-                    LoadFlow(activeFlow);
-                }
-                EditorUtility.SetDirty(activeFlow);
-            });
-
-            refreshCorridorFieldState();
-            SettingsBlackboard.Add(corridorSettings);
-
-            foreach (RoomType type in Enum.GetValues(typeof(RoomType)))
-            {
-                VisualElement group = new VisualElement();
-                group.AddToClassList("settings-type-group");
-
-                VisualElement headerRow = new VisualElement { style = { flexDirection = FlexDirection.Row, justifyContent = Justify.SpaceBetween } };
-                Label typeLabel = new Label(type.ToString().ToUpper());
-                typeLabel.AddToClassList("settings-type-header");
-                headerRow.Add(typeLabel);
-
-                Button addBtn = new Button(() => AddDefaultTemplate(type)) { text = "+", style = { width = 20, height = 20 } };
-                headerRow.Add(addBtn);
-                group.Add(headerRow);
-
-                DefaultTemplateMapping mapping = activeFlow.defaultTemplates.Find(m => m.type == type);
-                if (mapping != null)
-                {
-                    for (int i = 0; i < mapping.templates.Count; i++)
-                    {
-                        int index = i;
-                        VisualElement row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginBottom = 2 } };
-                        
-                        UnityEditor.UIElements.ObjectField field = new UnityEditor.UIElements.ObjectField { objectType = typeof(GameObject), value = mapping.templates[i] };
-                        field.style.flexGrow = 1;
-                        field.RegisterValueChangedCallback(evt => {
-                            Undo.RecordObject(activeFlow, "Change Default Template");
-                            mapping.templates[index] = (GameObject)evt.newValue;
-                            EditorUtility.SetDirty(activeFlow);
-                        });
-                        row.Add(field);
-
-                        Button removeBtn = new Button(() => RemoveDefaultTemplate(type, index)) { text = "×", style = { width = 20 } };
-                        row.Add(removeBtn);
-                        group.Add(row);
-                    }
-                }
-
-                SettingsBlackboard.Add(group);
-            }
-        }
-
-        private void AddDefaultTemplate(RoomType type)
-        {
-            if (activeFlow == null) return;
-            Undo.RecordObject(activeFlow, "Add Default Template");
-            DefaultTemplateMapping mapping = activeFlow.defaultTemplates.Find(m => m.type == type);
-            if (mapping == null)
-            {
-                mapping = new DefaultTemplateMapping { type = type };
-                activeFlow.defaultTemplates.Add(mapping);
-            }
-            mapping.templates.Add(null);
-            EditorUtility.SetDirty(activeFlow);
-            PopulateSettingsPanel();
-        }
-
-        private void RemoveDefaultTemplate(RoomType type, int index)
-        {
-            if (activeFlow == null) return;
-            Undo.RecordObject(activeFlow, "Remove Default Template");
-            DefaultTemplateMapping mapping = activeFlow.defaultTemplates.Find(m => m.type == type);
-            if (mapping != null && index < mapping.templates.Count)
-            {
-                mapping.templates.RemoveAt(index);
-            }
-            EditorUtility.SetDirty(activeFlow);
-            PopulateSettingsPanel();
-        }
     }
 }

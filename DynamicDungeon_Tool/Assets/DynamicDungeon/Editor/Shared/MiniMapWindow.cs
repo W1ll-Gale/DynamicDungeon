@@ -1,11 +1,22 @@
-using DynamicDungeon.Editor.Nodes;
+using System;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace DynamicDungeon.Editor.Windows
+namespace DynamicDungeon.Editor.Shared
 {
-    internal sealed class MiniMapWindow : FloatingPanelWindow
+    public sealed class MiniMapGraphCallbacks
+    {
+        public Action<Action> RegisterViewTransformChanged;
+        public ViewportStateProvider GetViewportState;
+        public Func<GraphElement, bool> ShouldIncludeElement;
+        public Func<GraphElement, string> GetElementId;
+        public Func<string, bool> FocusElement;
+
+        public delegate void ViewportStateProvider(out Vector3 scrollOffset, out float zoomScale);
+    }
+
+    public sealed class MiniMapWindow : FloatingPanelWindow
     {
         private const float FramePadding = 8.0f;
         private const float InnerPadding = 10.0f;
@@ -22,26 +33,15 @@ namespace DynamicDungeon.Editor.Windows
 
         private readonly Label _zoomLabel;
         private readonly MiniMapCanvas _canvas;
-        private DynamicDungeonGraphView _graphView;
+        private GraphView _graphView;
+        private MiniMapGraphCallbacks _callbacks;
         private int _refreshCountForTesting;
 
-        protected override bool UsesUniformResize
-        {
-            get
-            {
-                return true;
-            }
-        }
+        protected override bool UsesUniformResize => true;
 
-        internal int RefreshCountForTesting
-        {
-            get
-            {
-                return _refreshCountForTesting;
-            }
-        }
+        public int RefreshCountForTesting => _refreshCountForTesting;
 
-        public MiniMapWindow(FloatingWindowLayout layout, DynamicDungeonGraphView graphView)
+        public MiniMapWindow(FloatingWindowLayout layout, GraphView graphView, MiniMapGraphCallbacks callbacks)
             : base("MiniMap", layout)
         {
             name = "DynamicDungeonMiniMapWindow";
@@ -96,18 +96,19 @@ namespace DynamicDungeon.Editor.Windows
             _canvas.Add(_zoomLabel);
             _canvas.RegisterCallback<GeometryChangedEvent>(OnMiniMapCanvasGeometryChanged);
 
-            AttachToGraphView(graphView);
+            AttachToGraphView(graphView, callbacks);
         }
 
-        public void AttachToGraphView(DynamicDungeonGraphView graphView)
+        public void AttachToGraphView(GraphView graphView, MiniMapGraphCallbacks callbacks)
         {
             _graphView = graphView;
+            _callbacks = callbacks ?? new MiniMapGraphCallbacks();
             if (_graphView == null)
             {
                 return;
             }
 
-            _graphView.SetViewTransformChangedCallback(RefreshMiniMap);
+            _callbacks.RegisterViewTransformChanged?.Invoke(RefreshMiniMap);
             _graphView.RegisterCallback<GeometryChangedEvent>(OnGraphViewGeometryChanged);
             RefreshMiniMap();
         }
@@ -139,7 +140,7 @@ namespace DynamicDungeon.Editor.Windows
 
             Vector3 scrollOffset;
             float zoomScale;
-            _graphView.GetViewportState(out scrollOffset, out zoomScale);
+            GetViewportState(out scrollOffset, out zoomScale);
             _zoomLabel.text = zoomScale.ToString("0.00") + "x";
         }
 
@@ -188,7 +189,7 @@ namespace DynamicDungeon.Editor.Windows
 
             foreach (GraphElement element in _graphView.graphElements)
             {
-                if (element == null || element is Edge)
+                if (!ShouldIncludeElement(element))
                 {
                     continue;
                 }
@@ -199,22 +200,11 @@ namespace DynamicDungeon.Editor.Windows
                     continue;
                 }
 
-                if (!hasBounds)
-                {
-                    bounds = elementRect;
-                    hasBounds = true;
-                    continue;
-                }
-
-                bounds = UnionRects(bounds, elementRect);
+                bounds = hasBounds ? UnionRects(bounds, elementRect) : elementRect;
+                hasBounds = true;
             }
 
-            if (hasBounds)
-            {
-                return bounds;
-            }
-
-            return new Rect(-100.0f, -100.0f, 200.0f, 200.0f);
+            return hasBounds ? bounds : new Rect(-100.0f, -100.0f, 200.0f, 200.0f);
         }
 
         private Rect GetStableDisplayBounds(Rect contentBounds, Rect viewportRect)
@@ -240,15 +230,11 @@ namespace DynamicDungeon.Editor.Windows
         {
             Vector3 scrollOffset;
             float zoomScale;
-            _graphView.GetViewportState(out scrollOffset, out zoomScale);
+            GetViewportState(out scrollOffset, out zoomScale);
 
             float safeZoomScale = Mathf.Approximately(zoomScale, 0.0f) ? 1.0f : zoomScale;
-            Vector2 topLeft = new Vector2(
-                -scrollOffset.x / safeZoomScale,
-                -scrollOffset.y / safeZoomScale);
-            Vector2 size = new Vector2(
-                _graphView.layout.width / safeZoomScale,
-                _graphView.layout.height / safeZoomScale);
+            Vector2 topLeft = new Vector2(-scrollOffset.x / safeZoomScale, -scrollOffset.y / safeZoomScale);
+            Vector2 size = new Vector2(_graphView.layout.width / safeZoomScale, _graphView.layout.height / safeZoomScale);
             Vector2 bottomRight = topLeft + size;
 
             return Rect.MinMaxRect(
@@ -256,6 +242,18 @@ namespace DynamicDungeon.Editor.Windows
                 Mathf.Min(topLeft.y, bottomRight.y),
                 Mathf.Max(topLeft.x, bottomRight.x),
                 Mathf.Max(topLeft.y, bottomRight.y));
+        }
+
+        private void GetViewportState(out Vector3 scrollOffset, out float zoomScale)
+        {
+            if (_callbacks.GetViewportState != null)
+            {
+                _callbacks.GetViewportState(out scrollOffset, out zoomScale);
+                return;
+            }
+
+            scrollOffset = _graphView != null ? _graphView.contentViewContainer.resolvedStyle.translate : Vector3.zero;
+            zoomScale = _graphView != null ? _graphView.contentViewContainer.resolvedStyle.scale.value.x : 1.0f;
         }
 
         private Vector2 GraphToMiniMap(Vector2 graphPoint, MiniMapRenderData renderData)
@@ -288,11 +286,11 @@ namespace DynamicDungeon.Editor.Windows
 
             Vector3 scrollOffset;
             float zoomScale;
-            _graphView.GetViewportState(out scrollOffset, out zoomScale);
+            GetViewportState(out scrollOffset, out zoomScale);
             SetViewportCenterAndZoom(graphPoint, zoomScale);
         }
 
-        private bool TryFocusNodeAtMiniMapPosition(Vector2 localMousePosition)
+        private bool TryFocusElementAtMiniMapPosition(Vector2 localMousePosition)
         {
             MiniMapRenderData renderData;
             if (!TryGetRenderData(out renderData))
@@ -302,33 +300,31 @@ namespace DynamicDungeon.Editor.Windows
 
             foreach (GraphElement element in _graphView.graphElements)
             {
-                GenNodeView nodeView = element as GenNodeView;
-                if (nodeView == null)
+                if (!ShouldIncludeElement(element))
                 {
                     continue;
                 }
 
-                Rect nodeRect = nodeView.GetPosition();
-                if (nodeRect.width <= 0.0f || nodeRect.height <= 0.0f)
+                Rect elementRect = element.GetPosition();
+                if (elementRect.width <= 0.0f || elementRect.height <= 0.0f)
                 {
                     continue;
                 }
 
-                Rect miniMapRect = GraphToMiniMap(nodeRect, renderData);
+                Rect miniMapRect = GraphToMiniMap(elementRect, renderData);
                 if (!miniMapRect.Contains(localMousePosition))
                 {
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(nodeView.NodeData.NodeId))
+                string elementId = GetElementId(element);
+                if (!string.IsNullOrWhiteSpace(elementId) && TryFocusElement(elementId))
                 {
-                    _graphView.SelectAndFrameNode(nodeView.NodeData.NodeId);
-                }
-                else
-                {
-                    CenterViewportOnGraphPoint(nodeRect.center);
+                    RefreshMiniMap();
+                    return true;
                 }
 
+                CenterViewportOnGraphPoint(elementRect.center);
                 RefreshMiniMap();
                 return true;
             }
@@ -356,7 +352,7 @@ namespace DynamicDungeon.Editor.Windows
             Rect viewportRect = GetViewportRectInGraphSpace();
             Vector3 scrollOffset;
             float zoomScale;
-            _graphView.GetViewportState(out scrollOffset, out zoomScale);
+            GetViewportState(out scrollOffset, out zoomScale);
 
             float zoomFactor = wheelDeltaY < 0.0f ? GraphZoomStep : 1.0f / GraphZoomStep;
             float newZoomScale = Mathf.Clamp(zoomScale * zoomFactor, MinGraphZoomScale, MaxGraphZoomScale);
@@ -366,6 +362,26 @@ namespace DynamicDungeon.Editor.Windows
             }
 
             SetViewportCenterAndZoom(viewportRect.center, newZoomScale);
+        }
+
+        private bool ShouldIncludeElement(GraphElement element)
+        {
+            if (element == null || element is Edge)
+            {
+                return false;
+            }
+
+            return _callbacks.ShouldIncludeElement == null || _callbacks.ShouldIncludeElement(element);
+        }
+
+        private string GetElementId(GraphElement element)
+        {
+            return _callbacks.GetElementId != null ? _callbacks.GetElementId(element) : null;
+        }
+
+        private bool TryFocusElement(string elementId)
+        {
+            return _callbacks.FocusElement != null && _callbacks.FocusElement(elementId);
         }
 
         private static Rect UnionRects(Rect first, Rect second)
@@ -449,7 +465,7 @@ namespace DynamicDungeon.Editor.Windows
 
                 foreach (GraphElement element in _owner._graphView.graphElements)
                 {
-                    if (element == null || element is Edge)
+                    if (!_owner.ShouldIncludeElement(element))
                     {
                         continue;
                     }
@@ -476,7 +492,7 @@ namespace DynamicDungeon.Editor.Windows
                     return;
                 }
 
-                if (_owner.TryFocusNodeAtMiniMapPosition(mouseDownEvent.localMousePosition))
+                if (_owner.TryFocusElementAtMiniMapPosition(mouseDownEvent.localMousePosition))
                 {
                     mouseDownEvent.StopPropagation();
                     return;
