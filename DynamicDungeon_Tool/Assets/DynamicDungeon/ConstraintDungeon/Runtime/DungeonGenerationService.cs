@@ -488,7 +488,7 @@ namespace DynamicDungeon.ConstraintDungeon
         {
             if (request.EnableDiagnostics)
             {
-                Debug.LogWarning(message);
+                Debug.Log(message);
             }
         }
 

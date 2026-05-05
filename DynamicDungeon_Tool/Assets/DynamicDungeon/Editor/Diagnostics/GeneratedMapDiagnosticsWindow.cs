@@ -119,6 +119,30 @@ namespace DynamicDungeon.Editor.Diagnostics
             }
         }
 
+        /// <summary>
+        /// Opens the window (if needed), switches to FloodFill, targets the generator, and starts
+        /// a run immediately. Called automatically when Auto Run Map Diagnostics is enabled.
+        /// Pass null to use auto-discovered scene tilemaps (e.g. from DungeonGenerator).
+        /// </summary>
+        public static void TriggerAutoFloodFill(TilemapWorldGenerator generator)
+        {
+            GeneratedMapDiagnosticsWindow window = GetWindow<GeneratedMapDiagnosticsWindow>();
+            window.titleContent = new GUIContent("Map Diagnostics");
+            window.minSize = new Vector2(360.0f, 420.0f);
+            window.Show();
+            window._tool = GeneratedMapDiagnosticTool.FloodFill;
+            window._end = null;
+            if (generator != null)
+            {
+                window.SetSingleTarget(generator);
+            }
+            else
+            {
+                window.InvalidateGrid();
+            }
+            window.RunActiveTool();
+        }
+
         public bool IsPickingStart => _pickStart;
         public bool IsPickingEnd => _pickEnd;
         public GeneratedMapDiagnosticTool ActiveTool => _tool;
@@ -868,6 +892,7 @@ namespace DynamicDungeon.Editor.Diagnostics
                 if (_grid == null || _gridDirty)
                 {
                     _status = "Rebuilding diagnostic grid...";
+                    _progress = 0.1f;
                     Repaint();
                     RebuildGrid();
                 }
@@ -936,6 +961,7 @@ namespace DynamicDungeon.Editor.Diagnostics
             }
             finally
             {
+                EditorUtility.ClearProgressBar();
                 _isRunning = false;
                 _showProgress = false;
                 _runCancellationSource?.Dispose();
@@ -1008,6 +1034,8 @@ namespace DynamicDungeon.Editor.Diagnostics
                 return;
             }
 
+            EditorUtility.DisplayProgressBar("Map Diagnostics", "Building visualization mesh...", 0.99f);
+
             List<Vector3> vertices = new List<Vector3>();
             List<Color> colors = new List<Color>();
             List<int> indices = new List<int>();
@@ -1059,6 +1087,8 @@ namespace DynamicDungeon.Editor.Diagnostics
                 _visualizationMesh.SetColors(colors);
                 _visualizationMesh.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
             }
+
+            EditorUtility.ClearProgressBar();
         }
 
         private void AddCellToMesh(GeneratedMapDiagnosticCellKey key, Color color, List<Vector3> vertices, List<Color> colors, List<int> indices)
@@ -1095,7 +1125,16 @@ namespace DynamicDungeon.Editor.Diagnostics
         private void RebuildGrid()
         {
             SyncRulesFromFields();
-            _grid = GeneratedMapDiagnostics.BuildGrid(_targets, _rules, TileSemanticRegistry.GetOrLoad());
+            EditorUtility.DisplayProgressBar("Map Diagnostics", "Building diagnostic grid...", 0f);
+            try
+            {
+                _grid = GeneratedMapDiagnostics.BuildGrid(_targets, _rules, TileSemanticRegistry.GetOrLoad(),
+                    (p, s) => EditorUtility.DisplayProgressBar("Map Diagnostics", s, p));
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
             _lastTargetsHash = GetTargetsHash();
             _gridDirty = false;
             _result = null;
@@ -1366,10 +1405,34 @@ namespace DynamicDungeon.Editor.Diagnostics
         {
             EditorApplication.delayCall += () => {
                 if (this == null) return;
+                // If TriggerAutoRebuildGrid already rebuilt synchronously (before this deferred
+                // callback ran), the grid is already fresh — don't invalidate it again.
+                if (_grid != null && !_gridDirty)
+                {
+                    Repaint();
+                    return;
+                }
                 InvalidateGrid();
                 _status = "Generation completed. Diagnostic grid is now dirty.";
                 Repaint();
             };
+        }
+
+        /// <summary>
+        /// Pre-builds the diagnostic grid if the Map Diagnostics window is open and not already running.
+        /// Called by editor inspectors when Auto Rebuild Grid After Generate is enabled.
+        /// No-op if the window is closed or a run is already in progress.
+        /// </summary>
+        public static void TriggerAutoRebuildGrid()
+        {
+            GeneratedMapDiagnosticsWindow window = ActiveWindow;
+            if (window == null || window._isRunning) return;
+            window.InvalidateGrid();
+            window._status = "Rebuilding diagnostic grid...";
+            window.Repaint();
+            window.RebuildGrid();
+            window._status = "Diagnostic grid ready.";
+            window.Repaint();
         }
 
         private void Update()

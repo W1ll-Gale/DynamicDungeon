@@ -223,14 +223,28 @@ namespace DynamicDungeon.Runtime.Diagnostics
             return grid;
         }
 
-        public static GeneratedMapDiagnosticGrid BuildGrid(IReadOnlyList<TilemapWorldGenerator> generators, GeneratedMapDiagnosticRules rules, TileSemanticRegistry registry)
-
+        public static GeneratedMapDiagnosticGrid BuildGrid(IReadOnlyList<TilemapWorldGenerator> generators, GeneratedMapDiagnosticRules rules, TileSemanticRegistry registry, System.Action<float, string> onProgress = null)
         {
-            Physics2D.SyncTransforms();
             GeneratedMapDiagnosticGrid diagnosticGrid = new GeneratedMapDiagnosticGrid();
             GeneratedMapDiagnosticRules resolvedRules = rules ?? new GeneratedMapDiagnosticRules();
             GeneratedMapDiagnosticRules effectiveRules = CreateEffectiveRules(resolvedRules);
             int sourceIndex = 0;
+
+            // Pre-calculate total generator cells so we can report meaningful progress.
+            int totalGeneratorCells = 0;
+            if (generators != null)
+            {
+                for (int gi = 0; gi < generators.Count; gi++)
+                {
+                    TilemapWorldGenerator g = generators[gi];
+                    if (g != null && g.LastSuccessfulSnapshot != null)
+                        totalGeneratorCells += g.LastSuccessfulSnapshot.Width * g.LastSuccessfulSnapshot.Height;
+                }
+            }
+            int cellsDone = 0;
+            // Generator processing uses 0–80% of the bar; discovered tilemaps get 80–99%.
+            float generatorShare = 0.80f;
+
             if (generators != null)
             {
                 int generatorIndex;
@@ -288,14 +302,23 @@ namespace DynamicDungeon.Runtime.Diagnostics
                             diagnosticCell.BlockReason = blockReason;
                             AddOrReplaceCell(diagnosticGrid, diagnosticCell);
                         }
+
+                        cellsDone += snapshot.Width;
+                        if (onProgress != null && totalGeneratorCells > 0)
+                        {
+                            onProgress(generatorShare * cellsDone / totalGeneratorCells, "Processing " + generator.name + "...");
+                        }
                     }
                 }
             }
 
             if (effectiveRules.UseDiscoveredTilemaps)
             {
-                AddDiscoveredTilemapCells(diagnosticGrid, effectiveRules, registry, ref sourceIndex);
+                onProgress?.Invoke(generatorShare, "Discovering scene tilemaps...");
+                AddDiscoveredTilemapCells(diagnosticGrid, effectiveRules, registry, ref sourceIndex, onProgress);
             }
+
+            onProgress?.Invoke(0.99f, "Finalizing...");
 
             if (diagnosticGrid.Cells.Count == 0)
             {
@@ -305,7 +328,7 @@ namespace DynamicDungeon.Runtime.Diagnostics
             return diagnosticGrid;
         }
 
-        private static void AddDiscoveredTilemapCells(GeneratedMapDiagnosticGrid diagnosticGrid, GeneratedMapDiagnosticRules rules, TileSemanticRegistry registry, ref int sourceIndex)
+        private static void AddDiscoveredTilemapCells(GeneratedMapDiagnosticGrid diagnosticGrid, GeneratedMapDiagnosticRules rules, TileSemanticRegistry registry, ref int sourceIndex, System.Action<float, string> onProgress = null)
         {
             Tilemap[] tilemaps = UnityEngine.Object.FindObjectsByType<Tilemap>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             if (tilemaps == null || tilemaps.Length == 0)
@@ -376,6 +399,11 @@ namespace DynamicDungeon.Runtime.Diagnostics
                     diagnosticCell.IsWalkable = IsWalkable(diagnosticCell, rules, registry, null, out blockReason);
                     diagnosticCell.BlockReason = blockReason;
                     AddOrReplaceCell(diagnosticGrid, diagnosticCell);
+                }
+
+                if (onProgress != null)
+                {
+                    onProgress(0.80f + 0.19f * (tilemapIndex + 1) / tilemaps.Length, "Discovering " + sourceName + "...");
                 }
             }
         }

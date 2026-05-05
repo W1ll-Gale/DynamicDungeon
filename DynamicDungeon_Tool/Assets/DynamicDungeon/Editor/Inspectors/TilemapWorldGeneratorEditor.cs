@@ -38,6 +38,10 @@ namespace DynamicDungeon.Editor.Inspectors
         private SerializedProperty _backgroundBiomeChannelNameProperty;
         private SerializedProperty _bakedWorldSnapshotProperty;
         private SerializedProperty _propertyOverridesProperty;
+        private SerializedProperty _autoRunMapDiagnosticsProperty;
+        private SerializedProperty _autoRebuildMapDiagnosticGridProperty;
+
+        private TilemapWorldGenerator _subscribedComponent;
 
         private SerializedObject _graphSerializedObject;
         private ReorderableList _layerDefinitionsList;
@@ -68,6 +72,8 @@ namespace DynamicDungeon.Editor.Inspectors
             _backgroundBiomeChannelNameProperty = serializedObject.FindProperty("_backgroundBiomeChannelName");
             _bakedWorldSnapshotProperty = serializedObject.FindProperty("_bakedWorldSnapshot");
             _propertyOverridesProperty = serializedObject.FindProperty("_propertyOverrides");
+            _autoRunMapDiagnosticsProperty = serializedObject.FindProperty("_autoRunMapDiagnostics");
+            _autoRebuildMapDiagnosticGridProperty = serializedObject.FindProperty("_autoRebuildMapDiagnosticGrid");
 
             _previousGraph = _graphProperty.objectReferenceValue as GenGraph;
             if (_previousGraph != null)
@@ -77,11 +83,46 @@ namespace DynamicDungeon.Editor.Inspectors
 
             InitialiseLayerDefinitionsList();
             EditorApplication.update += OnEditorUpdate;
+
+            _subscribedComponent = target as TilemapWorldGenerator;
+            if (_subscribedComponent != null)
+            {
+                _subscribedComponent.OnGenerationCompleted += HandleAutoRunDiagnostics;
+            }
         }
 
         private void OnDisable()
         {
             EditorApplication.update -= OnEditorUpdate;
+            if (_subscribedComponent != null)
+            {
+                _subscribedComponent.OnGenerationCompleted -= HandleAutoRunDiagnostics;
+                _subscribedComponent = null;
+            }
+        }
+
+        private void HandleAutoRunDiagnostics(GenerationCompletedArgs args)
+        {
+            bool autoRun     = _autoRunMapDiagnosticsProperty         != null && _autoRunMapDiagnosticsProperty.boolValue;
+            bool autoRebuild = _autoRebuildMapDiagnosticGridProperty  != null && _autoRebuildMapDiagnosticGridProperty.boolValue;
+            if (!autoRun && !autoRebuild) return;
+
+            TilemapWorldGenerator component = target as TilemapWorldGenerator;
+            if (autoRun)
+            {
+                // Start the full async run on the next frame.
+                EditorApplication.delayCall += () =>
+                {
+                    if (component != null)
+                        GeneratedMapDiagnosticsWindow.TriggerAutoFloodFill(component);
+                };
+            }
+            else
+            {
+                // Rebuild synchronously right now so the DisplayProgressBar appears as an
+                // immediate continuation of generation — no separate popup window.
+                GeneratedMapDiagnosticsWindow.TriggerAutoRebuildGrid();
+            }
         }
 
         public override void OnInspectorGUI()
@@ -395,6 +436,8 @@ namespace DynamicDungeon.Editor.Inspectors
             }
 
             EditorGUILayout.LabelField("Open scene-map diagnostic tools for pathfinding, reachability, and island checks.", _mutedMiniLabelStyle);
+            EditorGUILayout.PropertyField(_autoRunMapDiagnosticsProperty, new GUIContent("Auto Run After Generate", "Automatically opens the Map Diagnostics window and runs a flood-fill after each successful generation."));
+            EditorGUILayout.PropertyField(_autoRebuildMapDiagnosticGridProperty, new GUIContent("Auto Rebuild Grid After Generate", "Rebuilds the diagnostic grid immediately after generation completes (using the progress bar) so the grid is ready without any loading delay when you next run diagnostics."));
             GUILayout.Space(2.0f);
             bool openRequested = GUILayout.Button("Open Generated Map Diagnostics");
             EndSection();

@@ -70,9 +70,9 @@ MonoBehaviour:
   corridorChance: 0.5
   maxCorridorChain: 3
   branchingProbability: 0.3
-  branchingBias: 1
+  branchingBias: 0
   branchingBiasStrength: 1
-  useDirectionalGrowthHeuristic: 1
+  useDirectionalGrowthHeuristic: 0
   preferredGrowthDirection: 1
   directionalGrowthBias: 1
   useGlobalTemplateDirectionBias: 0

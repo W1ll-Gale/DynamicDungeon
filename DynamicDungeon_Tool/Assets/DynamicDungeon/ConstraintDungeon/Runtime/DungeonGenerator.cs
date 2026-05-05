@@ -18,6 +18,10 @@ namespace DynamicDungeon.ConstraintDungeon
         [Min(0)] public long stableSeed = 12345L;
         public bool generateOnStart = true;
         public bool enableDiagnostics;
+        public bool autoRunMapDiagnostics;
+        public bool autoRebuildMapDiagnosticGrid;
+
+        public event System.Action OnGenerationCompleted;
 
         [Header("State")]
         [SerializeField, HideInInspector] private System.Collections.Generic.List<GameObject> generatedRooms = new System.Collections.Generic.List<GameObject>();
@@ -158,6 +162,7 @@ namespace DynamicDungeon.ConstraintDungeon
 
         private void ReportSuccess(DungeonGenerationResult result)
         {
+            OnGenerationCompleted?.Invoke();
             DungeonLayout layout = result.Layout;
             if (generationMode == DungeonGenerationMode.OrganicGrowth)
             {

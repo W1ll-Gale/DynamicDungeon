@@ -87,6 +87,11 @@ namespace DynamicDungeon.Runtime.Component
         [SerializeField]
         private List<ExposedPropertyOverride> _propertyOverrides = new List<ExposedPropertyOverride>();
 
+        [SerializeField]
+        private bool _autoRunMapDiagnostics;
+        [SerializeField]
+        private bool _autoRebuildMapDiagnosticGrid;
+
         private readonly Executor _executor = new Executor();
         private readonly TilemapOutputPass _tilemapOutputPass = new TilemapOutputPass();
         private readonly TilemapLayerWriter _tilemapLayerWriter = new TilemapLayerWriter();

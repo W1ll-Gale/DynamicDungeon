@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using System.IO;
 using DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner;
+using DynamicDungeon.Editor.Diagnostics;
 using DynamicDungeon.Editor.Shared;
 
 namespace DynamicDungeon.ConstraintDungeon
@@ -13,10 +14,70 @@ namespace DynamicDungeon.ConstraintDungeon
         private const float CompactButtonWidth = 118.0f;
         private const string HeaderTitle = "Constraint Dungeon Generator";
         private GUIStyle _mutedMiniLabelStyle;
+        private DungeonGenerator _subscribedGen;
 
         protected override void OnHeaderGUI()
         {
             ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle);
+        }
+
+        private void OnEnable()
+        {
+            _subscribedGen = target as DungeonGenerator;
+            if (_subscribedGen != null)
+            {
+                _subscribedGen.OnGenerationCompleted += HandleAutoRunDiagnostics;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_subscribedGen != null)
+            {
+                _subscribedGen.OnGenerationCompleted -= HandleAutoRunDiagnostics;
+                _subscribedGen = null;
+            }
+        }
+
+        private void HandleAutoRunDiagnostics()
+        {
+            DungeonGenerator gen = _subscribedGen;
+            if (gen == null) return;
+            bool autoRun     = gen.autoRunMapDiagnostics;
+            bool autoRebuild = gen.autoRebuildMapDiagnosticGrid;
+            if (!autoRun && !autoRebuild) return;
+
+            if (autoRun)
+            {
+                // Start the full async run on the next frame.
+                EditorApplication.delayCall += () =>
+                {
+                    if (gen != null)
+                        GeneratedMapDiagnosticsWindow.TriggerAutoFloodFill(null);
+                };
+            }
+            else
+            {
+                // Rebuild synchronously right now so the DisplayProgressBar appears as an
+                // immediate continuation of generation — no separate popup window.
+                GeneratedMapDiagnosticsWindow.TriggerAutoRebuildGrid();
+            }
+        }
+
+        private bool DrawDiagnosticsSection()
+        {
+            if (!BeginSection("Diagnostics"))
+            {
+                return false;
+            }
+
+            EditorGUILayout.LabelField("Open scene-map diagnostic tools for pathfinding, reachability, and island checks.", _mutedMiniLabelStyle);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("autoRunMapDiagnostics"), new GUIContent("Auto Run After Generate", "Automatically opens the Map Diagnostics window and runs a flood-fill after each successful generation."));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("autoRebuildMapDiagnosticGrid"), new GUIContent("Auto Rebuild Grid After Generate", "Rebuilds the diagnostic grid immediately after generation completes (using the progress bar) so the grid is ready without any loading delay when you next run diagnostics."));
+            GUILayout.Space(2.0f);
+            bool openRequested = GUILayout.Button("Open Generated Map Diagnostics");
+            EndSection();
+            return openRequested;
         }
 
         public override void OnInspectorGUI()
@@ -35,6 +96,7 @@ namespace DynamicDungeon.ConstraintDungeon
                 DrawOrganicSettings();
             }
 
+            bool openDiagnosticsRequested = DrawDiagnosticsSection();
             GenerationInspectorAction generationAction = DrawGenerationControls(gen);
             if (generationAction == GenerationInspectorAction.Generate)
             {
@@ -47,6 +109,11 @@ namespace DynamicDungeon.ConstraintDungeon
             else if (generationAction == GenerationInspectorAction.Cancel)
             {
                 gen.CancelGeneration();
+            }
+
+            if (openDiagnosticsRequested)
+            {
+                GeneratedMapDiagnosticsWindow.OpenWindow();
             }
 
             serializedObject.ApplyModifiedProperties();
