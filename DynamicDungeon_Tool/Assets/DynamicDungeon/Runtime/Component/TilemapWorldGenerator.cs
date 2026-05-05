@@ -1026,6 +1026,7 @@ namespace DynamicDungeon.Runtime.Component
 
             cancellationToken.ThrowIfCancellationRequested();
             Grid resolvedGrid = ResolveGrid(true);
+            Vector3Int resolvedTilemapOffset = GetCenteredTilemapOffset(snapshot);
             _generatedPrefabWriter.EnsureRoot(transform);
             _generatedPrefabWriter.ClearAll();
             cancellationToken.ThrowIfCancellationRequested();
@@ -1042,7 +1043,7 @@ namespace DynamicDungeon.Runtime.Component
                 _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
                 _tilemapLayerWriter.ClearAll();
                 cancellationToken.ThrowIfCancellationRequested();
-                _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+                _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, resolvedTilemapOffset);
                 cancellationToken.ThrowIfCancellationRequested();
                 if (_renderBackgroundFromFloorTiles)
                 {
@@ -1052,7 +1053,7 @@ namespace DynamicDungeon.Runtime.Component
                     }
 
                     ushort backgroundLogicalId = unchecked((ushort)Mathf.Max(0, _backgroundLogicalId));
-                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, _tilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
+                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, resolvedTilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
                     cancellationToken.ThrowIfCancellationRequested();
                 }
             }
@@ -1072,7 +1073,7 @@ namespace DynamicDungeon.Runtime.Component
                 SetGenerationProgress(OutputPrefabProgress, "Placing generated prefabs...");
             }
 
-            _prefabPlacementOutputPass.Execute(snapshot, resolvedGrid, _generatedPrefabWriter, _tilemapOffset);
+            _prefabPlacementOutputPass.Execute(snapshot, resolvedGrid, _generatedPrefabWriter, resolvedTilemapOffset);
             cancellationToken.ThrowIfCancellationRequested();
         }
 
@@ -1083,6 +1084,7 @@ namespace DynamicDungeon.Runtime.Component
         {
             cancellationToken.ThrowIfCancellationRequested();
             Grid resolvedGrid = ResolveGrid(true);
+            Vector3Int resolvedTilemapOffset = GetCenteredTilemapOffset(snapshot);
 
             await SetGenerationProgressAndYield(OutputStartProgress, "Clearing previous generated prefabs...", cancellationToken);
             _generatedPrefabWriter.EnsureRoot(transform);
@@ -1097,14 +1099,14 @@ namespace DynamicDungeon.Runtime.Component
                 _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
                 _tilemapLayerWriter.ClearAll();
                 cancellationToken.ThrowIfCancellationRequested();
-                _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, _tilemapOffset);
+                _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, resolvedTilemapOffset);
                 cancellationToken.ThrowIfCancellationRequested();
 
                 if (_renderBackgroundFromFloorTiles)
                 {
                     await SetGenerationProgressAndYield(OutputBackgroundProgress, "Writing generated background tilemap...", cancellationToken);
                     ushort backgroundLogicalId = unchecked((ushort)Mathf.Max(0, _backgroundLogicalId));
-                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, _tilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
+                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, resolvedTilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
                     cancellationToken.ThrowIfCancellationRequested();
                 }
             }
@@ -1116,8 +1118,21 @@ namespace DynamicDungeon.Runtime.Component
             }
 
             await SetGenerationProgressAndYield(OutputPrefabProgress, "Placing generated prefabs...", cancellationToken);
-            _prefabPlacementOutputPass.Execute(snapshot, resolvedGrid, _generatedPrefabWriter, _tilemapOffset);
+            _prefabPlacementOutputPass.Execute(snapshot, resolvedGrid, _generatedPrefabWriter, resolvedTilemapOffset);
             cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        private Vector3Int GetCenteredTilemapOffset(WorldSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return _tilemapOffset;
+            }
+
+            return new Vector3Int(
+                _tilemapOffset.x - (snapshot.Width / 2),
+                _tilemapOffset.y - (snapshot.Height / 2),
+                _tilemapOffset.z);
         }
 
         private void ApplyPropertyOverrides(ExecutionPlan plan)
