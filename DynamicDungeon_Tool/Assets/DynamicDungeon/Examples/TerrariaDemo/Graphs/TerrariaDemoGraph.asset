@@ -16,7 +16,7 @@ MonoBehaviour:
   WorldWidth: 512
   WorldHeight: 192
   DefaultSeed: 1
-  DefaultSeedMode: 0
+  DefaultSeedMode: 1
   MaxValidationRetries: 1
   Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}
   TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
@@ -581,7 +581,149 @@ MonoBehaviour:
     - Name: reservedMaskChannelName
       Value: DungeonReservedMask
       ObjectReference: {fileID: 0}
+  - NodeId: player-spawn-center-band
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.AxisBandNode
+    NodeName: Player Center Band
+    Position: {x: 1600, y: 640}
+    Ports:
+    - PortName: PlayerCenterBand
+      DisplayName: PlayerCenterBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: axis
+      Value: X
+      ObjectReference: {fileID: 0}
+    - Name: min
+      Value: 0.49
+      ObjectReference: {fileID: 0}
+    - Name: max
+      Value: 0.51
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: PlayerCenterBand
+      ObjectReference: {fileID: 0}
+  - NodeId: player-surface-center-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Player Surface Center Mask
+    Position: {x: 1920, y: 640}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: PlayerSurfaceCenterMask
+      DisplayName: PlayerSurfaceCenterMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: PlayerSurfaceCenterMask
+      ObjectReference: {fileID: 0}
+  - NodeId: player-start-point-scatter
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
+    NodeName: Player Start Point
+    Position: {x: 2160, y: 640}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: PlayerStartPoint
+      DisplayName: PlayerStartPoint
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: minDistance
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: maxAttempts
+      Value: 30
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: PlayerStartPoint
+      ObjectReference: {fileID: 0}
+  - NodeId: player-start-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Player Start Offset
+    Position: {x: 2300, y: 640}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: OffsetPoints
+      DisplayName: OffsetPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: PlayerOffsetPoint
+      ObjectReference: {fileID: 0}
+  - NodeId: player-prefab-spawner
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabSpawnerNode
+    NodeName: Player Spawner
+    Position: {x: 2400, y: 640}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: __PrefabPlacements
+      DisplayName: __PrefabPlacements
+      Direction: 1
+      Type: 4
+    Parameters:
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"639adb5a56b036a45b1896313fbe734f","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
   Connections:
+  - FromNodeId: player-spawn-center-band
+    FromPortName: PlayerCenterBand
+    ToNodeId: player-surface-center-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: organized-subgraph-MaterialContext
+    FromPortName: SurfaceFloorMask
+    ToNodeId: player-surface-center-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: player-surface-center-mask
+    FromPortName: PlayerSurfaceCenterMask
+    ToNodeId: player-start-point-scatter
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: player-start-point-scatter
+    FromPortName: PlayerStartPoint
+    ToNodeId: player-start-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: player-start-point-offset
+    FromPortName: PlayerOffsetPoint
+    ToNodeId: player-prefab-spawner
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: player-prefab-spawner
+    FromPortName: __PrefabPlacements
+    ToNodeId: graph-output-node
+    ToPortName: __PrefabPlacements
+    CastMode: 0
   - FromNodeId: prefab-reserved-void-overlay
     FromPortName: FinalLogicalIds
     ToNodeId: graph-output-node
@@ -870,6 +1012,11 @@ MonoBehaviour:
       height: 700
     ContainedNodeIds:
     - organized-subgraph-SurfacePropPlacement
+    - player-spawn-center-band
+    - player-surface-center-mask
+    - player-start-point-scatter
+    - player-start-point-offset
+    - player-prefab-spawner
     - organized-subgraph-CaveHousePlacement
     - dungeon-spawn-exclusion-band
     - dungeon-outside-middle-mask

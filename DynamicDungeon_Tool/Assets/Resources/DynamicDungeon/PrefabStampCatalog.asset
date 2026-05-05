@@ -181,3 +181,15 @@ MonoBehaviour:
       - {x: 2, y: 5}
       - {x: 3, y: 5}
       - {x: 4, y: 5}
+  - PrefabGuid: 639adb5a56b036a45b1896313fbe734f
+    Prefab: {fileID: 7115732961527051695, guid: 639adb5a56b036a45b1896313fbe734f, type: 3}
+    Template:
+      PrefabGuid: 639adb5a56b036a45b1896313fbe734f
+      AnchorOffset: {x: 0, y: 0, z: 0}
+      SupportsRandomRotation: 0
+      UsesTilemapFootprint: 1
+      OccupiedCells:
+      - {x: -1, y: 0}
+      - {x: -1, y: 1}
+      - {x: -1, y: 2}
+      - {x: -1, y: 3}
