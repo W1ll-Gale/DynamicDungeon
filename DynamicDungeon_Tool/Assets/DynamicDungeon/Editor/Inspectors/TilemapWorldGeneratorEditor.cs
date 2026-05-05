@@ -1,4 +1,5 @@
 using System.Globalization;
+using DynamicDungeon.Editor.Diagnostics;
 using DynamicDungeon.Editor.Shared;
 using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Editor.Windows;
@@ -107,6 +108,7 @@ namespace DynamicDungeon.Editor.Inspectors
             DrawGenerationSettingsSection();
             DrawOutputSection();
             bool applyLayerStructureRequested = DrawAutomationSection();
+            bool openDiagnosticsRequested = DrawDiagnosticsSection();
             bool bakeRequested;
             bool clearBakeRequested;
             DrawBakingSection(component, out bakeRequested, out clearBakeRequested);
@@ -141,6 +143,11 @@ namespace DynamicDungeon.Editor.Inspectors
             {
                 WorldGeneratorSetup.ApplyLayerStructure(component);
                 serializedObject.Update();
+            }
+
+            if (openDiagnosticsRequested)
+            {
+                GeneratedMapDiagnosticsWindow.OpenForGenerator(component);
             }
 
             if (bakeRequested)
@@ -378,6 +385,20 @@ namespace DynamicDungeon.Editor.Inspectors
             EndSection();
 
             return applyLayerStructureRequested;
+        }
+
+        private bool DrawDiagnosticsSection()
+        {
+            if (!BeginSection("Diagnostics"))
+            {
+                return false;
+            }
+
+            EditorGUILayout.LabelField("Open scene-map diagnostic tools for pathfinding, reachability, and island checks.", _mutedMiniLabelStyle);
+            GUILayout.Space(2.0f);
+            bool openRequested = GUILayout.Button("Open Generated Map Diagnostics");
+            EndSection();
+            return openRequested;
         }
 
         private void DrawBakingSection(TilemapWorldGenerator component, out bool bakeRequested, out bool clearBakeRequested)

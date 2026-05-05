@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace DynamicDungeon.Editor.Shared
 {
@@ -22,6 +23,7 @@ namespace DynamicDungeon.Editor.Shared
         public bool CanClear;
         public bool IsGenerating;
         public bool ShouldShowProgress;
+        public string[] LiveStats;
     }
 
     public static class GenerationInspectorControls
@@ -62,6 +64,18 @@ namespace DynamicDungeon.Editor.Shared
             Rect progressRect = GUILayoutUtility.GetRect(18.0f, 18.0f, "TextField");
             float progress = Mathf.Clamp01(options.Progress);
             EditorGUI.ProgressBar(progressRect, progress, Mathf.RoundToInt(progress * 100.0f) + "%");
+
+            if (options.LiveStats != null && options.LiveStats.Length > 0)
+            {
+                GUILayout.Space(4.0f);
+                foreach (string stat in options.LiveStats)
+                {
+                    if (!string.IsNullOrEmpty(stat))
+                    {
+                        EditorGUILayout.LabelField(stat, EditorStyles.miniLabel);
+                    }
+                }
+            }
 
             GUI.backgroundColor = new Color(1.0f, 0.6f, 0.35f);
             bool cancelRequested = GUILayout.Button("CANCEL GENERATION", GUILayout.Height(SecondaryButtonHeight));

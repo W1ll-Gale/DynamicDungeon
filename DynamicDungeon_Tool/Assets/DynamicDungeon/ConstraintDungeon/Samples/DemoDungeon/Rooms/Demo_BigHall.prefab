@@ -82,6 +82,8 @@ MonoBehaviour:
     socket: {fileID: 11400000, guid: dd08523d79333d84ba8ef68bebb0c09b, type: 2}
     autoSize: 1
   autoDoorPoints: []
+  hasSpawnPoint: 0
+  spawnPoint: {x: 0, y: 0}
   floorMap: {fileID: 4920131498168119341}
   wallMap: {fileID: 3247293794729127523}
   bakedData:
@@ -326,6 +328,8 @@ MonoBehaviour:
       originalCell: {x: 0, y: 0}
     allowRotation: 1
     allowMirroring: 1
+    hasSpawnPoint: 0
+    spawnPoint: {x: 0, y: 0}
 --- !u!1 &1405316677985087063
 GameObject:
   m_ObjectHideFlags: 0
@@ -337,6 +341,7 @@ GameObject:
   - component: {fileID: 6784686042353406930}
   - component: {fileID: 3247293794729127523}
   - component: {fileID: 4827491532743979638}
+  - component: {fileID: 1801737493704246479}
   m_Layer: 0
   m_Name: Walls
   m_TagString: Untagged
@@ -837,6 +842,44 @@ TilemapRenderer:
   m_SortOrder: 0
   m_Mode: 0
   m_DetectChunkCullingBounds: 0
+--- !u!19719996 &1801737493704246479
+TilemapCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1405316677985087063}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_MaximumTileChangeCount: 1000
+  m_ExtrusionFactor: 0
+  m_UseDelaunayMesh: 0
 --- !u!1 &8437369943276549017
 GameObject:
   m_ObjectHideFlags: 0

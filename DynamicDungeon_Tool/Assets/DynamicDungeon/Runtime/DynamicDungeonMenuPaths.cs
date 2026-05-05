@@ -10,6 +10,7 @@ namespace DynamicDungeon.Runtime
         public const string AssetMenuRoot = TilemapWorldGeneratorRoot;
 
         public const string GraphEditor = ToolsRoot + "Tilemap World Graph Editor";
+        public const string GeneratedMapDiagnostics = ToolsRoot + "Generated Map Diagnostics";
         public const string NewTilemapWorldGeneratorSetup = ToolsRoot + "New Generator Setup";
         public const string GameObjectTilemapWorldGeneratorSetup = GameObjectRoot + "Generator Setup";
         public const string GameObjectApplyLayerStructure = GameObjectRoot + "Apply Layer Structure";

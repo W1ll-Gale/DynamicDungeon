@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4069505230104639923}
   - component: {fileID: 7837528509755453804}
   - component: {fileID: 7114571235819815837}
+  - component: {fileID: 5936177727063972084}
   m_Layer: 0
   m_Name: FootprintTilemap
   m_TagString: Untagged
@@ -475,6 +476,44 @@ TilemapRenderer:
   m_SortOrder: 0
   m_Mode: 0
   m_DetectChunkCullingBounds: 0
+--- !u!19719996 &5936177727063972084
+TilemapCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31514128651943429}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_MaximumTileChangeCount: 1000
+  m_ExtrusionFactor: 0
+  m_UseDelaunayMesh: 0
 --- !u!1 &5547227400842665399
 GameObject:
   m_ObjectHideFlags: 0
@@ -1046,6 +1085,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Placement.PrefabStampAuthoring
   _footprintTilemap: {fileID: 7837528509755453804}
+  _footprintTilemaps: []
+  _fillEnclosedTilemapInterior: 1
   _fallbackCellSize: {x: 1, y: 1}
   _originCell: {x: 0, y: 0}
   _anchorOffset: {x: 0, y: 0, z: 0}

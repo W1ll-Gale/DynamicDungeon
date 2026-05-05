@@ -31,8 +31,7 @@ namespace DynamicDungeon.Runtime.Nodes
         [DescriptionAttribute("Prefab variants and relative weights encoded as JSON.")]
         private string _prefabVariants;
 
-        [DescriptionAttribute("Normalized X coordinate for the spawn (0.0 to 1.0). 0.5 is the center.")]
-        private float _normalizedX = 0.5f;
+
 
         private PrefabStampTemplate[] _resolvedTemplates = Array.Empty<PrefabStampTemplate>();
         private int[] _resolvedTemplateIndices = Array.Empty<int>();

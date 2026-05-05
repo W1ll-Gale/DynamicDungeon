@@ -104,6 +104,8 @@ namespace DynamicDungeon.Runtime.Component
         private long _lastUsedSeed;
         private int _mainThreadId;
         private bool _generationCancelRequested;
+        private WorldSnapshot _lastSuccessfulSnapshot;
+        private string _lastOutputChannelName = string.Empty;
 
         public event Action OnGenerationStarted;
         public event Action<GenerationCompletedArgs> OnGenerationCompleted;
@@ -184,6 +186,53 @@ namespace DynamicDungeon.Runtime.Component
             }
         }
 
+        public WorldSnapshot LastSuccessfulSnapshot
+        {
+            get
+            {
+                if (_lastSuccessfulSnapshot != null)
+                {
+                    return _lastSuccessfulSnapshot;
+                }
+
+                return HasValidBakedSnapshot() ? _bakedWorldSnapshot.Snapshot : null;
+            }
+        }
+
+        public string LastOutputChannelName
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(_lastOutputChannelName))
+                {
+                    return _lastOutputChannelName;
+                }
+
+                return HasValidBakedSnapshot() ? _bakedWorldSnapshot.OutputChannelName : string.Empty;
+            }
+        }
+
+        public Vector3Int TilemapOffset
+        {
+            get
+            {
+                return _tilemapOffset;
+            }
+        }
+
+        public Grid ResolvedGrid
+        {
+            get
+            {
+                return ResolveGrid(false);
+            }
+        }
+
+        public Vector3Int GetTilemapOffsetForSnapshot(WorldSnapshot snapshot)
+        {
+            return GetCenteredTilemapOffset(snapshot);
+        }
+
         public void ReconcilePropertyOverrides()
         {
             if (_propertyOverrides == null)
@@ -250,6 +299,8 @@ namespace DynamicDungeon.Runtime.Component
             }
 
             ClearTilemapsIfPossible();
+            _lastSuccessfulSnapshot = null;
+            _lastOutputChannelName = string.Empty;
             _statusLabel = IdleStatusLabel;
             SetGenerationProgress(0.0f, "Cleared generated world output.");
 
@@ -282,6 +333,7 @@ namespace DynamicDungeon.Runtime.Component
                 }
 
                 SaveBakedSnapshotAsset(snapshot, seed, outputChannelName);
+                CacheSuccessfulSnapshot(snapshot, outputChannelName);
 
                 _statusLabel = DoneStatusLabel;
             }
@@ -298,6 +350,8 @@ namespace DynamicDungeon.Runtime.Component
         public void ClearBake()
         {
             _bakedWorldSnapshot = null;
+            _lastSuccessfulSnapshot = null;
+            _lastOutputChannelName = string.Empty;
 
 #if UNITY_EDITOR
             EditorUtility.SetDirty(this);
@@ -564,6 +618,7 @@ namespace DynamicDungeon.Runtime.Component
                 completedArgs.WasBakedFallback = false;
                 completedArgs.ErrorMessage = null;
 
+                CacheSuccessfulSnapshot(executionResult.Snapshot, compileResult.OutputChannelName);
                 _statusLabel = DoneStatusLabel;
                 SetGenerationProgress(1.0f, BuildGenerationCompleteStatus(executionResult.Snapshot, seed, stopwatch.ElapsedMilliseconds, compileResult.HasConnectedOutput));
                 RaiseGenerationCompleted(completedArgs);
@@ -965,11 +1020,13 @@ namespace DynamicDungeon.Runtime.Component
                 if (string.IsNullOrWhiteSpace(bakedSnapshot.OutputChannelName))
                 {
                     snapshot = bakedSnapshot.Snapshot;
+                    CacheSuccessfulSnapshot(snapshot, bakedSnapshot.OutputChannelName);
                     return true;
                 }
 
                 WriteSnapshotToTilemaps(bakedSnapshot.Snapshot, bakedSnapshot.OutputChannelName);
                 snapshot = bakedSnapshot.Snapshot;
+                CacheSuccessfulSnapshot(snapshot, bakedSnapshot.OutputChannelName);
                 return true;
             }
             catch (Exception exception)
@@ -1075,6 +1132,12 @@ namespace DynamicDungeon.Runtime.Component
 
             _prefabPlacementOutputPass.Execute(snapshot, resolvedGrid, _generatedPrefabWriter, resolvedTilemapOffset);
             cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        private void CacheSuccessfulSnapshot(WorldSnapshot snapshot, string outputChannelName)
+        {
+            _lastSuccessfulSnapshot = snapshot;
+            _lastOutputChannelName = outputChannelName ?? string.Empty;
         }
 
         private async Task WriteSnapshotToTilemapsAsync(
