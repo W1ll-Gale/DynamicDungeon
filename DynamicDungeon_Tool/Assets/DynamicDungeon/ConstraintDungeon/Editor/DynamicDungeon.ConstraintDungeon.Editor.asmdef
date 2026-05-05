@@ -3,7 +3,8 @@
     "rootNamespace": "DynamicDungeon.ConstraintDungeon.Editor",
     "references": [
         "DynamicDungeon.Editor.Shared",
-        "DynamicDungeon.ConstraintDungeon.Runtime"
+        "DynamicDungeon.ConstraintDungeon.Runtime",
+        "DynamicDungeon.Runtime"
     ],
     "includePlatforms": [
         "Editor"

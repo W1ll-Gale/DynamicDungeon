@@ -15,7 +15,7 @@ MonoBehaviour:
   SchemaVersion: 5
   WorldWidth: 512
   WorldHeight: 192
-  DefaultSeed: 246813579
+  DefaultSeed: 1
   DefaultSeedMode: 1
   MaxValidationRetries: 1
   Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}

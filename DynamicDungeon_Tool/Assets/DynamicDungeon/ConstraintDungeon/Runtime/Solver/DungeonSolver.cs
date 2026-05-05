@@ -11,7 +11,7 @@ namespace DynamicDungeon.ConstraintDungeon.Solver
         {
             public int maxSearchSteps = 50000;
             public bool useRandomisation = true;
-            public int seed = 0;
+            public long seed = 0L;
             public bool enableDiagnostics;
         }
 
@@ -43,7 +43,7 @@ namespace DynamicDungeon.ConstraintDungeon.Solver
             this.settings = settings ?? new SolverSettings();
             this.progressCallback = progress;
             this.cancellationToken = token;
-            this.random = new System.Random(this.settings.seed);
+            this.random = new System.Random(DungeonSeedUtility.ToRandomSeed(this.settings.seed));
             this.diagnostics = diagnostics;
             this.templateCatalog = null;
         }

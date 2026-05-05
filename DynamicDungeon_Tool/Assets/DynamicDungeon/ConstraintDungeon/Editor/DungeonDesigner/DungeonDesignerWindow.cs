@@ -745,7 +745,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
         private void ValidateActiveFlow()
         {
             DungeonFlowValidator.Result result = DungeonFlowValidator.Validate(activeFlow);
-            IReadOnlyList<SharedGraphDiagnostic> diagnostics = ConvertValidationIssues(result);
+            IReadOnlyList<SharedGraphDiagnostic> diagnostics = ConvertValidationIssues(result, activeFlow);
             _diagnosticsPanel?.Populate(diagnostics);
             if (diagnostics.Count > 0)
             {
@@ -771,11 +771,23 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             SetStatus(result.Errors.Count + " errors, " + result.Warnings.Count + " warnings");
         }
 
-        private IReadOnlyList<SharedGraphDiagnostic> ConvertValidationIssues(DungeonFlowValidator.Result result)
+        private IReadOnlyList<SharedGraphDiagnostic> ConvertValidationIssues(DungeonFlowValidator.Result result, DungeonFlow flow)
         {
             if (result == null)
             {
                 return Array.Empty<SharedGraphDiagnostic>();
+            }
+
+            if (result.IsValid && result.Warnings.Count == 0)
+            {
+                string flowName = flow != null ? flow.name : "No Flow";
+                return new[]
+                {
+                    new SharedGraphDiagnostic(
+                        SharedDiagnosticSeverity.Info,
+                        "'" + flowName + "' passed validation with 0 warnings.",
+                        null)
+                };
             }
 
             if (result.Issues.Count > 0)

@@ -5,7 +5,7 @@ namespace DynamicDungeon.ConstraintDungeon
     public sealed class DungeonGenerationAttemptSummary
     {
         public int AttemptNumber;
-        public int Seed;
+        public long Seed;
         public bool Success;
         public string FailureReason;
         public long ElapsedMilliseconds;
@@ -33,7 +33,7 @@ namespace DynamicDungeon.ConstraintDungeon
     {
         public bool Success;
         public Solver.DungeonLayout Layout;
-        public int Seed;
+        public long Seed;
         public string FailureReason;
         public long ElapsedMilliseconds;
         public int AttemptCount;

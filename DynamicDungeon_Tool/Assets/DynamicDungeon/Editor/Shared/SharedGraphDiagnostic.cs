@@ -2,6 +2,7 @@ namespace DynamicDungeon.Editor.Shared
 {
     public enum SharedDiagnosticSeverity
     {
+        Info,
         Error,
         Warning
     }

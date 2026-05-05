@@ -6938,76 +6938,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: DynamicDungeon.ConstraintDungeon.Runtime::DynamicDungeon.ConstraintDungeon.DungeonGenerator
   generationMode: 1
   dungeonFlow: {fileID: 11400000, guid: d25f338056b177d41af013d03b8aa961, type: 2}
-  organicSettings:
-    startPrefab: {fileID: 0}
-    endPrefab: {fileID: 0}
-    templates:
-    - prefab: {fileID: 6432150833363729143, guid: c4ae1febd695cc94e9419abf1745f16b, type: 3}
-      enabled: 1
-      weight: 1
-      requiredMinimumCount: 0
-      maximumCount: 0
-      useDirectionBias: 0
-      preferredDirection: 2
-      directionBias: 0.5
-    - prefab: {fileID: 1116707898338037279, guid: 77782bd2933875d47af645963f918f73, type: 3}
-      enabled: 1
-      weight: 1
-      requiredMinimumCount: 0
-      maximumCount: 0
-      useDirectionBias: 0
-      preferredDirection: 2
-      directionBias: 0.5
-    - prefab: {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
-      enabled: 1
-      weight: 1
-      requiredMinimumCount: 0
-      maximumCount: 0
-      useDirectionBias: 0
-      preferredDirection: 2
-      directionBias: 0.5
-    - prefab: {fileID: 4731777390107429886, guid: 0962a1050f3322247962c706d91db305, type: 3}
-      enabled: 1
-      weight: 1
-      requiredMinimumCount: 0
-      maximumCount: 0
-      useDirectionBias: 0
-      preferredDirection: 2
-      directionBias: 0.5
-    - prefab: {fileID: 7310797877720484564, guid: 8be76e923bc556040a9b20e5ee4c13ed, type: 3}
-      enabled: 1
-      weight: 1
-      requiredMinimumCount: 0
-      maximumCount: 0
-      useDirectionBias: 0
-      preferredDirection: 2
-      directionBias: 0.5
-    - prefab: {fileID: 7044713205017155395, guid: 802fc1dc85dc497409005a1e947261eb, type: 3}
-      enabled: 1
-      weight: 1
-      requiredMinimumCount: 0
-      maximumCount: 0
-      useDirectionBias: 0
-      preferredDirection: 2
-      directionBias: 0.5
-    seed: 0
-    useRandomSeed: 1
-    targetRoomCount: 50
-    useRoomCountRange: 0
-    minRoomCount: 10
-    maxRoomCount: 10
-    corridorChance: 0.65
-    maxCorridorChain: 3
-    branchingProbability: 0.4
-    branchingBias: 0
-    branchingBiasStrength: 0.5
-    useDirectionalGrowthHeuristic: 0
-    preferredGrowthDirection: 2
-    directionalGrowthBias: 0.75
+  organicSettings: {fileID: 11400000, guid: 9d8f3a2c4b1e4f0a8c6d7e5f12345678, type: 2}
   layoutAttempts: 1000
   maxSearchSteps: 50000
-  flowSeed: 0
-  useRandomFlowSeed: 1
+  seedMode: 1
+  stableSeed: 0
   generateOnStart: 1
   enableDiagnostics: 0
   generatedRooms:

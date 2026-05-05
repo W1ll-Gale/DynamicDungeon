@@ -1,7 +1,9 @@
 ﻿{
     "name": "DynamicDungeon.ConstraintDungeon.Runtime",
     "rootNamespace": "DynamicDungeon.ConstraintDungeon",
-    "references": [],
+    "references": [
+        "DynamicDungeon.Runtime"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

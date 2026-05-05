@@ -359,7 +359,7 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.PropertyField(_gridProperty, new GUIContent("Grid"));
 
             GUILayout.Space(4.0f);
-            _layerDefinitionsList.DoLayoutList();
+            DrawLayerDefinitionsList();
 
             GUILayout.Space(4.0f);
             EditorGUILayout.PropertyField(_renderBackgroundFromFloorTilesProperty, new GUIContent("Render Background From Floor Tiles"));
@@ -443,11 +443,7 @@ namespace DynamicDungeon.Editor.Inspectors
             clearGeneratedOutputRequested = false;
             cancelRequested = false;
 
-            if (!BeginSection("Generation"))
-            {
-                return;
-            }
-
+            GUILayout.Space(8.0f);
             GenerationInspectorAction action = GenerationInspectorControls.Draw(
                 new GenerationInspectorOptions
                 {
@@ -467,7 +463,6 @@ namespace DynamicDungeon.Editor.Inspectors
             cancelRequested = action == GenerationInspectorAction.Cancel;
 
             EditorGUILayout.LabelField(BuildStatusHint(component), _mutedMiniLabelStyle);
-            EndSection();
         }
 
         private void DrawReadOnlyRow(string label, string value)
@@ -505,10 +500,26 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void InitialiseLayerDefinitionsList()
         {
-            _layerDefinitionsList = new ReorderableList(serializedObject, _layerDefinitionsProperty, true, true, true, true);
-            _layerDefinitionsList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Layer Definitions");
+            _layerDefinitionsList = new ReorderableList(serializedObject, _layerDefinitionsProperty, true, false, true, true);
             _layerDefinitionsList.drawElementCallback = DrawLayerDefinitionListElement;
             _layerDefinitionsList.elementHeightCallback = GetLayerDefinitionElementHeight;
+        }
+
+        private void DrawLayerDefinitionsList()
+        {
+            EditorGUILayout.BeginHorizontal();
+            _layerDefinitionsProperty.isExpanded = EditorGUILayout.Foldout(
+                _layerDefinitionsProperty.isExpanded,
+                new GUIContent("Layer Definitions", "Tilemap output layer assets used to route generated tiles."),
+                true);
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.LabelField(BuildLayerDefinitionsSummary(), EditorStyles.miniLabel, GUILayout.Width(130.0f));
+            EditorGUILayout.EndHorizontal();
+
+            if (_layerDefinitionsProperty.isExpanded)
+            {
+                _layerDefinitionsList.DoLayoutList();
+            }
         }
 
         private void DrawLayerDefinitionListElement(Rect rect, int index, bool isActive, bool isFocused)
@@ -590,6 +601,20 @@ namespace DynamicDungeon.Editor.Inspectors
             float contentWidth = Mathf.Max(EditorGUIUtility.currentViewWidth - 110.0f, 240.0f);
             float contentHeight = TilemapLayerDefinitionEditor.GetEmbeddedInspectorHeight(layerDefinition, TileSemanticRegistry.GetOrLoad(), contentWidth);
             return baseHeight + InlineInspectorSpacing + (InlineInspectorPadding * 2.0f) + contentHeight;
+        }
+
+        private string BuildLayerDefinitionsSummary()
+        {
+            int assignedCount = 0;
+            for (int index = 0; index < _layerDefinitionsProperty.arraySize; index++)
+            {
+                if (_layerDefinitionsProperty.GetArrayElementAtIndex(index).objectReferenceValue != null)
+                {
+                    assignedCount++;
+                }
+            }
+
+            return assignedCount + "/" + _layerDefinitionsProperty.arraySize + " assigned";
         }
 
         private bool BeginSection(string title)

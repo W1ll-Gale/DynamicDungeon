@@ -287,6 +287,8 @@ namespace DynamicDungeon.Editor.Shared
         {
             switch (severity)
             {
+                case SharedDiagnosticSeverity.Info:
+                    return new Color(0.28f, 0.72f, 0.38f, 1.0f);
                 case SharedDiagnosticSeverity.Error:
                     return new Color(0.82f, 0.24f, 0.24f, 1.0f);
                 case SharedDiagnosticSeverity.Warning:

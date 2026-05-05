@@ -8,7 +8,7 @@ namespace DynamicDungeon.ConstraintDungeon
         private readonly Stopwatch stopwatch = new Stopwatch();
 
         public int attemptNumber;
-        public int seed;
+        public long seed;
         public int searchSteps;
         public int socketRejections;
         public int overlapRejections;
@@ -23,7 +23,7 @@ namespace DynamicDungeon.ConstraintDungeon
 
         public long ElapsedMilliseconds => stopwatch.ElapsedMilliseconds;
 
-        public void Begin(int attempt, int attemptSeed)
+        public void Begin(int attempt, long attemptSeed)
         {
             attemptNumber = attempt;
             seed = attemptSeed;

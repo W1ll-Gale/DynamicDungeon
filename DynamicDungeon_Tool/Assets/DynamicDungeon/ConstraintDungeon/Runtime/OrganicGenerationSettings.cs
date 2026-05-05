@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DynamicDungeon.ConstraintDungeon
@@ -29,14 +29,12 @@ namespace DynamicDungeon.ConstraintDungeon
         Branchier
     }
 
-    [System.Serializable]
-    public sealed class OrganicGenerationSettings
+    [CreateAssetMenu(fileName = "NewOrganicGrowthProfile", menuName = ConstraintDungeonMenuPaths.OrganicGrowthProfileAssetMenu)]
+    public sealed class OrganicGenerationSettings : ScriptableObject
     {
         public GameObject startPrefab;
         public GameObject endPrefab;
         public List<TemplateEntry> templates = new List<TemplateEntry>();
-        [Min(0)] public int seed = 0;
-        public bool useRandomSeed = true;
         [Min(0)] public int targetRoomCount = 10;
         public bool useRoomCountRange = false;
         [Min(0)] public int minRoomCount = 10;
@@ -49,6 +47,9 @@ namespace DynamicDungeon.ConstraintDungeon
         public bool useDirectionalGrowthHeuristic = false;
         public FacingDirection preferredGrowthDirection = FacingDirection.East;
         [Range(0f, 1f)] public float directionalGrowthBias = 0.75f;
+        public bool useGlobalTemplateDirectionBias = false;
+        public FacingDirection globalTemplateDirection = FacingDirection.East;
+        [Range(0f, 1f)] public float globalTemplateDirectionBias = 0.5f;
 
         public void EnsureValidState()
         {
@@ -109,13 +110,28 @@ namespace DynamicDungeon.ConstraintDungeon
         {
             float baseWeight = GetWeight(prefab);
             TemplateEntry entry = GetEntry(prefab);
-            if (entry == null || !entry.useDirectionBias || baseWeight <= 0f)
+            if (entry == null || baseWeight <= 0f)
             {
                 return baseWeight;
             }
 
-            float bias = Mathf.Clamp01(entry.directionBias);
-            return entry.preferredDirection == growthDirection
+            if (entry.useDirectionBias)
+            {
+                return ApplyDirectionBias(baseWeight, entry.preferredDirection, entry.directionBias, growthDirection);
+            }
+
+            if (useGlobalTemplateDirectionBias)
+            {
+                return ApplyDirectionBias(baseWeight, globalTemplateDirection, globalTemplateDirectionBias, growthDirection);
+            }
+
+            return baseWeight;
+        }
+
+        private static float ApplyDirectionBias(float baseWeight, FacingDirection preferredDirection, float directionBias, FacingDirection growthDirection)
+        {
+            float bias = Mathf.Clamp01(directionBias);
+            return preferredDirection == growthDirection
                 ? baseWeight * Mathf.Lerp(1f, 3f, bias)
                 : baseWeight * Mathf.Lerp(1f, 0.25f, bias);
         }

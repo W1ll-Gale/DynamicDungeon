@@ -15,6 +15,7 @@ namespace DynamicDungeon.ConstraintDungeon
         public const string DungeonGeneratorSetup = GameObjectRoot + "Generator Setup";
 
         public const string DungeonFlowAssetMenu = AssetMenuRoot + "Dungeon Flow";
+        public const string OrganicGrowthProfileAssetMenu = AssetMenuRoot + "Organic Growth Profile";
         public const string SocketTypeAssetMenu = AssetMenuRoot + "Socket Type";
     }
 }

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using System;
 using System.Threading;
@@ -86,7 +86,7 @@ namespace DynamicDungeon.ConstraintDungeon.Solver
             this.cancellationToken = token;
             this.maxSearchSteps = Mathf.Max(1, solverSettings?.maxSearchSteps ?? 500000);
             this.enableDiagnostics = solverSettings != null && solverSettings.enableDiagnostics;
-            this.rnd = new System.Random(solverSettings?.seed ?? 0);
+            this.rnd = new System.Random(DungeonSeedUtility.ToRandomSeed(solverSettings?.seed ?? 0L));
             this.diagnostics = diagnostics;
         }
 

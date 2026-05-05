@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using DynamicDungeon.ConstraintDungeon.Solver;
@@ -13,8 +13,7 @@ namespace DynamicDungeon.ConstraintDungeon
         public OrganicGenerationSettings OrganicSettings;
         public int LayoutAttempts = 1000;
         public int MaxSearchSteps = 50000;
-        public int FlowSeed = 0;
-        public bool UseRandomFlowSeed = true;
+        public long Seed = 0L;
         public bool EnableDiagnostics;
     }
 
@@ -140,8 +139,8 @@ namespace DynamicDungeon.ConstraintDungeon
 
             if (organicSettings == null || !organicSettings.HasAnyTemplate())
             {
-                Debug.LogError("[DungeonGenerationService] Organic settings or template pool is missing.");
-                failureStatus = "Organic settings or template pool is missing.";
+                Debug.LogError("[DungeonGenerationService] Organic generation settings or template pool is missing.");
+                failureStatus = "Organic generation settings or template pool is missing.";
                 return false;
             }
 
@@ -151,7 +150,7 @@ namespace DynamicDungeon.ConstraintDungeon
             if (!report.IsValid)
             {
                 LogErrors("[DungeonGenerationService]", report.Errors);
-                failureStatus = $"Organic settings validation failed ({report.ErrorCount} error(s)).";
+                failureStatus = $"Organic generation settings validation failed ({report.ErrorCount} error(s)).";
                 return false;
             }
 
@@ -181,7 +180,7 @@ namespace DynamicDungeon.ConstraintDungeon
             DungeonFlow collapsedSolverFlow = null;
 
             int attempts = Mathf.Max(1, request.LayoutAttempts);
-            int baseSeed = GetBaseSeed(request);
+            long baseSeed = GetBaseSeed(request);
 
             try
             {
@@ -193,7 +192,7 @@ namespace DynamicDungeon.ConstraintDungeon
                     }
 
                     int attemptNumber = index + 1;
-                    int attemptSeed = unchecked(baseSeed + index);
+                    long attemptSeed = unchecked(baseSeed + index);
                     solverProgress = 0f;
                     DungeonGenerationDiagnostics diagnostics = new DungeonGenerationDiagnostics();
                     diagnostics.Begin(attemptNumber, attemptSeed);
@@ -339,7 +338,7 @@ namespace DynamicDungeon.ConstraintDungeon
             return new OrganicGrowthGenerationStrategy();
         }
 
-        private static DungeonSolver.SolverSettings CreateSolverSettings(DungeonGenerationRequest request, int seed)
+        private static DungeonSolver.SolverSettings CreateSolverSettings(DungeonGenerationRequest request, long seed)
         {
             return new DungeonSolver.SolverSettings
             {
@@ -350,16 +349,9 @@ namespace DynamicDungeon.ConstraintDungeon
             };
         }
 
-        private static int GetBaseSeed(DungeonGenerationRequest request)
+        private static long GetBaseSeed(DungeonGenerationRequest request)
         {
-            if (request.Mode == DungeonGenerationMode.OrganicGrowth)
-            {
-                return request.OrganicSettings != null && !request.OrganicSettings.useRandomSeed
-                    ? request.OrganicSettings.seed
-                    : Environment.TickCount;
-            }
-
-            return request.UseRandomFlowSeed ? Environment.TickCount : request.FlowSeed;
+            return request.Seed;
         }
 
         private void Report(float progress, string status)
@@ -387,7 +379,7 @@ namespace DynamicDungeon.ConstraintDungeon
         {
             foreach (string error in errors)
             {
-                Debug.LogError($"{prefix} {error}");
+                Debug.LogWarning($"{prefix} {error}");
             }
         }
     }

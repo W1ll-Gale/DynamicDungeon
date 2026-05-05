@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using DynamicDungeon.ConstraintDungeon;
 using DynamicDungeon.ConstraintDungeon.Solver;
 using UnityEngine;
@@ -185,10 +185,8 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
         [Test]
         public void OrganicSettingsValidationRejectsImpossibleRequiredMinimum()
         {
-            OrganicGenerationSettings settings = new OrganicGenerationSettings
-            {
-                targetRoomCount = 1
-            };
+            OrganicGenerationSettings settings = ScriptableObject.CreateInstance<OrganicGenerationSettings>();
+            settings.targetRoomCount = 1;
             GameObject prefab = CreateTemplatePrefab("RequiredRoom", RoomType.Room);
             settings.templates.Add(new TemplateEntry
             {
@@ -204,6 +202,7 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
             Assert.GreaterOrEqual(report.ErrorCount, 1);
 
             Object.DestroyImmediate(prefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
@@ -233,6 +232,7 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
 
             Object.DestroyImmediate(startPrefab);
             Object.DestroyImmediate(roomPrefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
@@ -267,6 +267,7 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
             Object.DestroyImmediate(requiredPrefab);
             Object.DestroyImmediate(fillerPrefab);
             Object.DestroyImmediate(endPrefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
@@ -299,6 +300,7 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
             Object.DestroyImmediate(startPrefab);
             Object.DestroyImmediate(roomPrefab);
             Object.DestroyImmediate(corridorPrefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
@@ -322,6 +324,7 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
 
             Object.DestroyImmediate(startPrefab);
             Object.DestroyImmediate(roomPrefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
@@ -359,6 +362,7 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
 
             Object.DestroyImmediate(startPrefab);
             Object.DestroyImmediate(roomPrefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
@@ -379,13 +383,14 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
 
             Object.DestroyImmediate(startPrefab);
             Object.DestroyImmediate(roomPrefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
         public void OrganicSettingsTemplateDirectionBiasAdjustsDirectionalWeight()
         {
             GameObject eastPrefab = CreateTemplatePrefab("EastBiased", RoomType.Room);
-            OrganicGenerationSettings settings = new OrganicGenerationSettings();
+            OrganicGenerationSettings settings = ScriptableObject.CreateInstance<OrganicGenerationSettings>();
             settings.templates.Add(new TemplateEntry
             {
                 prefab = eastPrefab,
@@ -400,6 +405,7 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
             Assert.Less(settings.GetDirectionalWeight(eastPrefab, FacingDirection.West), settings.GetWeight(eastPrefab));
 
             Object.DestroyImmediate(eastPrefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
@@ -409,17 +415,16 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
             RoomTemplateComponent component = startPrefab.GetComponent<RoomTemplateComponent>();
             component.bakedData.anchors.Add(new DoorAnchor(Vector2Int.zero, FacingDirection.East, 1, "SimpleDoor"));
 
-            OrganicGenerationSettings settings = new OrganicGenerationSettings
-            {
-                startPrefab = startPrefab,
-                targetRoomCount = 1
-            };
+            OrganicGenerationSettings settings = ScriptableObject.CreateInstance<OrganicGenerationSettings>();
+            settings.startPrefab = startPrefab;
+            settings.targetRoomCount = 1;
 
             ValidationReport report = settings.Validate();
 
             Assert.IsTrue(new System.Collections.Generic.List<string>(report.Warnings).Exists(w => w.Contains("no compatible opposite door")));
 
             Object.DestroyImmediate(startPrefab);
+            Object.DestroyImmediate(settings);
         }
 
         [Test]
@@ -661,17 +666,13 @@ namespace DynamicDungeon.ConstraintDungeon.Tests.EditMode
 
         private static OrganicGenerationSettings CreateOrganicLineSettings(GameObject startPrefab, GameObject roomPrefab, GameObject endPrefab, int targetRoomCount, int seed)
         {
-            OrganicGenerationSettings settings = new OrganicGenerationSettings
-            {
-                startPrefab = startPrefab,
-                endPrefab = endPrefab,
-                targetRoomCount = targetRoomCount,
-                seed = seed,
-                useRandomSeed = false,
-                corridorChance = 0f,
-                maxCorridorChain = 0,
-                branchingProbability = 0f
-            };
+            OrganicGenerationSettings settings = ScriptableObject.CreateInstance<OrganicGenerationSettings>();
+            settings.startPrefab = startPrefab;
+            settings.endPrefab = endPrefab;
+            settings.targetRoomCount = targetRoomCount;
+            settings.corridorChance = 0f;
+            settings.maxCorridorChain = 0;
+            settings.branchingProbability = 0f;
             settings.templates.Add(new TemplateEntry
             {
                 prefab = roomPrefab,

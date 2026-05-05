@@ -1,5 +1,6 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using DynamicDungeon.ConstraintDungeon.Solver;
+using DynamicDungeon.Runtime.Component;
 using UnityEngine;
 
 namespace DynamicDungeon.ConstraintDungeon
@@ -10,11 +11,11 @@ namespace DynamicDungeon.ConstraintDungeon
 
         public DungeonGenerationMode generationMode = DungeonGenerationMode.FlowGraph;
         public DungeonFlow dungeonFlow;
-        public OrganicGenerationSettings organicSettings = new OrganicGenerationSettings();
+        public OrganicGenerationSettings organicSettings;
         [Min(1)] public int layoutAttempts = 1000;
         [Min(1)] public int maxSearchSteps = 50000;
-        [Min(0)] public int flowSeed = 0;
-        public bool useRandomFlowSeed = true;
+        public SeedMode seedMode = SeedMode.Stable;
+        [Min(0)] public long stableSeed = 12345L;
         public bool generateOnStart = true;
         public bool enableDiagnostics;
 
@@ -22,13 +23,16 @@ namespace DynamicDungeon.ConstraintDungeon
         [SerializeField, HideInInspector] private System.Collections.Generic.List<GameObject> generatedRooms = new System.Collections.Generic.List<GameObject>();
 
         private DungeonGenerationService generationService;
+        private readonly System.Random seedRandom = new System.Random();
         private float generationProgress;
         private string generationStatus = "Idle";
         private double generationStartedAt;
+        private long lastUsedSeed;
 
         public bool IsGenerating => generationService != null && generationService.IsGenerating;
         public float GenerationProgress => generationProgress;
         public string GenerationStatus => generationStatus;
+        public long LastUsedSeed => lastUsedSeed;
         public bool ShouldShowGenerationProgress =>
             IsGenerating && Time.realtimeSinceStartupAsDouble - generationStartedAt >= ProgressRevealDelaySeconds;
 
@@ -60,6 +64,11 @@ namespace DynamicDungeon.ConstraintDungeon
         public async Task GenerateAndRenderAsync()
         {
             DungeonGenerationResult result = await GenerateLayoutAsync();
+            if (result != null && result.AttemptCount > 0)
+            {
+                lastUsedSeed = result.Seed;
+            }
+
             if (result == null || !result.Success || result.Layout == null)
             {
                 generationProgress = 0f;
@@ -117,10 +126,21 @@ namespace DynamicDungeon.ConstraintDungeon
                 OrganicSettings = organicSettings,
                 LayoutAttempts = layoutAttempts,
                 MaxSearchSteps = maxSearchSteps,
-                FlowSeed = flowSeed,
-                UseRandomFlowSeed = useRandomFlowSeed,
+                Seed = GetSeedForRun(),
                 EnableDiagnostics = enableDiagnostics
             };
+        }
+
+        private long GetSeedForRun()
+        {
+            if (seedMode == SeedMode.Stable)
+            {
+                lastUsedSeed = stableSeed;
+                return stableSeed;
+            }
+
+            lastUsedSeed = DungeonSeedUtility.CreateRandomSeed(seedRandom);
+            return lastUsedSeed;
         }
 
         private void RenderLayout(DungeonLayout layout)
@@ -141,6 +161,13 @@ namespace DynamicDungeon.ConstraintDungeon
             DungeonLayout layout = result.Layout;
             if (generationMode == DungeonGenerationMode.OrganicGrowth)
             {
+                if (organicSettings == null)
+                {
+                    generationProgress = 1f;
+                    generationStatus = $"Generated {layout.Rooms.Count} rooms. Seed {result.Seed}, {result.ElapsedMilliseconds}ms.";
+                    return;
+                }
+
                 int countedRooms = 0;
                 foreach (PlacedRoom room in layout.Rooms)
                 {
