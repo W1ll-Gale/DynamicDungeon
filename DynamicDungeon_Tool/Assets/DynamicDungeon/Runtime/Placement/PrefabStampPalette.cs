@@ -78,5 +78,46 @@ namespace DynamicDungeon.Runtime.Placement
             template = entry.Template;
             return true;
         }
+
+        public bool TryAddResolvedTemplate(string prefabGuid, GameObject prefab, PrefabStampTemplate template, out int templateIndex, out string errorMessage)
+        {
+            templateIndex = -1;
+            errorMessage = null;
+
+            if (string.IsNullOrWhiteSpace(prefabGuid))
+            {
+                errorMessage = "Prefab GUID is empty.";
+                return false;
+            }
+
+            if (_indicesByGuid.TryGetValue(prefabGuid, out templateIndex))
+            {
+                return true;
+            }
+
+            if (prefab == null)
+            {
+                errorMessage = "Prefab GUID '" + prefabGuid + "' does not resolve to a GameObject prefab.";
+                return false;
+            }
+
+            if (!template.IsValid)
+            {
+                errorMessage = "Resolved prefab stamp template for '" + prefab.name + "' is invalid.";
+                return false;
+            }
+
+            if (!string.Equals(template.PrefabGuid, prefabGuid, StringComparison.Ordinal))
+            {
+                errorMessage = "Resolved prefab stamp template GUID does not match prefab GUID '" + prefabGuid + "'.";
+                return false;
+            }
+
+            templateIndex = _templates.Count;
+            _indicesByGuid.Add(prefabGuid, templateIndex);
+            _prefabs.Add(prefab);
+            _templates.Add(template);
+            return true;
+        }
     }
 }

@@ -52,6 +52,7 @@ namespace DynamicDungeon.Runtime.Core
         public BiomeAsset[] BiomeChannelBiomes = Array.Empty<BiomeAsset>();
         public GameObject[] PrefabPlacementPrefabs = Array.Empty<GameObject>();
         public PrefabStampTemplate[] PrefabPlacementTemplates = Array.Empty<PrefabStampTemplate>();
+        public PrefabPlacementMetadata[] PrefabPlacementMetadata = Array.Empty<PrefabPlacementMetadata>();
         public FloatChannelSnapshot[] FloatChannels = Array.Empty<FloatChannelSnapshot>();
         public IntChannelSnapshot[] IntChannels = Array.Empty<IntChannelSnapshot>();
         public BoolMaskChannelSnapshot[] BoolMaskChannels = Array.Empty<BoolMaskChannelSnapshot>();
@@ -82,7 +83,8 @@ namespace DynamicDungeon.Runtime.Core
             WorldData data,
             IReadOnlyList<BiomeAsset> biomeChannelBiomes = null,
             IReadOnlyList<GameObject> prefabPlacementPrefabs = null,
-            IReadOnlyList<PrefabStampTemplate> prefabPlacementTemplates = null)
+            IReadOnlyList<PrefabStampTemplate> prefabPlacementTemplates = null,
+            IReadOnlyList<PrefabPlacementMetadata> prefabPlacementMetadata = null)
         {
             if (data == null)
             {
@@ -96,6 +98,7 @@ namespace DynamicDungeon.Runtime.Core
             snapshot.BiomeChannelBiomes = CopyBiomeChannelBiomes(biomeChannelBiomes);
             snapshot.PrefabPlacementPrefabs = CopyPrefabPlacementPrefabs(prefabPlacementPrefabs);
             snapshot.PrefabPlacementTemplates = CopyPrefabPlacementTemplates(prefabPlacementTemplates);
+            snapshot.PrefabPlacementMetadata = CopyPrefabPlacementMetadata(prefabPlacementMetadata);
             snapshot.FloatChannels = BuildFloatChannels(data);
             snapshot.IntChannels = BuildIntChannels(data);
             snapshot.BoolMaskChannels = BuildBoolMaskChannels(data);
@@ -486,6 +489,27 @@ namespace DynamicDungeon.Runtime.Core
             }
 
             return copiedTemplates;
+        }
+
+        private static PrefabPlacementMetadata[] CopyPrefabPlacementMetadata(IReadOnlyList<PrefabPlacementMetadata> metadata)
+        {
+            if (metadata == null || metadata.Count == 0)
+            {
+                return Array.Empty<PrefabPlacementMetadata>();
+            }
+
+            PrefabPlacementMetadata[] copiedMetadata = new PrefabPlacementMetadata[metadata.Count];
+
+            int index;
+            for (index = 0; index < metadata.Count; index++)
+            {
+                PrefabPlacementMetadata item = metadata[index];
+                copiedMetadata[index] = item != null
+                    ? new PrefabPlacementMetadata(item.Id, item.Type, item.Payload)
+                    : new PrefabPlacementMetadata();
+            }
+
+            return copiedMetadata;
         }
     }
 }

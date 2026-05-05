@@ -53,7 +53,7 @@ namespace DynamicDungeon.Runtime.Output
             }
         }
 
-        public void WritePrefab(GameObject prefab, Vector3 worldPosition, Quaternion rotation, Vector3 mirrorScale)
+        public GameObject WritePrefab(GameObject prefab, Vector3 worldPosition, Quaternion rotation, Vector3 mirrorScale)
         {
             if (prefab == null)
             {
@@ -75,6 +75,8 @@ namespace DynamicDungeon.Runtime.Output
                 baseScale.x * mirrorScale.x,
                 baseScale.y * mirrorScale.y,
                 baseScale.z * mirrorScale.z);
+
+            return instance;
         }
     }
 }

@@ -62,6 +62,8 @@ namespace DynamicDungeon.Tests.Editor
             AssertTypeAbsent(nodeTypes, "FloatInputTestNode");
             AssertTypeAbsent(nodeTypes, "GraphCompilerCopyNode");
             AssertTypeAbsent(nodeTypes, "BlockingNode");
+            Type dungeonGeneratorNodeType = AssertTypePresent(nodeTypes, "DynamicDungeon.Runtime.Nodes.DungeonGeneratorNode");
+            Assert.That(NodeDiscovery.GetNodeCategory(dungeonGeneratorNodeType), Is.EqualTo("Placement"));
         }
 
         [Test]
@@ -122,6 +124,22 @@ namespace DynamicDungeon.Tests.Editor
             }
 
             return false;
+        }
+
+        private static Type AssertTypePresent(IReadOnlyList<Type> nodeTypes, string fullTypeName)
+        {
+            int index;
+            for (index = 0; index < nodeTypes.Count; index++)
+            {
+                Type nodeType = nodeTypes[index];
+                if (nodeType != null && string.Equals(nodeType.FullName, fullTypeName, StringComparison.Ordinal))
+                {
+                    return nodeType;
+                }
+            }
+
+            Assert.Fail("Expected node type was not discovered: " + fullTypeName);
+            return null;
         }
 
         private static bool ContainsGroup(IReadOnlyList<SearchTreeEntry> entries, string label)

@@ -2,7 +2,10 @@
     "name": "DynamicDungeon.ConstraintDungeon.Runtime",
     "rootNamespace": "DynamicDungeon.ConstraintDungeon",
     "references": [
-        "DynamicDungeon.Runtime"
+        "DynamicDungeon.Runtime",
+        "Unity.Collections",
+        "Unity.Jobs",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

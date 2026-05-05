@@ -40,7 +40,7 @@ namespace DynamicDungeon.ConstraintDungeon
                 return DungeonGenerationResult.Failed("Generation is already running.");
             }
 
-            if (!ValidateRequest(request, out string failureStatus))
+            if (!TryValidateRequest(request, out string failureStatus))
             {
                 Report(0f, failureStatus);
                 return DungeonGenerationResult.Failed(failureStatus);
@@ -101,7 +101,48 @@ namespace DynamicDungeon.ConstraintDungeon
             currentGenerationCts.Cancel();
         }
 
-        private static bool ValidateRequest(DungeonGenerationRequest request, out string failureStatus)
+        internal static DungeonGenerationResult GenerateLayoutImmediate(DungeonGenerationRequest request, TemplateCatalog preparedTemplates = null)
+        {
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            if (!TryValidateRequest(request, out string failureStatus))
+            {
+                stopwatch.Stop();
+                DungeonGenerationResult invalidResult = DungeonGenerationResult.Failed(failureStatus);
+                invalidResult.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+                return invalidResult;
+            }
+
+            try
+            {
+                TemplateCatalog templates = preparedTemplates ?? PrepareTemplates(request);
+                LogWarnings("[DungeonGenerationService]", templates.Warnings);
+
+                if (templates.HasErrors)
+                {
+                    LogErrors("[DungeonGenerationService]", templates.Errors);
+                    stopwatch.Stop();
+                    DungeonGenerationResult templateFailedResult = DungeonGenerationResult.Failed($"Template validation failed ({templates.Report.ErrorCount} error(s)).");
+                    templateFailedResult.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+                    return templateFailedResult;
+                }
+
+                DungeonGenerationResult result = RunSolverAttempts(request, templates);
+                stopwatch.Stop();
+                result.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                stopwatch.Stop();
+                DungeonGenerationResult failedResult = DungeonGenerationResult.Failed(ex.Message);
+                failedResult.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+                return failedResult;
+            }
+        }
+
+        internal static bool TryValidateRequest(DungeonGenerationRequest request, out string failureStatus)
         {
             failureStatus = "Generation request is valid.";
 
@@ -157,7 +198,7 @@ namespace DynamicDungeon.ConstraintDungeon
             return true;
         }
 
-        private static TemplateCatalog PrepareTemplates(DungeonGenerationRequest request)
+        internal static TemplateCatalog PrepareTemplates(DungeonGenerationRequest request)
         {
             return request.Mode == DungeonGenerationMode.FlowGraph
                 ? TemplatePreparer.PrepareForFlow(request.Flow)
@@ -298,6 +339,90 @@ namespace DynamicDungeon.ConstraintDungeon
             if (layout == null)
             {
                 Report(0f, "Failed to find a valid layout.");
+                Debug.LogError("[DungeonGenerationService] Solver failed to find a valid layout.");
+            }
+
+            return result;
+        }
+
+        private static DungeonGenerationResult RunSolverAttempts(DungeonGenerationRequest request, TemplateCatalog templates)
+        {
+            float solverProgress = 0f;
+            DungeonLayout layout = null;
+            DungeonGenerationResult result = new DungeonGenerationResult();
+
+            bool useCollapsedFlowGraph = false;
+            bool canFallBackToCollapsedFlow = request.Mode == DungeonGenerationMode.FlowGraph &&
+                                             request.Flow.HasExpandedCorridorLinks();
+            DungeonFlow expandedSolverFlow = request.Mode == DungeonGenerationMode.FlowGraph
+                ? request.Flow.CreateSolverFlow(true)
+                : null;
+            DungeonFlow collapsedSolverFlow = null;
+
+            int attempts = Mathf.Max(1, request.LayoutAttempts);
+            long baseSeed = GetBaseSeed(request);
+
+            try
+            {
+                for (int index = 0; index < attempts; index++)
+                {
+                    int attemptNumber = index + 1;
+                    long attemptSeed = unchecked(baseSeed + index);
+                    solverProgress = 0f;
+                    DungeonGenerationDiagnostics diagnostics = new DungeonGenerationDiagnostics();
+                    diagnostics.Begin(attemptNumber, attemptSeed);
+
+                    DungeonFlow solverFlow = GetSolverFlowForAttempt(
+                        request,
+                        useCollapsedFlowGraph,
+                        expandedSolverFlow,
+                        ref collapsedSolverFlow);
+
+                    IDungeonGenerationStrategy strategy = CreateStrategy(request);
+                    GenerationContext context = new GenerationContext(
+                        request,
+                        templates,
+                        solverFlow,
+                        CreateSolverSettings(request, attemptSeed),
+                        p => solverProgress = p,
+                        CancellationToken.None,
+                        diagnostics);
+
+                    DungeonLayout generatedLayout = strategy.Generate(context);
+                    diagnostics.End(strategy.LastFailureReason);
+
+                    layout = generatedLayout;
+                    result.Attempts.Add(DungeonGenerationAttemptSummary.FromDiagnostics(diagnostics, layout != null));
+                    result.AttemptCount = attemptNumber;
+                    result.Seed = attemptSeed;
+                    result.Diagnostics = diagnostics;
+
+                    if (layout != null)
+                    {
+                        result.Success = true;
+                        result.Layout = layout;
+                        result.FailureReason = null;
+                        break;
+                    }
+
+                    result.FailureReason = strategy.LastFailureReason;
+                    LogDiagnostics(request, $"[DungeonGenerationService] Diagnostics: {diagnostics.ToSummary()}");
+
+                    if (canFallBackToCollapsedFlow && !useCollapsedFlowGraph && index + 1 >= ExpandedFlowAttemptsBeforeFallback)
+                    {
+                        Debug.LogWarning("[DungeonGenerationService] Expanded corridor counts could not be solved quickly. Falling back to one generated corridor per designer link.");
+                        useCollapsedFlowGraph = true;
+                    }
+                }
+            }
+            finally
+            {
+                DungeonFlow.DestroyTemporarySolverFlow(expandedSolverFlow);
+                DungeonFlow.DestroyTemporarySolverFlow(collapsedSolverFlow);
+            }
+
+            if (layout == null)
+            {
                 Debug.LogError("[DungeonGenerationService] Solver failed to find a valid layout.");
             }
 

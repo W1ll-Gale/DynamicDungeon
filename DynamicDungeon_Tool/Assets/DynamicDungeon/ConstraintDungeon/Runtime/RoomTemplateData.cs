@@ -35,6 +35,8 @@ namespace DynamicDungeon.ConstraintDungeon
 
         public bool allowRotation = true;
         public bool allowMirroring = true;
+        public bool hasSpawnPoint = false;
+        public Vector2Int spawnPoint = Vector2Int.zero;
 
         public List<RoomVariant> GenerateVariants()
         {
@@ -88,7 +90,10 @@ namespace DynamicDungeon.ConstraintDungeon
                 newAnchors.Add(transformed);
             }
 
-            return new RoomVariant(this, newCells, newAnchors, rotationSteps, mirrored);
+            Vector2Int transformedSpawnPoint = hasSpawnPoint
+                ? TransformPoint(spawnPoint, rotationSteps, mirrored)
+                : Vector2Int.zero;
+            return new RoomVariant(this, newCells, newAnchors, rotationSteps, mirrored, hasSpawnPoint, transformedSpawnPoint);
         }
 
         private RectInt TransformRect(RectInt rect, int rotationSteps, bool mirrored)
@@ -172,13 +177,16 @@ namespace DynamicDungeon.ConstraintDungeon
         public Vector2Int pivotOffset;
         public int rotation;
         public bool mirrored;
+        public bool hasSpawnPoint;
+        public Vector2Int spawnPoint;
         public RectInt localBounds;
 
-        public RoomVariant(RoomTemplateData source, List<CellData> cells, List<DoorAnchor> anchors, int rotation, bool mirrored)
+        public RoomVariant(RoomTemplateData source, List<CellData> cells, List<DoorAnchor> anchors, int rotation, bool mirrored, bool hasSpawnPoint = false, Vector2Int spawnPoint = default)
         {
             this.source = source;
             this.rotation = rotation;
             this.mirrored = mirrored;
+            this.hasSpawnPoint = hasSpawnPoint;
             
             Vector2Int min = new Vector2Int(int.MaxValue, int.MaxValue);
             Vector2Int max = new Vector2Int(int.MinValue, int.MinValue);
@@ -191,6 +199,7 @@ namespace DynamicDungeon.ConstraintDungeon
             }
             this.pivotOffset = min;
             this.localBounds = new RectInt(0, 0, max.x - min.x + 1, max.y - min.y + 1);
+            this.spawnPoint = hasSpawnPoint ? spawnPoint - min : Vector2Int.zero;
 
             this.cells = new List<CellData>(cells.Count);
             foreach (CellData cell in cells)
@@ -249,6 +258,14 @@ namespace DynamicDungeon.ConstraintDungeon
                     .Append(anchor.direction)
                     .Append(':')
                     .Append(anchor.size);
+            }
+
+            if (hasSpawnPoint)
+            {
+                builder.Append("|spawn:")
+                    .Append(spawnPoint.x)
+                    .Append(',')
+                    .Append(spawnPoint.y);
             }
             
             return builder.ToString();

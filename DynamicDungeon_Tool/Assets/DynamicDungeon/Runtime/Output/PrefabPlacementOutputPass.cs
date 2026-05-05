@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Placement;
 using UnityEngine;
@@ -35,6 +36,8 @@ namespace DynamicDungeon.Runtime.Output
                 return;
             }
 
+            Dictionary<int, PrefabPlacementMetadata> metadataById = BuildMetadataLookup(snapshot.PrefabPlacementMetadata);
+
             int index;
             for (index = 0; index < channelSnapshot.Data.Length; index++)
             {
@@ -63,7 +66,58 @@ namespace DynamicDungeon.Runtime.Output
                 Vector3 anchorOffset = template.AnchorOffset;
                 Vector3 worldPosition = grid.CellToWorld(cell) + anchorOffset;
 
-                writer.WritePrefab(prefab, worldPosition, rotation, mirrorScale);
+                GameObject instance = writer.WritePrefab(prefab, worldPosition, rotation, mirrorScale);
+                ApplyPlacementProcessors(instance, placement, TryGetMetadata(metadataById, placement.MetadataId));
+            }
+        }
+
+        private static Dictionary<int, PrefabPlacementMetadata> BuildMetadataLookup(PrefabPlacementMetadata[] metadata)
+        {
+            Dictionary<int, PrefabPlacementMetadata> lookup = new Dictionary<int, PrefabPlacementMetadata>();
+            if (metadata == null)
+            {
+                return lookup;
+            }
+
+            int index;
+            for (index = 0; index < metadata.Length; index++)
+            {
+                PrefabPlacementMetadata item = metadata[index];
+                if (item != null && item.Id > 0)
+                {
+                    lookup[item.Id] = item;
+                }
+            }
+
+            return lookup;
+        }
+
+        private static PrefabPlacementMetadata TryGetMetadata(Dictionary<int, PrefabPlacementMetadata> metadataById, int metadataId)
+        {
+            if (metadataById == null || metadataId <= 0)
+            {
+                return null;
+            }
+
+            metadataById.TryGetValue(metadataId, out PrefabPlacementMetadata metadata);
+            return metadata;
+        }
+
+        private static void ApplyPlacementProcessors(GameObject instance, PrefabPlacementRecord placement, PrefabPlacementMetadata metadata)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            MonoBehaviour[] behaviours = instance.GetComponentsInChildren<MonoBehaviour>(true);
+            int index;
+            for (index = 0; index < behaviours.Length; index++)
+            {
+                if (behaviours[index] is IPrefabPlacementInstanceProcessor processor)
+                {
+                    processor.ProcessPrefabPlacement(placement, metadata);
+                }
             }
         }
 

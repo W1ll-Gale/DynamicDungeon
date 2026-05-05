@@ -9,7 +9,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
     [CustomEditor(typeof(RoomTemplateComponent))]
     public class RoomTemplateComponentEditor : UnityEditor.Editor
     {
-        private enum PaintingMode { Off, Manual, Auto }
+        private enum PaintingMode { Off, Manual, Auto, Spawn }
 
         private RoomTemplateComponent room;
         private RoomValidator.ValidationResult lastResult;
@@ -40,9 +40,13 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
             EditorGUI.BeginChangeCheck();
 
             EditorGUILayout.LabelField("Room Management", EditorStyles.boldLabel);
-            DrawPropertiesExcluding(serializedObject, "m_Script", "manualDoorPoints", "autoDoorPoints", "activeSocket");
+            DrawPropertiesExcluding(serializedObject, "m_Script", "manualDoorPoints", "autoDoorPoints", "hasSpawnPoint", "spawnPoint", "activeSocket");
 
             DrawRoomTools();
+
+            GUILayout.Space(10);
+
+            DrawSpawnPointTools();
 
             GUILayout.Space(10);
 
@@ -72,14 +76,22 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
                 SetPaintingMode(autoActive ? PaintingMode.Off : PaintingMode.Auto);
             }
             GUI.backgroundColor = oldBg;
+
+            GUILayout.Space(5);
+
+            bool spawnActive = paintingMode == PaintingMode.Spawn;
+            GUI.backgroundColor = spawnActive ? new Color(1f, 0.85f, 0.15f, 1f) : Color.white;
+            if (GUILayout.Button("SPAWN", GetSlickStyle()))
+            {
+                SetPaintingMode(spawnActive ? PaintingMode.Off : PaintingMode.Spawn);
+            }
+            GUI.backgroundColor = oldBg;
             
             EditorGUILayout.EndHorizontal();
 
             if (paintingMode != PaintingMode.Off)
             {
-                EditorGUILayout.HelpBox(paintingMode == PaintingMode.Manual ? 
-                    "MANUAL: Click/Drag to paint fixed door tiles. Size is derived from number of tiles." : 
-                    "AUTO: Paint an area where a door can spawn. Set the spawn size below.", MessageType.Info);
+                EditorGUILayout.HelpBox(GetPaintingHelpText(), MessageType.Info);
                 
                 if (paintingMode == PaintingMode.Auto)
                 {
@@ -176,6 +188,45 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
                 data.socket = room.activeSocket;
                 points[i] = data;
             }
+        }
+
+        private void DrawSpawnPointTools()
+        {
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Spawn Point", EditorStyles.boldLabel);
+            string status = room.hasSpawnPoint ? room.spawnPoint.ToString() : "Default room origin";
+            EditorGUILayout.LabelField("Alignment Cell", status);
+
+            using (new EditorGUI.DisabledScope(!room.hasSpawnPoint))
+            {
+                if (GUILayout.Button("Clear Spawn Point"))
+                {
+                    Undo.RecordObject(room, "Clear Room Spawn Point");
+                    room.hasSpawnPoint = false;
+                    room.spawnPoint = Vector2Int.zero;
+                    room.Bake();
+                    Validate();
+                    EditorUtility.SetDirty(room);
+                    SceneView.RepaintAll();
+                }
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private string GetPaintingHelpText()
+        {
+            if (paintingMode == PaintingMode.Manual)
+            {
+                return "MANUAL: Click/Drag to paint fixed door tiles. Size is derived from number of tiles.";
+            }
+
+            if (paintingMode == PaintingMode.Auto)
+            {
+                return "AUTO: Paint an area where a door can spawn. Set the spawn size below.";
+            }
+
+            return "SPAWN: Click a floor tile to set the room alignment point. Hold Control and click to clear it.";
         }
 
         private void SetPaintingMode(PaintingMode mode)
@@ -397,6 +448,12 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
                 bool canBeDoor = (isWall && adjacentToFloor) || (isFloor && adjacentToAir);
                 
                 Color brushColor = (room.activeSocket != null) ? room.activeSocket.gizmoColor : Color.cyan;
+
+                if (paintingMode == PaintingMode.Spawn)
+                {
+                    HandleSpawnPainting(e, cellPos, isFloor);
+                    return;
+                }
                 
                 Handles.color = canBeDoor ? (e.control ? Color.red : brushColor) : Color.gray;
                 Handles.DrawWireDisc(new Vector3(cellPos.x + 0.5f, cellPos.y + 0.5f, 0), Vector3.forward, 0.5f);
@@ -444,6 +501,52 @@ namespace DynamicDungeon.ConstraintDungeon.Editor
                         }
                     }
                 }
+            }
+        }
+
+        private void HandleSpawnPainting(Event e, Vector3Int cellPos, bool isFloor)
+        {
+            Vector3 centre = new Vector3(cellPos.x + 0.5f, cellPos.y + 0.5f, 0);
+            Handles.color = e.control ? Color.red : (isFloor ? new Color(1f, 0.85f, 0.1f, 1f) : Color.gray);
+            Handles.DrawWireDisc(centre, Vector3.forward, 0.5f);
+            Handles.DrawLine(centre + Vector3.left * 0.35f, centre + Vector3.right * 0.35f);
+            Handles.DrawLine(centre + Vector3.down * 0.35f, centre + Vector3.up * 0.35f);
+
+            if ((e.type != EventType.MouseDown && e.type != EventType.MouseDrag) || e.button != 0)
+            {
+                return;
+            }
+
+            bool changed = false;
+            if (e.control)
+            {
+                if (room.hasSpawnPoint)
+                {
+                    Undo.RecordObject(room, "Clear Room Spawn Point");
+                    room.hasSpawnPoint = false;
+                    room.spawnPoint = Vector2Int.zero;
+                    changed = true;
+                }
+            }
+            else if (isFloor)
+            {
+                Vector2Int point = new Vector2Int(cellPos.x, cellPos.y);
+                if (!room.hasSpawnPoint || room.spawnPoint != point)
+                {
+                    Undo.RecordObject(room, "Paint Room Spawn Point");
+                    room.hasSpawnPoint = true;
+                    room.spawnPoint = point;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                room.Bake();
+                Validate();
+                EditorUtility.SetDirty(room);
+                SceneView.RepaintAll();
+                e.Use();
             }
         }
 

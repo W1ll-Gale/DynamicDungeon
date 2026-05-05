@@ -4,7 +4,7 @@ using DynamicDungeon.Runtime.Graph;
 
 namespace DynamicDungeon.Runtime.Core
 {
-    internal static class ManagedBlackboardDiagnosticUtility
+    public static class ManagedBlackboardDiagnosticUtility
     {
         private const string DiagnosticsKey = "__RuntimeDiagnostics";
 

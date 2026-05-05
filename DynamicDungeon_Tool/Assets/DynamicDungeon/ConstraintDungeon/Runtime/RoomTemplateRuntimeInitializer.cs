@@ -1,20 +1,56 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using DynamicDungeon.ConstraintDungeon.Solver;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 namespace DynamicDungeon.ConstraintDungeon
 {
+    [System.Serializable]
+    public struct RoomTemplateDoorCapCell
+    {
+        public Vector2Int cell;
+        public FacingDirection direction;
+
+        public RoomTemplateDoorCapCell(Vector2Int cell, FacingDirection direction)
+        {
+            this.cell = cell;
+            this.direction = direction;
+        }
+    }
+
+    [System.Serializable]
+    public sealed class RoomTemplatePlacementMutation
+    {
+        public const string MetadataType = "DynamicDungeon.ConstraintDungeon.RoomTemplatePlacementMutation";
+
+        public Vector2Int[] openDoorCells = System.Array.Empty<Vector2Int>();
+        public RoomTemplateDoorCapCell[] capDoorCells = System.Array.Empty<RoomTemplateDoorCapCell>();
+        public int variantRotation;
+        public bool variantMirrored;
+    }
+
     public static class RoomTemplateRuntimeInitializer
     {
         public static void Initialise(RoomTemplateComponent room, PlacedRoom data)
         {
-            if (room == null || data == null || room.wallMap == null)
+            if (room == null || data == null)
             {
                 return;
             }
 
+            ApplyMutation(room, CreateMutation(data));
+        }
+
+        public static RoomTemplatePlacementMutation CreateMutation(PlacedRoom data)
+        {
+            RoomTemplatePlacementMutation mutation = new RoomTemplatePlacementMutation();
+            if (data == null || data.variant == null)
+            {
+                return mutation;
+            }
+
             HashSet<Vector2Int> openDoorCells = new HashSet<Vector2Int>();
+            List<Vector2Int> opened = new List<Vector2Int>();
 
             foreach (DoorAnchor door in data.usedAnchors)
             {
@@ -25,8 +61,51 @@ namespace DynamicDungeon.ConstraintDungeon
                 foreach (Vector2Int cell in door.GetDoorCells(basePosition))
                 {
                     Vector2Int prefabCell = VariantCellToPrefabCell(cell, data);
-                    openDoorCells.Add(prefabCell);
-                    Vector3Int localPos = new Vector3Int(prefabCell.x, prefabCell.y, 0);
+                    if (openDoorCells.Add(prefabCell))
+                    {
+                        opened.Add(prefabCell);
+                    }
+                }
+            }
+
+            List<RoomTemplateDoorCapCell> capped = new List<RoomTemplateDoorCapCell>();
+            foreach (DoorAnchor door in data.variant.anchors)
+            {
+                FacingDirection prefabDirection = VariantDirectionToPrefabDirection(door.direction, data);
+                for (int x = door.area.xMin; x < door.area.xMax; x++)
+                {
+                    for (int y = door.area.yMin; y < door.area.yMax; y++)
+                    {
+                        Vector2Int localCell = VariantCellToPrefabCell(new Vector2Int(x, y), data);
+                        if (!openDoorCells.Contains(localCell))
+                        {
+                            capped.Add(new RoomTemplateDoorCapCell(localCell, prefabDirection));
+                        }
+                    }
+                }
+            }
+
+            mutation.openDoorCells = opened.ToArray();
+            mutation.capDoorCells = capped.ToArray();
+            mutation.variantRotation = data.variant.rotation;
+            mutation.variantMirrored = data.variant.mirrored;
+            return mutation;
+        }
+
+        public static void ApplyMutation(RoomTemplateComponent room, RoomTemplatePlacementMutation mutation)
+        {
+            if (room == null || mutation == null || room.wallMap == null)
+            {
+                return;
+            }
+
+            if (mutation.openDoorCells != null)
+            {
+                int index;
+                for (index = 0; index < mutation.openDoorCells.Length; index++)
+                {
+                    Vector2Int openCell = mutation.openDoorCells[index];
+                    Vector3Int localPos = new Vector3Int(openCell.x, openCell.y, 0);
 
                     TileBase sampleFloor = SampleAdjacentFloor(room, localPos);
                     room.wallMap.SetTile(localPos, null);
@@ -37,14 +116,18 @@ namespace DynamicDungeon.ConstraintDungeon
                 }
             }
 
-            foreach (DoorAnchor door in data.variant.anchors)
+            if (mutation.capDoorCells != null)
             {
-                CapDoor(room, door, openDoorCells, data);
+                int index;
+                for (index = 0; index < mutation.capDoorCells.Length; index++)
+                {
+                    CapDoorCell(room, mutation.capDoorCells[index]);
+                }
             }
 
             if (room.keepTileOrientation)
             {
-                ApplyTileOrientationCorrection(room, data);
+                ApplyTileOrientationCorrection(room, mutation.variantRotation, mutation.variantMirrored);
             }
         }
 
@@ -62,36 +145,24 @@ namespace DynamicDungeon.ConstraintDungeon
             return null;
         }
 
-        private static void CapDoor(RoomTemplateComponent room, DoorAnchor door, HashSet<Vector2Int> openDoorCells, PlacedRoom data)
+        private static void CapDoorCell(RoomTemplateComponent room, RoomTemplateDoorCapCell capCell)
         {
-            for (int x = door.area.xMin; x < door.area.xMax; x++)
+            Vector3Int localPos = new Vector3Int(capCell.cell.x, capCell.cell.y, 0);
+            TileBase sampleWall = SampleCapWallTile(room, capCell.direction, localPos);
+            if (sampleWall == null)
             {
-                for (int y = door.area.yMin; y < door.area.yMax; y++)
-                {
-                    Vector2Int localCell = VariantCellToPrefabCell(new Vector2Int(x, y), data);
-                    if (openDoorCells.Contains(localCell))
-                    {
-                        continue;
-                    }
-
-                    Vector3Int localPos = new Vector3Int(localCell.x, localCell.y, 0);
-                    TileBase sampleWall = SampleCapWallTile(room, door, localPos, data);
-                    if (sampleWall == null)
-                    {
-                        continue;
-                    }
-
-                    if (room.floorMap != null)
-                    {
-                        room.floorMap.SetTile(localPos, null);
-                    }
-
-                    room.wallMap.SetTile(localPos, sampleWall);
-                }
+                return;
             }
+
+            if (room.floorMap != null)
+            {
+                room.floorMap.SetTile(localPos, null);
+            }
+
+            room.wallMap.SetTile(localPos, sampleWall);
         }
 
-        private static TileBase SampleCapWallTile(RoomTemplateComponent room, DoorAnchor door, Vector3Int localPos, PlacedRoom data)
+        private static TileBase SampleCapWallTile(RoomTemplateComponent room, FacingDirection prefabDirection, Vector3Int localPos)
         {
             if (room.wallMap == null)
             {
@@ -100,7 +171,6 @@ namespace DynamicDungeon.ConstraintDungeon
 
             Vector3Int firstSide;
             Vector3Int secondSide;
-            FacingDirection prefabDirection = VariantDirectionToPrefabDirection(door.direction, data);
             if (prefabDirection == FacingDirection.North || prefabDirection == FacingDirection.South)
             {
                 firstSide = localPos + Vector3Int.left;
@@ -203,11 +273,11 @@ namespace DynamicDungeon.ConstraintDungeon
             return current;
         }
 
-        private static void ApplyTileOrientationCorrection(RoomTemplateComponent room, PlacedRoom data)
+        private static void ApplyTileOrientationCorrection(RoomTemplateComponent room, int variantRotation, bool variantMirrored)
         {
-            float angle = 90f * data.variant.rotation;
+            float angle = 90f * variantRotation;
             Matrix4x4 rot = Matrix4x4.Rotate(Quaternion.Euler(0, 0, angle));
-            Matrix4x4 mirror = data.variant.mirrored ? Matrix4x4.Scale(new Vector3(-1, 1, 1)) : Matrix4x4.identity;
+            Matrix4x4 mirror = variantMirrored ? Matrix4x4.Scale(new Vector3(-1, 1, 1)) : Matrix4x4.identity;
             Matrix4x4 correction = mirror * rot;
 
             ApplyCorrectionToMap(room.floorMap, correction);

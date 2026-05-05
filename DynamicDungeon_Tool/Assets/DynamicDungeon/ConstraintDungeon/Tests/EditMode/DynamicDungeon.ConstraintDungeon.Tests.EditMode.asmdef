@@ -4,7 +4,11 @@
     "references": [
         "DynamicDungeon.ConstraintDungeon.Runtime",
         "DynamicDungeon.ConstraintDungeon.Editor",
-        "DynamicDungeon.Editor.Shared"
+        "DynamicDungeon.Editor.Shared",
+        "DynamicDungeon.Runtime",
+        "Unity.Collections",
+        "Unity.Jobs",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [
         "Editor"

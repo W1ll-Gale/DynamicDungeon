@@ -17,4 +17,8 @@ namespace DynamicDungeon.Runtime.Core
 
         JobHandle Schedule(NodeExecutionContext context);
     }
+
+    public interface IMainThreadExecutionNode
+    {
+    }
 }

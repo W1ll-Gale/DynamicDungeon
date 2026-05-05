@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using DynamicDungeon.Runtime.Output;
+using DynamicDungeon.Runtime.Placement;
 using UnityEngine.Tilemaps;
 
 namespace DynamicDungeon.ConstraintDungeon
@@ -49,7 +51,7 @@ namespace DynamicDungeon.ConstraintDungeon
         }
     }
 
-    public class RoomTemplateComponent : MonoBehaviour
+    public class RoomTemplateComponent : MonoBehaviour, IPrefabPlacementInstanceProcessor
     {
         [Header("Room Properties")]
         public string roomName;
@@ -66,6 +68,8 @@ namespace DynamicDungeon.ConstraintDungeon
         
         [HideInInspector] public List<DoorTileData> manualDoorPoints = new List<DoorTileData>();
         [HideInInspector] public List<DoorTileData> autoDoorPoints = new List<DoorTileData>();
+        [HideInInspector] public bool hasSpawnPoint = false;
+        [HideInInspector] public Vector2Int spawnPoint = Vector2Int.zero;
         
         [Header("Tilemap layers")]
         public Tilemap floorMap;
@@ -99,6 +103,9 @@ namespace DynamicDungeon.ConstraintDungeon
 
             CleanDoorPoints(manualDoorPoints);
             CleanDoorPoints(autoDoorPoints);
+            CleanSpawnPoint();
+            bakedData.hasSpawnPoint = hasSpawnPoint;
+            bakedData.spawnPoint = spawnPoint;
 
             bakedData.anchors.Clear();
             if (manualDoorPoints.Count == 0 && autoDoorPoints.Count == 0)
@@ -146,6 +153,21 @@ namespace DynamicDungeon.ConstraintDungeon
                 }
                 return false;
             });
+        }
+
+        private void CleanSpawnPoint()
+        {
+            if (!hasSpawnPoint || floorMap == null)
+            {
+                return;
+            }
+
+            Vector3Int cell = new Vector3Int(spawnPoint.x, spawnPoint.y, 0);
+            if (!floorMap.HasTile(cell))
+            {
+                hasSpawnPoint = false;
+                spawnPoint = Vector2Int.zero;
+            }
         }
 
         private void GroupPointsToAnchors(List<DoorTileData> points, DoorMode mode)
@@ -302,6 +324,18 @@ namespace DynamicDungeon.ConstraintDungeon
             RoomTemplateRuntimeInitializer.Initialise(this, data);
         }
 
+        public void ProcessPrefabPlacement(PrefabPlacementRecord placement, PrefabPlacementMetadata metadata)
+        {
+            if (metadata == null || metadata.Type != RoomTemplatePlacementMutation.MetadataType || string.IsNullOrWhiteSpace(metadata.Payload))
+            {
+                return;
+            }
+
+            RoomTemplatePlacementMutation mutation = JsonUtility.FromJson<RoomTemplatePlacementMutation>(metadata.Payload);
+            RoomTemplateRuntimeInitializer.ApplyMutation(this, mutation);
+            PrefabInstanceUtility.DestroyObject(this);
+        }
+
         private void OnDrawGizmosSelected()
         {
             if (!showGizmos || floorMap == null) return;
@@ -312,6 +346,7 @@ namespace DynamicDungeon.ConstraintDungeon
 
             DrawRoomPerimeter();
             DrawDoorGizmos();
+            DrawSpawnPointGizmo();
             DrawValidityStatus();
             
 #if UNITY_EDITOR
@@ -340,6 +375,19 @@ namespace DynamicDungeon.ConstraintDungeon
             UnityEditor.Handles.EndGUI();
         }
 #endif
+
+        private void DrawSpawnPointGizmo()
+        {
+            if (!hasSpawnPoint)
+            {
+                return;
+            }
+
+            Vector3 centre = new Vector3(spawnPoint.x + 0.5f, spawnPoint.y + 0.5f, 0);
+            Gizmos.color = new Color(1f, 0.85f, 0.1f, 0.85f);
+            Gizmos.DrawSphere(centre, 0.22f);
+            Gizmos.DrawWireCube(centre, new Vector3(0.8f, 0.8f, 0.1f));
+        }
 
         private void DrawRoomPerimeter()
         {

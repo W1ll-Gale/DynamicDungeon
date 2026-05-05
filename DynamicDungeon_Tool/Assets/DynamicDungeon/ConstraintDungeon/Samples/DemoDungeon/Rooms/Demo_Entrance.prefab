@@ -1825,6 +1825,8 @@ MonoBehaviour:
     socket: {fileID: 11400000, guid: dd08523d79333d84ba8ef68bebb0c09b, type: 2}
     autoSize: 1
   autoDoorPoints: []
+  hasSpawnPoint: 1
+  spawnPoint: {x: 1, y: -1}
   floorMap: {fileID: 6155351613504598517}
   wallMap: {fileID: 6658210235768594235}
   bakedData:
@@ -2118,6 +2120,8 @@ MonoBehaviour:
       originalCell: {x: 0, y: 0}
     allowRotation: 0
     allowMirroring: 0
+    hasSpawnPoint: 1
+    spawnPoint: {x: 1, y: -1}
 --- !u!156049354 &893064048342231528
 Grid:
   m_ObjectHideFlags: 0

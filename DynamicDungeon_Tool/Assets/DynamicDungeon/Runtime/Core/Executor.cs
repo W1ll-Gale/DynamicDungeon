@@ -116,12 +116,32 @@ namespace DynamicDungeon.Runtime.Core
 
             try
             {
+                if (RequiresMainThreadExecution(plan))
+                {
+                    await Task.Yield();
+                    return ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion, jobCompleted, nodeProgress);
+                }
+
                 return await Task.Run(() => ExecuteInternal(plan, cancellationToken, progress, disposePlanOnCompletion, jobCompleted, nodeProgress)).ConfigureAwait(false);
             }
             finally
             {
                 Interlocked.Exchange(ref _isRunning, 0);
             }
+        }
+
+        private static bool RequiresMainThreadExecution(ExecutionPlan plan)
+        {
+            int index;
+            for (index = 0; index < plan.Jobs.Count; index++)
+            {
+                if (plan.Jobs[index].Node is IMainThreadExecutionNode)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static NodeChannelBindings BuildChannelBindings(IReadOnlyList<ChannelDeclaration> channels, WorldData worldData)
@@ -265,7 +285,7 @@ namespace DynamicDungeon.Runtime.Core
                     progress?.Report(1.0f);
                     ReportSnapshotProgress(nodeProgress, 0, 0);
                     return CreateSuccessResult(
-                        WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes, plan.PrefabPlacementPrefabs, plan.PrefabPlacementTemplates),
+                        CreateSnapshot(plan, managedBlackboard),
                         ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
                 }
 
@@ -342,7 +362,7 @@ namespace DynamicDungeon.Runtime.Core
 
                 ReportSnapshotProgress(nodeProgress, completedDirtyJobs, dirtyJobCount);
                 return CreateSuccessResult(
-                    WorldSnapshot.FromWorldData(plan.AllocatedWorld, plan.BiomeChannelBiomes, plan.PrefabPlacementPrefabs, plan.PrefabPlacementTemplates),
+                    CreateSnapshot(plan, managedBlackboard),
                     ManagedBlackboardDiagnosticUtility.ReadDiagnosticsSnapshot(managedBlackboard));
             }
             catch (Exception exception)
@@ -371,6 +391,16 @@ namespace DynamicDungeon.Runtime.Core
                     plan.Dispose();
                 }
             }
+        }
+
+        private static WorldSnapshot CreateSnapshot(ExecutionPlan plan, ManagedBlackboard managedBlackboard)
+        {
+            return WorldSnapshot.FromWorldData(
+                plan.AllocatedWorld,
+                plan.BiomeChannelBiomes,
+                plan.PrefabPlacementPrefabs,
+                plan.PrefabPlacementTemplates,
+                PrefabPlacementMetadataUtility.ReadMetadataSnapshot(managedBlackboard));
         }
 
         private static void ReportNodeProgress(
