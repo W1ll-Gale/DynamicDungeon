@@ -1,0 +1,893 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: CaveFeatureOverrides
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 5
+  WorldWidth: 512
+  WorldHeight: 192
+  DefaultSeed: 246813579
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Cave Region
+    Position: {x: 611, y: -875.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleCaveRegion
+      DisplayName: JungleCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Moss Cave Pockets
+    Position: {x: 931, y: -875.3999}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: MossPockets
+      DisplayName: MossPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.86
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.94
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 14
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-pocket-ids
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Moss Pocket IDs
+    Position: {x: 1251, y: -1155.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: MossPocketIds
+      DisplayName: MossPocketIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: trueLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: falseLogicalId
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-pocket-neighbour-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
+    NodeName: Moss Pocket Wall Neighbourhood
+    Position: {x: 1571, y: -1155.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: MossPocketNeighbourMask
+      DisplayName: MossPocketNeighbourMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: matchById
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: logicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: distanceMode
+      Value: Euclidean
+      ObjectReference: {fileID: 0}
+    - Name: tagName
+      Value: 
+      ObjectReference: {fileID: 0}
+  - NodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Moss Cave Override
+    Position: {x: 1251, y: -875.3999}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: baaee848be418e34d8662b0e76a2de46
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Cave Region
+    Position: {x: 611, y: -595.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceCaveRegion
+      DisplayName: IceCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Ice Cave Pockets
+    Position: {x: 931, y: -595.3999}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: IcePockets
+      DisplayName: IcePockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 12
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 15
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.8
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.9
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 16
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-pocket-ids
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Ice Pocket IDs
+    Position: {x: 1251, y: -395.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: IcePocketIds
+      DisplayName: IcePocketIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: trueLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: falseLogicalId
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-pocket-neighbour-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
+    NodeName: Ice Pocket Wall Neighbourhood
+    Position: {x: 1571, y: -395.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: IcePocketNeighbourMask
+      DisplayName: IcePocketNeighbourMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: matchById
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: logicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: distanceMode
+      Value: Euclidean
+      ObjectReference: {fileID: 0}
+    - Name: tagName
+      Value: 
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-cave-wall-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Cave Wall Mask
+    Position: {x: 1891, y: -395.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceWallPockets
+      DisplayName: IceWallPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Cave Override
+    Position: {x: 1251, y: -595.3999}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 4a3017a94c069e6448e4c6f527624dba
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
+    NodeName: Wall Mask
+    Position: {x: 1251, y: -1335.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: WallMask
+      DisplayName: WallMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: matchById
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: logicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: distanceMode
+      Value: Chebyshev
+      ObjectReference: {fileID: 0}
+    - Name: tagName
+      Value: 
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-cave-wall-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Moss Cave Wall Mask
+    Position: {x: 1891, y: -1155.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: MossWallPockets
+      DisplayName: MossWallPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 54a82da2-7200-4468-9eea-b57e1770069a
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Lower Crystal Region
+    Position: {x: 611, y: -355.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CrystalRegion
+      DisplayName: CrystalRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Crystal Cave Pockets
+    Position: {x: 931, y: -355.3999}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: CrystalPockets
+      DisplayName: CrystalPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 16
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.9
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 28
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-pocket-ids
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Crystal Pocket IDs
+    Position: {x: 1251, y: -155.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CrystalPocketIds
+      DisplayName: CrystalPocketIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: trueLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: falseLogicalId
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-pocket-neighbour-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
+    NodeName: Crystal Pocket Wall Neighbourhood
+    Position: {x: 1571, y: -155.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: CrystalPocketNeighbourMask
+      DisplayName: CrystalPocketNeighbourMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: matchById
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: logicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: distanceMode
+      Value: Euclidean
+      ObjectReference: {fileID: 0}
+    - Name: tagName
+      Value: 
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-cave-wall-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Crystal Cave Wall Mask
+    Position: {x: 1891, y: -155.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CrystalWallPockets
+      DisplayName: CrystalWallPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Crystal Cave Override
+    Position: {x: 2855, y: -589.0001}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 9b64401900a722143b09f2d0bde4dfb2
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-cave-visual-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Moss Cave Visual Override
+    Position: {x: 1886, y: -205}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: baaee848be418e34d8662b0e76a2de46
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-cave-visual-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Cave Visual Override
+    Position: {x: 2206, y: -205}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 4a3017a94c069e6448e4c6f527624dba
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-cave-visual-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Crystal Cave Visual Override
+    Position: {x: 2525.9998, y: -205}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 9b64401900a722143b09f2d0bde4dfb2
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: visual-biome-channel-copy
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.IntChannelCopyNode
+    NodeName: Visual Biome Channel
+    Position: {x: 2972.995, y: -205.01001}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: VisualBiomeChannel
+      DisplayName: VisualBiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: VisualBiomeChannel
+      ObjectReference: {fileID: 0}
+  - NodeId: CaveFeatureOverrides-input
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
+    NodeName: Sub Graph Input
+    Position: {x: 351, y: -665.3999}
+    Ports:
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    - PortName: JungleBiomeMask
+      DisplayName: JungleBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: IceBiomeMask
+      DisplayName: IceBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: BiomeChannel 2
+      DisplayName: BiomeChannel 2
+      Direction: 1
+      Type: 1
+    - PortName: CaveAllowedDepth
+      DisplayName: CaveAllowedDepth
+      Direction: 1
+      Type: 2
+    - PortName: FinalSolid
+      DisplayName: FinalSolid
+      Direction: 1
+      Type: 2
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    - PortName: DeepUndergroundBand
+      DisplayName: DeepUndergroundBand
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: CaveFeatureOverrides-output
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
+    NodeName: Sub Graph Output
+    Position: {x: 3452.995, y: -665.3999}
+    Ports:
+    - PortName: WallMask
+      DisplayName: WallMask
+      Direction: 0
+      Type: 2
+    - PortName: VisualBiomeChannel
+      DisplayName: VisualBiomeChannel
+      Direction: 0
+      Type: 1
+    - PortName: MossPockets
+      DisplayName: MossPockets
+      Direction: 0
+      Type: 2
+    - PortName: CrystalPockets
+      DisplayName: CrystalPockets
+      Direction: 0
+      Type: 2
+    - PortName: IcePockets
+      DisplayName: IcePockets
+      Direction: 0
+      Type: 2
+    Parameters: []
+  Connections:
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: BiomeChannel
+    ToNodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: JungleBiomeMask
+    ToNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: IceBiomeMask
+    ToNodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: BiomeChannel 2
+    ToNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: FinalSolid
+    ToNodeId: moss-cave-wall-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: FinalSolid
+    ToNodeId: ice-cave-wall-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: FinalSolid
+    ToNodeId: crystal-cave-wall-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: LogicalIds
+    ToNodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: CaveFeatureOverrides-input
+    FromPortName: DeepUndergroundBand
+    ToNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
+    FromPortName: WallMask
+    ToNodeId: CaveFeatureOverrides-output
+    ToPortName: WallMask
+    CastMode: 0
+  - FromNodeId: visual-biome-channel-copy
+    FromPortName: VisualBiomeChannel
+    ToNodeId: CaveFeatureOverrides-output
+    ToPortName: VisualBiomeChannel
+    CastMode: 0
+  - FromNodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    FromPortName: MossPockets
+    ToNodeId: CaveFeatureOverrides-output
+    ToPortName: MossPockets
+    CastMode: 0
+  - FromNodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    FromPortName: CrystalPockets
+    ToNodeId: CaveFeatureOverrides-output
+    ToPortName: CrystalPockets
+    CastMode: 0
+  - FromNodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    FromPortName: IcePockets
+    ToNodeId: CaveFeatureOverrides-output
+    ToPortName: IcePockets
+    CastMode: 0
+  - FromNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    FromPortName: JungleCaveRegion
+    ToNodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    FromPortName: MossPockets
+    ToNodeId: moss-pocket-ids
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: moss-pocket-ids
+    FromPortName: MossPocketIds
+    ToNodeId: moss-pocket-neighbour-mask
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: moss-pocket-neighbour-mask
+    FromPortName: MossPocketNeighbourMask
+    ToNodeId: moss-cave-wall-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: moss-cave-wall-mask
+    FromPortName: MossWallPockets
+    ToNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    FromPortName: IceCaveRegion
+    ToNodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    FromPortName: IcePockets
+    ToNodeId: ice-pocket-ids
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ice-pocket-ids
+    FromPortName: IcePocketIds
+    ToNodeId: ice-pocket-neighbour-mask
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ice-pocket-neighbour-mask
+    FromPortName: IcePocketNeighbourMask
+    ToNodeId: ice-cave-wall-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: ice-cave-wall-mask
+    FromPortName: IceWallPockets
+    ToNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
+    FromPortName: CrystalRegion
+    ToNodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    FromPortName: CrystalPockets
+    ToNodeId: crystal-pocket-ids
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: crystal-pocket-ids
+    FromPortName: CrystalPocketIds
+    ToNodeId: crystal-pocket-neighbour-mask
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: crystal-pocket-neighbour-mask
+    FromPortName: CrystalPocketNeighbourMask
+    ToNodeId: crystal-cave-wall-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: crystal-cave-wall-mask
+    FromPortName: CrystalWallPockets
+    ToNodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    FromPortName: CrystalPockets
+    ToNodeId: crystal-cave-visual-override
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    FromPortName: BiomeChannel
+    ToNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    FromPortName: BiomeChannel
+    ToNodeId: moss-cave-visual-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    FromPortName: MossPockets
+    ToNodeId: moss-cave-visual-override
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: moss-cave-visual-override
+    FromPortName: BiomeChannel
+    ToNodeId: ice-cave-visual-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    FromPortName: IcePockets
+    ToNodeId: ice-cave-visual-override
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: ice-cave-visual-override
+    FromPortName: BiomeChannel
+    ToNodeId: crystal-cave-visual-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: crystal-cave-visual-override
+    FromPortName: BiomeChannel
+    ToNodeId: visual-biome-channel-copy
+    ToPortName: Input
+    CastMode: 0
+  StickyNotes: []
+  Groups:
+  - GroupId: CaveFeatureOverrides-group
+    Title: Feature Overrides
+    Position:
+      serializedVersion: 2
+      x: 491
+      y: -1455.3999
+      width: 2821.995
+      height: 1580
+    ContainedNodeIds:
+    - 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    - 84e4b550-802d-4a30-831a-0442e24ae6af
+    - moss-pocket-ids
+    - moss-pocket-neighbour-mask
+    - c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    - 65af7331-f5f3-4902-8c01-c33a711e9871
+    - 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    - ice-pocket-ids
+    - ice-pocket-neighbour-mask
+    - ice-cave-wall-mask
+    - f236cfd2-a015-4d8e-ae61-072ab4760977
+    - 957e9086-5624-41ab-a22e-62e9ceb9721c
+    - moss-cave-wall-mask
+    - 54a82da2-7200-4468-9eea-b57e1770069a
+    - 04d569af-2156-41d1-baf7-a6d264adee89
+    - crystal-pocket-ids
+    - crystal-pocket-neighbour-mask
+    - crystal-cave-wall-mask
+    - 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    - moss-cave-visual-override
+    - ice-cave-visual-override
+    - crystal-cave-visual-override
+    - visual-biome-channel-copy
+    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+  ExposedProperties: []

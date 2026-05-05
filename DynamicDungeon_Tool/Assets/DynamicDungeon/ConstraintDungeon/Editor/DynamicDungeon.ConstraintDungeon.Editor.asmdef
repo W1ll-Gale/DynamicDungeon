@@ -1,0 +1,21 @@
+﻿{
+    "name": "DynamicDungeon.ConstraintDungeon.Editor",
+    "rootNamespace": "DynamicDungeon.ConstraintDungeon.Editor",
+    "references": [
+        "DynamicDungeon.Editor.Shared",
+        "DynamicDungeon.Editor",
+        "DynamicDungeon.ConstraintDungeon.Runtime",
+        "DynamicDungeon.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

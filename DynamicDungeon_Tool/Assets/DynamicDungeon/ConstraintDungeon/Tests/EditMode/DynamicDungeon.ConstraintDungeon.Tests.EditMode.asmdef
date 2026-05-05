@@ -1,0 +1,27 @@
+﻿{
+    "name": "DynamicDungeon.ConstraintDungeon.Tests.EditMode",
+    "rootNamespace": "DynamicDungeon.ConstraintDungeon.Tests.EditMode",
+    "references": [
+        "DynamicDungeon.ConstraintDungeon.Runtime",
+        "DynamicDungeon.ConstraintDungeon.Editor",
+        "DynamicDungeon.Editor.Shared",
+        "DynamicDungeon.Runtime",
+        "Unity.Collections",
+        "Unity.Jobs",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

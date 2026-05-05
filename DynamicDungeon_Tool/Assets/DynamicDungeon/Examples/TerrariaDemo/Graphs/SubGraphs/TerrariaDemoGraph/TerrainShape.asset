@@ -1,0 +1,517 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: TerrainShape
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 5
+  WorldWidth: 512
+  WorldHeight: 192
+  DefaultSeed: 246813579
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: 30729321-8c26-440a-8c37-54ed6a10e047
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SurfaceNoiseNode
+    NodeName: Surface Profile
+    Position: {x: -4506.5737, y: -784.50635}
+    Ports:
+    - PortName: TerrainMass
+      DisplayName: TerrainMass
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: baseHeight
+      Value: 0.56
+      ObjectReference: {fileID: 0}
+    - Name: amplitude
+      Value: 0.17
+      ObjectReference: {fileID: 0}
+    - Name: frequency
+      Value: 0.016
+      ObjectReference: {fileID: 0}
+    - Name: octaves
+      Value: 3
+      ObjectReference: {fileID: 0}
+    - Name: persistence
+      Value: 0.45
+      ObjectReference: {fileID: 0}
+    - Name: lacunarity
+      Value: 1.85
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 17
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 128
+      ObjectReference: {fileID: 0}
+  - NodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Terrain Mass Mask
+    Position: {x: -4186.5737, y: -784.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: TerrainMassMask
+      DisplayName: TerrainMassMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+  - NodeId: c51a5de2-490c-438f-a05e-106d9a02247b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Surface Band
+    Position: {x: -4506.5737, y: -504.50635}
+    Ports:
+    - PortName: SurfaceBand
+      DisplayName: SurfaceBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.05
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: c41ad5c5-4bd8-43d8-8373-376a74d37254
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Surface Crust Band
+    Position: {x: -4506.5737, y: -384.50635}
+    Ports:
+    - PortName: SurfaceCrustBand
+      DisplayName: SurfaceCrustBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.03
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Underground Band
+    Position: {x: -4506.5737, y: -284.50635}
+    Ports:
+    - PortName: UndergroundBand
+      DisplayName: UndergroundBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.48
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Deep Cave Band
+    Position: {x: -4506.5737, y: -64.50635}
+    Ports:
+    - PortName: DeepBand
+      DisplayName: DeepBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.42
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Sky Band
+    Position: {x: -4506.5737, y: 155.49365}
+    Ports:
+    - PortName: SkyBand
+      DisplayName: SkyBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 08271325-c52e-41cc-aa71-693805aad513
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave Region
+    Position: {x: -4186.5737, y: -174.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveBand
+      DisplayName: CaveBand
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: e9fa758c-4c63-4a03-b791-79b84175d7dc
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Surface Cave Buffer
+    Position: {x: -3866.5737, y: -704.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceCaveBuffer
+      DisplayName: SurfaceCaveBuffer
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 8
+      ObjectReference: {fileID: 0}
+  - NodeId: 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Cave Depth Mask
+    Position: {x: -3546.5737, y: -704.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CaveDepthMask
+      DisplayName: CaveDepthMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputType
+      Value: BoolMask
+      ObjectReference: {fileID: 0}
+  - NodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
+    NodeName: Caves Below Surface Buffer
+    Position: {x: -3226.5737, y: -544.50635}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: CaveAllowedDepth
+      DisplayName: CaveAllowedDepth
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: CaveAllowedDepth
+      ObjectReference: {fileID: 0}
+  - NodeId: 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Shallow Cave Band
+    Position: {x: -3306.5737, y: -1040.5063}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: ShallowCaveBand
+      DisplayName: ShallowCaveBand
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 34
+      ObjectReference: {fileID: 0}
+  - NodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Shallow Cave Region
+    Position: {x: -2911.5737, y: -919.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: ShallowCaveRegion
+      DisplayName: ShallowCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskExpressionNode
+    NodeName: Terrain Solid
+    Position: {x: -2638.5737, y: -542.50635}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: FinalSolid
+      DisplayName: FinalSolid
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: FinalSolid
+      ObjectReference: {fileID: 0}
+    - Name: rules
+      Value: '{"Rules":[{"Enabled":true,"MaskSlot":1,"Operation":0,"Invert":false},{"Enabled":true,"MaskSlot":2,"Operation":2,"Invert":true}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: TerrainShape-input
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
+    NodeName: Sub Graph Input
+    Position: {x: -4766.5737, y: -362.50635}
+    Ports:
+    - PortName: FeatureOpenCavesWithIce
+      DisplayName: FeatureOpenCavesWithIce
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: TerrainShape-output
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
+    NodeName: Sub Graph Output
+    Position: {x: -2158.5737, y: -362.50635}
+    Ports:
+    - PortName: ShallowCaveRegion
+      DisplayName: ShallowCaveRegion
+      Direction: 0
+      Type: 2
+    - PortName: CaveAllowedDepth
+      DisplayName: CaveAllowedDepth
+      Direction: 0
+      Type: 2
+    - PortName: DeepBand
+      DisplayName: DeepBand
+      Direction: 0
+      Type: 0
+    - PortName: TerrainMassMask
+      DisplayName: TerrainMassMask
+      Direction: 0
+      Type: 2
+    - PortName: FinalSolid
+      DisplayName: FinalSolid
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceCrustBand
+      DisplayName: SurfaceCrustBand
+      Direction: 0
+      Type: 0
+    - PortName: SkyBand
+      DisplayName: SkyBand
+      Direction: 0
+      Type: 0
+    Parameters: []
+  Connections:
+  - FromNodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    FromPortName: ShallowCaveRegion
+    ToNodeId: TerrainShape-output
+    ToPortName: ShallowCaveRegion
+    CastMode: 0
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: TerrainShape-output
+    ToPortName: CaveAllowedDepth
+    CastMode: 0
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: TerrainShape-output
+    ToPortName: DeepBand
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: TerrainShape-output
+    ToPortName: TerrainMassMask
+    CastMode: 0
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: TerrainShape-output
+    ToPortName: FinalSolid
+    CastMode: 0
+  - FromNodeId: c41ad5c5-4bd8-43d8-8373-376a74d37254
+    FromPortName: SurfaceCrustBand
+    ToNodeId: TerrainShape-output
+    ToPortName: SurfaceCrustBand
+    CastMode: 0
+  - FromNodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
+    FromPortName: SkyBand
+    ToNodeId: TerrainShape-output
+    ToPortName: SkyBand
+    CastMode: 0
+  - FromNodeId: 30729321-8c26-440a-8c37-54ed6a10e047
+    FromPortName: TerrainMass
+    ToNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: 08271325-c52e-41cc-aa71-693805aad513
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: 08271325-c52e-41cc-aa71-693805aad513
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: e9fa758c-4c63-4a03-b791-79b84175d7dc
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: e9fa758c-4c63-4a03-b791-79b84175d7dc
+    FromPortName: SurfaceCaveBuffer
+    ToNodeId: 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
+    FromPortName: ShallowCaveBand
+    ToNodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 08271325-c52e-41cc-aa71-693805aad513
+    FromPortName: CaveBand
+    ToNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
+    FromPortName: CaveDepthMask
+    ToNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: TerrainShape-input
+    FromPortName: FeatureOpenCavesWithIce
+    ToNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    ToPortName: Masks
+    CastMode: 0
+  StickyNotes: []
+  Groups:
+  - GroupId: TerrainShape-group
+    Title: Terrain Profile
+    Position:
+      serializedVersion: 2
+      x: -4626.5737
+      y: -1160.5063
+      width: 2328
+      height: 1596
+    ContainedNodeIds:
+    - 30729321-8c26-440a-8c37-54ed6a10e047
+    - 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    - c51a5de2-490c-438f-a05e-106d9a02247b
+    - c41ad5c5-4bd8-43d8-8373-376a74d37254
+    - ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    - fd837542-e32b-45ff-8499-937f33125ff1
+    - a371735b-35b3-4f2d-8172-f715f8b697b8
+    - 08271325-c52e-41cc-aa71-693805aad513
+    - e9fa758c-4c63-4a03-b791-79b84175d7dc
+    - 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
+    - d575842c-79cc-4180-adb5-8cc87584971d
+    - 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
+    - 0df84640-7648-45db-93fd-2e6a5af2d270
+    - 13755560-5c3d-4731-9e15-ceedd338fc84
+    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+  ExposedProperties: []

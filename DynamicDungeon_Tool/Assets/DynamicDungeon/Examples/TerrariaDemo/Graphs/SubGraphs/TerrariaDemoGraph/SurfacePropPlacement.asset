@@ -1,0 +1,986 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: SurfacePropPlacement
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 5
+  WorldWidth: 512
+  WorldHeight: 192
+  DefaultSeed: 246813579
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
+    NodeName: One
+    Position: {x: 1540.5026, y: 823.5001}
+    Ports:
+    - PortName: OneFloat
+      DisplayName: OneFloat
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputType
+      Value: Float
+      ObjectReference: {fileID: 0}
+    - Name: floatValue
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: intValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 6999daac-7624-464b-9308-87663f179e01
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
+    NodeName: Zero
+    Position: {x: 1781.0002, y: 1130}
+    Ports:
+    - PortName: ZeroFloat
+      DisplayName: ZeroFloat
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputType
+      Value: Float
+      ObjectReference: {fileID: 0}
+    - Name: floatValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: intValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: ced59584-f592-4d05-b4b5-487143502736
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
+    NodeName: Surface Floor Weights
+    Position: {x: 2149.9995, y: 951.9998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceFloorWeights
+      DisplayName: SurfaceFloorWeights
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: surface-prop-placement-points
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
+    NodeName: Surface Prop Ground Points
+    Position: {x: 1759, y: 1697.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: SurfacePropGroundPoints
+      DisplayName: SurfacePropGroundPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: conditions
+      Value: '{"Entries":[{"Offset":{"x":-1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":0,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":2,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":3,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":-1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":0,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":-1,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":0,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":2},"MatchById":true,"LogicalId":0,"TagName":""}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: surface-prop-placement-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
+    NodeName: Surface Prop Placement Mask
+    Position: {x: 2270, y: 1606.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: SurfacePropPlacementMask
+      DisplayName: SurfacePropPlacementMask
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: surface-prop-surface-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Surface Prop Surface Mask
+    Position: {x: 2604, y: 1829.505}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: SurfacePropSurfaceMask
+      DisplayName: SurfacePropSurfaceMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: surface-prop-placement-weights
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
+    NodeName: Surface Prop Placement Weights
+    Position: {x: 1219.8549, y: 1429}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SurfacePropPlacementWeights
+      DisplayName: SurfacePropPlacementWeights
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Forest Tree Weight
+    Position: {x: 2484, y: 898.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: ForestTreeWeight
+      DisplayName: ForestTreeWeight
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 62c2d399-7023-4628-b07a-c035317a8f19
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Jungle Tree Weight Base
+    Position: {x: 2484, y: 1181.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: JungleTreeWeightBase
+      DisplayName: JungleTreeWeightBase
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Jungle Tree Weight
+    Position: {x: 3067.646, y: 859.99994}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: JungleTreeWeight
+      DisplayName: JungleTreeWeight
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+  - NodeId: ceb72be0-5035-400a-a151-3a859daedd51
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Desert Cactus Weight Base
+    Position: {x: 2088.9998, y: 1232}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: DesertTreeWeightBase
+      DisplayName: DesertTreeWeightBase
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Desert Cactus Weight
+    Position: {x: 2776, y: 1181.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: DesertTreeWeight
+      DisplayName: DesertTreeWeight
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.42
+      ObjectReference: {fileID: 0}
+  - NodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Ice Tree Weight Base
+    Position: {x: 1815.9998, y: 2102}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: IceTreeWeightBase
+      DisplayName: IceTreeWeightBase
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Ice Tree Weight
+    Position: {x: 2776, y: 2229}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: IceTreeWeight
+      DisplayName: IceTreeWeight
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.6
+      ObjectReference: {fileID: 0}
+  - NodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Forest Tree Scatter
+    Position: {x: 4056, y: 1467.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: TreePoints
+      DisplayName: TreePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 18
+      ObjectReference: {fileID: 0}
+  - NodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Forest Tree Prefabs
+    Position: {x: 4879, y: 1317}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"51f71faa81cc4f741b4c2886c00273df","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: forest-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Forest Tree Placement Points
+    Position: {x: 4381, y: 1330.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: ForestTreePlacementPoints
+      DisplayName: ForestTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: ForestTreePlacementPoints
+      ObjectReference: {fileID: 0}
+  - NodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Jungle Tree Scatter
+    Position: {x: 4056, y: 1209.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: JungleTreePoints
+      DisplayName: JungleTreePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.16
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 18
+      ObjectReference: {fileID: 0}
+  - NodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Jungle Tree Prefabs
+    Position: {x: 5188, y: 856.00006}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"ea5fc636fbbbe474cb55b6095ad39959","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: jungle-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Jungle Tree Placement Points
+    Position: {x: 4815, y: 1042.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: JungleTreePlacementPoints
+      DisplayName: JungleTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: JungleTreePlacementPoints
+      ObjectReference: {fileID: 0}
+  - NodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Ice Tree Scatter
+    Position: {x: 4056, y: 1994.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: IceTreePoints
+      DisplayName: IceTreePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 14
+      ObjectReference: {fileID: 0}
+  - NodeId: 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Ice Tree Prefabs
+    Position: {x: 5085, y: 2236.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"3d29a499903e6c44b847b85c2c81242a","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Ice Tree Placement Points
+    Position: {x: 4511, y: 2121.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: IceTreePlacementPoints
+      DisplayName: IceTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: IceTreePlacementPoints
+      ObjectReference: {fileID: 0}
+  - NodeId: 68905719-fc24-450e-8b09-869ff286d755
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Cactus Scatter
+    Position: {x: 4056, y: 1721.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: CactusPoints
+      DisplayName: CactusPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.28
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 12
+      ObjectReference: {fileID: 0}
+  - NodeId: 598ec486-5ceb-4977-9ff6-cf36bb53fca2
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Cactus Prefabs
+    Position: {x: 4993, y: 1744.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"adcaa141de6eba940af9ebb2e4fc664e","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: cactus-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Cactus Placement Points
+    Position: {x: 4614, y: 1709.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: CactusPlacementPoints
+      DisplayName: CactusPlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: CactusPlacementPoints
+      ObjectReference: {fileID: 0}
+  - NodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Cloud Scatter
+    Position: {x: 1823.0052, y: 528.31213}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: CloudPoints
+      DisplayName: CloudPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.7
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 20
+      ObjectReference: {fileID: 0}
+  - NodeId: 7d91fd3c-0f1a-4313-b849-600a81f07311
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Cloud Prefabs
+    Position: {x: 4041, y: 816.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"75f965a629c6fb54e8f21780cf4b4f3c","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: SurfacePropPlacement-input
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
+    NodeName: Sub Graph Input
+    Position: {x: 575.78705, y: 1316.9998}
+    Ports:
+    - PortName: ForestBiomeMask
+      DisplayName: ForestBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: FinalJungleBiomeMask
+      DisplayName: FinalJungleBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: DesertBiomeMask
+      DisplayName: DesertBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: FinalIceBiomeMask
+      DisplayName: FinalIceBiomeMask
+      Direction: 1
+      Type: 0
+    - PortName: SkyBand
+      DisplayName: SkyBand
+      Direction: 1
+      Type: 0
+    - PortName: SurfaceFloorMask
+      DisplayName: SurfaceFloorMask
+      Direction: 1
+      Type: 2
+    - PortName: BaseLogicalIds
+      DisplayName: BaseLogicalIds
+      Direction: 1
+      Type: 1
+    Parameters: []
+  - NodeId: SurfacePropPlacement-output
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
+    NodeName: Sub Graph Output
+    Position: {x: 5668, y: 1606.52}
+    Ports:
+    - PortName: OneFloat
+      DisplayName: OneFloat
+      Direction: 0
+      Type: 0
+    - PortName: ZeroFloat
+      DisplayName: ZeroFloat
+      Direction: 0
+      Type: 0
+    Parameters: []
+  Connections:
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: ForestBiomeMask
+    ToNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: FinalJungleBiomeMask
+    ToNodeId: 62c2d399-7023-4628-b07a-c035317a8f19
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: DesertBiomeMask
+    ToNodeId: ceb72be0-5035-400a-a151-3a859daedd51
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: FinalIceBiomeMask
+    ToNodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: SkyBand
+    ToNodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: SurfaceFloorMask
+    ToNodeId: ced59584-f592-4d05-b4b5-487143502736
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: SurfaceFloorMask
+    ToNodeId: surface-prop-surface-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: SurfacePropPlacement-input
+    FromPortName: BaseLogicalIds
+    ToNodeId: surface-prop-placement-points
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    FromPortName: OneFloat
+    ToNodeId: SurfacePropPlacement-output
+    ToPortName: OneFloat
+    CastMode: 0
+  - FromNodeId: 6999daac-7624-464b-9308-87663f179e01
+    FromPortName: ZeroFloat
+    ToNodeId: SurfacePropPlacement-output
+    ToPortName: ZeroFloat
+    CastMode: 0
+  - FromNodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    FromPortName: OneFloat
+    ToNodeId: ced59584-f592-4d05-b4b5-487143502736
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 6999daac-7624-464b-9308-87663f179e01
+    FromPortName: ZeroFloat
+    ToNodeId: ced59584-f592-4d05-b4b5-487143502736
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-points
+    FromPortName: SurfacePropGroundPoints
+    ToNodeId: surface-prop-placement-mask
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-mask
+    FromPortName: SurfacePropPlacementMask
+    ToNodeId: surface-prop-surface-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    FromPortName: OneFloat
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 6999daac-7624-464b-9308-87663f179e01
+    FromPortName: ZeroFloat
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: surface-prop-surface-mask
+    FromPortName: SurfacePropSurfaceMask
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
+    ToNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
+    ToNodeId: 62c2d399-7023-4628-b07a-c035317a8f19
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 62c2d399-7023-4628-b07a-c035317a8f19
+    FromPortName: JungleTreeWeightBase
+    ToNodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
+    ToNodeId: ceb72be0-5035-400a-a151-3a859daedd51
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: ceb72be0-5035-400a-a151-3a859daedd51
+    FromPortName: DesertTreeWeightBase
+    ToNodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
+    ToNodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    FromPortName: IceTreeWeightBase
+    ToNodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    FromPortName: ForestTreeWeight
+    ToNodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
+    FromPortName: DesertTreeWeight
+    ToNodeId: 68905719-fc24-450e-8b09-869ff286d755
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
+    FromPortName: JungleTreeWeight
+    ToNodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
+    FromPortName: IceTreeWeight
+    ToNodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
+    FromPortName: TreePoints
+    ToNodeId: forest-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: forest-tree-point-offset
+    FromPortName: ForestTreePlacementPoints
+    ToNodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    FromPortName: JungleTreePoints
+    ToNodeId: jungle-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: jungle-tree-point-offset
+    FromPortName: JungleTreePlacementPoints
+    ToNodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
+    FromPortName: IceTreePoints
+    ToNodeId: ice-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: ice-tree-point-offset
+    FromPortName: IceTreePlacementPoints
+    ToNodeId: 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 68905719-fc24-450e-8b09-869ff286d755
+    FromPortName: CactusPoints
+    ToNodeId: cactus-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: cactus-point-offset
+    FromPortName: CactusPlacementPoints
+    ToNodeId: 598ec486-5ceb-4977-9ff6-cf36bb53fca2
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    FromPortName: CloudPoints
+    ToNodeId: 7d91fd3c-0f1a-4313-b849-600a81f07311
+    ToPortName: Points
+    CastMode: 0
+  StickyNotes: []
+  Groups:
+  - GroupId: SurfacePropPlacement-group
+    Title: Surface Placement
+    Position:
+      serializedVersion: 2
+      x: 1639
+      y: 696.52
+      width: 3889
+      height: 1820
+    ContainedNodeIds:
+    - d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    - 6999daac-7624-464b-9308-87663f179e01
+    - ced59584-f592-4d05-b4b5-487143502736
+    - surface-prop-placement-points
+    - surface-prop-placement-mask
+    - surface-prop-surface-mask
+    - surface-prop-placement-weights
+    - 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    - 62c2d399-7023-4628-b07a-c035317a8f19
+    - 757d030a-42ab-4f59-8055-d42881b78bd5
+    - ceb72be0-5035-400a-a151-3a859daedd51
+    - 10da511d-88ff-4bba-afc1-6df4beb35703
+    - fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    - 6510aebd-0ebe-4c96-9b81-a5be340738b8
+    - 480778a2-45e3-4772-96ff-64c8852c0f60
+    - fe4f3b73-12a8-4542-8106-2c0323c44b71
+    - forest-tree-point-offset
+    - 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    - 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
+    - jungle-tree-point-offset
+    - ab33acfc-89ad-47f4-b87a-1c2921219c01
+    - 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
+    - ice-tree-point-offset
+    - 68905719-fc24-450e-8b09-869ff286d755
+    - 598ec486-5ceb-4977-9ff6-cf36bb53fca2
+    - cactus-point-offset
+    - f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    - 7d91fd3c-0f1a-4313-b849-600a81f07311
+    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+  ExposedProperties: []

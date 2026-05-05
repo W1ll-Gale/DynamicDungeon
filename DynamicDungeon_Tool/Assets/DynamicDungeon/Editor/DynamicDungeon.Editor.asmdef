@@ -1,0 +1,22 @@
+{
+    "name": "DynamicDungeon.Editor",
+    "rootNamespace": "DynamicDungeon.Editor",
+    "references": [
+        "DynamicDungeon.Editor.Shared",
+        "DynamicDungeon.Runtime",
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "Unity.2D.Tilemap.Extras"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
