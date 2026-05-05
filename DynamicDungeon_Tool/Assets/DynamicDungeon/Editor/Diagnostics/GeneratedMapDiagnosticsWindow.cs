@@ -34,7 +34,6 @@ namespace DynamicDungeon.Editor.Diagnostics
     {
         private const float PickDistance = 2.0f;
 
-        // [SerializeField] fields survive domain reloads (Unity serialises EditorWindow)
         [SerializeField] private List<TilemapWorldGenerator> _targets = new List<TilemapWorldGenerator>();
         private List<TilemapWorldGenerator> _subscribedTargets = new List<TilemapWorldGenerator>();
         [SerializeField] private bool _rulesUsePhysics = true;
@@ -64,19 +63,19 @@ namespace DynamicDungeon.Editor.Diagnostics
         [SerializeField] private Vector2 _scroll;
         [SerializeField] private int _lastTargetsHash;
 
-        // Grid cell cache â€” survives domain reload, reconstructed without physics on OnEnable
-        [SerializeField] private int[]       _cachedCellSourceIndices;
+        
+        [SerializeField] private int[] _cachedCellSourceIndices;
         [SerializeField] private Vector3Int[] _cachedCellPositions;
-        [SerializeField] private bool[]      _cachedCellIsWalkable;
-        [SerializeField] private bool[]      _cachedCellIsAirCell;
-        [SerializeField] private string[]    _cachedCellBlockReasons;
-        [SerializeField] private string[]    _cachedCellSourceNames;
-        [SerializeField] private Vector3[]   _cachedCellWorldCenters;
-        [SerializeField] private Vector3[]   _cachedCellSizes;
-        [SerializeField] private Tilemap[]   _cachedCellTilemaps;
-        [SerializeField] private Grid[]      _cachedCellGrids;
-        [SerializeField] private string[]    _cachedGridSourceNames;
-        [SerializeField] private int         _cachedTargetsHash;
+        [SerializeField] private bool[] _cachedCellIsWalkable;
+        [SerializeField] private bool[] _cachedCellIsAirCell;
+        [SerializeField] private string[] _cachedCellBlockReasons;
+        [SerializeField] private string[] _cachedCellSourceNames;
+        [SerializeField] private Vector3[] _cachedCellWorldCenters;
+        [SerializeField] private Vector3[] _cachedCellSizes;
+        [SerializeField] private Tilemap[] _cachedCellTilemaps;
+        [SerializeField] private Grid[] _cachedCellGrids;
+        [SerializeField] private string[] _cachedGridSourceNames;
+        [SerializeField] private int _cachedTargetsHash;
         [SerializeField] private bool _cachedResultSuccess;
         [SerializeField] private string _cachedResultMessage;
         [SerializeField] private long _cachedResultElapsed;
@@ -91,7 +90,7 @@ namespace DynamicDungeon.Editor.Diagnostics
         [SerializeField] private GeneratedMapDiagnosticRunState _runState = GeneratedMapDiagnosticRunState.Idle;
         [SerializeField] private bool _showResultDetails;
 
-        // Non-serialised transient state (rebuilt on enable)
+        
         private GeneratedMapDiagnosticRules _rules;
         private GeneratedMapDiagnosticGrid _grid;
         private GeneratedMapDiagnosticResult _result;
@@ -130,11 +129,7 @@ namespace DynamicDungeon.Editor.Diagnostics
             }
         }
 
-        /// <summary>
-        /// Opens the window (if needed), switches to FloodFill, targets the generator, and starts
-        /// a run immediately. Called automatically when Auto Run Map Diagnostics is enabled.
-        /// Pass null to use auto-discovered scene tilemaps (e.g. from DungeonGenerator).
-        /// </summary>
+        
         public static void TriggerAutoFloodFill(TilemapWorldGenerator generator)
         {
             GeneratedMapDiagnosticsWindow window = GetWindow<GeneratedMapDiagnosticsWindow>();
@@ -280,18 +275,16 @@ namespace DynamicDungeon.Editor.Diagnostics
             menu.AddItem(new GUIContent("Force Rebuild Grid"), false, InvalidateGrid);
         }
 
-        // Written by background thread, read by main thread – must be volatile.
+        
         private volatile float _targetProgress;
         private volatile int _nodesVisited;
         private volatile int _nodesTotal;
         private volatile string _liveStatus;
         private float _displayProgress;
         private double _lastProgressUpdateTime;
+        private double _lastRepaintTime;
 
-        // Per-frame snapshots of volatile fields taken on the Layout event.
-        // Unity calls OnGUI twice per repaint (Layout then Repaint); the background thread can
-        // write volatile fields between those two calls, changing conditional control counts and
-        // causing a "Getting control N in a group with only N controls" layout mismatch.
+        
         private int _guiNodesVisited;
         private int _guiNodesTotal;
         private string _guiLiveStatus = string.Empty;
@@ -300,14 +293,13 @@ namespace DynamicDungeon.Editor.Diagnostics
             ActiveWindow = this;
             SceneView.duringSceneGui += OnSceneGUI;
 
-            // Restore serialized world positions
             _startWorldPosition = _hasStartWorldPosition ? (Vector3?)_startWorldPositionSerialized : null;
             _endWorldPosition   = _hasEndWorldPosition   ? (Vector3?)_endWorldPositionSerialized   : null;
 
-            // Rebuild the transient rules object from serialized fields
+            
             SyncRulesFromFields();
 
-            // Rebuild the ReorderableList for tilemap rules (lost on domain reload)
+            
             RebuildTilemapReorderableList();
 
             if (_targets.Count == 0)
@@ -315,7 +307,7 @@ namespace DynamicDungeon.Editor.Diagnostics
                 AddSelectionTargets();
             }
 
-            // Try to restore the cached grid (avoids full rebuild after domain reload)
+            
             if (!TryRestoreGridFromCache())
             {
                 _gridDirty = true;
@@ -354,9 +346,7 @@ namespace DynamicDungeon.Editor.Diagnostics
 
         private void OnGUI()
         {
-            // Snapshot volatile fields once per Layout pass so that the subsequent Repaint pass
-            // draws the exact same set of controls even if the background thread writes new values
-            // in the gap between the two calls.
+            
             if (Event.current.type == EventType.Layout)
             {
                 _guiNodesVisited = _nodesVisited;
@@ -1005,9 +995,24 @@ namespace DynamicDungeon.Editor.Diagnostics
 
             EditorUtility.DisplayProgressBar("Map Diagnostics", "Building visualization mesh...", 0.99f);
 
-            List<Vector3> vertices = new List<Vector3>();
-            List<Color> colors = new List<Color>();
-            List<int> indices = new List<int>();
+            int estimatedCells;
+            if (_result.Visited.Count > 0 && _result.Heat.Count == 0 && _result.Islands.Count == 0)
+            {
+                estimatedCells = _result.Visited.Count;
+            }
+            else if (_result.Heat.Count > 0)
+            {
+                estimatedCells = _result.Heat.Count;
+            }
+            else
+            {
+                estimatedCells = 0;
+                for (int ii = 0; ii < _result.Islands.Count; ii++) estimatedCells += _result.Islands[ii].Cells.Count;
+            }
+
+            List<Vector3> vertices = new List<Vector3>(estimatedCells * 4);
+            List<Color> colors = new List<Color>(estimatedCells * 4);
+            List<int> indices = new List<int>(estimatedCells * 6);
 
             if (_result.Visited.Count > 0 && _result.Heat.Count == 0 && _result.Islands.Count == 0)
             {
@@ -1054,7 +1059,7 @@ namespace DynamicDungeon.Editor.Diagnostics
                 _visualizationMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                 _visualizationMesh.SetVertices(vertices);
                 _visualizationMesh.SetColors(colors);
-                _visualizationMesh.SetIndices(indices.ToArray(), MeshTopology.Triangles, 0);
+                _visualizationMesh.SetIndices(indices, MeshTopology.Triangles, 0);
             }
 
             EditorUtility.ClearProgressBar();
@@ -1318,7 +1323,7 @@ namespace DynamicDungeon.Editor.Diagnostics
             // Unsubscribe from anything no longer in targets or now null
             for (int i = _subscribedTargets.Count - 1; i >= 0; i--)
             {
-                var target = _subscribedTargets[i];
+                TilemapWorldGenerator target = _subscribedTargets[i];
                 if (target == null || !_targets.Contains(target))
                 {
                     Unsubscribe(target);
@@ -1327,7 +1332,7 @@ namespace DynamicDungeon.Editor.Diagnostics
             }
 
             // Subscribe to new targets
-            foreach (var target in _targets)
+            foreach (TilemapWorldGenerator target in _targets)
             {
                 if (target != null && !_subscribedTargets.Contains(target))
                 {
@@ -1353,7 +1358,7 @@ namespace DynamicDungeon.Editor.Diagnostics
 
         private void ClearAllSubscriptions()
         {
-            foreach (var target in _subscribedTargets)
+            foreach (TilemapWorldGenerator target in _subscribedTargets)
             {
                 Unsubscribe(target);
             }
@@ -1425,7 +1430,11 @@ namespace DynamicDungeon.Editor.Diagnostics
 
             // Update the real progress field used for drawing
             _progress = _displayProgress;
-            Repaint();
+            if (currentTime - _lastRepaintTime >= 0.05)
+            {
+                _lastRepaintTime = currentTime;
+                Repaint();
+            }
         }
     
 
@@ -1480,7 +1489,7 @@ namespace DynamicDungeon.Editor.Diagnostics
             _cachedResultHeatKeys   = new GeneratedMapDiagnosticCellKey[_result.Heat.Count];
             _cachedResultHeatValues = new int[_result.Heat.Count];
             int i = 0;
-            foreach (var kvp in _result.Heat)
+            foreach (KeyValuePair<GeneratedMapDiagnosticCellKey,int> kvp in _result.Heat)
             {
                 _cachedResultHeatKeys[i]   = kvp.Key;
                 _cachedResultHeatValues[i] = kvp.Value;

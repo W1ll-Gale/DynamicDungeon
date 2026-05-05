@@ -111,13 +111,14 @@ namespace DynamicDungeon.Runtime.Diagnostics
         public bool IsAirCell;
         public bool IsWalkable;
         public string BlockReason = string.Empty;
+        internal int _cellListIndex = -1;
     }
 
     public sealed class GeneratedMapDiagnosticGrid
     {
         public readonly List<GeneratedMapDiagnosticCell> Cells = new List<GeneratedMapDiagnosticCell>();
         public readonly Dictionary<GeneratedMapDiagnosticCellKey, GeneratedMapDiagnosticCell> CellsByKey = new Dictionary<GeneratedMapDiagnosticCellKey, GeneratedMapDiagnosticCell>();
-        public readonly Dictionary<Vector3Int, List<GeneratedMapDiagnosticCell>> SpatialHash = new Dictionary<Vector3Int, List<GeneratedMapDiagnosticCell>>();
+        public readonly Dictionary<Vector3Int, HashSet<GeneratedMapDiagnosticCell>> SpatialHash = new Dictionary<Vector3Int, HashSet<GeneratedMapDiagnosticCell>>();
         public readonly List<string> Errors = new List<string>();
         public readonly List<string> SourceNames = new List<string>();
 
@@ -169,23 +170,19 @@ namespace DynamicDungeon.Runtime.Diagnostics
             new Vector3Int(-1, -1, 0)
         };
 
-        /// <summary>
-        /// Reconstructs a <see cref="GeneratedMapDiagnosticGrid"/> from flat arrays that are
-        /// safe to serialize with Unity's serializer (e.g. in an EditorWindow).
-        /// No physics queries are performed â€” call this after a domain reload to avoid rebuilding.
-        /// </summary>
+        
         public static GeneratedMapDiagnosticGrid RestoreGrid(
-            int[]       sourceIndices,
+            int[] sourceIndices,
             Vector3Int[] cellPositions,
-            bool[]      isWalkable,
-            bool[]      isAirCell,
-            string[]    blockReasons,
-            string[]    cellSourceNames,
-            Vector3[]   worldCenters,
-            Vector3[]   cellSizes,
-            Tilemap[]   tilemaps,
-            Grid[]      grids,
-            string[]    gridSourceNames)
+            bool[] isWalkable,
+            bool[] isAirCell,
+            string[] blockReasons,
+            string[] cellSourceNames,
+            Vector3[] worldCenters,
+            Vector3[] cellSizes,
+            Tilemap[] tilemaps,
+            Grid[] grids,
+            string[] gridSourceNames)
         {
             GeneratedMapDiagnosticGrid grid = new GeneratedMapDiagnosticGrid();
             if (gridSourceNames != null)
@@ -230,7 +227,7 @@ namespace DynamicDungeon.Runtime.Diagnostics
             GeneratedMapDiagnosticRules effectiveRules = CreateEffectiveRules(resolvedRules);
             int sourceIndex = 0;
 
-            // Pre-calculate total generator cells so we can report meaningful progress.
+            
             int totalGeneratorCells = 0;
             if (generators != null)
             {
@@ -242,7 +239,7 @@ namespace DynamicDungeon.Runtime.Diagnostics
                 }
             }
             int cellsDone = 0;
-            // Generator processing uses 0–80% of the bar; discovered tilemaps get 80–99%.
+            
             float generatorShare = 0.80f;
 
             if (generators != null)
@@ -378,7 +375,7 @@ namespace DynamicDungeon.Runtime.Diagnostics
 
                     GeneratedMapDiagnosticCellKey candidateKey = new GeneratedMapDiagnosticCellKey(currentSourceIndex, position);
 
-                    // Air cells don't displace existing tile cells from another source
+                    
                     if (!hasTile && diagnosticGrid.CellsByKey.ContainsKey(candidateKey))
                     {
                         continue;
@@ -470,16 +467,18 @@ namespace DynamicDungeon.Runtime.Diagnostics
             GeneratedMapDiagnosticCell existingCell = null;
             if (diagnosticGrid.CellsByKey.TryGetValue(diagnosticCell.Key, out existingCell))
             {
-                int existingIndex = diagnosticGrid.Cells.IndexOf(existingCell);
-                if (existingIndex >= 0)
+                int existingIndex = existingCell._cellListIndex;
+                if (existingIndex >= 0 && existingIndex < diagnosticGrid.Cells.Count)
                 {
                     diagnosticGrid.Cells[existingIndex] = diagnosticCell;
+                    diagnosticCell._cellListIndex = existingIndex;
                 }
 
                 diagnosticGrid.CellsByKey[diagnosticCell.Key] = diagnosticCell;
             }
             else
             {
+                diagnosticCell._cellListIndex = diagnosticGrid.Cells.Count;
                 diagnosticGrid.Cells.Add(diagnosticCell);
                 diagnosticGrid.CellsByKey[diagnosticCell.Key] = diagnosticCell;
             }
@@ -491,17 +490,17 @@ namespace DynamicDungeon.Runtime.Diagnostics
                 Mathf.FloorToInt(diagnosticCell.WorldCenter.z / step)
             );
 
-            if (!diagnosticGrid.SpatialHash.TryGetValue(spatialKey, out List<GeneratedMapDiagnosticCell> list))
+            if (!diagnosticGrid.SpatialHash.TryGetValue(spatialKey, out HashSet<GeneratedMapDiagnosticCell> bucket))
             {
-                list = new List<GeneratedMapDiagnosticCell>();
-                diagnosticGrid.SpatialHash[spatialKey] = list;
+                bucket = new HashSet<GeneratedMapDiagnosticCell>();
+                diagnosticGrid.SpatialHash[spatialKey] = bucket;
             }
 
             if (existingCell != null)
             {
-                list.Remove(existingCell);
+                bucket.Remove(existingCell);
             }
-            list.Add(diagnosticCell);
+            bucket.Add(diagnosticCell);
         }
 
         public static GeneratedMapDiagnosticCell PickNearestCell(GeneratedMapDiagnosticGrid grid, Vector3 worldPosition, float maximumDistance)
@@ -566,32 +565,41 @@ namespace DynamicDungeon.Runtime.Diagnostics
                 return result;
             }
 
-            List<GeneratedMapDiagnosticCellKey> open = new List<GeneratedMapDiagnosticCellKey>();
+            MinHeap<GeneratedMapDiagnosticCellKey> openHeap = new MinHeap<GeneratedMapDiagnosticCellKey>();
+            HashSet<GeneratedMapDiagnosticCellKey> openSet = new HashSet<GeneratedMapDiagnosticCellKey>();
             HashSet<GeneratedMapDiagnosticCellKey> closed = new HashSet<GeneratedMapDiagnosticCellKey>();
             Dictionary<GeneratedMapDiagnosticCellKey, GeneratedMapDiagnosticCellKey> cameFrom = new Dictionary<GeneratedMapDiagnosticCellKey, GeneratedMapDiagnosticCellKey>();
             Dictionary<GeneratedMapDiagnosticCellKey, float> gScore = new Dictionary<GeneratedMapDiagnosticCellKey, float>();
             Dictionary<GeneratedMapDiagnosticCellKey, float> fScore = new Dictionary<GeneratedMapDiagnosticCellKey, float>();
-            open.Add(start);
             gScore[start] = 0.0f;
             fScore[start] = Heuristic(startCell, endCell);
+            openHeap.Enqueue(start, fScore[start]);
+            openSet.Add(start);
+            List<GeneratedMapDiagnosticCell> neighborBuffer = new List<GeneratedMapDiagnosticCell>(8);
 
-            while (open.Count > 0)
+            while (openHeap.Count > 0)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                GeneratedMapDiagnosticCellKey current = PopLowest(open, fScore);
+                GeneratedMapDiagnosticCellKey current = openHeap.Dequeue();
+                if (closed.Contains(current))
+                {
+                    continue;
+                }
+
                 result.Visited.Add(current);
                 if (progress != null && result.Visited.Count % 10 == 0)
                 {
                     int totalWalkable = result.WalkableCellCount;
                     if (totalWalkable == 0) totalWalkable = 1;
-                    progress.Report(new GeneratedMapDiagnosticProgress 
-                    { 
+                    progress.Report(new GeneratedMapDiagnosticProgress
+                    {
                         Progress = Mathf.Clamp01((float)result.Visited.Count / totalWalkable),
                         NodesVisited = result.Visited.Count,
                         NodesTotal = totalWalkable,
                         Status = "Calculating Heatmap..."
                     });
                 }
+
                 if (current.Equals(end))
                 {
                     ReconstructPath(cameFrom, current, result.Path);
@@ -602,29 +610,34 @@ namespace DynamicDungeon.Runtime.Diagnostics
                 }
 
                 closed.Add(current);
+                openSet.Remove(current);
                 if (progress != null && closed.Count % 10 == 0)
                 {
                     float dist = Heuristic(grid.CellsByKey[current], endCell);
                     float initialDist = fScore[start];
                     float p = initialDist > 0 ? 1.0f - (dist / initialDist) : 0.0f;
-                    progress.Report(new GeneratedMapDiagnosticProgress 
-                    { 
+                    progress.Report(new GeneratedMapDiagnosticProgress
+                    {
                         Progress = Mathf.Clamp(p, 0.05f, 0.95f),
                         NodesVisited = result.Visited.Count,
                         Status = "Pathfinding..."
                     });
                 }
-                foreach (GeneratedMapDiagnosticCell neighbor in GetWalkableNeighbors(grid, current, rules))
+
+                neighborBuffer.Clear();
+                GetWalkableNeighbors(grid, current, rules, neighborBuffer);
+                for (int ni = 0; ni < neighborBuffer.Count; ni++)
                 {
+                    GeneratedMapDiagnosticCell neighbor = neighborBuffer[ni];
                     if (closed.Contains(neighbor.Key))
                     {
                         continue;
                     }
 
                     float tentativeGScore = GetScore(gScore, current, float.PositiveInfinity) + Vector3.Distance(grid.CellsByKey[current].WorldCenter, neighbor.WorldCenter);
-                    if (!open.Contains(neighbor.Key))
+                    if (!openSet.Contains(neighbor.Key))
                     {
-                        open.Add(neighbor.Key);
+                        openSet.Add(neighbor.Key);
                     }
                     else if (tentativeGScore >= GetScore(gScore, neighbor.Key, float.PositiveInfinity))
                     {
@@ -634,6 +647,7 @@ namespace DynamicDungeon.Runtime.Diagnostics
                     cameFrom[neighbor.Key] = current;
                     gScore[neighbor.Key] = tentativeGScore;
                     fScore[neighbor.Key] = tentativeGScore + Heuristic(neighbor, endCell);
+                    openHeap.Enqueue(neighbor.Key, fScore[neighbor.Key]);
                 }
             }
 
@@ -667,35 +681,37 @@ namespace DynamicDungeon.Runtime.Diagnostics
             }
 
             Queue<GeneratedMapDiagnosticCellKey> queue = new Queue<GeneratedMapDiagnosticCellKey>();
+            HashSet<GeneratedMapDiagnosticCellKey> visitedSet = new HashSet<GeneratedMapDiagnosticCellKey>();
             queue.Enqueue(start);
+            visitedSet.Add(start);
             result.Heat[start] = 0;
+            List<GeneratedMapDiagnosticCell> neighborBuffer = new List<GeneratedMapDiagnosticCell>(8);
 
             while (queue.Count > 0)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 GeneratedMapDiagnosticCellKey current = queue.Dequeue();
-                if (result.Visited.Contains(current))
-                {
-                    continue;
-                }
-
                 result.Visited.Add(current);
                 if (progress != null && result.Visited.Count % 10 == 0)
                 {
                     int totalWalkable = result.WalkableCellCount;
                     if (totalWalkable == 0) totalWalkable = 1;
-                    progress.Report(new GeneratedMapDiagnosticProgress 
-                    { 
+                    progress.Report(new GeneratedMapDiagnosticProgress
+                    {
                         Progress = Mathf.Clamp01((float)result.Visited.Count / totalWalkable),
                         NodesVisited = result.Visited.Count,
                         NodesTotal = totalWalkable,
                         Status = "Calculating Heatmap..."
                     });
                 }
+
                 int currentDepth = result.Heat[current];
-                foreach (GeneratedMapDiagnosticCell neighbor in GetWalkableNeighbors(grid, current, rules))
+                neighborBuffer.Clear();
+                GetWalkableNeighbors(grid, current, rules, neighborBuffer);
+                for (int ni = 0; ni < neighborBuffer.Count; ni++)
                 {
-                    if (result.Heat.ContainsKey(neighbor.Key))
+                    GeneratedMapDiagnosticCell neighbor = neighborBuffer[ni];
+                    if (!visitedSet.Add(neighbor.Key))
                     {
                         continue;
                     }
@@ -729,6 +745,7 @@ namespace DynamicDungeon.Runtime.Diagnostics
             }
 
             HashSet<GeneratedMapDiagnosticCellKey> assigned = new HashSet<GeneratedMapDiagnosticCellKey>();
+            List<GeneratedMapDiagnosticCell> neighborBuffer = new List<GeneratedMapDiagnosticCell>(8);
             int cellIndex;
             for (cellIndex = 0; cellIndex < grid.Cells.Count; cellIndex++)
             {
@@ -764,8 +781,12 @@ namespace DynamicDungeon.Runtime.Diagnostics
                             Status = "Flood Filling..."
                         });
                     }
-                    foreach (GeneratedMapDiagnosticCell neighbor in GetWalkableNeighbors(grid, current, rules))
+
+                    neighborBuffer.Clear();
+                    GetWalkableNeighbors(grid, current, rules, neighborBuffer);
+                    for (int ni = 0; ni < neighborBuffer.Count; ni++)
                     {
+                        GeneratedMapDiagnosticCell neighbor = neighborBuffer[ni];
                         if (assigned.Contains(neighbor.Key))
                         {
                             continue;
@@ -815,12 +836,12 @@ namespace DynamicDungeon.Runtime.Diagnostics
             result.ElapsedMilliseconds = stopwatch.ElapsedMilliseconds;
         }
 
-        private static IEnumerable<GeneratedMapDiagnosticCell> GetWalkableNeighbors(GeneratedMapDiagnosticGrid grid, GeneratedMapDiagnosticCellKey key, GeneratedMapDiagnosticRules rules)
+        private static void GetWalkableNeighbors(GeneratedMapDiagnosticGrid grid, GeneratedMapDiagnosticCellKey key, GeneratedMapDiagnosticRules rules, List<GeneratedMapDiagnosticCell> results)
         {
             Vector3Int[] directions = rules != null && rules.AllowDiagonal ? DiagonalDirections : CardinalDirections;
             if (!grid.TryGetCell(key, out GeneratedMapDiagnosticCell currentCell))
             {
-                yield break;
+                return;
             }
 
             int index;
@@ -829,7 +850,7 @@ namespace DynamicDungeon.Runtime.Diagnostics
                 GeneratedMapDiagnosticCellKey neighborKey = new GeneratedMapDiagnosticCellKey(key.SourceIndex, key.Cell + directions[index]);
                 if (grid.TryGetCell(neighborKey, out GeneratedMapDiagnosticCell neighbor) && neighbor.IsWalkable)
                 {
-                    yield return neighbor;
+                    results.Add(neighbor);
                 }
             }
 
@@ -845,11 +866,10 @@ namespace DynamicDungeon.Runtime.Diagnostics
                 for (int y = -1; y <= 1; y++)
                 {
                     Vector3Int searchKey = spatialKey + new Vector3Int(x, y, 0);
-                    if (grid.SpatialHash.TryGetValue(searchKey, out List<GeneratedMapDiagnosticCell> list))
+                    if (grid.SpatialHash.TryGetValue(searchKey, out HashSet<GeneratedMapDiagnosticCell> bucket))
                     {
-                        for (int i = 0; i < list.Count; i++)
+                        foreach (GeneratedMapDiagnosticCell candidate in bucket)
                         {
-                            GeneratedMapDiagnosticCell candidate = list[i];
                             if (candidate.Key.SourceIndex == key.SourceIndex || !candidate.IsWalkable)
                             {
                                 continue;
@@ -858,14 +878,14 @@ namespace DynamicDungeon.Runtime.Diagnostics
                             Vector3 delta = candidate.WorldCenter - currentCell.WorldCenter;
                             float maxAxis = Mathf.Max(Mathf.Abs(delta.x), Mathf.Abs(delta.y));
                             float minAxis = Mathf.Min(Mathf.Abs(delta.x), Mathf.Abs(delta.y));
-                            
+
                             bool adjacent = rules != null && rules.AllowDiagonal
                                 ? maxAxis <= step * 1.25f
                                 : maxAxis <= step * 1.25f && minAxis <= step * 0.25f;
-                                
+
                             if (adjacent)
                             {
-                                yield return candidate;
+                                results.Add(candidate);
                             }
                         }
                     }
@@ -952,6 +972,8 @@ namespace DynamicDungeon.Runtime.Diagnostics
             return true;
         }
 
+        private static readonly Collider2D[] _physicsBuffer = new Collider2D[1];
+
         private static bool PhysicsBlocksCell(GeneratedMapDiagnosticCell cell, GeneratedMapDiagnosticRules rules)
         {
             Vector2 size = rules.PhysicsQuerySize;
@@ -965,8 +987,7 @@ namespace DynamicDungeon.Runtime.Diagnostics
             filter.layerMask = rules.PhysicsLayerMask;
             filter.useTriggers = true;
 
-            Collider2D[] colliders = new Collider2D[1];
-            int count = Physics2D.OverlapBox(cell.WorldCenter, size, 0.0f, filter, colliders);
+            int count = Physics2D.OverlapBox(cell.WorldCenter, size, 0.0f, filter, _physicsBuffer);
             return count > 0;
         }
 
@@ -1131,24 +1152,73 @@ namespace DynamicDungeon.Runtime.Diagnostics
             return Vector3.Distance(left.WorldCenter, right.WorldCenter);
         }
 
-        private static GeneratedMapDiagnosticCellKey PopLowest(List<GeneratedMapDiagnosticCellKey> open, Dictionary<GeneratedMapDiagnosticCellKey, float> scores)
+        private sealed class MinHeap<T>
         {
-            int bestIndex = 0;
-            float bestScore = GetScore(scores, open[0], float.PositiveInfinity);
-            int index;
-            for (index = 1; index < open.Count; index++)
+            private readonly List<(T Item, float Priority)> _data = new List<(T Item, float Priority)>();
+
+            public int Count => _data.Count;
+
+            public void Enqueue(T item, float priority)
             {
-                float score = GetScore(scores, open[index], float.PositiveInfinity);
-                if (score < bestScore)
+                _data.Add((item, priority));
+                BubbleUp(_data.Count - 1);
+            }
+
+            public T Dequeue()
+            {
+                T result = _data[0].Item;
+                int last = _data.Count - 1;
+                _data[0] = _data[last];
+                _data.RemoveAt(last);
+                if (_data.Count > 0)
                 {
-                    bestIndex = index;
-                    bestScore = score;
+                    SiftDown(0);
+                }
+                return result;
+            }
+
+            private void BubbleUp(int i)
+            {
+                while (i > 0)
+                {
+                    int parent = (i - 1) >> 1;
+                    if (_data[parent].Priority <= _data[i].Priority)
+                    {
+                        break;
+                    }
+                    (T Item, float Priority) tmp = _data[parent];
+                    _data[parent] = _data[i];
+                    _data[i] = tmp;
+                    i = parent;
                 }
             }
 
-            GeneratedMapDiagnosticCellKey key = open[bestIndex];
-            open.RemoveAt(bestIndex);
-            return key;
+            private void SiftDown(int i)
+            {
+                int count = _data.Count;
+                while (true)
+                {
+                    int left = (i << 1) + 1;
+                    int right = left + 1;
+                    int smallest = i;
+                    if (left < count && _data[left].Priority < _data[smallest].Priority)
+                    {
+                        smallest = left;
+                    }
+                    if (right < count && _data[right].Priority < _data[smallest].Priority)
+                    {
+                        smallest = right;
+                    }
+                    if (smallest == i)
+                    {
+                        break;
+                    }
+                    (T Item, float Priority) tmp = _data[i];
+                    _data[i] = _data[smallest];
+                    _data[smallest] = tmp;
+                    i = smallest;
+                }
+            }
         }
 
         private static float GetScore(Dictionary<GeneratedMapDiagnosticCellKey, float> scores, GeneratedMapDiagnosticCellKey key, float fallback)

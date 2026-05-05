@@ -190,7 +190,7 @@ namespace DynamicDungeon.Runtime.Nodes
 
         private void RefreshChannelDeclarations()
         {
-            var declarations = new List<ChannelDeclaration>();
+            List<ChannelDeclaration> declarations = new List<ChannelDeclaration>();
 
             if (!string.IsNullOrWhiteSpace(_input1ChannelName)) declarations.Add(new ChannelDeclaration(_input1ChannelName, ChannelType.Float, false));
             if (!string.IsNullOrWhiteSpace(_input2ChannelName)) declarations.Add(new ChannelDeclaration(_input2ChannelName, ChannelType.Float, false));
