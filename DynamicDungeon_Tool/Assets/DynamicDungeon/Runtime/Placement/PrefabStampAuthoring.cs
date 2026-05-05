@@ -40,7 +40,8 @@ namespace DynamicDungeon.Runtime.Placement
             Vector3 derivedAnchorOffset;
             bool usesTilemapFootprint = TryExtractTilemapCells(out occupiedCells, out derivedAnchorOffset, out errorMessage);
             if (usesTilemapFootprint ||
-                TryExtractSnappedChildCells(out occupiedCells, out derivedAnchorOffset, out errorMessage))
+                TryExtractSnappedChildCells(out occupiedCells, out derivedAnchorOffset, out errorMessage) ||
+                TryExtractBoundsCells(out occupiedCells, out derivedAnchorOffset, out errorMessage))
             {
                 template.PrefabGuid = prefabGuid ?? string.Empty;
                 template.AnchorOffset = derivedAnchorOffset;
@@ -157,6 +158,77 @@ namespace DynamicDungeon.Runtime.Placement
             }
 
             occupiedCells.AddRange(uniqueCells);
+            occupiedCells.Sort(CompareCells);
+            return true;
+        }
+
+        private bool TryExtractBoundsCells(out List<Vector2Int> occupiedCells, out Vector3 derivedAnchorOffset, out string errorMessage)
+        {
+            occupiedCells = new List<Vector2Int>();
+            derivedAnchorOffset = _anchorOffset;
+            errorMessage = null;
+
+            Bounds? combinedBounds = null;
+
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] is TilemapRenderer) continue;
+                if (combinedBounds == null)
+                    combinedBounds = renderers[i].bounds;
+                else
+                {
+                    Bounds b = combinedBounds.Value;
+                    b.Encapsulate(renderers[i].bounds);
+                    combinedBounds = b;
+                }
+            }
+
+            Collider2D[] colliders = GetComponentsInChildren<Collider2D>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                if (combinedBounds == null)
+                    combinedBounds = colliders[i].bounds;
+                else
+                {
+                    Bounds b = combinedBounds.Value;
+                    b.Encapsulate(colliders[i].bounds);
+                    combinedBounds = b;
+                }
+            }
+
+            if (combinedBounds == null)
+            {
+                errorMessage = "No renderers or colliders found to derive footprint.";
+                return false;
+            }
+
+            float safeCellWidth = Mathf.Abs(_fallbackCellSize.x) > Mathf.Epsilon ? _fallbackCellSize.x : 1.0f;
+            float safeCellHeight = Mathf.Abs(_fallbackCellSize.y) > Mathf.Epsilon ? _fallbackCellSize.y : 1.0f;
+
+            Bounds bounds = combinedBounds.Value;
+            
+            Vector3 min = transform.InverseTransformPoint(bounds.min);
+            Vector3 max = transform.InverseTransformPoint(bounds.max);
+
+            int minCellX = Mathf.FloorToInt(min.x / safeCellWidth);
+            int minCellY = Mathf.FloorToInt(min.y / safeCellHeight);
+            int maxCellX = Mathf.FloorToInt(max.x / safeCellWidth);
+            int maxCellY = Mathf.FloorToInt(max.y / safeCellHeight);
+
+            for (int x = minCellX; x <= maxCellX; x++)
+            {
+                for (int y = minCellY; y <= maxCellY; y++)
+                {
+                    occupiedCells.Add(new Vector2Int(x - _originCell.x, y - _originCell.y));
+                }
+            }
+
+            if (occupiedCells.Count == 0)
+            {
+                occupiedCells.Add(new Vector2Int(-_originCell.x, -_originCell.y));
+            }
+
             occupiedCells.Sort(CompareCells);
             return true;
         }

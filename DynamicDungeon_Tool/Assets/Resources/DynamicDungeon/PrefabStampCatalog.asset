@@ -187,9 +187,11 @@ MonoBehaviour:
       PrefabGuid: 639adb5a56b036a45b1896313fbe734f
       AnchorOffset: {x: 0, y: 0, z: 0}
       SupportsRandomRotation: 0
-      UsesTilemapFootprint: 1
+      UsesTilemapFootprint: 0
       OccupiedCells:
       - {x: -1, y: 0}
       - {x: -1, y: 1}
       - {x: -1, y: 2}
-      - {x: -1, y: 3}
+      - {x: 0, y: 0}
+      - {x: 0, y: 1}
+      - {x: 0, y: 2}

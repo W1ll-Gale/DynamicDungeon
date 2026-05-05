@@ -86,16 +86,21 @@ namespace DynamicDungeon.Runtime.Placement
             }
 
             PrefabStampAuthoring authoring = prefab.GetComponent<PrefabStampAuthoring>();
-            if (authoring == null)
-            {
-                errorMessage = "Prefab '" + prefab.name + "' requires a PrefabStampAuthoring component.";
-                return false;
-            }
-
             PrefabStampTemplate template;
-            if (!authoring.TryBuildTemplate(prefabGuid, out template, out errorMessage))
+
+            if (authoring != null)
             {
-                return false;
+                if (!authoring.TryBuildTemplate(prefabGuid, out template, out errorMessage))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (!TryBuildTemplateFromBounds(prefab, prefabGuid, out template, out errorMessage))
+                {
+                    return false;
+                }
             }
 
             bool changed;
@@ -105,6 +110,76 @@ namespace DynamicDungeon.Runtime.Placement
                 EditorUtility.SetDirty(catalog);
                 AssetDatabase.SaveAssets();
             }
+
+            return true;
+        }
+
+        private static bool TryBuildTemplateFromBounds(GameObject prefab, string prefabGuid, out PrefabStampTemplate template, out string errorMessage)
+        {
+            template = default;
+            errorMessage = null;
+
+            Bounds? combinedBounds = null;
+
+            Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] is UnityEngine.Tilemaps.TilemapRenderer) continue;
+                if (combinedBounds == null)
+                    combinedBounds = renderers[i].bounds;
+                else
+                {
+                    Bounds b = combinedBounds.Value;
+                    b.Encapsulate(renderers[i].bounds);
+                    combinedBounds = b;
+                }
+            }
+
+            Collider2D[] colliders = prefab.GetComponentsInChildren<Collider2D>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                if (combinedBounds == null)
+                    combinedBounds = colliders[i].bounds;
+                else
+                {
+                    Bounds b = combinedBounds.Value;
+                    b.Encapsulate(colliders[i].bounds);
+                    combinedBounds = b;
+                }
+            }
+
+            List<Vector2Int> occupiedCells = new List<Vector2Int>();
+
+            if (combinedBounds != null)
+            {
+                Bounds bounds = combinedBounds.Value;
+                Vector3 min = prefab.transform.InverseTransformPoint(bounds.min);
+                Vector3 max = prefab.transform.InverseTransformPoint(bounds.max);
+
+                int minCellX = Mathf.FloorToInt(min.x);
+                int minCellY = Mathf.FloorToInt(min.y);
+                int maxCellX = Mathf.FloorToInt(max.x);
+                int maxCellY = Mathf.FloorToInt(max.y);
+
+                for (int x = minCellX; x <= maxCellX; x++)
+                {
+                    for (int y = minCellY; y <= maxCellY; y++)
+                    {
+                        occupiedCells.Add(new Vector2Int(x, y));
+                    }
+                }
+            }
+
+            if (occupiedCells.Count == 0)
+            {
+                occupiedCells.Add(Vector2Int.zero);
+            }
+
+            template.PrefabGuid = prefabGuid ?? string.Empty;
+            template.AnchorOffset = Vector3.zero;
+            template.SupportsRandomRotation = false;
+            template.UsesTilemapFootprint = false;
+            template.OccupiedCells = occupiedCells.ToArray();
 
             return true;
         }
