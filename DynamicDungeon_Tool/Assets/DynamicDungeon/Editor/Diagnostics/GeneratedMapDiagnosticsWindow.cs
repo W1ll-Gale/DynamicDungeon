@@ -14,6 +14,15 @@ using UnityEngine.Tilemaps;
 
 namespace DynamicDungeon.Editor.Diagnostics
 {
+    public enum GeneratedMapDiagnosticRunState
+    {
+        Idle,
+        Running,
+        Succeeded,
+        Failed,
+        Cancelled
+    }
+
     [System.Serializable]
     public sealed class TilemapLayerRuleEntry
     {
@@ -79,6 +88,8 @@ namespace DynamicDungeon.Editor.Diagnostics
         [SerializeField] private int[] _cachedResultHeatValues;
         [SerializeField] private string _status = "Idle";
         [SerializeField] private string _lastError = string.Empty;
+        [SerializeField] private GeneratedMapDiagnosticRunState _runState = GeneratedMapDiagnosticRunState.Idle;
+        [SerializeField] private bool _showResultDetails;
 
         // Non-serialised transient state (rebuilt on enable)
         private GeneratedMapDiagnosticRules _rules;
@@ -152,6 +163,7 @@ namespace DynamicDungeon.Editor.Diagnostics
         public GeneratedMapDiagnosticCellKey? EndKey => _end;
         public bool IsRunning => _isRunning;
         public string LastError => _lastError;
+        public GeneratedMapDiagnosticRunState RunState => _runState;
 
         public void SetActiveTool(GeneratedMapDiagnosticTool tool)
         {
@@ -244,6 +256,7 @@ namespace DynamicDungeon.Editor.Diagnostics
             _hasEndWorldPosition = false;
             _status = "Cleared.";
             _lastError = string.Empty;
+            _runState = GeneratedMapDiagnosticRunState.Idle;
             _progress = 0.0f;
             _showProgress = false;
 
@@ -307,6 +320,8 @@ namespace DynamicDungeon.Editor.Diagnostics
             {
                 _gridDirty = true;
             }
+
+            NormalizeRestoredDiagnosticState();
             UpdateSubscriptions();
         }
 
@@ -651,7 +666,7 @@ namespace DynamicDungeon.Editor.Diagnostics
                     GenerateLabel = "RUN DIAGNOSTIC",
                     GeneratingLabel = "RUNNING DIAGNOSTIC...",
                     ClearLabel = "CLEAR DIAGNOSTIC",
-                    Status = _status,
+                    Status = _isRunning ? BuildGeneratingLabel() : _status,
                     Progress = _progress,
                     CanGenerate = !_isRunning,
                     CanClear = !_isRunning,
@@ -689,57 +704,7 @@ namespace DynamicDungeon.Editor.Diagnostics
                 }
             }
 
-            if (_result == null)
-            {
-                EditorGUILayout.LabelField("No diagnostic result yet.");
-                if (!string.IsNullOrWhiteSpace(_lastError))
-                {
-                    EditorGUILayout.HelpBox(_lastError, MessageType.Error);
-                }
-
-                if (!string.IsNullOrWhiteSpace(_status))
-                {
-                    EditorGUILayout.HelpBox(_status, MessageType.Info);
-                }
-
-                if (_isRunning)
-                {
-                    EditorGUILayout.LabelField("Live Stats", EditorStyles.boldLabel);
-                    if (!string.IsNullOrEmpty(_guiLiveStatus)) EditorGUILayout.LabelField("Task", _guiLiveStatus);
-                    EditorGUILayout.LabelField("Nodes Visited", _guiNodesVisited.ToString());
-                    if (_guiNodesTotal > 0) EditorGUILayout.LabelField("Nodes Total", _guiNodesTotal.ToString());
-                }
-                return;
-            }
-
-            EditorGUILayout.LabelField("Result", _result.Success ? "Success" : "Failed");
-            EditorGUILayout.LabelField("Message", _result.Message);
-            EditorGUILayout.LabelField("Elapsed", _result.ElapsedMilliseconds + " ms");
-            EditorGUILayout.LabelField("Walkable / Blocked", _result.WalkableCellCount + " / " + _result.BlockedCellCount);
-            EditorGUILayout.LabelField("Visited", _result.Visited.Count.ToString());
-            if (_result.Path.Count > 0)
-            {
-                EditorGUILayout.LabelField("Path Length", _result.Path.Count.ToString());
-            }
-
-            if (_result.Islands.Count > 0)
-            {
-                EditorGUILayout.LabelField("Islands", _result.Islands.Count.ToString());
-                GeneratedMapDiagnosticIsland largest = null;
-                int index;
-                for (index = 0; index < _result.Islands.Count; index++)
-                {
-                    if (largest == null || _result.Islands[index].Cells.Count > largest.Cells.Count)
-                    {
-                        largest = _result.Islands[index];
-                    }
-                }
-
-                if (largest != null)
-                {
-                    EditorGUILayout.LabelField("Largest Island", largest.Cells.Count.ToString());
-                }
-            }
+            DrawResultSummaryUI();
         }
 
         private void OnSceneGUI(SceneView sceneView)
@@ -885,6 +850,7 @@ namespace DynamicDungeon.Editor.Diagnostics
             _progress = 0.05f;
             _lastError = string.Empty;
             _result = null;
+            _runState = GeneratedMapDiagnosticRunState.Running;
             Repaint();
 
             try
@@ -943,6 +909,7 @@ namespace DynamicDungeon.Editor.Diagnostics
 
                 _targetProgress = 1.0f; _displayProgress = 1.0f; _progress = 1.0f;
                 _status = _result.Message;
+                _runState = _result.Success ? GeneratedMapDiagnosticRunState.Succeeded : GeneratedMapDiagnosticRunState.Failed;
                 BuildVisualizationMesh();
                 Repaint();
                 SceneView.RepaintAll();
@@ -950,12 +917,14 @@ namespace DynamicDungeon.Editor.Diagnostics
             catch (OperationCanceledException)
             {
                 _status = "Diagnostic run cancelled.";
+                _runState = GeneratedMapDiagnosticRunState.Cancelled;
                 _progress = 0.0f;
             }
             catch (Exception exception)
             {
                 _lastError = exception.GetType().Name + ": " + exception.Message;
                 _status = "Diagnostic run failed.";
+                _runState = GeneratedMapDiagnosticRunState.Failed;
                 Debug.LogException(exception);
                 ShowNotification(new GUIContent("Diagnostic run failed. See Stats/Console."));
             }
@@ -1541,6 +1510,240 @@ namespace DynamicDungeon.Editor.Diagnostics
             }
 
             BuildVisualizationMesh();
+        }
+
+        private void NormalizeRestoredDiagnosticState()
+        {
+            if (_runState != GeneratedMapDiagnosticRunState.Idle)
+            {
+                return;
+            }
+
+            if (_result != null && HasMeaningfulResult(_result))
+            {
+                _runState = _result.Success ? GeneratedMapDiagnosticRunState.Succeeded : GeneratedMapDiagnosticRunState.Failed;
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_lastError))
+            {
+                _runState = GeneratedMapDiagnosticRunState.Failed;
+                return;
+            }
+
+            _result = null;
+        }
+
+        private string GetRunStateLabel(GeneratedMapDiagnosticRunState state)
+        {
+            switch (state)
+            {
+                case GeneratedMapDiagnosticRunState.Running:
+                    return "Running";
+                case GeneratedMapDiagnosticRunState.Succeeded:
+                    return "Success";
+                case GeneratedMapDiagnosticRunState.Failed:
+                    return "Failed";
+                case GeneratedMapDiagnosticRunState.Cancelled:
+                    return "Cancelled";
+                default:
+                    return "Idle";
+            }
+        }
+
+        private MessageType GetRunStateMessageType(GeneratedMapDiagnosticRunState state)
+        {
+            switch (state)
+            {
+                case GeneratedMapDiagnosticRunState.Succeeded:
+                    return MessageType.Info;
+                case GeneratedMapDiagnosticRunState.Failed:
+                    return MessageType.Error;
+                case GeneratedMapDiagnosticRunState.Cancelled:
+                    return MessageType.Warning;
+                case GeneratedMapDiagnosticRunState.Running:
+                    return MessageType.Info;
+                default:
+                    return MessageType.Info;
+            }
+        }
+
+        public void DrawResultSummaryUI()
+        {
+            if (_runState == GeneratedMapDiagnosticRunState.Idle && _result == null && string.IsNullOrWhiteSpace(_lastError))
+            {
+                EditorGUILayout.LabelField("Idle", EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox("No diagnostic run has been executed yet.", MessageType.Info);
+                return;
+            }
+
+            Color previousContentColor = GUI.contentColor;
+            GUI.contentColor = GetRunStateAccentColor(_runState);
+            EditorGUILayout.LabelField(BuildResultHeadline(), EditorStyles.boldLabel);
+            GUI.contentColor = previousContentColor;
+
+            if (!string.IsNullOrWhiteSpace(_lastError))
+            {
+                EditorGUILayout.HelpBox(_lastError, MessageType.Error);
+            }
+
+            if (_runState == GeneratedMapDiagnosticRunState.Running)
+            {
+                return;
+
+            }
+
+            if (_result == null)
+            {
+                return;
+            }
+
+            _showResultDetails = EditorGUILayout.Foldout(_showResultDetails, "Extra info", true);
+            if (!_showResultDetails)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            DrawDetailRow("Message", _result.Message);
+            DrawDetailRow("Time", _result.ElapsedMilliseconds + " ms");
+            DrawDetailRow("Cells", "walkable " + _result.WalkableCellCount + ", blocked " + _result.BlockedCellCount);
+            DrawDetailRow("Visited", _result.Visited.Count.ToString());
+            if (_result.Path.Count > 0)
+            {
+                DrawDetailRow("Path", _result.Path.Count.ToString());
+            }
+
+            if (_result.Islands.Count > 0)
+            {
+                DrawDetailRow("Islands", _result.Islands.Count.ToString());
+                GeneratedMapDiagnosticIsland largest = null;
+                int index;
+                for (index = 0; index < _result.Islands.Count; index++)
+                {
+                    if (largest == null || _result.Islands[index].Cells.Count > largest.Cells.Count)
+                    {
+                        largest = _result.Islands[index];
+                    }
+                }
+
+                if (largest != null)
+                {
+                    DrawDetailRow("Largest island", largest.Cells.Count.ToString());
+                }
+            }
+
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawDetailRow(string label, string value)
+        {
+            EditorGUILayout.LabelField(label, EditorStyles.miniBoldLabel);
+            EditorGUILayout.LabelField(string.IsNullOrWhiteSpace(value) ? "-" : value, EditorStyles.wordWrappedMiniLabel);
+        }
+
+        private Color GetRunStateAccentColor(GeneratedMapDiagnosticRunState state)
+        {
+            switch (state)
+            {
+                case GeneratedMapDiagnosticRunState.Succeeded:
+                    return new Color(0.35f, 0.85f, 0.45f);
+                case GeneratedMapDiagnosticRunState.Failed:
+                    return new Color(0.95f, 0.35f, 0.35f);
+                case GeneratedMapDiagnosticRunState.Cancelled:
+                    return new Color(0.95f, 0.72f, 0.25f);
+                case GeneratedMapDiagnosticRunState.Running:
+                    return new Color(0.35f, 0.75f, 1.0f);
+                default:
+                    return new Color(0.78f, 0.78f, 0.78f);
+            }
+        }
+
+        private string BuildResultHeadline()
+        {
+            if (_runState == GeneratedMapDiagnosticRunState.Idle)
+            {
+                return "Idle";
+            }
+
+            if (_runState == GeneratedMapDiagnosticRunState.Running)
+            {
+                return BuildGeneratingLabel();
+            }
+
+            string label = GetRunStateLabel(_runState);
+            string message = _result != null && !string.IsNullOrWhiteSpace(_result.Message) ? _result.Message : _status;
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return label;
+            }
+
+            return label + ": " + message;
+        }
+
+        private string BuildGeneratingLabel()
+        {
+            int percentage = Mathf.Clamp(Mathf.RoundToInt((_progress <= 0.0f ? 0.0f : _progress) * 100.0f), 0, 99);
+            return "Generating [" + percentage + "%]";
+        }
+
+        public string BuildResultSummary()
+        {
+            if (_runState == GeneratedMapDiagnosticRunState.Idle)
+            {
+                return "Idle: no diagnostic run has been executed yet.";
+            }
+
+            if (_runState == GeneratedMapDiagnosticRunState.Running)
+            {
+                return string.IsNullOrWhiteSpace(_status) ? "Running diagnostic..." : _status;
+            }
+
+            if (_runState == GeneratedMapDiagnosticRunState.Cancelled)
+            {
+                return string.IsNullOrWhiteSpace(_status) ? "Diagnostic run cancelled." : _status;
+            }
+
+            if (_result == null)
+            {
+                return string.IsNullOrWhiteSpace(_status) ? "Diagnostic run completed." : _status;
+            }
+
+            string label = _runState == GeneratedMapDiagnosticRunState.Succeeded ? "Succeeded" : "Failed";
+            string message = string.IsNullOrWhiteSpace(_result.Message) ? _status : _result.Message;
+            List<string> parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                parts.Add(message);
+            }
+
+            parts.Add("Time: " + _result.ElapsedMilliseconds + " ms");
+            parts.Add("Cells: walkable " + _result.WalkableCellCount + ", blocked " + _result.BlockedCellCount);
+            parts.Add("Visited: " + _result.Visited.Count);
+            if (_result.Path.Count > 0)
+            {
+                parts.Add("Path: " + _result.Path.Count);
+            }
+
+            if (_result.Islands.Count > 0)
+            {
+                parts.Add("Islands: " + _result.Islands.Count);
+            }
+
+            return label + ":\n" + string.Join("\n", parts);
+        }
+
+        private static bool HasMeaningfulResult(GeneratedMapDiagnosticResult result)
+        {
+            return result != null &&
+                (result.Success ||
+                 result.ElapsedMilliseconds > 0 ||
+                 result.WalkableCellCount != 0 ||
+                 result.BlockedCellCount != 0 ||
+                 result.Visited.Count > 0 ||
+                 result.Path.Count > 0 ||
+                 result.Islands.Count > 0 ||
+                 !string.IsNullOrWhiteSpace(result.Message));
         }
     }
 }

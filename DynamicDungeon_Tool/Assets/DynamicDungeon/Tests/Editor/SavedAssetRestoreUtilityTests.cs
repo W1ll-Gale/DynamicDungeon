@@ -53,9 +53,4 @@ namespace DynamicDungeon.Tests.Editor
         }
 
     }
-
-    internal sealed class RestoreTargetAsset : ScriptableObject
-    {
-        public int Value;
-    }
 }

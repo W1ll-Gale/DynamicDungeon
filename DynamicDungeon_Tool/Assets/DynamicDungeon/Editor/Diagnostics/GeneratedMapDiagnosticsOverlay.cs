@@ -68,22 +68,7 @@ namespace DynamicDungeon.Editor.Diagnostics
             }
             GUILayout.EndHorizontal();
 
-            GeneratedMapDiagnosticResult result = window.CurrentResult;
-            string lastError = window.LastError;
-            if (!string.IsNullOrEmpty(lastError))
-            {
-                Color prev = GUI.contentColor;
-                GUI.contentColor = new Color(1.0f, 0.35f, 0.35f);
-                EditorGUILayout.LabelField("Error: " + lastError, EditorStyles.wordWrappedMiniLabel);
-                GUI.contentColor = prev;
-            }
-            else if (result != null && !result.Success)
-            {
-                Color prev = GUI.contentColor;
-                GUI.contentColor = new Color(1.0f, 0.35f, 0.35f);
-                EditorGUILayout.LabelField("Failed: " + result.Message, EditorStyles.wordWrappedMiniLabel);
-                GUI.contentColor = prev;
-            }
+            window.DrawResultSummaryUI();
         }
     }
 }

@@ -38,25 +38,53 @@ namespace DynamicDungeon.Runtime.Placement
 
             List<Vector2Int> occupiedCells;
             Vector3 derivedAnchorOffset;
-            bool usesTilemapFootprint = TryExtractTilemapCells(out occupiedCells, out derivedAnchorOffset, out errorMessage);
-            if (usesTilemapFootprint ||
-                TryExtractSnappedChildCells(out occupiedCells, out derivedAnchorOffset, out errorMessage) ||
-                TryExtractBoundsCells(out occupiedCells, out derivedAnchorOffset, out errorMessage))
+
+            string tilemapError = null;
+            string snappedError = null;
+            string boundsError = null;
+
+            bool usesTilemapFootprint = TryExtractTilemapCells(out occupiedCells, out derivedAnchorOffset, out tilemapError);
+
+            if (!usesTilemapFootprint)
             {
-                template.PrefabGuid = prefabGuid ?? string.Empty;
-                template.AnchorOffset = derivedAnchorOffset;
-                template.SupportsRandomRotation = _supportsRandomRotation;
-                template.UsesTilemapFootprint = usesTilemapFootprint;
-                template.OccupiedCells = occupiedCells.ToArray();
-                return true;
+                // Try snapped child cells next
+                List<Vector2Int> snappedCells;
+                Vector3 snappedOffset;
+                if (TryExtractSnappedChildCells(out snappedCells, out snappedOffset, out snappedError))
+                {
+                    occupiedCells = snappedCells;
+                    derivedAnchorOffset = snappedOffset;
+                }
+                else
+                {
+                    // Try bounds-derived cells last
+                    List<Vector2Int> boundsCells;
+                    Vector3 boundsOffset;
+                    if (TryExtractBoundsCells(out boundsCells, out boundsOffset, out boundsError))
+                    {
+                        occupiedCells = boundsCells;
+                        derivedAnchorOffset = boundsOffset;
+                    }
+                    else
+                    {
+                        // Prefer the first non-null error (tilemap, then snapped, then bounds)
+                        errorMessage = tilemapError ?? snappedError ?? boundsError;
+                        if (string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            errorMessage = "Prefab stamp authoring could not derive any occupied cells.";
+                        }
+
+                        return false;
+                    }
+                }
             }
 
-            if (string.IsNullOrWhiteSpace(errorMessage))
-            {
-                errorMessage = "Prefab stamp authoring could not derive any occupied cells.";
-            }
-
-            return false;
+            template.PrefabGuid = prefabGuid ?? string.Empty;
+            template.AnchorOffset = derivedAnchorOffset;
+            template.SupportsRandomRotation = _supportsRandomRotation;
+            template.UsesTilemapFootprint = usesTilemapFootprint;
+            template.OccupiedCells = occupiedCells.ToArray();
+            return true;
         }
 
         private bool TryExtractTilemapCells(out List<Vector2Int> occupiedCells, out Vector3 derivedAnchorOffset, out string errorMessage)

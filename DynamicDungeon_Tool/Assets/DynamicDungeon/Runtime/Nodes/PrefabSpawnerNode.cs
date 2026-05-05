@@ -14,6 +14,7 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [Description("Places a single prefab at each specified point without modifying footprints or logical IDs.")]
+    [DynamicDungeon.Runtime.Core.NodeCategory("Placement")]
     public sealed class PrefabSpawnerNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IPrefabPlacementNode
     {
         private const string DefaultNodeName = "Prefab Spawner";
