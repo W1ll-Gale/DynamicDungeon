@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DynamicDungeon.Editor.Nodes;
+using DynamicDungeon.Editor.Shared;
 using DynamicDungeon.Editor.Utilities;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
@@ -79,10 +80,7 @@ namespace DynamicDungeon.Editor.Windows
             style.flexGrow = 1.0f;
             focusable = true;
 
-            SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
-            currentGraphView.AddManipulator(new ContentDragger());
-            currentGraphView.AddManipulator(new SelectionDragger());
-            currentGraphView.AddManipulator(new RectangleSelector());
+            GraphViewShellUtility.ConfigureDefaultGraphView(currentGraphView);
             graphViewChanged = OnGraphViewChanged;
             viewTransformChanged = OnViewTransformChanged;
 
@@ -180,8 +178,7 @@ namespace DynamicDungeon.Editor.Windows
         /// </summary>
         public void GetViewportState(out Vector3 scrollOffset, out float zoomScale)
         {
-            scrollOffset = contentViewContainer.resolvedStyle.translate;
-            zoomScale = contentViewContainer.resolvedStyle.scale.value.x;
+            GraphViewShellUtility.GetViewportState(this, out scrollOffset, out zoomScale);
         }
 
         /// <summary>
@@ -190,12 +187,7 @@ namespace DynamicDungeon.Editor.Windows
         /// </summary>
         public void RestoreViewportState(Vector3 scrollOffset, float zoomScale)
         {
-            float safeZoom = Mathf.Clamp(
-                zoomScale,
-                ContentZoomer.DefaultMinScale,
-                ContentZoomer.DefaultMaxScale);
-
-            UpdateViewTransform(scrollOffset, new Vector3(safeZoom, safeZoom, 1.0f));
+            GraphViewShellUtility.RestoreViewportState(this, scrollOffset, zoomScale);
         }
 
         public void SetGenerationOverlayVisible(bool isVisible)

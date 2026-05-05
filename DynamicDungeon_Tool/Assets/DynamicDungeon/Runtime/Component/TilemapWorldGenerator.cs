@@ -444,13 +444,8 @@ namespace DynamicDungeon.Runtime.Component
                 return stableSeed;
             }
 
-            unchecked
-            {
-                long upperBits = (long)_seedRandom.Next() << 32;
-                long lowerBits = (uint)_seedRandom.Next();
-                _lastUsedSeed = upperBits | lowerBits;
-                return _lastUsedSeed;
-            }
+            _lastUsedSeed = GenerationSeedUtility.CreateRandomSeed(_seedRandom);
+            return _lastUsedSeed;
         }
 
         private void RaiseGenerationCompleted(GenerationCompletedArgs args)

@@ -139,7 +139,7 @@ namespace DynamicDungeon.ConstraintDungeon
                 return stableSeed;
             }
 
-            lastUsedSeed = DungeonSeedUtility.CreateRandomSeed(seedRandom);
+            lastUsedSeed = GenerationSeedUtility.CreateRandomSeed(seedRandom);
             return lastUsedSeed;
         }
 

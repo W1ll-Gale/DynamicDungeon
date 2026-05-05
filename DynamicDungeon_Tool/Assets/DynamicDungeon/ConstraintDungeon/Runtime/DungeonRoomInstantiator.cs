@@ -1,9 +1,6 @@
 ﻿using DynamicDungeon.ConstraintDungeon.Solver;
+using DynamicDungeon.Runtime.Output;
 using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace DynamicDungeon.ConstraintDungeon
 {
@@ -16,24 +13,7 @@ namespace DynamicDungeon.ConstraintDungeon
                 return null;
             }
 
-            GameObject instance;
-
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                instance = (GameObject)PrefabUtility.InstantiatePrefab(data.sourcePrefab, parent);
-                if (PrefabUtility.IsPartOfPrefabInstance(instance))
-                {
-                    PrefabUtility.UnpackPrefabInstance(instance, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-                }
-            }
-            else
-            {
-                instance = Object.Instantiate(data.sourcePrefab, parent);
-            }
-#else
-            instance = Object.Instantiate(data.sourcePrefab, parent);
-#endif
+            GameObject instance = PrefabInstanceUtility.InstantiatePrefab(data.sourcePrefab, parent, true);
 
             InitialiseInstance(instance, data, tileSize);
             return instance;
@@ -76,15 +56,7 @@ namespace DynamicDungeon.ConstraintDungeon
                 return;
             }
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                Object.DestroyImmediate(obj);
-                return;
-            }
-#endif
-
-            Object.Destroy(obj);
+            PrefabInstanceUtility.DestroyObject(obj);
         }
 
         private static void DestroyComponent(Component component)
@@ -94,15 +66,7 @@ namespace DynamicDungeon.ConstraintDungeon
                 return;
             }
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                Object.DestroyImmediate(component);
-                return;
-            }
-#endif
-
-            Object.Destroy(component);
+            PrefabInstanceUtility.DestroyObject(component);
         }
     }
 }

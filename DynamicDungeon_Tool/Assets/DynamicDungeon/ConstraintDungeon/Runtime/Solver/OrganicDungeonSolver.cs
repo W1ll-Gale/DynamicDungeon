@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Threading;
 using DynamicDungeon.ConstraintDungeon.Utils;
+using DynamicDungeon.Runtime.Component;
 
 namespace DynamicDungeon.ConstraintDungeon.Solver
 {
@@ -86,7 +87,7 @@ namespace DynamicDungeon.ConstraintDungeon.Solver
             this.cancellationToken = token;
             this.maxSearchSteps = Mathf.Max(1, solverSettings?.maxSearchSteps ?? 500000);
             this.enableDiagnostics = solverSettings != null && solverSettings.enableDiagnostics;
-            this.rnd = new System.Random(DungeonSeedUtility.ToRandomSeed(solverSettings?.seed ?? 0L));
+            this.rnd = new System.Random(GenerationSeedUtility.ToRandomSeed(solverSettings?.seed ?? 0L));
             this.diagnostics = diagnostics;
         }
 

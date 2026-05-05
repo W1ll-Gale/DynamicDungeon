@@ -2,10 +2,6 @@ using System;
 using DynamicDungeon.Runtime.Placement;
 using UnityEngine;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 namespace DynamicDungeon.Runtime.Output
 {
     public sealed class GeneratedPrefabWriter
@@ -53,18 +49,7 @@ namespace DynamicDungeon.Runtime.Output
                     continue;
                 }
 
-                if (Application.isPlaying)
-                {
-                    UnityEngine.Object.Destroy(child.gameObject);
-                }
-                else
-                {
-#if UNITY_EDITOR
-                    UnityEngine.Object.DestroyImmediate(child.gameObject);
-#else
-                    UnityEngine.Object.Destroy(child.gameObject);
-#endif
-                }
+                PrefabInstanceUtility.DestroyObject(child.gameObject);
             }
         }
 
@@ -80,7 +65,7 @@ namespace DynamicDungeon.Runtime.Output
                 throw new InvalidOperationException("Generated prefab root has not been created.");
             }
 
-            GameObject instance = InstantiatePrefab(prefab);
+            GameObject instance = PrefabInstanceUtility.InstantiatePrefab(prefab, _generatedRoot, false);
             Transform instanceTransform = instance.transform;
             instanceTransform.position = worldPosition;
             instanceTransform.rotation = rotation;
@@ -90,18 +75,6 @@ namespace DynamicDungeon.Runtime.Output
                 baseScale.x * mirrorScale.x,
                 baseScale.y * mirrorScale.y,
                 baseScale.z * mirrorScale.z);
-        }
-
-        private GameObject InstantiatePrefab(GameObject prefab)
-        {
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                return (GameObject)PrefabUtility.InstantiatePrefab(prefab, _generatedRoot);
-            }
-#endif
-
-            return UnityEngine.Object.Instantiate(prefab, _generatedRoot);
         }
     }
 }

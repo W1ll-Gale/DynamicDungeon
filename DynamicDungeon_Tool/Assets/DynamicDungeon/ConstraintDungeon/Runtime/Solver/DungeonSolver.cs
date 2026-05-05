@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using DynamicDungeon.Runtime.Component;
 using UnityEngine;
 
 namespace DynamicDungeon.ConstraintDungeon.Solver
@@ -43,7 +44,7 @@ namespace DynamicDungeon.ConstraintDungeon.Solver
             this.settings = settings ?? new SolverSettings();
             this.progressCallback = progress;
             this.cancellationToken = token;
-            this.random = new System.Random(DungeonSeedUtility.ToRandomSeed(this.settings.seed));
+            this.random = new System.Random(GenerationSeedUtility.ToRandomSeed(this.settings.seed));
             this.diagnostics = diagnostics;
             this.templateCatalog = null;
         }

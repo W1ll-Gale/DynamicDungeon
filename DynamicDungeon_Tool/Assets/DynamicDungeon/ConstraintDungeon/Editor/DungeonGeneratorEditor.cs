@@ -4,7 +4,6 @@ using UnityEditorInternal;
 using System.IO;
 using DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner;
 using DynamicDungeon.Editor.Shared;
-using DynamicDungeon.Runtime.Component;
 
 namespace DynamicDungeon.ConstraintDungeon
 {
@@ -55,11 +54,7 @@ namespace DynamicDungeon.ConstraintDungeon
 
         private void EnsureStyles()
         {
-            if (_mutedMiniLabelStyle == null)
-            {
-                _mutedMiniLabelStyle = new GUIStyle(EditorStyles.miniLabel);
-                _mutedMiniLabelStyle.normal.textColor = new Color(0.72f, 0.72f, 0.72f, 1.0f);
-            }
+            _mutedMiniLabelStyle = InspectorSharedControls.GetMutedMiniLabelStyle(_mutedMiniLabelStyle);
         }
 
         private void DrawSourceAssetSection(DungeonGenerator gen)
@@ -165,20 +160,11 @@ namespace DynamicDungeon.ConstraintDungeon
 
         private void DrawSharedSeedSettings(DungeonGenerator gen)
         {
-            SerializedProperty seedModeProp = serializedObject.FindProperty("seedMode");
-            EditorGUILayout.PropertyField(seedModeProp, new GUIContent("Seed Mode"));
-
-            SeedMode seedMode = (SeedMode)seedModeProp.enumValueIndex;
-            if (seedMode == SeedMode.Stable)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("stableSeed"), new GUIContent("Stable Seed"));
-            }
-            else
-            {
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.LongField(new GUIContent("Last Seed", "Seed used in the most recent generation run."), gen.LastUsedSeed);
-                EditorGUI.EndDisabledGroup();
-            }
+            InspectorSharedControls.DrawSeedSettings(
+                serializedObject.FindProperty("seedMode"),
+                serializedObject.FindProperty("stableSeed"),
+                gen.LastUsedSeed,
+                true);
         }
 
         private void DrawOrganicSeedSettings(DungeonGenerator gen)

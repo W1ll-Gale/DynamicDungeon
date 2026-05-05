@@ -4,6 +4,7 @@ using UnityEngine.UIElements;
 using System.Collections.Generic;
 using UnityEngine;
 using DynamicDungeon.ConstraintDungeon;
+using DynamicDungeon.Editor.Shared;
 using System.Linq;
 using System;
 
@@ -25,11 +26,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             _editorWindow = window;
             styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>(ConstraintDungeonAssetPaths.DungeonGraphStylesheet));
             
-            SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
-            
-            this.AddManipulator(new ContentDragger());
-            this.AddManipulator(new SelectionDragger());
-            this.AddManipulator(new RectangleSelector());
+            GraphViewShellUtility.ConfigureDefaultGraphView(this);
 
             GridBackground background = new GridBackground();
             background.AddToClassList("dungeon-graph-background");
@@ -56,8 +53,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
 
         public void GetViewportState(out Vector3 scrollOffset, out float zoomScale)
         {
-            scrollOffset = contentViewContainer.resolvedStyle.translate;
-            zoomScale = contentViewContainer.resolvedStyle.scale.value.x;
+            GraphViewShellUtility.GetViewportState(this, out scrollOffset, out zoomScale);
         }
 
         private void OnViewTransformChanged(GraphView graphView)

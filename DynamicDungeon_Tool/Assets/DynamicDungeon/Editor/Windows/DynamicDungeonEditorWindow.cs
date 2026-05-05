@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using DynamicDungeon.Editor.Nodes;
 using DynamicDungeon.Editor.Shared;
 using DynamicDungeon.Runtime;
@@ -281,13 +280,7 @@ namespace DynamicDungeon.Editor.Windows
         private Toolbar BuildToolbar()
         {
             Toolbar toolbar = new Toolbar();
-            toolbar.style.height = 24.0f;
-            toolbar.style.minHeight = 24.0f;
-            toolbar.style.paddingLeft = 6.0f;
-            toolbar.style.paddingRight = 4.0f;
-            toolbar.style.paddingTop = 0.0f;
-            toolbar.style.paddingBottom = 0.0f;
-            toolbar.style.alignItems = Align.Center;
+            GraphEditorToolbarControls.ApplyStandardToolbarStyle(toolbar);
 
             _graphField = new ObjectField("Graph");
             _graphField.objectType = typeof(GenGraph);
@@ -309,41 +302,26 @@ namespace DynamicDungeon.Editor.Windows
             cancelButton.style.marginRight = 6.0f;
             toolbar.Add(cancelButton);
 
-            _autoSaveToggle = new ToolbarToggle();
-            _autoSaveToggle.text = "Auto Save";
-            _autoSaveToggle.SetValueWithoutNotify(AutoSave);
-            _autoSaveToggle.RegisterValueChangedCallback(OnAutoSaveToggleChanged);
-            _autoSaveToggle.style.marginRight = 8.0f;
-            _autoSaveToggle.tooltip = "Save graph assets automatically after edits.";
+            _autoSaveToggle = GraphEditorToolbarControls.BuildAutoSaveToggle(
+                AutoSave,
+                "Save graph assets automatically after edits.",
+                OnAutoSaveToggleChanged);
             toolbar.Add(_autoSaveToggle);
 
-            _statusLabel = new Label(IdleStatusText);
-            _statusLabel.style.fontSize = 11.0f;
-            _statusLabel.style.color = new Color(0.76f, 0.76f, 0.76f, 1.0f);
-            _statusLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
-            _statusLabel.style.marginRight = 8.0f;
+            _statusLabel = GraphEditorToolbarControls.BuildStatusLabel(IdleStatusText);
             toolbar.Add(_statusLabel);
 
-            _saveStateLabel = new Label();
-            _saveStateLabel.style.fontSize = 11.0f;
-            _saveStateLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
-            _saveStateLabel.style.minWidth = 58.0f;
-            _saveStateLabel.style.marginRight = 8.0f;
+            _saveStateLabel = GraphEditorToolbarControls.BuildSaveStateLabel();
             toolbar.Add(_saveStateLabel);
 
-            _discardChangesButton = new ToolbarButton(DiscardUnsavedGraphChanges);
-            _discardChangesButton.text = "Discard";
-            _discardChangesButton.tooltip = "Delete all unsaved changes on the loaded graph and reload it from disk.";
-            _discardChangesButton.style.marginRight = 8.0f;
+            _discardChangesButton = GraphEditorToolbarControls.BuildDiscardButton(
+                "Delete all unsaved changes on the loaded graph and reload it from disk.",
+                DiscardUnsavedGraphChanges);
             toolbar.Add(_discardChangesButton);
 
-            VisualElement toolbarSpacer = new VisualElement();
-            toolbarSpacer.style.flexGrow = 1.0f;
-            toolbar.Add(toolbarSpacer);
+            toolbar.Add(GraphEditorToolbarControls.BuildToolbarSpacer());
 
-            VisualElement panelToggleGroup = new VisualElement();
-            panelToggleGroup.style.flexDirection = FlexDirection.Row;
-            panelToggleGroup.style.alignItems = Align.Center;
+            VisualElement panelToggleGroup = GraphEditorToolbarControls.BuildPanelToggleGroup();
             toolbar.Add(panelToggleGroup);
 
             _blackboardToggle = GraphEditorToolbarControls.BuildPanelToggle(
@@ -392,19 +370,12 @@ namespace DynamicDungeon.Editor.Windows
 
         private DiagnosticsPanel BuildDiagnosticsPanel()
         {
-            DiagnosticsPanel diagnosticsPanel = new DiagnosticsPanel();
-            diagnosticsPanel.SetContext(ResolveDiagnosticElementName, FocusDiagnosticElement);
-            diagnosticsPanel.style.flexShrink = 0.0f;
-            diagnosticsPanel.style.borderTopWidth = 1.0f;
-            diagnosticsPanel.style.borderTopColor = new Color(0.18f, 0.18f, 0.18f, 1.0f);
-            diagnosticsPanel.style.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 1.0f);
-            diagnosticsPanel.style.paddingLeft = 8.0f;
-            diagnosticsPanel.style.paddingRight = 8.0f;
-            diagnosticsPanel.style.paddingTop = 0.0f;
-            diagnosticsPanel.style.paddingBottom = 6.0f;
-            diagnosticsPanel.SetExpandedHeight(_diagnosticsPanelExpandedHeight);
-            diagnosticsPanel.SetCollapsed(_isDiagnosticsPanelCollapsed);
-            return diagnosticsPanel;
+            return DiagnosticsPanelUtility.BuildDockedPanel(
+                ResolveDiagnosticElementName,
+                FocusDiagnosticElement,
+                _diagnosticsPanelExpandedHeight,
+                _isDiagnosticsPanelCollapsed,
+                new Color(0.18f, 0.18f, 0.18f, 1.0f));
         }
 
         private MiniMapGraphCallbacks CreateMiniMapCallbacks()
@@ -1022,70 +993,12 @@ namespace DynamicDungeon.Editor.Windows
 
         private static bool RestoreGraphFromSavedAsset(GenGraph graph)
         {
-            if (graph == null)
-            {
-                return false;
-            }
-
-            string assetPath = AssetDatabase.GetAssetPath(graph);
-            if (string.IsNullOrWhiteSpace(assetPath))
-            {
-                return false;
-            }
-
-            string projectRoot = Path.GetDirectoryName(Application.dataPath);
-            if (string.IsNullOrWhiteSpace(projectRoot))
-            {
-                return false;
-            }
-
-            string sourceAbsolutePath = Path.GetFullPath(Path.Combine(projectRoot, assetPath));
-            if (!File.Exists(sourceAbsolutePath))
-            {
-                Debug.LogError("Could not find saved graph asset file at '" + sourceAbsolutePath + "'.");
-                return false;
-            }
-
-            string tempDirectory = Path.GetDirectoryName(assetPath);
-            if (string.IsNullOrWhiteSpace(tempDirectory))
-            {
-                tempDirectory = "Assets";
-            }
-
-            string tempAssetPath = AssetDatabase.GenerateUniqueAssetPath(
-                (tempDirectory + "/__DynamicDungeonDiscardTemp_" + Guid.NewGuid().ToString("N") + ".asset").Replace("\\", "/"));
-            string tempAbsolutePath = Path.GetFullPath(Path.Combine(projectRoot, tempAssetPath));
-
-            try
-            {
-                File.Copy(sourceAbsolutePath, tempAbsolutePath, false);
-                AssetDatabase.ImportAsset(tempAssetPath, ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
-
-                GenGraph savedGraph = AssetDatabase.LoadAssetAtPath<GenGraph>(tempAssetPath);
-                if (savedGraph == null)
-                {
-                    Debug.LogError("Could not load saved graph copy from '" + tempAssetPath + "'.");
-                    return false;
-                }
-
-                EditorUtility.CopySerialized(savedGraph, graph);
-                graph.name = Path.GetFileNameWithoutExtension(assetPath);
-                Undo.ClearUndo(graph);
-                EditorUtility.ClearDirty(graph);
-                return true;
-            }
-            catch (Exception exception)
-            {
-                Debug.LogError("Could not discard unsaved graph changes for '" + assetPath + "': " + exception.Message);
-                return false;
-            }
-            finally
-            {
-                if (!string.IsNullOrWhiteSpace(tempAssetPath))
-                {
-                    AssetDatabase.DeleteAsset(tempAssetPath);
-                }
-            }
+            return SavedAssetRestoreUtility.RestoreFromSavedAsset(
+                graph,
+                "__DynamicDungeonDiscardTemp_",
+                "Could not find saved graph asset file at",
+                "Could not load saved graph copy from",
+                "Could not discard unsaved graph changes for");
         }
 
         private void RefreshSaveStateAfterExternalSave()
@@ -1130,13 +1043,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private void SetDiscardChangesButtonEnabled(bool isEnabled)
         {
-            if (_discardChangesButton == null)
-            {
-                return;
-            }
-
-            _discardChangesButton.SetEnabled(isEnabled);
-            _discardChangesButton.style.opacity = isEnabled ? 1.0f : 0.45f;
+            GraphEditorToolbarControls.SetButtonEnabledWithOpacity(_discardChangesButton, isEnabled);
         }
 
         private GenGraph GetCurrentGraphForSaveState()
@@ -1261,29 +1168,16 @@ namespace DynamicDungeon.Editor.Windows
                 _panelViewSettings.IsMiniMapCollapsed = _miniMapWindow.IsCollapsedForTesting;
             }
 
-            EditorUserSettings.SetConfigValue(
-                PanelViewSettingsPrefsKey,
-                JsonUtility.ToJson(_panelViewSettings ?? new PanelViewSettings()));
-            EditorUserSettings.SetConfigValue(
-                BlackboardLayoutPrefsKey,
-                JsonUtility.ToJson(_blackboardLayout ?? CreateDefaultBlackboardLayout()));
-            EditorUserSettings.SetConfigValue(
-                GraphSettingsLayoutPrefsKey,
-                JsonUtility.ToJson(_graphSettingsLayout ?? CreateDefaultGraphSettingsLayout()));
-            EditorUserSettings.SetConfigValue(
-                GroupNavigatorLayoutPrefsKey,
-                JsonUtility.ToJson(_groupNavigatorLayout ?? CreateDefaultGroupNavigatorLayout()));
-            EditorUserSettings.SetConfigValue(
-                MiniMapLayoutPrefsKey,
-                JsonUtility.ToJson(_miniMapLayout ?? CreateDefaultMiniMapLayout()));
+            EditorPreferenceUtility.SaveJson(PanelViewSettingsPrefsKey, _panelViewSettings ?? new PanelViewSettings());
+            EditorPreferenceUtility.SaveJson(BlackboardLayoutPrefsKey, _blackboardLayout ?? CreateDefaultBlackboardLayout());
+            EditorPreferenceUtility.SaveJson(GraphSettingsLayoutPrefsKey, _graphSettingsLayout ?? CreateDefaultGraphSettingsLayout());
+            EditorPreferenceUtility.SaveJson(GroupNavigatorLayoutPrefsKey, _groupNavigatorLayout ?? CreateDefaultGroupNavigatorLayout());
+            EditorPreferenceUtility.SaveJson(MiniMapLayoutPrefsKey, _miniMapLayout ?? CreateDefaultMiniMapLayout());
         }
 
         private static PanelViewSettings LoadPanelViewSettings()
         {
-            string json = EditorUserSettings.GetConfigValue(PanelViewSettingsPrefsKey);
-            return string.IsNullOrWhiteSpace(json)
-                ? new PanelViewSettings()
-                : (JsonUtility.FromJson<PanelViewSettings>(json) ?? new PanelViewSettings());
+            return EditorPreferenceUtility.LoadJson(PanelViewSettingsPrefsKey, new PanelViewSettings());
         }
 
         private static bool LoadAutoSavePreference()
@@ -1298,10 +1192,7 @@ namespace DynamicDungeon.Editor.Windows
 
         private static FloatingWindowLayout LoadLayout(string prefsKey, FloatingWindowLayout defaultLayout)
         {
-            string json = EditorUserSettings.GetConfigValue(prefsKey);
-            return string.IsNullOrWhiteSpace(json)
-                ? defaultLayout
-                : (JsonUtility.FromJson<FloatingWindowLayout>(json) ?? defaultLayout);
+            return EditorPreferenceUtility.LoadJson(prefsKey, defaultLayout);
         }
 
         internal static PanelViewSettings LoadPanelViewSettingsForTesting()
@@ -1361,27 +1252,27 @@ namespace DynamicDungeon.Editor.Windows
 
         internal static void SavePanelViewSettingsForTesting(PanelViewSettings panelViewSettings)
         {
-            EditorUserSettings.SetConfigValue(PanelViewSettingsPrefsKey, JsonUtility.ToJson(panelViewSettings));
+            EditorPreferenceUtility.SaveJson(PanelViewSettingsPrefsKey, panelViewSettings);
         }
 
         internal static void SaveBlackboardLayoutForTesting(FloatingWindowLayout layout)
         {
-            EditorUserSettings.SetConfigValue(BlackboardLayoutPrefsKey, JsonUtility.ToJson(layout));
+            EditorPreferenceUtility.SaveJson(BlackboardLayoutPrefsKey, layout);
         }
 
         internal static void SaveGraphSettingsLayoutForTesting(FloatingWindowLayout layout)
         {
-            EditorUserSettings.SetConfigValue(GraphSettingsLayoutPrefsKey, JsonUtility.ToJson(layout));
+            EditorPreferenceUtility.SaveJson(GraphSettingsLayoutPrefsKey, layout);
         }
 
         internal static void SaveGroupNavigatorLayoutForTesting(FloatingWindowLayout layout)
         {
-            EditorUserSettings.SetConfigValue(GroupNavigatorLayoutPrefsKey, JsonUtility.ToJson(layout));
+            EditorPreferenceUtility.SaveJson(GroupNavigatorLayoutPrefsKey, layout);
         }
 
         internal static void SaveMiniMapLayoutForTesting(FloatingWindowLayout layout)
         {
-            EditorUserSettings.SetConfigValue(MiniMapLayoutPrefsKey, JsonUtility.ToJson(layout));
+            EditorPreferenceUtility.SaveJson(MiniMapLayoutPrefsKey, layout);
         }
 
         private static FloatingWindowLayout CreateDefaultBlackboardLayout()

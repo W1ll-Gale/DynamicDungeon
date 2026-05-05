@@ -173,11 +173,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void EnsureStyles()
         {
-            if (_mutedMiniLabelStyle == null)
-            {
-                _mutedMiniLabelStyle = new GUIStyle(EditorStyles.miniLabel);
-                _mutedMiniLabelStyle.normal.textColor = new Color(0.72f, 0.72f, 0.72f, 1.0f);
-            }
+            _mutedMiniLabelStyle = InspectorSharedControls.GetMutedMiniLabelStyle(_mutedMiniLabelStyle);
         }
 
         private bool DrawGraphSection()
@@ -313,32 +309,16 @@ namespace DynamicDungeon.Editor.Inspectors
                 SerializedProperty widthProp = _graphSerializedObject.FindProperty("WorldWidth");
                 SerializedProperty heightProp = _graphSerializedObject.FindProperty("WorldHeight");
 
-                EditorGUILayout.PropertyField(seedModeProp, new GUIContent("Seed Mode"));
-
-                SeedMode seedMode = (SeedMode)seedModeProp.enumValueIndex;
-                if (seedMode == SeedMode.Stable)
-                {
-                    EditorGUILayout.PropertyField(seedProp, new GUIContent("Stable Seed"));
-                }
-                else
-                {
-                    TilemapWorldGenerator component = (TilemapWorldGenerator)target;
-                    EditorGUI.BeginDisabledGroup(true);
-                    EditorGUILayout.LongField(new GUIContent("Last Seed", "Seed used in the most recent generation run."), component.LastUsedSeed);
-                    EditorGUI.EndDisabledGroup();
-                }
+                TilemapWorldGenerator component = (TilemapWorldGenerator)target;
+                InspectorSharedControls.DrawSeedSettings(seedModeProp, seedProp, component.LastUsedSeed, true);
 
                 EditorGUILayout.PropertyField(widthProp, new GUIContent("World Width"));
                 EditorGUILayout.PropertyField(heightProp, new GUIContent("World Height"));
             }
             else
             {
-                EditorGUILayout.PropertyField(_seedModeProperty, new GUIContent("Seed Mode"));
-                SeedMode seedMode = (SeedMode)_seedModeProperty.enumValueIndex;
-                if (seedMode == SeedMode.Stable)
-                {
-                    EditorGUILayout.PropertyField(_stableSeedProperty, new GUIContent("Stable Seed"));
-                }
+                TilemapWorldGenerator component = (TilemapWorldGenerator)target;
+                InspectorSharedControls.DrawSeedSettings(_seedModeProperty, _stableSeedProperty, component.LastUsedSeed, false);
                 EditorGUILayout.PropertyField(_worldWidthProperty, new GUIContent("World Width"));
                 EditorGUILayout.PropertyField(_worldHeightProperty, new GUIContent("World Height"));
             }
