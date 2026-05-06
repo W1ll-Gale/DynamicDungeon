@@ -561,8 +561,8 @@ MonoBehaviour:
       Value: 
       ObjectReference: {fileID: 0}
     - Name: organicSettings
-      Value: 2f67b95a885e42d8a4f0a98b6c9e13b4
-      ObjectReference: {fileID: 11400000, guid: 2f67b95a885e42d8a4f0a98b6c9e13b4, type: 2}
+      Value: 2725d5fe5ff1a8b42aaeeb6b77058c67
+      ObjectReference: {fileID: 11400000, guid: 2725d5fe5ff1a8b42aaeeb6b77058c67, type: 2}
     - Name: layoutAttempts
       Value: 1000
       ObjectReference: {fileID: 0}
