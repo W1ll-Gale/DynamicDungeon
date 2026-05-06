@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using DynamicDungeon.ConstraintDungeon.Solver;
 using DynamicDungeon.Runtime.Component;
@@ -65,9 +66,10 @@ namespace DynamicDungeon.ConstraintDungeon
             }
         }
 
-        public async Task GenerateAndRenderAsync()
+        public async Task GenerateAndRenderAsync(CancellationToken cancellationToken = default)
         {
-            DungeonGenerationResult result = await GenerateLayoutAsync();
+            DungeonGenerationResult result = await GenerateLayoutAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             if (result != null && result.AttemptCount > 0)
             {
                 lastUsedSeed = result.Seed;
@@ -81,15 +83,16 @@ namespace DynamicDungeon.ConstraintDungeon
             }
 
             generationStatus = "Rendering rooms...";
+            cancellationToken.ThrowIfCancellationRequested();
             RenderLayout(result.Layout);
             ReportSuccess(result);
         }
 
-        public Task<DungeonGenerationResult> GenerateLayoutAsync()
+        public Task<DungeonGenerationResult> GenerateLayoutAsync(CancellationToken cancellationToken = default)
         {
             EnsureService();
             generationStartedAt = Time.realtimeSinceStartupAsDouble;
-            return generationService.GenerateLayoutAsync(CreateRequest());
+            return generationService.GenerateLayoutAsync(CreateRequest(), cancellationToken);
         }
 
         public void CancelGeneration()

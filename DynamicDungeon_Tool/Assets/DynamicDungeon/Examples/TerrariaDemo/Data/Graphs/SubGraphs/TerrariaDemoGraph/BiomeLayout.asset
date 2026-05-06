@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: biome-layout-randomized
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeLayoutNode
-    NodeName: Random Biome Layout
+    NodeName: Random Biome Layout (Biome Layout)
     Position: {x: -847.714, y: 591.3216}
     Ports:
     - PortName: BiomeChannel
@@ -55,7 +55,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
-    NodeName: Jungle Presence
+    NodeName: Jungle Presence (Biome Mask)
     Position: {x: -90.12457, y: 590.99976}
     Ports:
     - PortName: Biome Channel
@@ -72,7 +72,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
-    NodeName: Ice Presence
+    NodeName: Ice Presence (Biome Mask)
     Position: {x: -90.12457, y: 830.99976}
     Ports:
     - PortName: Biome Channel
@@ -89,7 +89,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
-    NodeName: Forest Mask
+    NodeName: Forest Mask (Biome Mask)
     Position: {x: 374.286, y: 470.3216}
     Ports:
     - PortName: Biome Channel
@@ -106,7 +106,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 8104437b-0d86-42e7-b702-88b0035651e6
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
-    NodeName: Final Jungle Mask
+    NodeName: Final Jungle Mask (Biome Mask)
     Position: {x: 372.286, y: 748.3216}
     Ports:
     - PortName: Biome Channel
@@ -123,7 +123,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
-    NodeName: Desert Mask
+    NodeName: Desert Mask (Biome Mask)
     Position: {x: 372.286, y: 1023.3216}
     Ports:
     - PortName: Biome Channel
@@ -140,7 +140,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
-    NodeName: Final Ice Mask
+    NodeName: Final Ice Mask (Biome Mask)
     Position: {x: 372.286, y: 1289.3215}
     Ports:
     - PortName: Biome Channel

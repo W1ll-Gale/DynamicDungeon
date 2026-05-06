@@ -103,3 +103,6 @@ ExportProject.ps1
 /.local
 /.claude
 
+/docs-site
+*.benchmark.csv
+/scratch

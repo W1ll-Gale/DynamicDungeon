@@ -12,33 +12,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38a9e45a561565446a68d8149bca61cf, type: 3}
   m_Name: Forest
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Biome.BiomeAsset
+  SemanticRegistry: {fileID: 11400000, guid: c3d4e5f6a7b811e8a8b0c1d2e3f4a5b8, type: 2}
   TileMappings:
-  - LogicalId: 1
+  - LogicalIds:
+    - 1
+    - 10
+    - 12
+    - 14
     TileType: 0
     Tile: {fileID: 11400000, guid: 4da885a2042552b4b83fd5a3a9d4cf8e, type: 2}
     SpriteAsset: {fileID: 0}
     WeightedTiles: []
-  - LogicalId: 2
+  - LogicalIds:
+    - 2
+    - 11
     TileType: 0
     Tile: {fileID: 11400000, guid: 93e196dfa45273c49a5e6ab4b10519b6, type: 2}
     SpriteAsset: {fileID: 0}
     WeightedTiles: []
-  - LogicalId: 10
+  - LogicalIds:
+    - 16
+    - 17
+    - 19
     TileType: 0
-    Tile: {fileID: 11400000, guid: 4da885a2042552b4b83fd5a3a9d4cf8e, type: 2}
+    Tile: {fileID: 11400000, guid: 60856dae9077ef641995457fd0846738, type: 2}
     SpriteAsset: {fileID: 0}
     WeightedTiles: []
-  - LogicalId: 11
-    TileType: 0
-    Tile: {fileID: 11400000, guid: 93e196dfa45273c49a5e6ab4b10519b6, type: 2}
-    SpriteAsset: {fileID: 0}
-    WeightedTiles: []
-  - LogicalId: 12
-    TileType: 0
-    Tile: {fileID: 11400000, guid: 4da885a2042552b4b83fd5a3a9d4cf8e, type: 2}
-    SpriteAsset: {fileID: 0}
-    WeightedTiles: []
-  - LogicalId: 13
+  - LogicalIds:
+    - 13
+    - 15
     TileType: 1
     Tile: {fileID: 0}
     SpriteAsset: {fileID: 0}
@@ -47,31 +49,8 @@ MonoBehaviour:
       Weight: 0.35
     - Tile: {fileID: 11400000, guid: 60856dae9077ef641995457fd0846738, type: 2}
       Weight: 0.65
-  - LogicalId: 14
-    TileType: 0
-    Tile: {fileID: 11400000, guid: 4da885a2042552b4b83fd5a3a9d4cf8e, type: 2}
-    SpriteAsset: {fileID: 0}
-    WeightedTiles: []
-  - LogicalId: 15
-    TileType: 1
-    Tile: {fileID: 0}
-    SpriteAsset: {fileID: 0}
-    WeightedTiles:
-    - Tile: {fileID: 11400000, guid: 93e196dfa45273c49a5e6ab4b10519b6, type: 2}
-      Weight: 0.35
-    - Tile: {fileID: 11400000, guid: 60856dae9077ef641995457fd0846738, type: 2}
-      Weight: 0.65
-  - LogicalId: 16
-    TileType: 0
-    Tile: {fileID: 11400000, guid: 60856dae9077ef641995457fd0846738, type: 2}
-    SpriteAsset: {fileID: 0}
-    WeightedTiles: []
-  - LogicalId: 17
-    TileType: 0
-    Tile: {fileID: 11400000, guid: 60856dae9077ef641995457fd0846738, type: 2}
-    SpriteAsset: {fileID: 0}
-    WeightedTiles: []
-  - LogicalId: 18
+  - LogicalIds:
+    - 18
     TileType: 1
     Tile: {fileID: 0}
     SpriteAsset: {fileID: 0}
@@ -80,8 +59,3 @@ MonoBehaviour:
       Weight: 0.82
     - Tile: {fileID: 11400000, guid: 60856dae9077ef641995457fd0846738, type: 2}
       Weight: 0.18
-  - LogicalId: 19
-    TileType: 0
-    Tile: {fileID: 11400000, guid: 60856dae9077ef641995457fd0846738, type: 2}
-    SpriteAsset: {fileID: 0}
-    WeightedTiles: []

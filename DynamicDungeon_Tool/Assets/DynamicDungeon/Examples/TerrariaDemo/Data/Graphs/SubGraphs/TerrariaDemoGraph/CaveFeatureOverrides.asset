@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Jungle Cave Region
+    NodeName: Jungle Cave Region (Combine Masks)
     Position: {x: 611, y: -875.3999}
     Ports:
     - PortName: A
@@ -45,7 +45,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Moss Cave Pockets
+    NodeName: Moss Cave Pockets (Cluster)
     Position: {x: 931, y: -875.3999}
     Ports:
     - PortName: Mask
@@ -74,7 +74,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: moss-pocket-ids
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
-    NodeName: Moss Pocket IDs
+    NodeName: Moss Pocket IDs (Bool Mask to Logical ID)
     Position: {x: 1251, y: -1155.3999}
     Ports:
     - PortName: Input
@@ -94,7 +94,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: moss-pocket-neighbour-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
-    NodeName: Moss Pocket Wall Neighbourhood
+    NodeName: Moss Pocket Wall Neighbourhood (Neighbourhood Check)
     Position: {x: 1571, y: -1155.3999}
     Ports:
     - PortName: Input
@@ -123,7 +123,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Moss Cave Override
+    NodeName: Moss Cave Override (Biome Override)
     Position: {x: 1251, y: -875.3999}
     Ports:
     - PortName: Biome Input
@@ -150,7 +150,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Ice Cave Region
+    NodeName: Ice Cave Region (Combine Masks)
     Position: {x: 611, y: -595.3999}
     Ports:
     - PortName: A
@@ -171,7 +171,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Ice Cave Pockets
+    NodeName: Ice Cave Pockets (Cluster)
     Position: {x: 931, y: -595.3999}
     Ports:
     - PortName: Mask
@@ -200,7 +200,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ice-pocket-ids
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
-    NodeName: Ice Pocket IDs
+    NodeName: Ice Pocket IDs (Bool Mask to Logical ID)
     Position: {x: 1251, y: -395.3999}
     Ports:
     - PortName: Input
@@ -220,7 +220,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ice-pocket-neighbour-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
-    NodeName: Ice Pocket Wall Neighbourhood
+    NodeName: Ice Pocket Wall Neighbourhood (Neighbourhood Check)
     Position: {x: 1571, y: -395.3999}
     Ports:
     - PortName: Input
@@ -249,7 +249,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ice-cave-wall-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Ice Cave Wall Mask
+    NodeName: Ice Cave Wall Mask (Combine Masks)
     Position: {x: 1891, y: -395.3999}
     Ports:
     - PortName: A
@@ -270,7 +270,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Ice Cave Override
+    NodeName: Ice Cave Override (Biome Override)
     Position: {x: 1251, y: -595.3999}
     Ports:
     - PortName: Biome Input
@@ -297,7 +297,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
-    NodeName: Wall Mask
+    NodeName: Wall Mask (Neighbourhood Check)
     Position: {x: 1251, y: -1335.3999}
     Ports:
     - PortName: Input
@@ -326,7 +326,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: moss-cave-wall-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Moss Cave Wall Mask
+    NodeName: Moss Cave Wall Mask (Combine Masks)
     Position: {x: 1891, y: -1155.3999}
     Ports:
     - PortName: A
@@ -347,7 +347,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 54a82da2-7200-4468-9eea-b57e1770069a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Lower Crystal Region
+    NodeName: Lower Crystal Region (Combine Masks)
     Position: {x: 611, y: -355.3999}
     Ports:
     - PortName: A
@@ -368,7 +368,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 04d569af-2156-41d1-baf7-a6d264adee89
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Crystal Cave Pockets
+    NodeName: Crystal Cave Pockets (Cluster)
     Position: {x: 931, y: -355.3999}
     Ports:
     - PortName: Mask
@@ -397,7 +397,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: crystal-pocket-ids
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
-    NodeName: Crystal Pocket IDs
+    NodeName: Crystal Pocket IDs (Bool Mask to Logical ID)
     Position: {x: 1251, y: -155.3999}
     Ports:
     - PortName: Input
@@ -417,7 +417,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: crystal-pocket-neighbour-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
-    NodeName: Crystal Pocket Wall Neighbourhood
+    NodeName: Crystal Pocket Wall Neighbourhood (Neighbourhood Check)
     Position: {x: 1571, y: -155.3999}
     Ports:
     - PortName: Input
@@ -446,7 +446,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: crystal-cave-wall-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Crystal Cave Wall Mask
+    NodeName: Crystal Cave Wall Mask (Combine Masks)
     Position: {x: 1891, y: -155.3999}
     Ports:
     - PortName: A
@@ -467,7 +467,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Crystal Cave Override
+    NodeName: Crystal Cave Override (Biome Override)
     Position: {x: 2855, y: -589.0001}
     Ports:
     - PortName: Biome Input
@@ -494,7 +494,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: moss-cave-visual-override
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Moss Cave Visual Override
+    NodeName: Moss Cave Visual Override (Biome Override)
     Position: {x: 1886, y: -205}
     Ports:
     - PortName: Biome Input
@@ -521,7 +521,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ice-cave-visual-override
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Ice Cave Visual Override
+    NodeName: Ice Cave Visual Override (Biome Override)
     Position: {x: 2206, y: -205}
     Ports:
     - PortName: Biome Input
@@ -548,7 +548,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: crystal-cave-visual-override
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Crystal Cave Visual Override
+    NodeName: Crystal Cave Visual Override (Biome Override)
     Position: {x: 2525.9998, y: -205}
     Ports:
     - PortName: Biome Input
@@ -575,7 +575,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: visual-biome-channel-copy
     NodeTypeName: DynamicDungeon.Runtime.Nodes.IntChannelCopyNode
-    NodeName: Visual Biome Channel
+    NodeName: Visual Biome Channel (Copy Int Channel)
     Position: {x: 2972.995, y: -205.01001}
     Ports:
     - PortName: Input

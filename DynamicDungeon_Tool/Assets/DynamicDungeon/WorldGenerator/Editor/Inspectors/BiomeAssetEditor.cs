@@ -26,9 +26,11 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private readonly Dictionary<int, int> _weightedPreviewHighlights = new Dictionary<int, int>();
         private readonly Dictionary<int, UnityEditor.Editor> _inlineAssetEditors = new Dictionary<int, UnityEditor.Editor>();
+        private readonly Dictionary<int, Rect> _idAddButtonRects = new Dictionary<int, Rect>();
 
         private SerializedProperty _tileMappingsProperty;
 
+        private Rect _addMappingButtonRect;
         private Vector2 _mappingScrollPosition;
         private Vector2 _previewScrollPosition;
         private string _search = string.Empty;
@@ -70,7 +72,11 @@ namespace DynamicDungeon.Editor.Inspectors
             EnsureStyles();
             serializedObject.Update();
 
-            TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
+            SerializedProperty registryProp = serializedObject.FindProperty("SemanticRegistry");
+            EditorGUILayout.PropertyField(registryProp, new GUIContent("Semantic Registry"));
+            EditorGUILayout.Space(2.0f);
+
+            TileSemanticRegistry registry = Biome.SemanticRegistry ?? TileSemanticRegistry.GetOrLoad();
             List<int> visibleIndices = BuildVisibleIndices(registry);
             if (_pendingScrollToSelection)
             {
@@ -118,9 +124,27 @@ namespace DynamicDungeon.Editor.Inspectors
             }
             EditorGUILayout.EndScrollView();
 
-            if (GUILayout.Button("Add Mapping"))
+            bool addClicked = GUILayout.Button("Add Mapping");
+            if (Event.current.type == EventType.Repaint)
             {
-                ShowAddMappingMenu(registry);
+                _addMappingButtonRect = GUILayoutUtility.GetLastRect();
+            }
+
+            if (addClicked)
+            {
+                if (registry != null && registry.Entries != null && registry.Entries.Count > 0)
+                {
+                    PopupWindow.Show(_addMappingButtonRect, new BiomeAddMappingPopup(Biome, registry, AddMappingsForTile));
+                }
+                else
+                {
+                    Undo.RecordObject(Biome, "Add Mapping");
+                    BiomeTileMapping fallbackMapping = new BiomeTileMapping();
+                    fallbackMapping.LogicalIds = new List<ushort> { FindFirstUnusedLogicalId() };
+                    Biome.TileMappings.Add(fallbackMapping);
+                    EditorUtility.SetDirty(Biome);
+                    serializedObject.Update();
+                }
             }
 
             EditorGUILayout.EndVertical();
@@ -164,30 +188,8 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUI.backgroundColor = previousBackground;
 
-            SerializedProperty mappingProperty = _tileMappingsProperty.GetArrayElementAtIndex(mappingIndex);
-            SerializedProperty logicalIdProperty = mappingProperty.FindPropertyRelative("LogicalId");
-
             EditorGUILayout.BeginHorizontal();
-            if (registry != null)
-            {
-                RegistryDropdown.LogicalIdDropdown("Logical ID", logicalIdProperty, registry);
-                TileEntry registryEntry;
-                string displayName = registry.TryGetEntry((ushort)logicalIdProperty.intValue, out registryEntry) && registryEntry != null
-                    ? GetSafeDisplayName(registryEntry.DisplayName)
-                    : "Missing from registry";
-                EditorGUILayout.LabelField(displayName, _mutedLabelStyle, GUILayout.Width(140.0f));
-            }
-            else
-            {
-                int newLogicalId = EditorGUILayout.IntField("Logical ID", mapping.LogicalId);
-                if (newLogicalId != mapping.LogicalId)
-                {
-                    Undo.RecordObject(Biome, "Change Logical ID");
-                    mapping.LogicalId = (ushort)Mathf.Clamp(newLogicalId, 0, ushort.MaxValue);
-                    EditorUtility.SetDirty(Biome);
-                }
-            }
-
+            EditorGUILayout.LabelField(BuildMappingHeaderLabel(mapping, registry), EditorStyles.boldLabel);
             if (GUILayout.Button("Delete", GUILayout.Width(58.0f)))
             {
                 DeleteMappingAt(mappingIndex);
@@ -197,7 +199,13 @@ namespace DynamicDungeon.Editor.Inspectors
             }
             EditorGUILayout.EndHorizontal();
 
-            DrawRegistryMetadata(mapping.LogicalId, registry);
+            DrawLogicalIdChips(mappingIndex, mapping, registry);
+            bool deletedByChip = mapping == null || !Biome.TileMappings.Contains(mapping);
+            if (deletedByChip)
+            {
+                EditorGUILayout.EndVertical();
+                return;
+            }
 
             TileMappingType updatedType = (TileMappingType)EditorGUILayout.EnumPopup("Tile Type", mapping.TileType);
             if (updatedType != mapping.TileType)
@@ -263,23 +271,194 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawRegistryMetadata(ushort logicalId, TileSemanticRegistry registry)
+        private void DrawLogicalIdChips(int mappingIndex, BiomeTileMapping mapping, TileSemanticRegistry registry)
         {
-            if (registry == null)
+            float labelWidth = EditorGUIUtility.labelWidth - 4.0f;
+            float chipsAvailableWidth = Mathf.Max(60.0f, EditorGUIUtility.currentViewWidth - labelWidth - 34.0f);
+
+            List<string> chipLabels = new List<string>();
+            if (mapping.LogicalIds != null)
+            {
+                int i;
+                for (i = 0; i < mapping.LogicalIds.Count; i++)
+                {
+                    chipLabels.Add(BuildIdChipLabel(mapping.LogicalIds[i], registry) + " ×");
+                }
+            }
+
+            float totalHeight = CalculateChipsRowHeight(chipLabels, chipsAvailableWidth);
+            Rect rowRect = EditorGUILayout.GetControlRect(false, totalHeight);
+
+            EditorGUI.LabelField(new Rect(rowRect.x, rowRect.y, labelWidth, ChipHeight), "Logical IDs");
+
+            float startX = rowRect.x + labelWidth;
+            float currentX = startX;
+            float currentY = rowRect.y;
+            float rowMaxX = rowRect.xMax;
+
+            int deleteIndex = -1;
+
+            int chipIndex;
+            for (chipIndex = 0; chipIndex < chipLabels.Count; chipIndex++)
+            {
+                string label = chipLabels[chipIndex];
+                float chipW = EditorStyles.miniButton.CalcSize(new GUIContent(label)).x + ChipPadding;
+                if (currentX > startX && currentX + chipW > rowMaxX)
+                {
+                    currentX = startX;
+                    currentY += ChipHeight + ChipSpacing;
+                }
+
+                Rect chipRect = new Rect(currentX, currentY, chipW, ChipHeight);
+                if (GUI.Button(chipRect, label, EditorStyles.miniButton))
+                {
+                    deleteIndex = chipIndex;
+                }
+
+                currentX += chipW + ChipSpacing;
+            }
+
+            float addWidth = 22.0f;
+            if (currentX > startX && currentX + addWidth > rowMaxX)
+            {
+                currentX = startX;
+                currentY += ChipHeight + ChipSpacing;
+            }
+
+            Rect addButtonRect = new Rect(currentX, currentY, addWidth, ChipHeight);
+            if (Event.current.type == EventType.Repaint)
+            {
+                _idAddButtonRects[mappingIndex] = addButtonRect;
+            }
+
+            if (GUI.Button(addButtonRect, "+", EditorStyles.miniButton))
+            {
+                Rect storedRect = _idAddButtonRects.TryGetValue(mappingIndex, out Rect r) ? r : addButtonRect;
+                ShowAddIdToMappingMenu(mapping, registry, storedRect);
+            }
+
+            if (deleteIndex >= 0 && mapping.LogicalIds != null)
+            {
+                Undo.RecordObject(Biome, "Remove Logical ID");
+                mapping.LogicalIds.RemoveAt(deleteIndex);
+                EditorUtility.SetDirty(Biome);
+                GUI.changed = true;
+            }
+        }
+
+        private float CalculateChipsRowHeight(IList<string> chipLabels, float availableWidth)
+        {
+            float currentX = 0.0f;
+            float height = ChipHeight;
+
+            int i;
+            for (i = 0; i < chipLabels.Count; i++)
+            {
+                float chipW = EditorStyles.miniButton.CalcSize(new GUIContent(chipLabels[i])).x + ChipPadding;
+                if (currentX > 0.0f && currentX + chipW > availableWidth)
+                {
+                    currentX = 0.0f;
+                    height += ChipHeight + ChipSpacing;
+                }
+
+                currentX += chipW + ChipSpacing;
+            }
+
+            if (currentX > 0.0f && currentX + 22.0f > availableWidth)
+            {
+                height += ChipHeight + ChipSpacing;
+            }
+
+            return height;
+        }
+
+        private string BuildIdChipLabel(ushort id, TileSemanticRegistry registry)
+        {
+            TileEntry entry;
+            if (registry != null && registry.TryGetEntry(id, out entry) && entry != null && !string.IsNullOrWhiteSpace(entry.DisplayName))
+            {
+                return entry.DisplayName;
+            }
+
+            return id.ToString();
+        }
+
+        private string BuildMappingHeaderLabel(BiomeTileMapping mapping, TileSemanticRegistry registry)
+        {
+            if (mapping.LogicalIds == null || mapping.LogicalIds.Count == 0)
+            {
+                return "No IDs Assigned";
+            }
+
+            ushort firstId = mapping.LogicalIds[0];
+            string firstName;
+            TileEntry entry;
+            if (registry != null && registry.TryGetEntry(firstId, out entry) && entry != null && !string.IsNullOrWhiteSpace(entry.DisplayName))
+            {
+                firstName = entry.DisplayName + " (" + firstId + ")";
+            }
+            else
+            {
+                firstName = "ID " + firstId;
+            }
+
+            if (mapping.LogicalIds.Count > 1)
+            {
+                return firstName + " + " + (mapping.LogicalIds.Count - 1) + " more";
+            }
+
+            return firstName;
+        }
+
+        private void ShowAddIdToMappingMenu(BiomeTileMapping mapping, TileSemanticRegistry registry, Rect buttonRect)
+        {
+            if (registry == null || registry.Entries == null)
             {
                 return;
             }
 
-            TileEntry registryEntry;
-            if (!registry.TryGetEntry(logicalId, out registryEntry) || registryEntry == null)
+            GenericMenu menu = new GenericMenu();
+            List<TileEntry> entries = new List<TileEntry>(registry.Entries);
+            entries.Sort((a, b) => a.LogicalId.CompareTo(b.LogicalId));
+
+            bool any = false;
+            int index;
+            for (index = 0; index < entries.Count; index++)
             {
-                EditorGUILayout.HelpBox("This Logical ID is not currently present in the registry.", MessageType.Warning);
-                return;
+                TileEntry entry = entries[index];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                bool alreadyInThisMapping = mapping.LogicalIds != null && mapping.LogicalIds.Contains(entry.LogicalId);
+                bool alreadyInOtherMapping = !alreadyInThisMapping && ContainsLogicalId(entry.LogicalId);
+                if (alreadyInThisMapping || alreadyInOtherMapping)
+                {
+                    continue;
+                }
+
+                ushort capturedId = entry.LogicalId;
+                menu.AddItem(new GUIContent(RegistryDropdown.BuildLogicalIdLabel(entry.LogicalId, registry)), false, () =>
+                {
+                    Undo.RecordObject(Biome, "Add Logical ID");
+                    if (mapping.LogicalIds == null)
+                    {
+                        mapping.LogicalIds = new List<ushort>();
+                    }
+
+                    mapping.LogicalIds.Add(capturedId);
+                    EditorUtility.SetDirty(Biome);
+                });
+                any = true;
             }
 
-            EditorGUILayout.LabelField("Registry Name", GetSafeDisplayName(registryEntry.DisplayName));
-            EditorGUILayout.LabelField("Registry Tags", _mutedLabelStyle);
-            DrawReadOnlyTagChips(registryEntry.Tags);
+            if (!any)
+            {
+                menu.AddDisabledItem(new GUIContent("No more IDs available"));
+            }
+
+            menu.ShowAsContext();
         }
 
         private void DrawWeightedTileList(int mappingIndex, BiomeTileMapping mapping)
@@ -449,58 +628,77 @@ namespace DynamicDungeon.Editor.Inspectors
             serializedObject.Update();
         }
 
-        private void ShowAddMappingMenu(TileSemanticRegistry registry)
+        private void AddMappingsForTile(TileBase tile, IList<ushort> logicalIds)
         {
-            if (registry == null || registry.Entries == null || registry.Entries.Count == 0)
+            if (tile == null || logicalIds == null || logicalIds.Count == 0)
             {
-                Undo.RecordObject(Biome, "Add Mapping");
-                BiomeTileMapping fallbackMapping = new BiomeTileMapping();
-                fallbackMapping.LogicalId = FindFirstUnusedLogicalId();
-                Biome.TileMappings.Add(fallbackMapping);
-                EditorUtility.SetDirty(Biome);
-                serializedObject.Update();
                 return;
             }
 
-            GenericMenu menu = new GenericMenu();
-            List<TileEntry> entries = new List<TileEntry>(registry.Entries);
-            entries.Sort((left, right) => left.LogicalId.CompareTo(right.LogicalId));
+            BiomeTileMapping existingMapping = FindMappingForTile(tile);
 
-            int addedCount = 0;
-            int index;
-            for (index = 0; index < entries.Count; index++)
+            Undo.RecordObject(Biome, logicalIds.Count == 1 ? "Add Mapping" : "Add Mappings");
+
+            if (existingMapping != null)
             {
-                TileEntry entry = entries[index];
-                if (entry == null || ContainsLogicalId(entry.LogicalId))
+                if (existingMapping.LogicalIds == null)
                 {
-                    continue;
+                    existingMapping.LogicalIds = new List<ushort>();
                 }
 
-                addedCount++;
-                menu.AddItem(new GUIContent(RegistryDropdown.BuildLogicalIdLabel(entry.LogicalId, registry)), false, () => AddMappingForLogicalId(entry.LogicalId));
+                int index;
+                for (index = 0; index < logicalIds.Count; index++)
+                {
+                    ushort id = logicalIds[index];
+                    if (!existingMapping.LogicalIds.Contains(id) && !ContainsLogicalId(id))
+                    {
+                        existingMapping.LogicalIds.Add(id);
+                    }
+                }
             }
-
-            if (addedCount == 0)
+            else
             {
-                menu.AddDisabledItem(new GUIContent("All registry IDs are already mapped"));
+                BiomeTileMapping mapping = new BiomeTileMapping();
+                mapping.Tile = tile;
+                mapping.LogicalIds = new List<ushort>();
+                int index;
+                for (index = 0; index < logicalIds.Count; index++)
+                {
+                    ushort id = logicalIds[index];
+                    if (!ContainsLogicalId(id))
+                    {
+                        mapping.LogicalIds.Add(id);
+                    }
+                }
+
+                if (mapping.LogicalIds.Count > 0)
+                {
+                    Biome.TileMappings.Add(mapping);
+                }
             }
 
-            menu.ShowAsContext();
-        }
-
-        private void AddMappingForLogicalId(ushort logicalId)
-        {
-            if (ContainsLogicalId(logicalId))
-            {
-                return;
-            }
-
-            Undo.RecordObject(Biome, "Add Mapping");
-            BiomeTileMapping mapping = new BiomeTileMapping();
-            mapping.LogicalId = logicalId;
-            Biome.TileMappings.Add(mapping);
             EditorUtility.SetDirty(Biome);
             serializedObject.Update();
+        }
+
+        private BiomeTileMapping FindMappingForTile(TileBase tile)
+        {
+            if (tile == null)
+            {
+                return null;
+            }
+
+            int index;
+            for (index = 0; index < Biome.TileMappings.Count; index++)
+            {
+                BiomeTileMapping mapping = Biome.TileMappings[index];
+                if (mapping != null && ReferenceEquals(mapping.Tile, tile))
+                {
+                    return mapping;
+                }
+            }
+
+            return null;
         }
 
         private bool ContainsLogicalId(ushort logicalId)
@@ -509,7 +707,7 @@ namespace DynamicDungeon.Editor.Inspectors
             for (index = 0; index < Biome.TileMappings.Count; index++)
             {
                 BiomeTileMapping mapping = Biome.TileMappings[index];
-                if (mapping != null && mapping.LogicalId == logicalId)
+                if (mapping != null && mapping.LogicalIds != null && mapping.LogicalIds.Contains(logicalId))
                 {
                     return true;
                 }
@@ -791,41 +989,68 @@ namespace DynamicDungeon.Editor.Inspectors
             }
 
             string trimmedSearch = search.Trim();
-            TileEntry registryEntry;
-            if (registry != null && registry.TryGetEntry(mapping.LogicalId, out registryEntry) && registryEntry != null)
+
+            if (mapping.LogicalIds == null)
             {
-                if (!string.IsNullOrWhiteSpace(registryEntry.DisplayName) &&
-                    registryEntry.DisplayName.IndexOf(trimmedSearch, StringComparison.OrdinalIgnoreCase) >= 0)
+                return false;
+            }
+
+            int idIndex;
+            for (idIndex = 0; idIndex < mapping.LogicalIds.Count; idIndex++)
+            {
+                ushort id = mapping.LogicalIds[idIndex];
+
+                if (id.ToString().IndexOf(trimmedSearch, StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return true;
                 }
 
-                if (registryEntry.Tags != null)
+                TileEntry registryEntry;
+                if (registry != null && registry.TryGetEntry(id, out registryEntry) && registryEntry != null)
                 {
-                    int tagIndex;
-                    for (tagIndex = 0; tagIndex < registryEntry.Tags.Count; tagIndex++)
+                    if (!string.IsNullOrWhiteSpace(registryEntry.DisplayName) &&
+                        registryEntry.DisplayName.IndexOf(trimmedSearch, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        string tag = registryEntry.Tags[tagIndex];
-                        if (!string.IsNullOrWhiteSpace(tag) && tag.IndexOf(trimmedSearch, StringComparison.OrdinalIgnoreCase) >= 0)
+                        return true;
+                    }
+
+                    if (registryEntry.Tags != null)
+                    {
+                        int tagIndex;
+                        for (tagIndex = 0; tagIndex < registryEntry.Tags.Count; tagIndex++)
                         {
-                            return true;
+                            string tag = registryEntry.Tags[tagIndex];
+                            if (!string.IsNullOrWhiteSpace(tag) && tag.IndexOf(trimmedSearch, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
             }
 
-            return mapping.LogicalId.ToString().IndexOf(trimmedSearch, StringComparison.OrdinalIgnoreCase) >= 0;
+            return false;
         }
 
         private static string BuildPreviewLabel(BiomeTileMapping mapping, TileSemanticRegistry registry)
         {
-            TileEntry registryEntry;
-            if (registry != null && registry.TryGetEntry(mapping.LogicalId, out registryEntry) && registryEntry != null)
+            if (mapping.LogicalIds == null || mapping.LogicalIds.Count == 0)
             {
-                return mapping.LogicalId + "\n" + GetSafeDisplayName(registryEntry.DisplayName);
+                return "No IDs";
             }
 
-            return mapping.LogicalId + "\nMissing";
+            ushort firstId = mapping.LogicalIds[0];
+            TileEntry registryEntry;
+            string firstName = registry != null && registry.TryGetEntry(firstId, out registryEntry) && registryEntry != null
+                ? GetSafeDisplayName(registryEntry.DisplayName)
+                : "?";
+
+            if (mapping.LogicalIds.Count == 1)
+            {
+                return firstId + "\n" + firstName;
+            }
+
+            return firstName + "\n+" + (mapping.LogicalIds.Count - 1);
         }
 
         private bool DrawPreviewCell(Rect rect, BiomeTileMapping mapping, string label, bool isSelected)
@@ -844,14 +1069,19 @@ namespace DynamicDungeon.Editor.Inspectors
             Rect previewRect = new Rect(innerRect.x + 4.0f, innerRect.y + 4.0f, innerRect.width - 8.0f, innerRect.height - 8.0f);
             if (!DrawPreviewVisual(previewRect, mapping))
             {
-                EditorGUI.DrawRect(previewRect, GetPreviewColour(mapping.LogicalId));
+                ushort colourId = mapping.LogicalIds != null && mapping.LogicalIds.Count > 0 ? mapping.LogicalIds[0] : (ushort)0;
+                EditorGUI.DrawRect(previewRect, GetPreviewColour(colourId));
             }
+
+            float labelWidth = previewRect.width - 8.0f;
+            float labelHeight = _selectedPreviewStyle.CalcHeight(new GUIContent(label), labelWidth);
+            labelHeight = Mathf.Clamp(labelHeight, 14.0f, previewRect.height - 8.0f);
 
             Rect labelBackgroundRect = new Rect(
                 previewRect.x + 4.0f,
-                previewRect.y + ((previewRect.height - 26.0f) * 0.5f),
-                previewRect.width - 8.0f,
-                26.0f);
+                previewRect.y + ((previewRect.height - labelHeight) * 0.5f),
+                labelWidth,
+                labelHeight);
             EditorGUI.DrawRect(labelBackgroundRect, new Color(0.08f, 0.08f, 0.08f, 0.68f));
 
             Rect labelRect = new Rect(
@@ -1158,6 +1388,139 @@ namespace DynamicDungeon.Editor.Inspectors
         private string GetInlineEditorStateKey(int mappingIndex, string slotName)
         {
             return "DynamicDungeon.BiomeAssetEditor.InlineEditor." + target.GetInstanceID() + "." + mappingIndex + "." + slotName;
+        }
+
+        private sealed class BiomeAddMappingPopup : PopupWindowContent
+        {
+            private readonly BiomeAsset _biome;
+            private readonly TileSemanticRegistry _registry;
+            private readonly Action<TileBase, IList<ushort>> _onConfirm;
+            private readonly List<TileEntry> _availableEntries;
+
+            private TileBase _tile;
+            private readonly HashSet<ushort> _selectedIds = new HashSet<ushort>();
+            private Vector2 _scrollPosition;
+
+            public BiomeAddMappingPopup(BiomeAsset biome, TileSemanticRegistry registry, Action<TileBase, IList<ushort>> onConfirm)
+            {
+                _biome = biome;
+                _registry = registry;
+                _onConfirm = onConfirm;
+
+                _availableEntries = new List<TileEntry>();
+                if (registry != null && registry.Entries != null)
+                {
+                    int index;
+                    for (index = 0; index < registry.Entries.Count; index++)
+                    {
+                        TileEntry entry = registry.Entries[index];
+                        if (entry != null && !IsMapped(entry.LogicalId))
+                        {
+                            _availableEntries.Add(entry);
+                        }
+                    }
+
+                    _availableEntries.Sort((a, b) => a.LogicalId.CompareTo(b.LogicalId));
+                }
+            }
+
+            public override Vector2 GetWindowSize()
+            {
+                float listHeight = _availableEntries.Count == 0
+                    ? 22.0f
+                    : Mathf.Min(22.0f + _availableEntries.Count * 22.0f, 200.0f);
+                return new Vector2(300.0f, 28.0f + 8.0f + listHeight + 8.0f + 26.0f + 8.0f);
+            }
+
+            public override void OnGUI(Rect rect)
+            {
+                _tile = (TileBase)EditorGUILayout.ObjectField("Tile", _tile, typeof(TileBase), false);
+
+                GUILayout.Space(4.0f);
+
+                float listHeight = _availableEntries.Count == 0
+                    ? 22.0f
+                    : Mathf.Min(22.0f + _availableEntries.Count * 22.0f, 200.0f);
+
+                _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition, GUILayout.Height(listHeight));
+
+                if (_availableEntries.Count == 0)
+                {
+                    EditorGUILayout.LabelField("All registry IDs are already mapped.", EditorStyles.miniLabel);
+                }
+                else
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    if (GUILayout.Button("All", EditorStyles.miniButton, GUILayout.Width(36.0f)))
+                    {
+                        int index;
+                        for (index = 0; index < _availableEntries.Count; index++)
+                        {
+                            _selectedIds.Add(_availableEntries[index].LogicalId);
+                        }
+                    }
+
+                    if (GUILayout.Button("None", EditorStyles.miniButton, GUILayout.Width(42.0f)))
+                    {
+                        _selectedIds.Clear();
+                    }
+
+                    EditorGUILayout.EndHorizontal();
+
+                    int entryIndex;
+                    for (entryIndex = 0; entryIndex < _availableEntries.Count; entryIndex++)
+                    {
+                        TileEntry entry = _availableEntries[entryIndex];
+                        bool isChecked = _selectedIds.Contains(entry.LogicalId);
+                        string displayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? "Unnamed" : entry.DisplayName;
+                        string label = entry.LogicalId + "  " + displayName;
+                        bool newChecked = EditorGUILayout.ToggleLeft(label, isChecked);
+                        if (newChecked != isChecked)
+                        {
+                            if (newChecked)
+                            {
+                                _selectedIds.Add(entry.LogicalId);
+                            }
+                            else
+                            {
+                                _selectedIds.Remove(entry.LogicalId);
+                            }
+                        }
+                    }
+                }
+
+                EditorGUILayout.EndScrollView();
+
+                GUILayout.Space(4.0f);
+
+                EditorGUI.BeginDisabledGroup(_tile == null || _selectedIds.Count == 0);
+                string buttonLabel = _selectedIds.Count > 1
+                    ? "Add " + _selectedIds.Count + " Mappings"
+                    : "Add Mapping";
+                if (GUILayout.Button(buttonLabel))
+                {
+                    List<ushort> selectedList = new List<ushort>(_selectedIds);
+                    _onConfirm?.Invoke(_tile, selectedList);
+                    editorWindow.Close();
+                }
+
+                EditorGUI.EndDisabledGroup();
+            }
+
+            private bool IsMapped(ushort logicalId)
+            {
+                int index;
+                for (index = 0; index < _biome.TileMappings.Count; index++)
+                {
+                    BiomeTileMapping mapping = _biome.TileMappings[index];
+                    if (mapping != null && mapping.LogicalIds != null && mapping.LogicalIds.Contains(logicalId))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
     }
 }

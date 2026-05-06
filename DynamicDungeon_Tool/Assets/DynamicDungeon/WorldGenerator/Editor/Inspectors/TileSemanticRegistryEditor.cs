@@ -275,7 +275,7 @@ namespace DynamicDungeon.Editor.Inspectors
                 for (mappingIndex = 0; mappingIndex < biomeAsset.TileMappings.Count; mappingIndex++)
                 {
                     BiomeTileMapping mapping = biomeAsset.TileMappings[mappingIndex];
-                    if (mapping != null && mapping.LogicalId == logicalId)
+                    if (mapping != null && mapping.LogicalIds != null && mapping.LogicalIds.Contains(logicalId))
                     {
                         biomeAssetCount++;
                         break;

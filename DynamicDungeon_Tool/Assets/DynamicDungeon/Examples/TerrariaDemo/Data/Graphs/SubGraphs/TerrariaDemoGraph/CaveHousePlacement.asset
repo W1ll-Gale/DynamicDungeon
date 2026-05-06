@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
-    NodeName: Cave House Anchors
+    NodeName: Cave House Anchors (Contextual Query)
     Position: {x: 1893, y: 1994.52}
     Ports:
     - PortName: Input
@@ -41,7 +41,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
-    NodeName: House Candidate Mask
+    NodeName: House Candidate Mask (Point List To Mask)
     Position: {x: 2461, y: 2062.52}
     Ports:
     - PortName: Points
@@ -55,7 +55,7 @@ MonoBehaviour:
     Parameters: []
   - NodeId: cave-house-depth-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
-    NodeName: Cave House Depth Band
+    NodeName: Cave House Depth Band (Column Surface Band)
     Position: {x: 2461, y: 2222.52}
     Ports:
     - PortName: Input
@@ -75,7 +75,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: cave-house-room-candidates
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Cave House Room Candidates
+    NodeName: Cave House Room Candidates (Mask Stack)
     Position: {x: 3096, y: 2222.52}
     Ports:
     - PortName: Masks
@@ -98,7 +98,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
-    NodeName: House Candidate Weights
+    NodeName: House Candidate Weights (Mask Blend)
     Position: {x: 2776, y: 1721.52}
     Ports:
     - PortName: A
@@ -120,7 +120,7 @@ MonoBehaviour:
     Parameters: []
   - NodeId: cdf66d27-6d46-44ed-97d5-101ecbe82a90
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
-    NodeName: House Band
+    NodeName: House Band (Height Band)
     Position: {x: 2776, y: 1996.52}
     Ports:
     - PortName: HouseBand
@@ -145,7 +145,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: House Weights
+    NodeName: House Weights (Math)
     Position: {x: 3132, y: 2121.52}
     Ports:
     - PortName: A
@@ -169,7 +169,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
-    NodeName: House Eligibility Mask
+    NodeName: House Eligibility Mask (Threshold)
     Position: {x: 3416, y: 2170.52}
     Ports:
     - PortName: Input
@@ -186,7 +186,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
-    NodeName: House Poisson
+    NodeName: House Poisson (Poisson Disc Sampler)
     Position: {x: 3713, y: 2170.52}
     Ports:
     - PortName: Mask
@@ -209,7 +209,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
-    NodeName: Cave House Prefabs
+    NodeName: Cave House Prefabs (Prefab Stamper)
     Position: {x: 4076, y: 2297.52}
     Ports:
     - PortName: Points

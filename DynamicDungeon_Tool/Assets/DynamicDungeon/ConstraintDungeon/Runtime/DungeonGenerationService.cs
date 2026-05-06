@@ -32,7 +32,7 @@ namespace DynamicDungeon.ConstraintDungeon
             this.progressChanged = progressChanged;
         }
 
-        public async Task<DungeonGenerationResult> GenerateLayoutAsync(DungeonGenerationRequest request)
+        public async Task<DungeonGenerationResult> GenerateLayoutAsync(DungeonGenerationRequest request, CancellationToken cancellationToken = default)
         {
             if (isGenerating)
             {
@@ -49,7 +49,7 @@ namespace DynamicDungeon.ConstraintDungeon
             isGenerating = true;
             Report(0f, "Preparing templates...");
 
-            CancellationTokenSource cts = new CancellationTokenSource();
+            CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             currentGenerationCts = cts;
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
 

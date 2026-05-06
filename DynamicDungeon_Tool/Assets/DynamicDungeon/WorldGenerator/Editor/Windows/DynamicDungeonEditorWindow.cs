@@ -31,6 +31,8 @@ namespace DynamicDungeon.Editor.Windows
         private const string GraphSettingsLayoutPrefsKey = "DynamicDungeon.EditorWindow.GraphSettingsLayout";
         private const string GroupNavigatorLayoutPrefsKey = "DynamicDungeon.EditorWindow.GroupNavigatorLayout";
         private const string MiniMapLayoutPrefsKey = "DynamicDungeon.EditorWindow.MiniMapLayout";
+        private const string NodeDocumentationBaseUrl = "https://dynamicdungeon.mrbytesized.com/docs/nodes/";
+        private const string WorldGeneratorDocumentationUrl = "https://dynamicdungeon.mrbytesized.com/docs/world-generator";
 
         private ObjectField _graphField;
         private Label _statusLabel;
@@ -361,7 +363,7 @@ namespace DynamicDungeon.Editor.Windows
 
             _docsButton = GraphEditorToolbarControls.BuildIconButton(
                 LoadDocsIcon(),
-                "Documentation (coming later)",
+                "Open documentation for the selected node",
                 OnDocsButtonClicked);
             panelToggleGroup.Add(_docsButton);
 
@@ -622,6 +624,124 @@ namespace DynamicDungeon.Editor.Windows
 
         private void OnDocsButtonClicked()
         {
+            if (_graphView == null)
+            {
+                return;
+            }
+
+            int selectedNodeCount = _graphView.GetSelectedNodeCount();
+            if (selectedNodeCount == 0)
+            {
+                Application.OpenURL(WorldGeneratorDocumentationUrl);
+                return;
+            }
+
+            GenNodeData selectedNodeData = _graphView.GetSingleSelectedNodeData();
+            if (selectedNodeData == null)
+            {
+                EditorUtility.DisplayDialog("Node Documentation", "Select exactly one node to open its documentation.", "OK");
+                return;
+            }
+
+            string documentationUrl;
+            if (!TryGetNodeDocumentationUrl(selectedNodeData, out documentationUrl))
+            {
+                string nodeName = !string.IsNullOrWhiteSpace(selectedNodeData.NodeName)
+                    ? selectedNodeData.NodeName
+                    : selectedNodeData.NodeTypeName;
+                EditorUtility.DisplayDialog("Node Documentation", "No documentation page is registered for '" + nodeName + "'.", "OK");
+                return;
+            }
+
+            Application.OpenURL(documentationUrl);
+        }
+
+        private static bool TryGetNodeDocumentationUrl(GenNodeData nodeData, out string url)
+        {
+            url = string.Empty;
+            if (nodeData == null || string.IsNullOrWhiteSpace(nodeData.NodeTypeName))
+            {
+                return false;
+            }
+
+            string nodeTypeName = GetShortTypeName(nodeData.NodeTypeName);
+            string route;
+            if (!TryGetNodeDocumentationRoute(nodeTypeName, out route))
+            {
+                return false;
+            }
+
+            url = NodeDocumentationBaseUrl + route;
+            return true;
+        }
+
+        private static string GetShortTypeName(string fullTypeName)
+        {
+            if (string.IsNullOrWhiteSpace(fullTypeName))
+            {
+                return string.Empty;
+            }
+
+            int separatorIndex = fullTypeName.LastIndexOf('.');
+            return separatorIndex >= 0 && separatorIndex < fullTypeName.Length - 1
+                ? fullTypeName.Substring(separatorIndex + 1)
+                : fullTypeName;
+        }
+
+        private static bool TryGetNodeDocumentationRoute(string nodeTypeName, out string route)
+        {
+            switch (nodeTypeName)
+            {
+                case "BiomeLayerNode": route = "biome/biomelayernode"; return true;
+                case "BiomeLayoutNode": route = "biome/biomelayout"; return true;
+                case "BiomeMaskNode": route = "biome/biomemasknode"; return true;
+                case "BiomeMergeNode": route = "biome/biomemerge"; return true;
+                case "BiomeOverrideNode": route = "biome/biomeoverride"; return true;
+                case "BiomeSelectorNode": route = "biome/biomeselector"; return true;
+                case "BiomeWeightBlendNode": route = "biome/biomeweightblend"; return true;
+                case "WeightedBlendNode": route = "biome/biomeweightblend"; return true;
+                case "AxisBandNode": route = "filter-transform/axisbandnode"; return true;
+                case "CellularAutomataNode": route = "filter-transform/cellularautomata"; return true;
+                case "ClampNode": route = "filter-transform/clampnode"; return true;
+                case "ColumnSurfaceBandNode": route = "filter-transform/columnsurfaceband"; return true;
+                case "DistanceFieldNode": route = "filter-transform/distancefieldnode"; return true;
+                case "EdgeDetectNode": route = "filter-transform/edgedetectnode"; return true;
+                case "HeightBandNode": route = "filter-transform/heightbandnode"; return true;
+                case "HeightGradientNode": route = "filter-transform/heightgradient"; return true;
+                case "InvertNode": route = "filter-transform/invertnode"; return true;
+                case "NormaliseNode": route = "filter-transform/normalisenode"; return true;
+                case "RemapNode": route = "filter-transform/remapnode"; return true;
+                case "SmoothstepNode": route = "filter-transform/smoothstepnode"; return true;
+                case "StepNode": route = "filter-transform/stepnode"; return true;
+                case "ThresholdNode": route = "filter-transform/thresholdnode"; return true;
+                case "ClusterNode": route = "growth-organic/clusternode"; return true;
+                case "PerlinWormNode": route = "growth-organic/perlinwormnode"; return true;
+                case "VeinNode": route = "growth-organic/veinnode"; return true;
+                case "AddNode": route = "maths-composite/addnode"; return true;
+                case "BlendNode": route = "maths-composite/blendnode"; return true;
+                case "MaskBlendNode": route = "maths-composite/blendnode"; return true;
+                case "CombineMasksNode": route = "maths-composite/combinemasks"; return true;
+                case "CompositeNode": route = "maths-composite/composite"; return true;
+                case "MaskExpressionNode": route = "maths-composite/maskexpression"; return true;
+                case "MaskStackNode": route = "maths-composite/maskstacknode"; return true;
+                case "MaxNode": route = "maths-composite/maxnode"; return true;
+                case "MultiplyNode": route = "maths-composite/multiplynode"; return true;
+                case "SelectNode": route = "maths-composite/selectnode"; return true;
+                case "SelectMaskNode": route = "maths-composite/selectnode"; return true;
+                case "ConstantNode": route = "noise/constantnode"; return true;
+                case "FractalNoiseNode": route = "noise/fractalnoise"; return true;
+                case "GradientNoiseNode": route = "noise/gradientnoise"; return true;
+                case "PerlinNoiseNode": route = "noise/perlinnoise"; return true;
+                case "SimplexNoiseNode": route = "noise/simplexnoise"; return true;
+                case "SurfaceNoiseNode": route = "noise/surfacenoisenode"; return true;
+                case "VoronoiNoiseNode": route = "noise/voronoinoise"; return true;
+                case "WhiteNoiseNode": route = "noise/whitenoise"; return true;
+                case "DungeonGeneratorNode": route = "placement/dungeongenerator"; return true;
+                case "PlacementSetNode": route = "placement/placementsetnode"; return true;
+                case "PrefabSpawnerNode": route = "placement/prefabspawnernode"; return true;
+                case "PrefabStamperNode": route = "placement/prefabstampernode"; return true;
+                default: route = string.Empty; return false;
+            }
         }
 
         private void OnDiagnosticsUpdated(IReadOnlyList<GraphDiagnostic> diagnostics)

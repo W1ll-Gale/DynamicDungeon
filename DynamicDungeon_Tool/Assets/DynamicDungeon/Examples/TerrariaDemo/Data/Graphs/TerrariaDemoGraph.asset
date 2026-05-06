@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
-    NodeName: Output
+    NodeName: Output (Output)
     Position: {x: 2560, y: 0}
     Ports:
     - PortName: LogicalIds
@@ -42,7 +42,7 @@ MonoBehaviour:
     Parameters: []
   - NodeId: prefab-reserved-void-overlay
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
-    NodeName: Prefab Reserved Void
+    NodeName: Prefab Reserved Void (Logical ID Rule Overlay)
     Position: {x: 2240, y: 0}
     Ports:
     - PortName: Base
@@ -438,7 +438,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 11400000, guid: feef017809148ad43a55a348f723ec6f, type: 2}
   - NodeId: dungeon-spawn-exclusion-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.AxisBandNode
-    NodeName: Dungeon Spawn Exclusion Band
+    NodeName: Dungeon Spawn Exclusion Band (Axis Band)
     Position: {x: 1600, y: 430}
     Ports:
     - PortName: DungeonSpawnExclusionBand
@@ -460,7 +460,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: dungeon-outside-middle-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Dungeon Outside Middle
+    NodeName: Dungeon Outside Middle (Combine Masks)
     Position: {x: 1920, y: 430}
     Ports:
     - PortName: A
@@ -484,7 +484,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: dungeon-surface-start-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Dungeon Surface Start Mask
+    NodeName: Dungeon Surface Start Mask (Combine Masks)
     Position: {x: 2160, y: 430}
     Ports:
     - PortName: A
@@ -508,7 +508,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: dungeon-start-point-scatter
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
-    NodeName: Dungeon Start Point
+    NodeName: Dungeon Start Point (Poisson Disc Sampler)
     Position: {x: 2400, y: 430}
     Ports:
     - PortName: Mask
@@ -583,7 +583,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: player-spawn-center-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.AxisBandNode
-    NodeName: Player Center Band
+    NodeName: Player Center Band (Axis Band)
     Position: {x: 1600, y: 640}
     Ports:
     - PortName: PlayerCenterBand
@@ -605,7 +605,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: player-surface-center-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Player Surface Center Mask
+    NodeName: Player Surface Center Mask (Combine Masks)
     Position: {x: 1920, y: 640}
     Ports:
     - PortName: A
@@ -629,7 +629,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: player-start-point-scatter
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
-    NodeName: Player Start Point
+    NodeName: Player Start Point (Poisson Disc Sampler)
     Position: {x: 2160, y: 640}
     Ports:
     - PortName: Mask
@@ -655,7 +655,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: player-start-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
-    NodeName: Player Start Offset
+    NodeName: Player Start Offset (Point List Offset)
     Position: {x: 2300, y: 640}
     Ports:
     - PortName: Points

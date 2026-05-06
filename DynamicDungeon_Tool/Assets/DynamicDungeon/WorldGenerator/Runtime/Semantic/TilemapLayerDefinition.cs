@@ -6,6 +6,7 @@ namespace DynamicDungeon.Runtime.Semantic
     public sealed class TilemapLayerDefinition : ScriptableObject
     {
         public string LayerName = "Default";
+        public List<string> ExcludedRegistryGuids = new List<string>();
         public List<string> RoutingTags = new List<string>();
         public List<string> ComponentsToAdd = new List<string>();
         public int SortOrder;

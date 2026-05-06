@@ -148,26 +148,29 @@ namespace DynamicDungeon.Editor.Inspectors
         public override void OnInspectorGUI()
         {
             EnsureStyles();
-            TileSemanticRegistry registry = TileSemanticRegistry.GetOrLoad();
+            TileSemanticRegistry fallbackRegistry = TileSemanticRegistry.GetOrLoad();
             float contentWidth = Mathf.Max(EditorGUIUtility.currentViewWidth - 44.0f, 240.0f);
-            float contentHeight = GetEmbeddedInspectorHeight(Definition, registry, contentWidth);
+            float contentHeight = GetEmbeddedInspectorHeight(Definition, fallbackRegistry, contentWidth);
             Rect contentRect = GUILayoutUtility.GetRect(0.0f, contentHeight, GUILayout.ExpandWidth(true));
-            DrawEmbeddedInspector(contentRect, serializedObject, Definition, registry);
+            DrawEmbeddedInspector(contentRect, serializedObject, Definition, fallbackRegistry);
         }
 
         internal static float GetEmbeddedInspectorHeight(TilemapLayerDefinition definition, TileSemanticRegistry registry, float width)
         {
             EnsureStyles();
 
+            (List<string> mergedTags, List<TileEntry> mergedEntries) = FindAndMergeAllRegistries(definition);
+
             float safeWidth = Mathf.Max(width, 240.0f);
             float totalHeight = 0.0f;
+            totalHeight += EditorGUIUtility.singleLineHeight + SectionSpacing;
             totalHeight += GetLayerIdentitySectionHeight(definition, safeWidth);
             totalHeight += SectionSpacing;
-            totalHeight += GetRoutingTagsSectionHeight(definition, registry, safeWidth);
+            totalHeight += GetRoutingTagsSectionHeight(definition, mergedTags, mergedEntries, safeWidth);
             totalHeight += SectionSpacing;
             totalHeight += GetComponentsSectionHeight(definition, safeWidth);
             totalHeight += SectionSpacing;
-            totalHeight += GetLayerPreviewSectionHeight(definition, registry, safeWidth);
+            totalHeight += GetLayerPreviewSectionHeight(definition, mergedEntries);
             return totalHeight;
         }
 
@@ -181,23 +184,29 @@ namespace DynamicDungeon.Editor.Inspectors
             EnsureStyles();
             serializedObject.Update();
 
+            (List<string> mergedTags, List<TileEntry> mergedEntries) = FindAndMergeAllRegistries(definition);
+
             float currentY = rect.y;
+
+            Rect selectorRect = new Rect(rect.x, currentY, rect.width, EditorGUIUtility.singleLineHeight);
+            DrawRegistrySelector(selectorRect, definition);
+            currentY = selectorRect.yMax + SectionSpacing;
 
             Rect identityRect = new Rect(rect.x, currentY, rect.width, GetLayerIdentitySectionHeight(definition, rect.width));
             DrawLayerIdentitySection(identityRect, definition);
             currentY = identityRect.yMax + SectionSpacing;
 
             SerializedProperty routingTagsProperty = serializedObject.FindProperty("RoutingTags");
-            Rect routingRect = new Rect(rect.x, currentY, rect.width, GetRoutingTagsSectionHeight(definition, registry, rect.width));
-            DrawRoutingTagsSection(routingRect, serializedObject, definition, routingTagsProperty, registry);
+            Rect routingRect = new Rect(rect.x, currentY, rect.width, GetRoutingTagsSectionHeight(definition, mergedTags, mergedEntries, rect.width));
+            DrawRoutingTagsSection(routingRect, serializedObject, definition, routingTagsProperty, mergedTags, mergedEntries);
             currentY = routingRect.yMax + SectionSpacing;
 
             Rect componentsRect = new Rect(rect.x, currentY, rect.width, GetComponentsSectionHeight(definition, rect.width));
             DrawComponentsSection(componentsRect, definition);
             currentY = componentsRect.yMax + SectionSpacing;
 
-            Rect previewRect = new Rect(rect.x, currentY, rect.width, GetLayerPreviewSectionHeight(definition, registry, rect.width));
-            DrawLayerPreviewSection(previewRect, definition, registry);
+            Rect previewRect = new Rect(rect.x, currentY, rect.width, GetLayerPreviewSectionHeight(definition, mergedEntries));
+            DrawLayerPreviewSection(previewRect, definition, mergedEntries);
 
             if (serializedObject.ApplyModifiedProperties())
             {
@@ -217,6 +226,30 @@ namespace DynamicDungeon.Editor.Inspectors
             for (entryIndex = 0; entryIndex < registry.Entries.Count; entryIndex++)
             {
                 TileEntry entry = registry.Entries[entryIndex];
+                if (entry == null || entry.Tags == null || !ContainsAnyTag(entry.Tags, routingTags))
+                {
+                    continue;
+                }
+
+                matchedEntries.Add(entry);
+            }
+
+            matchedEntries.Sort((left, right) => left.LogicalId.CompareTo(right.LogicalId));
+            return matchedEntries;
+        }
+
+        internal static List<TileEntry> GetMatchedEntries(IList<TileEntry> allEntries, IList<string> routingTags)
+        {
+            List<TileEntry> matchedEntries = new List<TileEntry>();
+            if (allEntries == null || routingTags == null || routingTags.Count == 0)
+            {
+                return matchedEntries;
+            }
+
+            int entryIndex;
+            for (entryIndex = 0; entryIndex < allEntries.Count; entryIndex++)
+            {
+                TileEntry entry = allEntries[entryIndex];
                 if (entry == null || entry.Tags == null || !ContainsAnyTag(entry.Tags, routingTags))
                 {
                     continue;
@@ -315,6 +348,196 @@ namespace DynamicDungeon.Editor.Inspectors
             return count;
         }
 
+        private static (List<string> tags, List<TileEntry> entries) FindAndMergeAllRegistries(TilemapLayerDefinition definition)
+        {
+            string[] guids = AssetDatabase.FindAssets("t:TileSemanticRegistry");
+
+            if (guids == null || guids.Length == 0)
+            {
+                return (null, null);
+            }
+
+            IList<string> excluded = definition != null && definition.ExcludedRegistryGuids != null
+                ? definition.ExcludedRegistryGuids
+                : (IList<string>)Array.Empty<string>();
+
+            HashSet<string> tagSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            List<string> tags = new List<string>();
+            Dictionary<ushort, TileEntry> entryMap = new Dictionary<ushort, TileEntry>();
+
+            int guidIndex;
+            for (guidIndex = 0; guidIndex < guids.Length; guidIndex++)
+            {
+                string guid = guids[guidIndex];
+                if (excluded.Contains(guid))
+                {
+                    continue;
+                }
+
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                TileSemanticRegistry reg = AssetDatabase.LoadAssetAtPath<TileSemanticRegistry>(path);
+                if (reg == null)
+                {
+                    continue;
+                }
+
+                if (reg.AllTags != null)
+                {
+                    int tagIndex;
+                    for (tagIndex = 0; tagIndex < reg.AllTags.Count; tagIndex++)
+                    {
+                        string tag = reg.AllTags[tagIndex];
+                        if (!string.IsNullOrWhiteSpace(tag) && tagSet.Add(tag))
+                        {
+                            tags.Add(tag);
+                        }
+                    }
+                }
+
+                if (reg.Entries != null)
+                {
+                    int entryIndex;
+                    for (entryIndex = 0; entryIndex < reg.Entries.Count; entryIndex++)
+                    {
+                        TileEntry entry = reg.Entries[entryIndex];
+                        if (entry != null && !entryMap.ContainsKey(entry.LogicalId))
+                        {
+                            entryMap[entry.LogicalId] = entry;
+                        }
+                    }
+                }
+            }
+
+            tags.Sort(StringComparer.OrdinalIgnoreCase);
+            List<TileEntry> entries = new List<TileEntry>(entryMap.Values);
+            entries.Sort((a, b) => a.LogicalId.CompareTo(b.LogicalId));
+            return (tags, entries);
+        }
+
+        private static void DrawRegistrySelector(Rect rect, TilemapLayerDefinition definition)
+        {
+            string[] allGuids = AssetDatabase.FindAssets("t:TileSemanticRegistry");
+            int total = allGuids != null ? allGuids.Length : 0;
+            int excludedCount = definition != null && definition.ExcludedRegistryGuids != null
+                ? definition.ExcludedRegistryGuids.Count
+                : 0;
+            int activeCount = total - excludedCount;
+
+            Rect labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth - 4.0f, rect.height);
+            Rect buttonRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, rect.width - EditorGUIUtility.labelWidth, rect.height);
+
+            EditorGUI.LabelField(labelRect, "Semantic Registries");
+
+            string buttonLabel = total == 0
+                ? "None found"
+                : activeCount == total
+                    ? "All (" + total + ")"
+                    : activeCount + " / " + total + " selected";
+
+            if (GUI.Button(buttonRect, buttonLabel, EditorStyles.popup))
+            {
+                PopupWindow.Show(rect, new RegistrySelectionPopup(definition));
+            }
+        }
+
+        private sealed class RegistrySelectionPopup : PopupWindowContent
+        {
+            private readonly TilemapLayerDefinition _definition;
+            private readonly List<string> _guids = new List<string>();
+            private readonly List<string> _names = new List<string>();
+            private readonly List<bool> _selected = new List<bool>();
+            private Vector2 _scroll;
+
+            public RegistrySelectionPopup(TilemapLayerDefinition definition)
+            {
+                _definition = definition;
+
+                string[] guids = AssetDatabase.FindAssets("t:TileSemanticRegistry");
+                if (guids == null)
+                {
+                    return;
+                }
+
+                IList<string> excluded = definition != null && definition.ExcludedRegistryGuids != null
+                    ? definition.ExcludedRegistryGuids
+                    : (IList<string>)Array.Empty<string>();
+
+                int i;
+                for (i = 0; i < guids.Length; i++)
+                {
+                    string guid = guids[i];
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    TileSemanticRegistry reg = AssetDatabase.LoadAssetAtPath<TileSemanticRegistry>(path);
+                    if (reg == null)
+                    {
+                        continue;
+                    }
+
+                    _guids.Add(guid);
+                    _names.Add(reg.name);
+                    _selected.Add(!excluded.Contains(guid));
+                }
+            }
+
+            public override Vector2 GetWindowSize()
+            {
+                float rowHeight = EditorGUIUtility.singleLineHeight + 4.0f;
+                float listHeight = Mathf.Min(_guids.Count * rowHeight + 16.0f, 280.0f);
+                return new Vector2(300.0f, listHeight);
+            }
+
+            public override void OnGUI(Rect rect)
+            {
+                float rowHeight = EditorGUIUtility.singleLineHeight + 4.0f;
+                float contentHeight = _guids.Count * rowHeight;
+                Rect listRect = new Rect(rect.x + 6.0f, rect.y + 6.0f, rect.width - 12.0f, rect.height - 12.0f);
+                Rect contentRect = new Rect(0.0f, 0.0f, listRect.width - 16.0f, contentHeight);
+
+                _scroll = GUI.BeginScrollView(listRect, _scroll, contentRect);
+
+                int i;
+                for (i = 0; i < _guids.Count; i++)
+                {
+                    Rect rowRect = new Rect(0.0f, i * rowHeight, contentRect.width, rowHeight);
+                    bool newSelected = EditorGUI.ToggleLeft(rowRect, _names[i], _selected[i]);
+                    if (newSelected != _selected[i])
+                    {
+                        _selected[i] = newSelected;
+                        ApplySelection();
+                    }
+                }
+
+                GUI.EndScrollView();
+            }
+
+            private void ApplySelection()
+            {
+                if (_definition == null)
+                {
+                    return;
+                }
+
+                Undo.RecordObject(_definition, "Change Registry Selection");
+                if (_definition.ExcludedRegistryGuids == null)
+                {
+                    _definition.ExcludedRegistryGuids = new List<string>();
+                }
+
+                _definition.ExcludedRegistryGuids.Clear();
+
+                int i;
+                for (i = 0; i < _guids.Count; i++)
+                {
+                    if (!_selected[i])
+                    {
+                        _definition.ExcludedRegistryGuids.Add(_guids[i]);
+                    }
+                }
+
+                EditorUtility.SetDirty(_definition);
+            }
+        }
+
         private static void DrawLayerIdentitySection(Rect rect, TilemapLayerDefinition definition)
         {
             DrawSectionBackground(rect, "Layer Identity", out Rect contentRect);
@@ -366,7 +589,8 @@ namespace DynamicDungeon.Editor.Inspectors
             SerializedObject serializedObject,
             TilemapLayerDefinition definition,
             SerializedProperty routingTagsProperty,
-            TileSemanticRegistry registry)
+            IList<string> allTags,
+            IList<TileEntry> allEntries)
         {
             DrawSectionBackground(rect, "Routing Tags", out Rect contentRect);
             float currentY = contentRect.y;
@@ -383,15 +607,16 @@ namespace DynamicDungeon.Editor.Inspectors
 
             currentY = tagsRect.yMax + RowSpacing;
 
-            if (registry != null)
+            bool hasRegistry = allTags != null && allTags.Count > 0;
+            if (hasRegistry)
             {
                 Rect dropdownRect = new Rect(contentRect.x, currentY, contentRect.width, EditorGUIUtility.singleLineHeight);
-                RegistryDropdown.TagDropdown(dropdownRect, "Select Tags", routingTagsProperty, registry);
+                RegistryDropdown.TagDropdown(dropdownRect, "Select Tags", routingTagsProperty, allTags);
                 currentY = dropdownRect.yMax + RowSpacing;
             }
             else
             {
-                string warningMessage = "Registry not found - type tag manually";
+                string warningMessage = "No TileSemanticRegistry assets found in project - type tag manually";
                 float warningHeight = GetHelpBoxHeight(warningMessage, contentRect.width);
                 Rect warningRect = new Rect(contentRect.x, currentY, contentRect.width, warningHeight);
                 EditorGUI.HelpBox(warningRect, warningMessage, MessageType.Warning);
@@ -427,7 +652,7 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUI.LabelField(matchedLabelRect, "Matched IDs", _mutedLabelStyle);
             currentY = matchedLabelRect.yMax + 2.0f;
 
-            List<TileEntry> matchedEntries = GetMatchedEntries(registry, definition.RoutingTags);
+            List<TileEntry> matchedEntries = GetMatchedEntries(allEntries, definition.RoutingTags);
             float matchedAreaHeight = CalculateMatchedEntryAreaHeight(matchedEntries, contentRect.width);
             Rect matchedAreaRect = new Rect(contentRect.x, currentY, contentRect.width, matchedAreaHeight);
             DrawMatchedEntryChips(matchedAreaRect, matchedEntries);
@@ -473,11 +698,11 @@ namespace DynamicDungeon.Editor.Inspectors
             }
         }
 
-        private static void DrawLayerPreviewSection(Rect rect, TilemapLayerDefinition definition, TileSemanticRegistry registry)
+        private static void DrawLayerPreviewSection(Rect rect, TilemapLayerDefinition definition, IList<TileEntry> mergedEntries)
         {
             DrawSectionBackground(rect, "Layer Preview", out Rect contentRect);
 
-            int matchedCount = GetMatchedEntries(registry, definition.RoutingTags).Count;
+            int matchedCount = GetMatchedEntries(mergedEntries, definition.RoutingTags).Count;
             Rect summaryRect = new Rect(contentRect.x, contentRect.y, contentRect.width, EditorGUIUtility.singleLineHeight);
             EditorGUI.LabelField(summaryRect, "This layer will receive " + matchedCount + " tile types");
 
@@ -615,24 +840,26 @@ namespace DynamicDungeon.Editor.Inspectors
             return GetSectionHeight(contentHeight);
         }
 
-        private static float GetRoutingTagsSectionHeight(TilemapLayerDefinition definition, TileSemanticRegistry registry, float width)
+        private static float GetRoutingTagsSectionHeight(TilemapLayerDefinition definition, IList<string> allTags, IList<TileEntry> allEntries, float width)
         {
             float contentWidth = GetContentWidth(width);
             float contentHeight = CalculateChipAreaHeight(definition != null ? definition.RoutingTags : null, contentWidth, false);
             contentHeight += RowSpacing;
 
-            if (registry != null)
+            bool hasRegistry = allTags != null && allTags.Count > 0;
+            if (hasRegistry)
             {
                 contentHeight += EditorGUIUtility.singleLineHeight + RowSpacing;
             }
             else
             {
-                contentHeight += GetHelpBoxHeight("Registry not found - type tag manually", contentWidth) + RowSpacing;
+                contentHeight += GetHelpBoxHeight("No TileSemanticRegistry assets found in project - type tag manually", contentWidth) + RowSpacing;
                 contentHeight += EditorGUIUtility.singleLineHeight + RowSpacing;
             }
 
             contentHeight += EditorGUIUtility.singleLineHeight + 2.0f;
-            contentHeight += CalculateMatchedEntryAreaHeight(GetMatchedEntries(registry, definition != null ? definition.RoutingTags : null), contentWidth);
+            List<TileEntry> matchedEntries = GetMatchedEntries(allEntries, definition != null ? definition.RoutingTags : null);
+            contentHeight += CalculateMatchedEntryAreaHeight(matchedEntries, contentWidth);
             return GetSectionHeight(contentHeight);
         }
 
@@ -658,7 +885,7 @@ namespace DynamicDungeon.Editor.Inspectors
             return GetSectionHeight(contentHeight);
         }
 
-        private static float GetLayerPreviewSectionHeight(TilemapLayerDefinition definition, TileSemanticRegistry registry, float width)
+        private static float GetLayerPreviewSectionHeight(TilemapLayerDefinition definition, IList<TileEntry> mergedEntries)
         {
             float contentHeight = EditorGUIUtility.singleLineHeight;
             if (definition != null && definition.IsCatchAll)

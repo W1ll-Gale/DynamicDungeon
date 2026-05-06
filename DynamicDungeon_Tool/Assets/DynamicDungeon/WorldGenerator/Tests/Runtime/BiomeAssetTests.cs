@@ -76,7 +76,7 @@ namespace DynamicDungeon.Tests.Runtime
             try
             {
                 BiomeTileMapping mapping = new BiomeTileMapping();
-                mapping.LogicalId = 12;
+                mapping.LogicalIds = new System.Collections.Generic.List<ushort> { 12 };
                 mapping.TileType = TileMappingType.WeightedRandom;
                 mapping.WeightedTiles.Add(new WeightedTileEntry
                 {
@@ -116,7 +116,7 @@ namespace DynamicDungeon.Tests.Runtime
             {
                 biome.TileMappings.Add(new BiomeTileMapping
                 {
-                    LogicalId = 21,
+                    LogicalIds = new List<ushort> { 21 },
                     TileType = TileMappingType.Sprite,
                     SpriteAsset = sprite
                 });
@@ -145,7 +145,7 @@ namespace DynamicDungeon.Tests.Runtime
         private static BiomeTileMapping CreateWeightedMapping(ushort logicalId, TileBase firstTile, float firstWeight, TileBase secondTile, float secondWeight)
         {
             BiomeTileMapping mapping = new BiomeTileMapping();
-            mapping.LogicalId = logicalId;
+            mapping.LogicalIds = new System.Collections.Generic.List<ushort> { logicalId };
             mapping.TileType = TileMappingType.WeightedRandom;
             mapping.WeightedTiles.Add(new WeightedTileEntry
             {

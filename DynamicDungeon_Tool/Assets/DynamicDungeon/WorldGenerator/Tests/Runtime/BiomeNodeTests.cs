@@ -1507,7 +1507,7 @@ namespace DynamicDungeon.Tests.Runtime
         private static void AddBiomeMapping(BiomeAsset biome, ushort logicalId, TileBase tile)
         {
             BiomeTileMapping mapping = new BiomeTileMapping();
-            mapping.LogicalId = logicalId;
+            mapping.LogicalIds = new System.Collections.Generic.List<ushort> { logicalId };
             mapping.Tile = tile;
             biome.TileMappings.Add(mapping);
         }

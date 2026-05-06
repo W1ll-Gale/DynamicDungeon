@@ -24,7 +24,7 @@ namespace DynamicDungeon.Runtime.Biome
     [Serializable]
     public sealed class BiomeTileMapping
     {
-        public ushort LogicalId;
+        public List<ushort> LogicalIds = new List<ushort>();
         public TileMappingType TileType;
         public TileBase Tile;
         public Sprite SpriteAsset;

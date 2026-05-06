@@ -21,6 +21,7 @@ namespace DynamicDungeon.Editor.Inspectors
         private const float InlineInspectorPadding = 6.0f;
         private const float InlineInspectorSpacing = 4.0f;
         private const string HeaderTitle = "Tilemap World Generator";
+        private const string DocumentationUrl = "https://dynamicdungeon.mrbytesized.com/docs/world-generator";
 
         private SerializedProperty _generateOnStartProperty;
         private SerializedProperty _seedModeProperty;
@@ -51,7 +52,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
         protected override void OnHeaderGUI()
         {
-            ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle);
+            ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle, DocumentationUrl);
         }
 
         private void OnEnable()
@@ -231,6 +232,10 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUI.BeginDisabledGroup(_graphProperty.objectReferenceValue == null);
             bool openGraphRequested = GUILayout.Button("Open Graph", GUILayout.Width(CompactButtonWidth));
             EditorGUI.EndDisabledGroup();
+            if (GUILayout.Button(new GUIContent("?", "Open world generator documentation"), EditorStyles.miniButton, GUILayout.Width(22.0f)))
+            {
+                Application.OpenURL(DocumentationUrl);
+            }
             EditorGUILayout.EndHorizontal();
 
             if (_graphProperty.objectReferenceValue == null)
@@ -383,7 +388,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
             EditorGUILayout.PropertyField(_tilemapOffsetProperty, new GUIContent("Tilemap Offset"));
 
-            EditorGUILayout.PropertyField(_biomeProperty, new GUIContent("Biome Asset"));
+            EditorGUILayout.PropertyField(_biomeProperty, new GUIContent("Default Biome"));
             EditorGUILayout.PropertyField(_gridProperty, new GUIContent("Grid"));
 
             GUILayout.Space(4.0f);
@@ -603,7 +608,7 @@ namespace DynamicDungeon.Editor.Inspectors
             if (layerDefinition != null && elementProperty.isExpanded)
             {
                 float bodyWidth = Mathf.Max(rect.width - 20.0f - (InlineInspectorPadding * 2.0f), 240.0f);
-                float contentHeight = TilemapLayerDefinitionEditor.GetEmbeddedInspectorHeight(layerDefinition, TileSemanticRegistry.GetOrLoad(), bodyWidth);
+                float contentHeight = TilemapLayerDefinitionEditor.GetEmbeddedInspectorHeight(layerDefinition, GetActiveRegistry(), bodyWidth);
                 Rect bodyRect = new Rect(
                     rect.x + 20.0f,
                     rect.yMax + InlineInspectorSpacing,
@@ -618,7 +623,7 @@ namespace DynamicDungeon.Editor.Inspectors
                     bodyRect.height - (InlineInspectorPadding * 2.0f));
 
                 SerializedObject layerSerializedObject = new SerializedObject(layerDefinition);
-                TilemapLayerDefinitionEditor.DrawEmbeddedInspector(contentRect, layerSerializedObject, layerDefinition, TileSemanticRegistry.GetOrLoad());
+                TilemapLayerDefinitionEditor.DrawEmbeddedInspector(contentRect, layerSerializedObject, layerDefinition, GetActiveRegistry());
             }
         }
 
@@ -669,6 +674,12 @@ namespace DynamicDungeon.Editor.Inspectors
         private static void EndSection()
         {
             CollapsibleInspectorSection.End();
+        }
+
+        private TileSemanticRegistry GetActiveRegistry()
+        {
+            GenGraph graph = _graphProperty.objectReferenceValue as GenGraph;
+            return (graph != null ? graph.TileSemanticRegistry : null) ?? TileSemanticRegistry.GetOrLoad();
         }
 
         private void OpenAssignedGraph()
