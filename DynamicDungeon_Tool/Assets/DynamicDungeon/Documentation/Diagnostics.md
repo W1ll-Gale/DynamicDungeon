@@ -38,4 +38,5 @@ The results of a diagnostic run are displayed directly in the **Scene View**:
 
 ---
 
-[← Back to README](../../../../../README.md)
+[← Back to README](../../../../README.md)
+

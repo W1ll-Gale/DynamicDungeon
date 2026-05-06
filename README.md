@@ -30,11 +30,11 @@ Understanding the data types flowing between ports is essential for building val
 
 | Type | Visual Cue | Description |
 |---|---|---|
-| **Float** | Grey Port | Decimal values (typically 0.0 to 1.0). Used for noise, weight maps, and gradients. |
-| **Int** | Blue Port | Whole numbers. Used for Logical IDs, Biome indices, and discrete categories. |
-| **Bool Mask** | Gold Port | Binary 'True' or 'False' states. Used for region masking and logic gates. |
-| **Point List** | Pink Port | A collection of discrete (X, Y) coordinates for object placement. |
-| **Placements** | Green Port | Advanced records including asset references, rotation, and mirroring. |
+| **Float** | ![](https://placehold.co/15/808080/808080.png) Grey Port | Decimal values (typically 0.0 to 1.0). Used for noise, weight maps, and gradients. |
+| **Int** | ![](https://placehold.co/15/3366E6/3366E6.png) Blue Port | Whole numbers. Used for Logical IDs, Biome indices, and discrete categories. |
+| **Bool Mask** | ![](https://placehold.co/15/FFD700/FFD700.png) Gold Port | Binary 'True' or 'False' states. Used for region masking and logic gates. |
+| **Point List** | ![](https://placehold.co/15/FF69B4/FF69B4.png) Pink Port | A collection of discrete (X, Y) coordinates for object placement. |
+| **Placements** | ![](https://placehold.co/15/33CC33/33CC33.png) Green Port | Advanced records including asset references, rotation, and mirroring. |
 
 ---
 
@@ -89,13 +89,14 @@ Generators that produce continuous float data as the foundation for terrain and 
 
 | Node | Inputs | Outputs | Summary |
 |---|---|---|---|
-| `PerlinNoiseNode` | *(none)* | Float | Layered Perlin noise. Configurable frequency, amplitude, octaves, and seed offset. |
-| `SimplexNoiseNode` | *(none)* | Float | Simplex noise. Faster and produces fewer directional artefacts than Perlin. |
-| `VoronoiNoiseNode` | *(none)* | Float, Int | Cellular noise. Outputs a distance field (Float) and cell ID channel (Int). |
-| `FractalNoiseNode` | Float | Float | Octave-based noise stacking (FBM). Adds layered detail to any input float channel. |
-| `GradientNoiseNode` | Float *(opt)* | Float | Deterministic spatial gradients (Linear X/Y, Radial, Diagonal). |
-| `SurfaceNoiseNode` | *(none)* | Float | Generates a 1D noise-driven horizontal surface, outputting 1.0 below the line. |
-| `ConstantNode` | *(none)* | Float, Int | Emits a single constant value across the entire channel. |
+| `PerlinNoise` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Standard smooth pseudo-random noise. Best for natural terrain and weight maps. |
+| `SimplexNoise` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Similar to Perlin but with fewer directional artefacts. More computationally efficient. |
+| `VoronoiNoise` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Cellular noise. Produces distinct regions and angular boundaries (cracked earth). |
+| `FractalNoise` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Layered noise (Octaves). High detail, useful for multi-scale erosion effects. |
+| `WhiteNoise` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Purely random per-tile values. Used for grain, dithering, or point seeding. |
+| `GradientNoise`| *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Deterministic spatial gradients (Linear X/Y, Radial, Diagonal). |
+| `SurfaceNoiseNode` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Generates a 1D noise-driven horizontal surface, outputting 1.0 below the line. |
+| `ConstantNode` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float, ![](https://placehold.co/10/3366E6/3366E6.png) Int | Emits a single constant value across the entire channel. |
 
 ---
 
@@ -105,20 +106,20 @@ Nodes that modify existing channels to refine shapes or extract specific feature
 
 | Node | Inputs | Outputs | Summary |
 |---|---|---|---|
-| `ThresholdNode` | Float | Bool Mask | Converts float values to a binary mask based on a cutoff value. |
-| `InvertNode` | Float/Bool | Match Input | Flips values (1 - value for float, NOT for bool). |
-| `ClampNode` | Float | Float | Restricts values to a specified min/max range. |
-| `RemapNode` | Float | Float | Linear remapping from one range (e.g., 0-1) to another (e.g., -50 to 50). |
-| `NormaliseNode` | Float | Float | Normalises a channel to 0–1 based on the actual min/max found in the data. |
-| `StepNode` | Float | Float | Quantises values into N discrete steps (posterisation). |
-| `SmoothstepNode` | Float | Float | S-curve interpolation between two edges for soft transitions. |
-| `EdgeDetectNode` | Float/Int | Bool Mask | Detects boundaries where neighbouring tiles have different values. |
-| `DistanceFieldNode` | Bool Mask | Float | Computes distance to the nearest 'true' tile in a bool mask. |
-| `CellularAutomata` | Bool Mask | Bool Mask | Iterative smoothing using B/S rules (e.g., B3/S45678 for organic caves). |
-| `AxisBandNode` | *(none)* | Float | Generates a horizontal or vertical band at a fixed coordinate range. |
-| `HeightBandNode` | *(none)* | Float | Specialised Axis Band for vertical height with support for anchoring to world top/bottom. |
-| `HeightGradient` | *(none)* | Float | Simple vertical 0-1 gradient covering the full world height. |
-| `ColumnSurfaceBand` | *(none)* | Float | Specialised Axis Band for surface-relative features in column-based maps. |
+| `ThresholdNode` | ![](https://placehold.co/10/808080/808080.png) Float | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Converts float values to a binary mask based on a cutoff value. |
+| `InvertNode` | ![](https://placehold.co/10/808080/808080.png) Float / ![](https://placehold.co/10/FFD700/FFD700.png) Bool | Match Input | Flips values (1 - value for float, NOT for bool). |
+| `ClampNode` | ![](https://placehold.co/10/808080/808080.png) Float | ![](https://placehold.co/10/808080/808080.png) Float | Restricts values to a specified min/max range. |
+| `RemapNode` | ![](https://placehold.co/10/808080/808080.png) Float | ![](https://placehold.co/10/808080/808080.png) Float | Linear remapping from one range (e.g., 0-1) to another (e.g., -50 to 50). |
+| `NormaliseNode` | ![](https://placehold.co/10/808080/808080.png) Float | ![](https://placehold.co/10/808080/808080.png) Float | Normalises a channel to 0–1 based on the actual min/max found in the data. |
+| `StepNode` | ![](https://placehold.co/10/808080/808080.png) Float | ![](https://placehold.co/10/808080/808080.png) Float | Quantises values into N discrete steps (posterisation). |
+| `SmoothstepNode` | ![](https://placehold.co/10/808080/808080.png) Float | ![](https://placehold.co/10/808080/808080.png) Float | S-curve interpolation between two edges for soft transitions. |
+| `EdgeDetectNode` | ![](https://placehold.co/10/808080/808080.png) Float / ![](https://placehold.co/10/3366E6/3366E6.png) Int | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Detects boundaries where neighbouring tiles have different values. |
+| `DistanceFieldNode` | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | ![](https://placehold.co/10/808080/808080.png) Float | Computes distance to the nearest 'true' tile in a bool mask. |
+| `CellularAutomata` | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Iterative smoothing using B/S rules (e.g., B3/S45678 for organic caves). |
+| `AxisBandNode` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Generates a horizontal or vertical band at a fixed coordinate range. |
+| `HeightBandNode` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Specialised Axis Band for vertical height with support for anchoring to world top/bottom. |
+| `HeightGradient` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Simple vertical 0-1 gradient covering the full world height. |
+| `ColumnSurfaceBand` | *(none)* | ![](https://placehold.co/10/808080/808080.png) Float | Specialised Axis Band for surface-relative features in column-based maps. |
 
 ---
 
@@ -128,14 +129,15 @@ Perform arithmetic or blend multiple channels together.
 
 | Node | Inputs | Outputs | Summary |
 |---|---|---|---|
-| `MathNode` | Float (x2) | Float | Per-tile maths: Add, Subtract, Multiply, Divide, Power, Abs, Min, Max. |
-| `BlendNode` | Float (x2) | Float | Selects between two inputs based on a bool mask. |
-| `WeightedBlend` | Float (x2), Weight | Float | Linear interpolation (LERP) between two inputs using a float weight. |
-| `LayerBlendNode` | Float (x2) | Float | Composite modes: Multiply, Screen, Overlay, Difference, Add, Subtract. |
-| `SelectNode` | Float (×N) | Float | Multi-way selection based on a control float channel's range. |
-| `CombineMasks` | Bool (x2) | Bool Mask | Logical operations between masks: AND, OR, XOR, NOT. |
-| `MaskStackNode` | Bool (×N) | Bool Mask | Procedural list of mask operations (Add/Subtract/Intersect) applied in order. |
-| `MaskExpression` | Bool (×N) | Bool Mask | Complex boolean logic evaluator for combining multiple inputs. |
+| `AddNode` | ![](https://placehold.co/10/808080/808080.png) Float (x2) | ![](https://placehold.co/10/808080/808080.png) Float | Adds two channels. Used for layering heightmaps (e.g., Base + Detail). |
+| `MultiplyNode` | ![](https://placehold.co/10/808080/808080.png) Float (x2) | ![](https://placehold.co/10/808080/808080.png) Float | Multiplies two channels. Essential for masking one noise with another. |
+| `BlendNode` | ![](https://placehold.co/10/808080/808080.png) Float (x2), Mask| ![](https://placehold.co/10/808080/808080.png) Float | Linear interpolation (Lerp) between two inputs based on a weight/mask. |
+| `MaxNode` | ![](https://placehold.co/10/808080/808080.png) Float (x2) | ![](https://placehold.co/10/808080/808080.png) Float | Returns the higher value. Useful for combining non-overlapping peaks. |
+| `Composite` | Float (×N) | ![](https://placehold.co/10/808080/808080.png) Float | Multi-input stack with individual weights and blending modes. |
+| `SelectNode` | Float (×N) | ![](https://placehold.co/10/808080/808080.png) Float | Multi-way selection based on a control float channel's range. |
+| `CombineMasks` | Bool (x2) | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Logical operations between masks: AND, OR, XOR, NOT. |
+| `MaskStackNode` | Bool (×N) | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Procedural list of mask operations (Add/Subtract/Intersect) applied in order. |
+| `MaskExpression` | Bool (×N) | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Complex boolean logic evaluator for combining multiple inputs. |
 
 ---
 
@@ -147,11 +149,11 @@ System-level nodes for assigning environmental assets to regions.
 |---|---|---|---|
 | `BiomeLayerNode` | Float *(opt)* | Biome | Assigns biomes along an axis or driven by a data channel. |
 | `BiomeOverride` | Biome, Mask | Biome | Overwrites tiles in a mask with a specific biome. Supports soft blending. |
-| `BiomeSelector` | Float/Int | Biome | Advanced assignment using **Range** (1D), **Matrix** (2D), or **Cell** (Lookup) modes. |
-| `BiomeLayout` | *(none)* | Biome | Constraint-based biome solver (Voronoi/Relaxed) for macroscopic layout. |
-| `BiomeMerge` | Biome (×N) | Biome | Combines multiple biome channels into a single priority-resolved channel. |
-| `BiomeMaskNode` | Biome | Bool Mask | Extracts a mask where a specific `BiomeAsset` is present. |
-| `BiomeWeightBlend` | Biome (x2), Weight| Biome | Blends between two biomes using a weight map. Supports transitional textures. |
+| `BiomeSelector` | ![](https://placehold.co/10/808080/808080.png) Float/![](https://placehold.co/10/3366E6/3366E6.png) Int | ![](https://placehold.co/10/E6CC1A/E6CC1A.png) Biome | Advanced assignment using **Range** (1D), **Matrix** (2D), or **Cell** (Lookup) modes. |
+| `BiomeLayout` | *(none)* | ![](https://placehold.co/10/E6CC1A/E6CC1A.png) Biome | Constraint-based biome solver (Voronoi/Relaxed) for macroscopic layout. |
+| `BiomeMerge` | Biome (×N) | ![](https://placehold.co/10/E6CC1A/E6CC1A.png) Biome | Combines multiple biome channels into a single priority-resolved channel. |
+| `BiomeMaskNode` | ![](https://placehold.co/10/E6CC1A/E6CC1A.png) Biome | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Extracts a mask where a specific `BiomeAsset` is present. |
+| `BiomeWeightBlend` | Biome (x2), Weight| ![](https://placehold.co/10/E6CC1A/E6CC1A.png) Biome | Blends between two biomes using a weight map. Supports transitional textures. |
 
 ---
 
@@ -161,11 +163,11 @@ Analyse the world or generate discrete positions for object placement.
 
 | Node | Inputs | Outputs | Summary |
 |---|---|---|---|
-| `ContextualQuery` | *(reads world)* | Point List | Finds positions matching a neighbourhood pattern (Logical ID/Semantic Tag). |
-| `Neighbourhood` | *(reads world)* | Bool Mask | Checks if a specific ID/Tag exists within a radius (Chebyshev/Euclidean). |
-| `PoissonSampler` | Bool/Float | Point List | Generates randomly distributed points with a minimum separation. |
-| `StochasticScatter`| Float | Point List | Probabilistic per-tile scatter based on noise/mask weight. |
-| `PointGridNode` | *(none)* | Point List | Regular grid of points with optional jitter. |
+| `ContextualQuery` | *(reads world)* | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point List | Finds positions matching a neighbourhood pattern (Logical ID/Semantic Tag). |
+| `Neighbourhood` | *(reads world)* | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Checks if a specific ID/Tag exists within a radius (Chebyshev/Euclidean). |
+| `PoissonSampler` | ![](https://placehold.co/10/FFD700/FFD700.png) Bool/![](https://placehold.co/10/808080/808080.png) Float | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point List | Generates randomly distributed points with a minimum separation. |
+| `StochasticScatter`| ![](https://placehold.co/10/808080/808080.png) Float | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point List | Probabilistic per-tile scatter based on noise/mask weight. |
+| `PointGridNode` | *(none)* | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point List | Regular grid of points with optional jitter. |
 | `EdgeFinderNode` | *(reads world)* | Point List | Generates points along the boundaries between different Logical IDs. |
 | `PointOffset` | Point List | Point List | Shifts every point in a list by a fixed or noise-driven vector. |
 | `PointToMask` | Point List | Bool Mask | Converts a list of points into a binary mask (1.0 at point location). |
@@ -178,9 +180,9 @@ Simulate natural expansion or directional carving.
 
 | Node | Inputs | Outputs | Summary |
 |---|---|---|---|
-| `ClusterNode` | Point/Mask | Bool Mask | Grows probabilistic blobs from seed points. Spread decreases with distance. |
-| `VeinNode` | Point/Mask | Bool Mask | Directed random walk to create filament-like structures (e.g., rivers, ores). |
-| `PerlinWormNode` | Bool Mask *(opt)* | Bool Mask | Smooth, noise-steered carving. Ideal for tunnels or vertical surface shafts. |
+| `ClusterNode` | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point/![](https://placehold.co/10/FFD700/FFD700.png) Mask | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Grows probabilistic blobs from seed points. Spread decreases with distance. |
+| `VeinNode` | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point/![](https://placehold.co/10/FFD700/FFD700.png) Mask | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Directed random walk to create filament-like structures (e.g., rivers, ores). |
+| `PerlinWormNode` | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask *(opt)* | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | Smooth, noise-steered carving. Ideal for tunnels or vertical surface shafts. |
 
 ---
 
@@ -190,10 +192,10 @@ Nodes that generate or stamp prefab data onto the world grid.
 
 | Node | Inputs | Outputs | Summary |
 |---|---|---|---|
-| `DungeonGenerator` | Point List | Int, Placements | **High-Level Solver.** Generates complex constraint-based dungeons at input points. |
-| `PrefabStamperNode` | Point List *or* Bool Mask | *(writes world)* | Places pre-built Unity Tilemap chunks at input positions. |
-| `PlacementSetNode` | Weights, Masks | Placements | Generates multiple prefab placement rows from one multi-input weight stack. |
-| `PrefabSpawnerNode` | Point List | Placements | Instantiates Unity Prefabs (GameObjects) at specific points. |
+| `DungeonGenerator` | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point List | ![](https://placehold.co/10/3366E6/3366E6.png) Int, ![](https://placehold.co/10/33CC33/33CC33.png) Placements | **High-Level Solver.** Generates complex constraint-based dungeons at input points. |
+| `PrefabStamperNode` | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point List *or* ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | *(writes world)* | Places pre-built Unity Tilemap chunks at input positions. |
+| `PlacementSetNode` | Weights, Masks | ![](https://placehold.co/10/33CC33/33CC33.png) Placements | Generates multiple prefab placement rows from one multi-input weight stack. |
+| `PrefabSpawnerNode` | ![](https://placehold.co/10/FF69B4/FF69B4.png) Point List | ![](https://placehold.co/10/33CC33/33CC33.png) Placements | Instantiates Unity Prefabs (GameObjects) at specific points. |
 
 ---
 
@@ -203,11 +205,11 @@ Final nodes that translate abstract data into Unity Tilemap data.
 
 | Node | Inputs | Outputs | Summary |
 |---|---|---|---|
-| `TilemapOutput` | Int, Biome, Placements | *(terminal)* | **Terminal Node.** Receives the final Logical ID channel for generation. |
-| `MaskToLogicalId` | Bool Mask | Int | Assigns two specific Logical IDs based on a mask (e.g., Wall vs Floor). |
-| `LogicalIdOverlay`| Int, Bool Mask | Int | Overwrites a base ID channel with a specific ID where the mask is true. |
-| `LogicalIdRuleStack`| Int, Mask (×N) | Int | Sequential list of ID overwrite rules based on procedural masks. |
-| `FlatFillNode` | *(none)* | Int | Fills the entire world with a single constant Logical ID. |
+| `TilemapOutput` | ![](https://placehold.co/10/3366E6/3366E6.png) Int, ![](https://placehold.co/10/E6CC1A/E6CC1A.png) Biome, ![](https://placehold.co/10/33CC33/33CC33.png) Placements | *(terminal)* | **Terminal Node.** Receives the final Logical ID channel for generation. |
+| `MaskToLogicalId` | ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | ![](https://placehold.co/10/3366E6/3366E6.png) Int | Assigns two specific Logical IDs based on a mask (e.g., Wall vs Floor). |
+| `LogicalIdOverlay`| ![](https://placehold.co/10/3366E6/3366E6.png) Int, ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask | ![](https://placehold.co/10/3366E6/3366E6.png) Int | Overwrites a base ID channel with a specific ID where the mask is true. |
+| `LogicalIdRuleStack`| ![](https://placehold.co/10/3366E6/3366E6.png) Int, Mask (×N) | ![](https://placehold.co/10/3366E6/3366E6.png) Int | Sequential list of ID overwrite rules based on procedural masks. |
+| `FlatFillNode` | *(none)* | ![](https://placehold.co/10/3366E6/3366E6.png) Int | Fills the entire world with a single constant Logical ID. |
 | `EmptyGridNode` | *(none)* | Match Input | Resets a channel to its default empty state (e.g., 0.0 or Void). |
 
 ---
