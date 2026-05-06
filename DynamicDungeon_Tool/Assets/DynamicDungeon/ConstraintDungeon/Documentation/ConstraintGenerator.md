@@ -1,3 +1,5 @@
+[← Back to README](../../../../../README.md)
+
 # Constraint Generator Documentation
 
 The **Constraint Generator** is a high-level layout engine designed to create complex, connected dungeon structures. It solves the problem of "where should rooms go?" by satisfying connectivity constraints, door alignment, and room-specific rules.
@@ -68,3 +70,6 @@ The solver uses a backtracking algorithm to place rooms. It ensures:
 
 ## Diagnostics
 If generation fails, enable **Enable Diagnostics** on the component. The Unity Console will provide a detailed trace of where the solver failed (e.g., "Could not find valid connection for Room B" or "Template X overlap at [10, 5]").
+
+---
+[← Back to README](../../../../../README.md)
