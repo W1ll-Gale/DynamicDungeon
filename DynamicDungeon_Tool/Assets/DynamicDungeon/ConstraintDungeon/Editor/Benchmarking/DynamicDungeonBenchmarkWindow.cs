@@ -71,7 +71,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.Benchmarking
         private CancellationTokenSource activeCancellationSource;
         private DungeonGenerator activeDungeonGenerator;
 
-        [MenuItem(DynamicDungeonMenuPaths.ToolsRoot + "Automated Benchmarks")]
+        [MenuItem(DynamicDungeonMenuPaths.ToolsBaseRoot + "Automated Benchmarks")]
         public static void OpenWindow()
         {
             DynamicDungeonBenchmarkWindow window = GetWindow<DynamicDungeonBenchmarkWindow>();

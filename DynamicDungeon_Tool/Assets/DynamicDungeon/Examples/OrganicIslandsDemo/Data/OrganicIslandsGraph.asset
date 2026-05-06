@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: island-noise
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SimplexNoiseNode
-    NodeName: Island Noise
+    NodeName: Island Noise (Simplex Noise)
     Position: {x: -3200, y: 0}
     Ports:
     - PortName: island-raw-noise
@@ -46,7 +46,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: island-fractal
     NodeTypeName: DynamicDungeon.Runtime.Nodes.FractalNoiseNode
-    NodeName: Island Fractal
+    NodeName: Island Fractal (Fractal Noise)
     Position: {x: -2850, y: 0}
     Ports:
     - PortName: Input
@@ -72,7 +72,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: island-voronoi
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VoronoiNoiseNode
-    NodeName: Island Voronoi
+    NodeName: Island Voronoi (Voronoi Noise)
     Position: {x: -3200.0005, y: -300}
     Ports:
     - PortName: Distance__island-voronoi
@@ -92,7 +92,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: voronoi-scale
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Voronoi Scale
+    NodeName: Voronoi Scale (Math)
     Position: {x: -2850, y: -300}
     Ports:
     - PortName: A
@@ -119,7 +119,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: terrain-subtract
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Voronoi Terrain Blend
+    NodeName: Voronoi Terrain Blend (Math)
     Position: {x: -2500, y: -150}
     Ports:
     - PortName: A
@@ -146,7 +146,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: land-threshold
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
-    NodeName: Land Threshold
+    NodeName: Land Threshold (Threshold)
     Position: {x: -2166.2258, y: -1.0000575}
     Ports:
     - PortName: Input
@@ -169,7 +169,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: island-smooth
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
-    NodeName: Island Smooth
+    NodeName: Island Smooth (Cellular Automata)
     Position: {x: -1853.147, y: 0.000024080276}
     Ports:
     - PortName: Input
@@ -204,7 +204,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ocean-invert
     NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
-    NodeName: Ocean Mask
+    NodeName: Ocean Mask (Invert)
     Position: {x: -1400, y: -200}
     Ports:
     - PortName: Input
@@ -224,7 +224,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ocean-df
     NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
-    NodeName: Ocean Distance Field
+    NodeName: Ocean Distance Field (Distance Field)
     Position: {x: -1050, y: -200}
     Ports:
     - PortName: Input
@@ -241,7 +241,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: beach-threshold
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
-    NodeName: Beach Distance Threshold
+    NodeName: Beach Distance Threshold (Threshold)
     Position: {x: -700, y: -200}
     Ports:
     - PortName: Input
@@ -264,7 +264,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: beach-near-invert
     NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
-    NodeName: Beach Near Mask
+    NodeName: Beach Near Mask (Invert)
     Position: {x: -350, y: -200}
     Ports:
     - PortName: Input
@@ -284,7 +284,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: beach-and
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Beach Mask
+    NodeName: Beach Mask (Combine Masks)
     Position: {x: 100, y: -100}
     Ports:
     - PortName: A
@@ -314,7 +314,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: land-df
     NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
-    NodeName: Land Distance Field
+    NodeName: Land Distance Field (Distance Field)
     Position: {x: -1399.9999, y: 416.65863}
     Ports:
     - PortName: Input
@@ -331,7 +331,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: shore-noise
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SimplexNoiseNode
-    NodeName: Shore Noise
+    NodeName: Shore Noise (Simplex Noise)
     Position: {x: -1506, y: 812}
     Ports:
     - PortName: shore-noise-raw
@@ -353,7 +353,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: shore-noise-scale
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Shore Noise Scale
+    NodeName: Shore Noise Scale (Math)
     Position: {x: -1050, y: 812.0001}
     Ports:
     - PortName: A
@@ -380,7 +380,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: land-dist-noisy
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Land Dist Noisy
+    NodeName: Land Dist Noisy (Math)
     Position: {x: -700, y: 811.9998}
     Ports:
     - PortName: A
@@ -407,7 +407,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: deep-water-threshold
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
-    NodeName: Deep Water Threshold
+    NodeName: Deep Water Threshold (Threshold)
     Position: {x: -269.4154, y: 461}
     Ports:
     - PortName: Input
@@ -430,7 +430,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: deep-water-and
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Deep Water Ocean Mask
+    NodeName: Deep Water Ocean Mask (Combine Masks)
     Position: {x: 99.99991, y: 460.9999}
     Ports:
     - PortName: A
@@ -460,7 +460,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: medium-threshold
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
-    NodeName: Medium Water Threshold
+    NodeName: Medium Water Threshold (Threshold)
     Position: {x: -350, y: 811.9997}
     Ports:
     - PortName: Input
@@ -483,7 +483,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: medium-water-and
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Medium Water Mask
+    NodeName: Medium Water Mask (Combine Masks)
     Position: {x: 99.99991, y: 811.9997}
     Ports:
     - PortName: A
@@ -513,7 +513,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: medium-water-overlay
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
-    NodeName: Medium Water Overlay
+    NodeName: Medium Water Overlay (Logical ID Overlay)
     Position: {x: 700.22736, y: 442.00006}
     Ports:
     - PortName: Base
@@ -537,7 +537,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: base-ids
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
-    NodeName: Base Logical IDs
+    NodeName: Base Logical IDs (Bool Mask to Logical ID)
     Position: {x: 100, y: 200}
     Ports:
     - PortName: Input
@@ -560,7 +560,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: deep-water-overlay
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
-    NodeName: Deep Water Overlay
+    NodeName: Deep Water Overlay (Logical ID Overlay)
     Position: {x: 1075.671, y: 229.99983}
     Ports:
     - PortName: Base
@@ -584,7 +584,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: beach-overlay
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
-    NodeName: Beach Overlay
+    NodeName: Beach Overlay (Logical ID Overlay)
     Position: {x: 1455.002, y: 41.999958}
     Ports:
     - PortName: Base
@@ -608,7 +608,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: graph-output
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
-    NodeName: Graph Output
+    NodeName: Graph Output (Output)
     Position: {x: 1775.0021, y: 41.999958}
     Ports:
     - PortName: LogicalIds

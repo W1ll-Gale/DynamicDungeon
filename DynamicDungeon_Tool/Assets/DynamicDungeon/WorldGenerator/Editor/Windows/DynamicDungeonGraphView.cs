@@ -282,6 +282,23 @@ namespace DynamicDungeon.Editor.Windows
             return true;
         }
 
+        public GenNodeData GetSingleSelectedNodeData()
+        {
+            List<GenNodeView> selectedNodeViews = GetSelectedNodeViews();
+            if (selectedNodeViews.Count != 1)
+            {
+                return null;
+            }
+
+            GenNodeView selectedNodeView = selectedNodeViews[0];
+            return selectedNodeView != null ? selectedNodeView.NodeData : null;
+        }
+
+        public int GetSelectedNodeCount()
+        {
+            return GetSelectedNodeViews().Count;
+        }
+
         private static string ResolveVisiblePreviewNodeId(string nodeId)
         {
             if (string.IsNullOrWhiteSpace(nodeId))

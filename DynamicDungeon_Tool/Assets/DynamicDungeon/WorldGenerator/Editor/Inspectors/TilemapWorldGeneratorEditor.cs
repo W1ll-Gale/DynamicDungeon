@@ -21,6 +21,7 @@ namespace DynamicDungeon.Editor.Inspectors
         private const float InlineInspectorPadding = 6.0f;
         private const float InlineInspectorSpacing = 4.0f;
         private const string HeaderTitle = "Tilemap World Generator";
+        private const string DocumentationUrl = "https://dynamicdungeon.mrbytesized.com/docs/world-generator";
 
         private SerializedProperty _generateOnStartProperty;
         private SerializedProperty _seedModeProperty;
@@ -51,7 +52,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
         protected override void OnHeaderGUI()
         {
-            ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle);
+            ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle, DocumentationUrl);
         }
 
         private void OnEnable()
@@ -231,6 +232,10 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUI.BeginDisabledGroup(_graphProperty.objectReferenceValue == null);
             bool openGraphRequested = GUILayout.Button("Open Graph", GUILayout.Width(CompactButtonWidth));
             EditorGUI.EndDisabledGroup();
+            if (GUILayout.Button(new GUIContent("?", "Open world generator documentation"), EditorStyles.miniButton, GUILayout.Width(22.0f)))
+            {
+                Application.OpenURL(DocumentationUrl);
+            }
             EditorGUILayout.EndHorizontal();
 
             if (_graphProperty.objectReferenceValue == null)
@@ -383,7 +388,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
             EditorGUILayout.PropertyField(_tilemapOffsetProperty, new GUIContent("Tilemap Offset"));
 
-            EditorGUILayout.PropertyField(_biomeProperty, new GUIContent("Biome Asset"));
+            EditorGUILayout.PropertyField(_biomeProperty, new GUIContent("Default Biome"));
             EditorGUILayout.PropertyField(_gridProperty, new GUIContent("Grid"));
 
             GUILayout.Space(4.0f);

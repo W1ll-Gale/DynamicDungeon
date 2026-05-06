@@ -4,13 +4,15 @@ namespace DynamicDungeon.Runtime
     {
         public const string DisplayRoot = "Dynamic Dungeon/";
         public const string TilemapWorldGeneratorRoot = DisplayRoot + "Tilemap World Generator/";
+        public const string ToolsBaseRoot = "Tools/" + DisplayRoot;
         public const string ToolsRoot = "Tools/" + TilemapWorldGeneratorRoot;
         public const string GameObjectRoot = "GameObject/" + TilemapWorldGeneratorRoot;
         public const string AssetCreateRoot = "Assets/Create/" + TilemapWorldGeneratorRoot;
         public const string AssetMenuRoot = TilemapWorldGeneratorRoot;
 
         public const string GraphEditor = ToolsRoot + "Tilemap World Graph Editor";
-        public const string GeneratedMapDiagnostics = ToolsRoot + "Generated Map Diagnostics";
+        public const string GeneratedMapDiagnostics = ToolsBaseRoot + "Generated Map Diagnostics";
+        public const string Documentation = ToolsBaseRoot + "Documentation";
         public const string NewTilemapWorldGeneratorSetup = ToolsRoot + "New Generator Setup";
         public const string GameObjectTilemapWorldGeneratorSetup = GameObjectRoot + "Generator Setup";
         public const string GameObjectApplyLayerStructure = GameObjectRoot + "Apply Layer Structure";

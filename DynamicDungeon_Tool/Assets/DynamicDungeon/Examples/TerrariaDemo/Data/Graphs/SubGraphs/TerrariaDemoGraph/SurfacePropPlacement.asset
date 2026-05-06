@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
-    NodeName: One
+    NodeName: One (Constant)
     Position: {x: 1540.5026, y: 823.5001}
     Ports:
     - PortName: OneFloat
@@ -43,7 +43,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 6999daac-7624-464b-9308-87663f179e01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
-    NodeName: Zero
+    NodeName: Zero (Constant)
     Position: {x: 1781.0002, y: 1130}
     Ports:
     - PortName: ZeroFloat
@@ -62,7 +62,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ced59584-f592-4d05-b4b5-487143502736
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
-    NodeName: Surface Floor Weights
+    NodeName: Surface Floor Weights (Mask Blend)
     Position: {x: 2149.9995, y: 951.9998}
     Ports:
     - PortName: A
@@ -84,7 +84,7 @@ MonoBehaviour:
     Parameters: []
   - NodeId: surface-prop-placement-points
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
-    NodeName: Surface Prop Ground Points
+    NodeName: Surface Prop Ground Points (Contextual Query)
     Position: {x: 1759, y: 1697.52}
     Ports:
     - PortName: Input
@@ -101,7 +101,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: surface-prop-placement-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
-    NodeName: Surface Prop Placement Mask
+    NodeName: Surface Prop Placement Mask (Point List To Mask)
     Position: {x: 2270, y: 1606.52}
     Ports:
     - PortName: Points
@@ -115,7 +115,7 @@ MonoBehaviour:
     Parameters: []
   - NodeId: surface-prop-surface-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Surface Prop Surface Mask
+    NodeName: Surface Prop Surface Mask (Combine Masks)
     Position: {x: 2604, y: 1829.505}
     Ports:
     - PortName: A
@@ -136,7 +136,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: surface-prop-placement-weights
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
-    NodeName: Surface Prop Placement Weights
+    NodeName: Surface Prop Placement Weights (Mask Blend)
     Position: {x: 1219.8549, y: 1429}
     Ports:
     - PortName: A
@@ -158,7 +158,7 @@ MonoBehaviour:
     Parameters: []
   - NodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Forest Tree Weight
+    NodeName: Forest Tree Weight (Math)
     Position: {x: 2484, y: 898.52}
     Ports:
     - PortName: A
@@ -182,7 +182,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 62c2d399-7023-4628-b07a-c035317a8f19
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Jungle Tree Weight Base
+    NodeName: Jungle Tree Weight Base (Math)
     Position: {x: 2484, y: 1181.52}
     Ports:
     - PortName: A
@@ -206,7 +206,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Jungle Tree Weight
+    NodeName: Jungle Tree Weight (Math)
     Position: {x: 3067.646, y: 859.99994}
     Ports:
     - PortName: A
@@ -226,7 +226,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ceb72be0-5035-400a-a151-3a859daedd51
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Desert Cactus Weight Base
+    NodeName: Desert Cactus Weight Base (Math)
     Position: {x: 2088.9998, y: 1232}
     Ports:
     - PortName: A
@@ -250,7 +250,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Desert Cactus Weight
+    NodeName: Desert Cactus Weight (Math)
     Position: {x: 2776, y: 1181.52}
     Ports:
     - PortName: A
@@ -270,7 +270,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Ice Tree Weight Base
+    NodeName: Ice Tree Weight Base (Math)
     Position: {x: 1815.9998, y: 2102}
     Ports:
     - PortName: A
@@ -294,7 +294,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
-    NodeName: Ice Tree Weight
+    NodeName: Ice Tree Weight (Math)
     Position: {x: 2776, y: 2229}
     Ports:
     - PortName: A
@@ -314,7 +314,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
-    NodeName: Forest Tree Scatter
+    NodeName: Forest Tree Scatter (Stochastic Scatter)
     Position: {x: 4056, y: 1467.52}
     Ports:
     - PortName: Weights
@@ -334,7 +334,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
-    NodeName: Forest Tree Prefabs
+    NodeName: Forest Tree Prefabs (Prefab Stamper)
     Position: {x: 4879, y: 1317}
     Ports:
     - PortName: Points
@@ -375,7 +375,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: forest-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
-    NodeName: Forest Tree Placement Points
+    NodeName: Forest Tree Placement Points (Point List Offset)
     Position: {x: 4381, y: 1330.52}
     Ports:
     - PortName: Points
@@ -398,7 +398,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
-    NodeName: Jungle Tree Scatter
+    NodeName: Jungle Tree Scatter (Stochastic Scatter)
     Position: {x: 4056, y: 1209.52}
     Ports:
     - PortName: Weights
@@ -418,7 +418,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
-    NodeName: Jungle Tree Prefabs
+    NodeName: Jungle Tree Prefabs (Prefab Stamper)
     Position: {x: 5188, y: 856.00006}
     Ports:
     - PortName: Points
@@ -459,7 +459,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: jungle-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
-    NodeName: Jungle Tree Placement Points
+    NodeName: Jungle Tree Placement Points (Point List Offset)
     Position: {x: 4815, y: 1042.52}
     Ports:
     - PortName: Points
@@ -482,7 +482,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
-    NodeName: Ice Tree Scatter
+    NodeName: Ice Tree Scatter (Stochastic Scatter)
     Position: {x: 4056, y: 1994.52}
     Ports:
     - PortName: Weights
@@ -502,7 +502,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
-    NodeName: Ice Tree Prefabs
+    NodeName: Ice Tree Prefabs (Prefab Stamper)
     Position: {x: 5085, y: 2236.52}
     Ports:
     - PortName: Points
@@ -543,7 +543,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ice-tree-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
-    NodeName: Ice Tree Placement Points
+    NodeName: Ice Tree Placement Points (Point List Offset)
     Position: {x: 4511, y: 2121.52}
     Ports:
     - PortName: Points
@@ -566,7 +566,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 68905719-fc24-450e-8b09-869ff286d755
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
-    NodeName: Cactus Scatter
+    NodeName: Cactus Scatter (Stochastic Scatter)
     Position: {x: 4056, y: 1721.52}
     Ports:
     - PortName: Weights
@@ -586,7 +586,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 598ec486-5ceb-4977-9ff6-cf36bb53fca2
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
-    NodeName: Cactus Prefabs
+    NodeName: Cactus Prefabs (Prefab Stamper)
     Position: {x: 4993, y: 1744.52}
     Ports:
     - PortName: Points
@@ -627,7 +627,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: cactus-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
-    NodeName: Cactus Placement Points
+    NodeName: Cactus Placement Points (Point List Offset)
     Position: {x: 4614, y: 1709.52}
     Ports:
     - PortName: Points
@@ -650,7 +650,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
     NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
-    NodeName: Cloud Scatter
+    NodeName: Cloud Scatter (Stochastic Scatter)
     Position: {x: 1823.0052, y: 528.31213}
     Ports:
     - PortName: Weights
@@ -670,7 +670,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 7d91fd3c-0f1a-4313-b849-600a81f07311
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
-    NodeName: Cloud Prefabs
+    NodeName: Cloud Prefabs (Prefab Stamper)
     Position: {x: 4041, y: 816.52}
     Ports:
     - PortName: Points

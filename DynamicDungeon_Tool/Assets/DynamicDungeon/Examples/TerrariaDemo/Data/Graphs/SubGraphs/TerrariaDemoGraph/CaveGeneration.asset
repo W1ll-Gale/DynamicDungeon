@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Shallow Cave Pockets
+    NodeName: Shallow Cave Pockets (Cluster)
     Position: {x: -2586.5737, y: -1175.5063}
     Ports:
     - PortName: Mask
@@ -53,7 +53,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
-    NodeName: Cave Automata
+    NodeName: Cave Automata (Cellular Automata)
     Position: {x: -3546.5737, y: -384.50635}
     Ports:
     - PortName: Input
@@ -82,7 +82,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: forest-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
-    NodeName: Forest Deep Cave Automata
+    NodeName: Forest Deep Cave Automata (Cellular Automata)
     Position: {x: -3914.5737, y: 25.493652}
     Ports:
     - PortName: Input
@@ -111,7 +111,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: jungle-deep-cave-region
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Jungle Deep Cave Region
+    NodeName: Jungle Deep Cave Region (Combine Masks)
     Position: {x: -3680, y: 363.47998}
     Ports:
     - PortName: A
@@ -132,7 +132,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: jungle-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
-    NodeName: Jungle Deep Cave Automata
+    NodeName: Jungle Deep Cave Automata (Cellular Automata)
     Position: {x: -3360, y: 363.47998}
     Ports:
     - PortName: Input
@@ -161,7 +161,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: desert-deep-cave-region
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Desert Deep Cave Region
+    NodeName: Desert Deep Cave Region (Combine Masks)
     Position: {x: -3680, y: 523.48}
     Ports:
     - PortName: A
@@ -182,7 +182,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: desert-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
-    NodeName: Desert Deep Cave Automata
+    NodeName: Desert Deep Cave Automata (Cellular Automata)
     Position: {x: -3360, y: 523.48}
     Ports:
     - PortName: Input
@@ -211,7 +211,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ice-deep-cave-region
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Ice Deep Cave Region
+    NodeName: Ice Deep Cave Region (Combine Masks)
     Position: {x: -3680, y: 683.48}
     Ports:
     - PortName: A
@@ -232,7 +232,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ice-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
-    NodeName: Ice Deep Cave Automata
+    NodeName: Ice Deep Cave Automata (Cellular Automata)
     Position: {x: -3360, y: 683.48}
     Ports:
     - PortName: Input
@@ -261,7 +261,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: biome-deep-cave-automata
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Biome Deep Cave Automata
+    NodeName: Biome Deep Cave Automata (Mask Stack)
     Position: {x: -2720, y: 363.47998}
     Ports:
     - PortName: Masks
@@ -284,7 +284,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: combined-automata-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Combined Automata Caves
+    NodeName: Combined Automata Caves (Combine Masks)
     Position: {x: -2720, y: 103.47998}
     Ports:
     - PortName: A
@@ -305,7 +305,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Deep Cavern Pockets
+    NodeName: Deep Cavern Pockets (Cluster)
     Position: {x: -3546.5737, y: -104.50635}
     Ports:
     - PortName: Mask
@@ -334,7 +334,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Base Open Caves
+    NodeName: Base Open Caves (Mask Stack)
     Position: {x: -2906.5737, y: -244.50635}
     Ports:
     - PortName: Masks
@@ -357,7 +357,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: upper-underground-cave-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
-    NodeName: Upper Underground Cave Band
+    NodeName: Upper Underground Cave Band (Column Surface Band)
     Position: {x: -2400, y: -696.52}
     Ports:
     - PortName: Input
@@ -377,7 +377,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: upper-underground-cave-pockets
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Upper Underground Small Caves
+    NodeName: Upper Underground Small Caves (Cluster)
     Position: {x: -2080, y: -696.52}
     Ports:
     - PortName: Mask
@@ -406,7 +406,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: mid-underground-cave-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
-    NodeName: Mid Underground Cave Band
+    NodeName: Mid Underground Cave Band (Column Surface Band)
     Position: {x: -2400, y: -576.52}
     Ports:
     - PortName: Input
@@ -426,7 +426,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: mid-underground-cave-pockets
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Mid Underground Growing Caves
+    NodeName: Mid Underground Growing Caves (Cluster)
     Position: {x: -2080, y: -576.52}
     Ports:
     - PortName: Mask
@@ -455,7 +455,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: staged-base-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Staged Base Open Caves
+    NodeName: Staged Base Open Caves (Mask Stack)
     Position: {x: -1440, y: -636.52}
     Ports:
     - PortName: Masks
@@ -478,7 +478,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: surface-entrance-worms
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
-    NodeName: Surface Entrance Worms
+    NodeName: Surface Entrance Worms (Perlin Worm)
     Position: {x: -2400, y: -456.52002}
     Ports:
     - PortName: Mask
@@ -537,7 +537,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: shallow-perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
-    NodeName: Shallow Perlin Worm Caves
+    NodeName: Shallow Perlin Worm Caves (Perlin Worm)
     Position: {x: -1760, y: -456.52002}
     Ports:
     - PortName: Mask
@@ -596,7 +596,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: shallow-worm-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Shallow Worm Open Caves
+    NodeName: Shallow Worm Open Caves (Mask Stack)
     Position: {x: -1760, y: -236.52002}
     Ports:
     - PortName: Masks
@@ -619,7 +619,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
-    NodeName: Deep Perlin Worm Caves
+    NodeName: Deep Perlin Worm Caves (Perlin Worm)
     Position: {x: -2400, y: 123.47998}
     Ports:
     - PortName: Mask
@@ -678,7 +678,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: worm-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Worm Open Caves
+    NodeName: Worm Open Caves (Mask Stack)
     Position: {x: -2080, y: 123.47998}
     Ports:
     - PortName: Masks
@@ -701,7 +701,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: large-deep-perlin-worm-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
-    NodeName: Large Deep Perlin Worm Caves
+    NodeName: Large Deep Perlin Worm Caves (Perlin Worm)
     Position: {x: -2400, y: 343.47998}
     Ports:
     - PortName: Mask
@@ -760,7 +760,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: feature-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Open Caves
+    NodeName: Open Caves (Mask Stack)
     Position: {x: -2266.5737, y: -244.50635}
     Ports:
     - PortName: Masks
@@ -783,7 +783,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ice-feature-open-caves
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Ice Feature Open Caves
+    NodeName: Ice Feature Open Caves (Combine Masks)
     Position: {x: -1440, y: -136.52002}
     Ports:
     - PortName: A

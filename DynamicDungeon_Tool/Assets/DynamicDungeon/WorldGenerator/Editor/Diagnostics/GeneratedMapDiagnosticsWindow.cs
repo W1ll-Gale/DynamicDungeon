@@ -33,6 +33,7 @@ namespace DynamicDungeon.Editor.Diagnostics
     public sealed class GeneratedMapDiagnosticsWindow : EditorWindow, IHasCustomMenu
     {
         private const float PickDistance = 2.0f;
+        private const string DocumentationUrl = "https://dynamicdungeon.mrbytesized.com/docs/diagnostics";
 
         [SerializeField] private List<TilemapWorldGenerator> _targets = new List<TilemapWorldGenerator>();
         private List<TilemapWorldGenerator> _subscribedTargets = new List<TilemapWorldGenerator>();
@@ -356,12 +357,24 @@ namespace DynamicDungeon.Editor.Diagnostics
 
             UpdateSubscriptions();
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            DrawDocumentationHeader();
             DrawTargets();
             DrawToolControls();
             DrawRules();
             DrawActions();
             DrawStatus();
             EditorGUILayout.EndScrollView();
+        }
+
+        private static void DrawDocumentationHeader()
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Map Diagnostics", EditorStyles.boldLabel);
+            if (GUILayout.Button(new GUIContent("?", "Open diagnostics documentation"), EditorStyles.miniButton, GUILayout.Width(22.0f)))
+            {
+                Application.OpenURL(DocumentationUrl);
+            }
+            EditorGUILayout.EndHorizontal();
         }
 
         private void DrawTargets()

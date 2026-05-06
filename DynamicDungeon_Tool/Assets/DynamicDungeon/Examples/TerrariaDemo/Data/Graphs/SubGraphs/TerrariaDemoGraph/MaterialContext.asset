@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
-    NodeName: Base Terrain IDs
+    NodeName: Base Terrain IDs (Bool Mask to Logical ID)
     Position: {x: -4093, y: 1483}
     Ports:
     - PortName: Input
@@ -44,7 +44,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 085d0f8b-3f82-4c28-b1ad-d84bcabe64d5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
-    NodeName: Surface Ledge Points
+    NodeName: Surface Ledge Points (Contextual Query)
     Position: {x: -4093, y: 1183}
     Ports:
     - PortName: Input
@@ -61,7 +61,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 6cd9eea0-9ae5-415d-86c8-2709427db4c4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
-    NodeName: Surface Ledge Mask
+    NodeName: Surface Ledge Mask (Point List To Mask)
     Position: {x: -3603.0002, y: 1203.8175}
     Ports:
     - PortName: Points
@@ -75,7 +75,7 @@ MonoBehaviour:
     Parameters: []
   - NodeId: 9e1054e5-cc0d-4368-8e22-7164072c9b7e
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Surface Floor Mask
+    NodeName: Surface Floor Mask (Combine Masks)
     Position: {x: -3333.0002, y: 1322.0002}
     Ports:
     - PortName: A
@@ -96,7 +96,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ea8ac51f-ba19-44df-977c-899da7d0deca
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
-    NodeName: Surface Crust Depth
+    NodeName: Surface Crust Depth (Column Surface Band)
     Position: {x: -3724.4998, y: 1552.3922}
     Ports:
     - PortName: Input
@@ -116,7 +116,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: subsurface-biome-transition
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceTransitionMaskNode
-    NodeName: Subsurface Biome Transition
+    NodeName: Subsurface Biome Transition (Column Surface Transition Mask)
     Position: {x: -3724.4998, y: 1752.3922}
     Ports:
     - PortName: Input
@@ -142,7 +142,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Surface Crust Mask
+    NodeName: Surface Crust Mask (Mask Stack)
     Position: {x: -3363.0005, y: 1891.0004}
     Ports:
     - PortName: Masks
@@ -165,7 +165,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
-    NodeName: Final Terrain IDs
+    NodeName: Final Terrain IDs (Logical ID Overlay)
     Position: {x: -3013.0005, y: 1422.0004}
     Ports:
     - PortName: Base
@@ -186,7 +186,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
-    NodeName: Deep Underground Band
+    NodeName: Deep Underground Band (Height Band)
     Position: {x: -4013, y: 1924}
     Ports:
     - PortName: DeepUndergroundBand
@@ -211,7 +211,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
     NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
-    NodeName: Cave Distance Field
+    NodeName: Cave Distance Field (Distance Field)
     Position: {x: -3653, y: 2166}
     Ports:
     - PortName: Input
@@ -225,7 +225,7 @@ MonoBehaviour:
     Parameters: []
   - NodeId: 7a3d7211-74a3-4ef4-b3ae-cdc4a5dfe87d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
-    NodeName: Cave Proximity
+    NodeName: Cave Proximity (Invert)
     Position: {x: -3333, y: 2166}
     Ports:
     - PortName: Input
@@ -242,7 +242,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
-    NodeName: Cave Material Proximity Mask
+    NodeName: Cave Material Proximity Mask (Threshold)
     Position: {x: -3013, y: 2166}
     Ports:
     - PortName: Input
@@ -259,7 +259,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
-    NodeName: Cave Material Region
+    NodeName: Cave Material Region (Mask Stack)
     Position: {x: -2693, y: 2166}
     Ports:
     - PortName: Masks
@@ -282,7 +282,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: cave-material-depth-transition
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceTransitionMaskNode
-    NodeName: Cave Material Depth Transition
+    NodeName: Cave Material Depth Transition (Column Surface Transition Mask)
     Position: {x: -3653, y: 2426}
     Ports:
     - PortName: Input
@@ -308,7 +308,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: logical-id-material-context
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleStackNode
-    NodeName: Material Context IDs
+    NodeName: Material Context IDs (Logical ID Rule Stack)
     Position: {x: -2721, y: 1322.0002}
     Ports:
     - PortName: Base

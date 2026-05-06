@@ -24,7 +24,7 @@ MonoBehaviour:
   Nodes:
   - NodeId: forest-deep-cave-region
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Forest Deep Cave Region
+    NodeName: Forest Deep Cave Region (Combine Masks)
     Position: {x: -3680, y: 203.47998}
     Ports:
     - PortName: A
@@ -45,7 +45,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 246c68d4-6427-4de7-8e42-3859c3a495fb
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
-    NodeName: Ore Surface Buffer
+    NodeName: Ore Surface Buffer (Column Surface Band)
     Position: {x: 1571, y: -1715.3999}
     Ports:
     - PortName: Input
@@ -65,7 +65,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskExpressionNode
-    NodeName: Ore Wall Mask
+    NodeName: Ore Wall Mask (Mask Expression)
     Position: {x: 2223, y: -1805}
     Ports:
     - PortName: Masks
@@ -88,7 +88,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 4978ff0f-b00f-40ef-8464-ceeb214dec50
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
-    NodeName: Upper Ore Band
+    NodeName: Upper Ore Band (Height Band)
     Position: {x: 1571, y: -1455.3999}
     Ports:
     - PortName: UpperOreBand
@@ -113,7 +113,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 7c2aced2-da86-4c3d-ade5-719168a576fc
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
-    NodeName: Mid Ore Band
+    NodeName: Mid Ore Band (Height Band)
     Position: {x: 1571, y: -1255.3999}
     Ports:
     - PortName: MidOreBand
@@ -138,7 +138,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 8953ba8a-f86a-42cc-b3ba-f5d21f4bcc3d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
-    NodeName: Gold Ore Band
+    NodeName: Gold Ore Band (Height Band)
     Position: {x: 1571, y: -1055.3999}
     Ports:
     - PortName: GoldOreBand
@@ -163,7 +163,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 0449a063-05b1-4877-95ae-9dcc15ba320f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
-    NodeName: Diamond Ore Band
+    NodeName: Diamond Ore Band (Height Band)
     Position: {x: 1571, y: -855.3999}
     Ports:
     - PortName: DiamondOreBand
@@ -188,7 +188,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Coal Zone
+    NodeName: Coal Zone (Combine Masks)
     Position: {x: 1891, y: -1455.3999}
     Ports:
     - PortName: A
@@ -209,7 +209,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 868da92d-18cc-4e91-a39b-35f4b2569640
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Coal Clumps
+    NodeName: Coal Clumps (Cluster)
     Position: {x: 2223, y: -1660.4171}
     Ports:
     - PortName: Mask
@@ -238,7 +238,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 6f076013-c3de-435c-aa1f-c8c9f46607c9
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
-    NodeName: Coal Veins
+    NodeName: Coal Veins (Vein)
     Position: {x: 2223, y: -1535.9998}
     Ports:
     - PortName: Mask
@@ -270,7 +270,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 79db410b-8dcb-4a46-af55-26bb112b5717
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Coal Mask
+    NodeName: Coal Mask (Combine Masks)
     Position: {x: 2531, y: -1805.0001}
     Ports:
     - PortName: A
@@ -291,7 +291,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Coal Ore Override
+    NodeName: Coal Ore Override (Biome Override)
     Position: {x: 2852, y: -1804.96}
     Ports:
     - PortName: Biome Input
@@ -318,7 +318,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: c6b64ae4-2807-494d-9adb-069f6c9d9979
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Iron Zone
+    NodeName: Iron Zone (Combine Masks)
     Position: {x: 1891, y: -1255.3999}
     Ports:
     - PortName: A
@@ -339,7 +339,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: c7572979-2da5-44be-bfee-1762ed82425a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Iron Clumps
+    NodeName: Iron Clumps (Cluster)
     Position: {x: 2222.9998, y: -1389.9998}
     Ports:
     - PortName: Mask
@@ -368,7 +368,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 09faa8f3-9fce-4aa8-b428-5f7b980a5b49
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
-    NodeName: Iron Veins
+    NodeName: Iron Veins (Vein)
     Position: {x: 2223, y: -1244.5}
     Ports:
     - PortName: Mask
@@ -400,7 +400,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 5c4ed9a0-d941-4874-ba2e-8fbbd290b79f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Iron Mask
+    NodeName: Iron Mask (Combine Masks)
     Position: {x: 2531, y: -1499.0001}
     Ports:
     - PortName: A
@@ -421,7 +421,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Iron Ore Override
+    NodeName: Iron Ore Override (Biome Override)
     Position: {x: 2851, y: -1498.9998}
     Ports:
     - PortName: Biome Input
@@ -448,7 +448,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 2778bedb-770f-44ea-a2d3-c7f685eb199a
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Gold Zone
+    NodeName: Gold Zone (Combine Masks)
     Position: {x: 1891, y: -1055.3999}
     Ports:
     - PortName: A
@@ -469,7 +469,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: dda42942-e1e4-4651-be72-924eb8b517b7
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Gold Clumps
+    NodeName: Gold Clumps (Cluster)
     Position: {x: 2223, y: -1115.935}
     Ports:
     - PortName: Mask
@@ -498,7 +498,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: cce810a0-8818-44f3-9b61-2c8d72a5bdd5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
-    NodeName: Gold Veins
+    NodeName: Gold Veins (Vein)
     Position: {x: 2223, y: -985}
     Ports:
     - PortName: Mask
@@ -530,7 +530,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: c4fd252a-8972-465d-a833-cf46a30effe5
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Gold Mask
+    NodeName: Gold Mask (Combine Masks)
     Position: {x: 2531, y: -1204}
     Ports:
     - PortName: A
@@ -551,7 +551,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 272ed66d-0521-4890-855c-c570cba4af92
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Gold Ore Override
+    NodeName: Gold Ore Override (Biome Override)
     Position: {x: 2852, y: -1204.0002}
     Ports:
     - PortName: Biome Input
@@ -578,7 +578,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Diamond Zone
+    NodeName: Diamond Zone (Combine Masks)
     Position: {x: 1891, y: -855.3999}
     Ports:
     - PortName: A
@@ -599,7 +599,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: d7f3563e-cf6f-4c75-97b6-9149b3af394b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
-    NodeName: Diamond Clumps
+    NodeName: Diamond Clumps (Cluster)
     Position: {x: 2211, y: -825.5}
     Ports:
     - PortName: Mask
@@ -628,7 +628,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: ebbbd407-9d4c-4be8-9b51-d3fbea5a112b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
-    NodeName: Diamond Veins
+    NodeName: Diamond Veins (Vein)
     Position: {x: 2223, y: -666}
     Ports:
     - PortName: Mask
@@ -660,7 +660,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: c6a6d713-9cfe-4e17-b39b-7b896fcf9c24
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
-    NodeName: Diamond Mask
+    NodeName: Diamond Mask (Combine Masks)
     Position: {x: 2531, y: -890.9999}
     Ports:
     - PortName: A
@@ -681,7 +681,7 @@ MonoBehaviour:
       ObjectReference: {fileID: 0}
   - NodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
-    NodeName: Diamond Ore Override
+    NodeName: Diamond Ore Override (Biome Override)
     Position: {x: 2850.0002, y: -895.0001}
     Ports:
     - PortName: Biome Input

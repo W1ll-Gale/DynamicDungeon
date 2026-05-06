@@ -13,12 +13,13 @@ namespace DynamicDungeon.ConstraintDungeon
     {
         private const float CompactButtonWidth = 118.0f;
         private const string HeaderTitle = "Constraint Dungeon Generator";
+        private const string DocumentationUrl = "https://dynamicdungeon.mrbytesized.com/docs/constraint-generator";
         private GUIStyle _mutedMiniLabelStyle;
         private DungeonGenerator _subscribedGen;
 
         protected override void OnHeaderGUI()
         {
-            ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle);
+            ComponentHeaderControls.DrawScriptlessHeader(target, HeaderTitle, DocumentationUrl);
         }
 
         private void OnEnable()
@@ -87,6 +88,7 @@ namespace DynamicDungeon.ConstraintDungeon
             EnsureStyles();
             serializedObject.Update();
 
+            DrawDocumentationButton(DocumentationUrl);
             DrawSourceAssetSection(gen);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("generationMode"));
             DrawGenerationSettingsSection(gen);
@@ -122,6 +124,17 @@ namespace DynamicDungeon.ConstraintDungeon
         private void EnsureStyles()
         {
             _mutedMiniLabelStyle = InspectorSharedControls.GetMutedMiniLabelStyle(_mutedMiniLabelStyle);
+        }
+
+        private static void DrawDocumentationButton(string documentationUrl)
+        {
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(new GUIContent("?", "Open documentation"), EditorStyles.miniButton, GUILayout.Width(22.0f)))
+            {
+                Application.OpenURL(documentationUrl);
+            }
+            EditorGUILayout.EndHorizontal();
         }
 
         private void DrawSourceAssetSection(DungeonGenerator gen)
