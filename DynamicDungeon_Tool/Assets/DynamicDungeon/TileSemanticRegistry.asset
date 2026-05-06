@@ -37,7 +37,7 @@ MonoBehaviour:
     Tags:
     - Walkable
   - LogicalId: 11
-    DisplayName: Surface Wall
+    DisplayName: Stone Wall
     Tags:
     - Solid
   - LogicalId: 12
@@ -53,7 +53,7 @@ MonoBehaviour:
     Tags:
     - Walkable
   - LogicalId: 15
-    DisplayName: Deep Wall
+    DisplayName: Deepslate Wall
     Tags:
     - Solid
   - LogicalId: 16
@@ -65,13 +65,45 @@ MonoBehaviour:
     Tags:
     - Solid
   - LogicalId: 18
-    DisplayName: Subsurface Ground Wall
+    DisplayName: Andesite
     Tags:
     - Solid
   - LogicalId: 19
     DisplayName: Cave Background
     Tags:
     - Decorative
+  - LogicalId: 20
+    DisplayName: Coal Ore
+    Tags:
+    - Solid
+  - LogicalId: 21
+    DisplayName: Deepslate Coal Ore
+    Tags:
+    - Solid
+  - LogicalId: 22
+    DisplayName: Iron Ore
+    Tags:
+    - Solid
+  - LogicalId: 23
+    DisplayName: Deepslate Iron Ore
+    Tags:
+    - Solid
+  - LogicalId: 24
+    DisplayName: Gold Ore
+    Tags:
+    - Solid
+  - LogicalId: 25
+    DisplayName: Deepslate Gold Ore
+    Tags:
+    - Solid
+  - LogicalId: 26
+    DisplayName: Diamond Ore
+    Tags:
+    - Solid
+  - LogicalId: 27
+    DisplayName: Deepslate Diamond Ore
+    Tags:
+    - Solid
   AllTags:
   - Walkable
   - Solid

@@ -86,7 +86,7 @@ namespace DynamicDungeon.Runtime.Nodes
             }
         }
 
-        public SelectNode(string nodeId, string nodeName, string inputAChannelName, string inputBChannelName, string inputCChannelName, string inputDChannelName, string controlChannelName, string outputChannelName, float thresholdAB = 0.25f, float thresholdBC = 0.5f, float thresholdCD = 0.75f)
+        public SelectNode(string nodeId, string nodeName, string inputAChannelName, string inputBChannelName, string inputCChannelName = "", string inputDChannelName = "", string controlChannelName = "", string outputChannelName = "", float thresholdAB = 0.25f, float thresholdBC = 0.5f, float thresholdCD = 0.75f)
         {
             if (string.IsNullOrWhiteSpace(nodeId))
             {

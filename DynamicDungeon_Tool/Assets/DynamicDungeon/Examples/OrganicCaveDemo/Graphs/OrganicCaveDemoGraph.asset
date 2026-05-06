@@ -1,0 +1,1324 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: OrganicCaveDemoGraph
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 5
+  WorldWidth: 256
+  WorldHeight: 128
+  DefaultSeed: 1
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 11400000, guid: 612ad49b6dbbf9b448c1cafb5da518f1, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: stone-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Stone Cave Automata
+    Position: {x: -2532.4414, y: -230.99997}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: stone-cave-mask
+      DisplayName: stone-cave-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: 
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: stone-cave-mask
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.42
+      ObjectReference: {fileID: 0}
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: deepslate-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Deepslate Cave Automata
+    Position: {x: -2531.9995, y: 143.49995}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: deepslate-cave-mask
+      DisplayName: deepslate-cave-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: 
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: deepslate-cave-mask
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.48
+      ObjectReference: {fileID: 0}
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: height-cave-select
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SelectMaskNode
+    NodeName: Height Cave Selector
+    Position: {x: -1981.4996, y: -231.00005}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: Control
+      DisplayName: Control
+      Direction: 0
+      Type: 0
+    - PortName: Output
+      DisplayName: Output
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputAChannelName
+      Value: stone-cave-mask
+      ObjectReference: {fileID: 0}
+    - Name: inputBChannelName
+      Value: deepslate-cave-mask
+      ObjectReference: {fileID: 0}
+    - Name: controlChannelName
+      Value: deepslate-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: height-selected-cave-mask
+      ObjectReference: {fileID: 0}
+    - Name: thresholdAB
+      Value: 0.25
+      ObjectReference: {fileID: 0}
+    - Name: thresholdBC
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+    - Name: thresholdCD
+      Value: 0.75
+      ObjectReference: {fileID: 0}
+  - NodeId: mossy-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Mossy Cave Automata
+    Position: {x: -2214.4082, y: -683.99976}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: mossy-cave-mask
+      DisplayName: mossy-cave-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: 
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: mossy-cave-mask
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.48
+      ObjectReference: {fileID: 0}
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Crystal Cave Automata
+    Position: {x: -2048.6821, y: -1093.8821}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: crystal-cave-mask
+      DisplayName: crystal-cave-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: 
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: crystal-cave-mask
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.35
+      ObjectReference: {fileID: 0}
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: combine-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
+    NodeName: Combine Caves
+    Position: {x: -1548, y: -581.5}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: combined-caves-mask
+      DisplayName: combined-caves-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: outputChannelName
+      Value: combined-caves-mask
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: Union
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: false
+      ObjectReference: {fileID: 0}
+  - NodeId: height-band
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Deepslate Transition
+    Position: {x: -2403.9993, y: 519.2606}
+    Ports:
+    - PortName: deepslate-band
+      DisplayName: deepslate-band
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputChannelName
+      Value: deepslate-band
+      ObjectReference: {fileID: 0}
+    - Name: minHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.4
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: height-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Deepslate Mask
+    Position: {x: -1546.9998, y: -103.99994}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: deepslate-mask
+      DisplayName: deepslate-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: deepslate-band
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: deepslate-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+  - NodeId: andesite-noise
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SimplexNoiseNode
+    NodeName: Andesite Noise
+    Position: {x: -605.99994, y: 1017.1586}
+    Ports:
+    - PortName: andesite-raw-noise
+      DisplayName: andesite-raw-noise
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: andesite-raw-noise
+      ObjectReference: {fileID: 0}
+    - Name: frequency
+      Value: 0.05
+      ObjectReference: {fileID: 0}
+    - Name: amplitude
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: offset
+      Value: 0,0
+      ObjectReference: {fileID: 0}
+  - NodeId: andesite-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Andesite Mask
+    Position: {x: 100, y: 650}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: andesite-binary-mask
+      DisplayName: andesite-binary-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: andesite-raw-noise
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: andesite-binary-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.75
+      ObjectReference: {fileID: 0}
+  - NodeId: coal-vein
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Coal Vein
+    Position: {x: -201.99997, y: 296.00003}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: coal-vein-mask
+      DisplayName: coal-vein-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: outputChannelName
+      Value: coal-vein-mask
+      ObjectReference: {fileID: 0}
+    - Name: seedCount
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMin
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMax
+      Value: 20
+      ObjectReference: {fileID: 0}
+    - Name: wanderProbability
+      Value: 0.25
+      ObjectReference: {fileID: 0}
+    - Name: forkProbability
+      Value: 0.15
+      ObjectReference: {fileID: 0}
+    - Name: forkAngleRange
+      Value: 45
+      ObjectReference: {fileID: 0}
+  - NodeId: iron-vein
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Iron Vein
+    Position: {x: 340.0001, y: 892}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: iron-vein-mask
+      DisplayName: iron-vein-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: outputChannelName
+      Value: iron-vein-mask
+      ObjectReference: {fileID: 0}
+    - Name: seedCount
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMin
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMax
+      Value: 15
+      ObjectReference: {fileID: 0}
+    - Name: wanderProbability
+      Value: 0.25
+      ObjectReference: {fileID: 0}
+    - Name: forkProbability
+      Value: 0.15
+      ObjectReference: {fileID: 0}
+    - Name: forkAngleRange
+      Value: 45
+      ObjectReference: {fileID: 0}
+  - NodeId: gold-vein
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Gold Vein
+    Position: {x: 372.00003, y: 1310.1993}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: gold-vein-mask
+      DisplayName: gold-vein-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: outputChannelName
+      Value: gold-vein-mask
+      ObjectReference: {fileID: 0}
+    - Name: seedCount
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMin
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMax
+      Value: 15
+      ObjectReference: {fileID: 0}
+    - Name: wanderProbability
+      Value: 0.25
+      ObjectReference: {fileID: 0}
+    - Name: forkProbability
+      Value: 0.15
+      ObjectReference: {fileID: 0}
+    - Name: forkAngleRange
+      Value: 45
+      ObjectReference: {fileID: 0}
+  - NodeId: diamond-vein
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Diamond Vein
+    Position: {x: 744.30725, y: 1310.0001}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: diamond-vein-mask
+      DisplayName: diamond-vein-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: outputChannelName
+      Value: diamond-vein-mask
+      ObjectReference: {fileID: 0}
+    - Name: seedCount
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMin
+      Value: 3
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMax
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: wanderProbability
+      Value: 0.25
+      ObjectReference: {fileID: 0}
+    - Name: forkProbability
+      Value: 0.15
+      ObjectReference: {fileID: 0}
+    - Name: forkAngleRange
+      Value: 45
+      ObjectReference: {fileID: 0}
+  - NodeId: wall-base-const
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
+    NodeName: Stone ID
+    Position: {x: 400, y: 500}
+    Ports:
+    - PortName: wall-base-id
+      DisplayName: wall-base-id
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: wall-base-id
+      ObjectReference: {fileID: 0}
+    - Name: outputType
+      Value: Int
+      ObjectReference: {fileID: 0}
+    - Name: intValue
+      Value: 11
+      ObjectReference: {fileID: 0}
+    - Name: floatValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: full-height-gradient
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightGradientNode
+    NodeName: Height Gradient
+    Position: {x: -1407.0001, y: -1139.9999}
+    Ports:
+    - PortName: full-gradient
+      DisplayName: full-gradient
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputChannelName
+      Value: full-gradient
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-type-bias
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.WeightedBlendNode
+    NodeName: Biome Height Bias
+    Position: {x: -700, y: -950}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Weight
+      DisplayName: Weight
+      Direction: 0
+      Type: 0
+    - PortName: Output
+      DisplayName: Output
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputChannelName
+      Value: biased-pocket-noise
+      ObjectReference: {fileID: 0}
+  - NodeId: ore-seed-noise
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SimplexNoiseNode
+    NodeName: Ore Seed Noise
+    Position: {x: -1709.9998, y: 245.49998}
+    Ports:
+    - PortName: ore-seed-noise
+      DisplayName: ore-seed-noise
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: ore-seed-noise
+      ObjectReference: {fileID: 0}
+    - Name: frequency
+      Value: 0.1
+      ObjectReference: {fileID: 0}
+    - Name: amplitude
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: offset
+      Value: 50,50
+      ObjectReference: {fileID: 0}
+  - NodeId: zero-const
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
+    NodeName: Zero Const
+    Position: {x: -1603.9996, y: 635.00006}
+    Ports:
+    - PortName: zero-value
+      DisplayName: zero-value
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputChannelName
+      Value: zero-value
+      ObjectReference: {fileID: 0}
+    - Name: floatValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: outputType
+      Value: Float
+      ObjectReference: {fileID: 0}
+    - Name: intValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: high-ore-bias
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.WeightedBlendNode
+    NodeName: High Ore Bias
+    Position: {x: -700.99976, y: -30.000029}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Weight
+      DisplayName: Weight
+      Direction: 0
+      Type: 0
+    - PortName: Output
+      DisplayName: Output
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputChannelName
+      Value: high-ore-biased-noise
+      ObjectReference: {fileID: 0}
+  - NodeId: high-ore-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: High Ore Mask
+    Position: {x: -500, y: 400}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: high-ore-seed-mask
+      DisplayName: high-ore-seed-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: high-ore-biased-noise
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: high-ore-seed-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.4
+      ObjectReference: {fileID: 0}
+  - NodeId: low-ore-bias
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.WeightedBlendNode
+    NodeName: Low Ore Bias
+    Position: {x: -1151.9999, y: 594}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Weight
+      DisplayName: Weight
+      Direction: 0
+      Type: 0
+    - PortName: Output
+      DisplayName: Output
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputChannelName
+      Value: low-ore-biased-noise
+      ObjectReference: {fileID: 0}
+  - NodeId: low-ore-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Low Ore Mask
+    Position: {x: -500, y: 700}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: low-ore-seed-mask
+      DisplayName: low-ore-seed-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: low-ore-biased-noise
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: low-ore-seed-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.4
+      ObjectReference: {fileID: 0}
+  - NodeId: wall-rule-stack
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleStackNode
+    NodeName: Wall Variants
+    Position: {x: 1145.9996, y: 374.00006}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: wall-final-ids
+      DisplayName: wall-final-ids
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: inputBaseChannelName
+      Value: wall-base-id
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: wall-final-ids
+      ObjectReference: {fileID: 0}
+    - Name: rules
+      Value: '{"Rules":[{"Enabled":true,"MaskSlot":1,"SourceLogicalId":-1,"TargetLogicalId":15},{"Enabled":true,"MaskSlot":2,"SourceLogicalId":-1,"TargetLogicalId":18},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":11,"TargetLogicalId":20},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":15,"TargetLogicalId":21},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":11,"TargetLogicalId":22},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":15,"TargetLogicalId":23},{"Enabled":true,"MaskSlot":5,"SourceLogicalId":11,"TargetLogicalId":24},{"Enabled":true,"MaskSlot":5,"SourceLogicalId":15,"TargetLogicalId":25},{"Enabled":true,"MaskSlot":6,"SourceLogicalId":11,"TargetLogicalId":26},{"Enabled":true,"MaskSlot":6,"SourceLogicalId":15,"TargetLogicalId":27}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: cave-select
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
+    NodeName: Final Logical IDs
+    Position: {x: 1765.2717, y: 5.999954}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: selected-logical-ids
+      DisplayName: selected-logical-ids
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overlayLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: selected-logical-ids
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-sampler
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
+    NodeName: Pocket Seeds
+    Position: {x: -1167, y: -580.9999}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: pocket-seeds
+      DisplayName: pocket-seeds
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: outputChannelName
+      Value: pocket-seeds
+      ObjectReference: {fileID: 0}
+    - Name: minDistance
+      Value: 40
+      ObjectReference: {fileID: 0}
+    - Name: maxAttempts
+      Value: 30
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-mask-gen
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
+    NodeName: Pocket Mask
+    Position: {x: -724.45496, y: -323.99997}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: pocket-raw-mask
+      DisplayName: pocket-raw-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: outputChannelName
+      Value: pocket-raw-mask
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-df
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
+    NodeName: Pocket DF
+    Position: {x: -382.00006, y: -230.99998}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: pocket-distance-field
+      DisplayName: pocket-distance-field
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: inputChannelName
+      Value: pocket-raw-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: pocket-distance-field
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Pocket Shape Threshold
+    Position: {x: -48.49989, y: -171.432}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: pocket-raw-threshold-mask
+      DisplayName: pocket-raw-threshold-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: pocket-distance-field
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: pocket-raw-threshold-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.08
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-invert-shapes
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Invert Pocket Shapes
+    Position: {x: 280.00012, y: -49.99994}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: pocket-shapes-mask
+      DisplayName: pocket-shapes-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: pocket-raw-threshold-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: pocket-shapes-mask
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-type-noise
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SimplexNoiseNode
+    NodeName: Pocket Type Noise
+    Position: {x: -1407, y: -1437.687}
+    Ports:
+    - PortName: pocket-type-noise
+      DisplayName: pocket-type-noise
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: pocket-type-noise
+      ObjectReference: {fileID: 0}
+    - Name: frequency
+      Value: 0.05
+      ObjectReference: {fileID: 0}
+    - Name: amplitude
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: offset
+      Value: 0,0
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-type-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Pocket Type Threshold
+    Position: {x: -382, y: -742}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: pocket-type-mask
+      DisplayName: pocket-type-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: biased-pocket-noise
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: crystal-type-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.2
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-type-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Moss Type Split
+    Position: {x: -320, y: -1094}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: moss-type-mask
+      DisplayName: moss-type-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: biased-pocket-noise
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: moss-type-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.4
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-pocket-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Crystal Pocket Mask
+    Position: {x: 906, y: -410.48874}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: crystal-pocket-mask
+      DisplayName: crystal-pocket-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputAChannelName
+      Value: pocket-shapes-mask
+      ObjectReference: {fileID: 0}
+    - Name: inputBChannelName
+      Value: pocket-type-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: crystal-pocket-mask
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: pocket-type-invert
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Invert Type
+    Position: {x: 118.20447, y: -580.9999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: pocket-type-inverted-mask
+      DisplayName: pocket-type-inverted-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: crystal-type-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: crystal-type-inverted-mask
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-pocket-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Moss Pocket Mask
+    Position: {x: 906, y: -769.99994}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: moss-pocket-mask
+      DisplayName: moss-pocket-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputAChannelName
+      Value: pocket-shapes-mask
+      ObjectReference: {fileID: 0}
+    - Name: inputBChannelName
+      Value: pocket-type-inverted-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: moss-pocket-mask
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: biome-layout
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeLayoutNode
+    NodeName: Base Biome
+    Position: {x: 744.4996, y: -1261.9996}
+    Ports:
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: layoutMode
+      Value: Strips
+      ObjectReference: {fileID: 0}
+    - Name: axis
+      Value: X
+      ObjectReference: {fileID: 0}
+    - Name: minRegionSize
+      Value: 24
+      ObjectReference: {fileID: 0}
+    - Name: maxRegionSize
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: blendWidth
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: rules
+      Value: '{"Entries":[{"Biome":"612ad49b6dbbf9b448c1cafb5da518f1","Weight":1.0,"MinSize":0,"MaxSize":0,"Enabled":true}],"Constraints":[]}'
+      ObjectReference: {fileID: 0}
+    - Name: cellSize
+      Value: 24
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Crystal Biome Pocket
+    Position: {x: 1595.0002, y: -543.99994}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 6baca09cffb73f54796bec7ad46c04ed
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Mossy Biome Pocket
+    Position: {x: 2101.8372, y: -786.9998}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 4c5919547829d9f4a92c8b6d0993fc67
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: graph-output-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
+    NodeName: Output
+    Position: {x: 2518.5693, y: -308.9999}
+    Ports:
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 0
+      Type: 1
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 0
+      Type: 1
+    Parameters: []
+  Connections:
+  - FromNodeId: stone-cave-automata
+    FromPortName: stone-cave-mask
+    ToNodeId: height-cave-select
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: deepslate-cave-automata
+    FromPortName: deepslate-cave-mask
+    ToNodeId: height-cave-select
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: height-band
+    FromPortName: deepslate-band
+    ToNodeId: height-cave-select
+    ToPortName: Control
+    CastMode: 0
+  - FromNodeId: height-cave-select
+    FromPortName: height-selected-cave-mask
+    ToNodeId: combine-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: mossy-cave-automata
+    FromPortName: mossy-cave-mask
+    ToNodeId: combine-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: crystal-cave-automata
+    FromPortName: crystal-cave-mask
+    ToNodeId: combine-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: height-band
+    FromPortName: deepslate-band
+    ToNodeId: height-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: andesite-noise
+    FromPortName: andesite-raw-noise
+    ToNodeId: andesite-mask
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: wall-base-const
+    FromPortName: wall-base-id
+    ToNodeId: wall-rule-stack
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: height-threshold
+    FromPortName: deepslate-mask
+    ToNodeId: wall-rule-stack
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: andesite-mask
+    FromPortName: andesite-binary-mask
+    ToNodeId: wall-rule-stack
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: coal-vein
+    FromPortName: coal-vein-mask
+    ToNodeId: wall-rule-stack
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: iron-vein
+    FromPortName: iron-vein-mask
+    ToNodeId: wall-rule-stack
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: gold-vein
+    FromPortName: gold-vein-mask
+    ToNodeId: wall-rule-stack
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: diamond-vein
+    FromPortName: diamond-vein-mask
+    ToNodeId: wall-rule-stack
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: wall-rule-stack
+    FromPortName: wall-final-ids
+    ToNodeId: cave-select
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: combine-caves
+    FromPortName: combined-caves-mask
+    ToNodeId: cave-select
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: combine-caves
+    FromPortName: combined-caves-mask
+    ToNodeId: pocket-sampler
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: pocket-sampler
+    FromPortName: pocket-seeds
+    ToNodeId: pocket-mask-gen
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: pocket-mask-gen
+    FromPortName: pocket-raw-mask
+    ToNodeId: pocket-df
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: pocket-df
+    FromPortName: pocket-distance-field
+    ToNodeId: pocket-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: pocket-threshold
+    FromPortName: pocket-raw-threshold-mask
+    ToNodeId: pocket-invert-shapes
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: pocket-type-noise
+    FromPortName: pocket-type-noise
+    ToNodeId: pocket-type-bias
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: full-height-gradient
+    FromPortName: full-gradient
+    ToNodeId: pocket-type-bias
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: full-height-gradient
+    FromPortName: full-gradient
+    ToNodeId: pocket-type-bias
+    ToPortName: Weight
+    CastMode: 0
+  - FromNodeId: pocket-type-bias
+    FromPortName: biased-pocket-noise
+    ToNodeId: pocket-type-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: pocket-type-bias
+    FromPortName: biased-pocket-noise
+    ToNodeId: moss-type-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: pocket-invert-shapes
+    FromPortName: pocket-shapes-mask
+    ToNodeId: crystal-pocket-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: pocket-type-invert
+    FromPortName: crystal-type-inverted-mask
+    ToNodeId: crystal-pocket-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: pocket-type-threshold
+    FromPortName: crystal-type-mask
+    ToNodeId: pocket-type-invert
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: pocket-invert-shapes
+    FromPortName: pocket-shapes-mask
+    ToNodeId: moss-pocket-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: moss-type-threshold
+    FromPortName: moss-type-mask
+    ToNodeId: moss-pocket-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: biome-layout
+    FromPortName: BiomeChannel
+    ToNodeId: crystal-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: crystal-pocket-mask
+    FromPortName: crystal-pocket-mask
+    ToNodeId: crystal-override
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: crystal-override
+    FromPortName: BiomeChannel
+    ToNodeId: moss-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: moss-pocket-mask
+    FromPortName: moss-pocket-mask
+    ToNodeId: moss-override
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: cave-select
+    FromPortName: selected-logical-ids
+    ToNodeId: graph-output-node
+    ToPortName: LogicalIds
+    CastMode: 0
+  - FromNodeId: moss-override
+    FromPortName: BiomeChannel
+    ToNodeId: graph-output-node
+    ToPortName: BiomeChannel
+    CastMode: 0
+  - FromNodeId: ore-seed-noise
+    FromPortName: ore-seed-noise
+    ToNodeId: high-ore-bias
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: zero-const
+    FromPortName: zero-value
+    ToNodeId: high-ore-bias
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: full-height-gradient
+    FromPortName: full-gradient
+    ToNodeId: high-ore-bias
+    ToPortName: Weight
+    CastMode: 0
+  - FromNodeId: high-ore-bias
+    FromPortName: high-ore-biased-noise
+    ToNodeId: high-ore-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ore-seed-noise
+    FromPortName: ore-seed-noise
+    ToNodeId: low-ore-bias
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: zero-const
+    FromPortName: zero-value
+    ToNodeId: low-ore-bias
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: full-height-gradient
+    FromPortName: full-gradient
+    ToNodeId: low-ore-bias
+    ToPortName: Weight
+    CastMode: 0
+  - FromNodeId: low-ore-bias
+    FromPortName: low-ore-biased-noise
+    ToNodeId: low-ore-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: high-ore-threshold
+    FromPortName: high-ore-seed-mask
+    ToNodeId: coal-vein
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: high-ore-threshold
+    FromPortName: high-ore-seed-mask
+    ToNodeId: iron-vein
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: low-ore-threshold
+    FromPortName: low-ore-seed-mask
+    ToNodeId: gold-vein
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: low-ore-threshold
+    FromPortName: low-ore-seed-mask
+    ToNodeId: diamond-vein
+    ToPortName: Mask
+    CastMode: 0
+  StickyNotes: []
+  Groups: []
+  ExposedProperties: []
