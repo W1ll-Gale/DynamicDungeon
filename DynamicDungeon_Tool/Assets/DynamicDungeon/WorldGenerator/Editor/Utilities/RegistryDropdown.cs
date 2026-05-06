@@ -299,6 +299,29 @@ namespace DynamicDungeon.Editor.Utilities
             PopupWindow.Show(rect, new SearchableTagPopup(listProperty, allTags, rect.width + 40.0f));
         }
 
+        public static void TagDropdown(Rect rect, string label, SerializedProperty listProperty, IList<string> allTags)
+        {
+            Rect buttonRect = EditorGUI.PrefixLabel(rect, new GUIContent(label));
+            TagDropdown(buttonRect, listProperty, allTags);
+        }
+
+        public static void TagDropdown(Rect rect, SerializedProperty listProperty, IList<string> allTags)
+        {
+            if (!GUI.Button(rect, "Select Tags", EditorStyles.popup))
+            {
+                return;
+            }
+
+            if (allTags == null || allTags.Count == 0)
+            {
+                PopupWindow.Show(rect, new SearchableOptionPopup(new List<SearchOption>(), "No tags available", rect.width + 40.0f));
+                return;
+            }
+
+            List<string> tagsCopy = new List<string>(allTags);
+            PopupWindow.Show(rect, new SearchableTagPopup(listProperty, tagsCopy, rect.width + 40.0f));
+        }
+
         public static void ShowLogicalIdPopup(Rect rect, int currentLogicalId, TileSemanticRegistry registry, Action<int> onSelect)
         {
             List<TileEntry> entries = registry != null ? registry.Entries : null;
