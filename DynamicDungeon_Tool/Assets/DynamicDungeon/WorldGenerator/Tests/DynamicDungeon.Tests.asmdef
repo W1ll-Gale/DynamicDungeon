@@ -1,0 +1,28 @@
+{
+    "name": "DynamicDungeon.Tests",
+    "rootNamespace": "DynamicDungeon.Tests",
+    "references": [
+        "DynamicDungeon.Editor",
+        "DynamicDungeon.Editor.Shared",
+        "DynamicDungeon.Runtime",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Jobs",
+        "Unity.Mathematics",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

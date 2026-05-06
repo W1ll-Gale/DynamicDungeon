@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03cc925ee1b03d84b89d02be1bd6313b, type: 3}
+  m_Name: IslandsTileSemanticRegistry
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Semantic.TileSemanticRegistry
+  Entries:
+  - LogicalId: 0
+    DisplayName: Void
+    Tags: []
+  - LogicalId: 1
+    DisplayName: Shallow Water
+    Tags:
+    - Walkable
+  - LogicalId: 2
+    DisplayName: Wall
+    Tags:
+    - Solid
+  - LogicalId: 3
+    DisplayName: Liquid
+    Tags:
+    - Liquid
+  - LogicalId: 4
+    DisplayName: Access
+    Tags:
+    - Trigger
+  - LogicalId: 12
+    DisplayName: Sand
+    Tags:
+    - Walkable
+  - LogicalId: 14
+    DisplayName: Deep Water
+    Tags:
+    - Walkable
+  - LogicalId: 16
+    DisplayName: Medium Water
+    Tags:
+    - Walkable
+  - LogicalId: 21
+    DisplayName: Land
+    Tags:
+    - Walkable
+  AllTags:
+  - Walkable
+  - Solid
+  - Liquid
+  - Trigger

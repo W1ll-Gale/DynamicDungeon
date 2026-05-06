@@ -19,7 +19,7 @@ MonoBehaviour:
   DefaultSeedMode: 1
   MaxValidationRetries: 1
   Biome: {fileID: 11400000, guid: 612ad49b6dbbf9b448c1cafb5da518f1, type: 2}
-  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: b2c3d4e5f6a711e8a8b0c1d2e3f4a5b7, type: 2}
   PromoteBlackboardToParentScope: 0
   Nodes:
   - NodeId: stone-cave-automata
