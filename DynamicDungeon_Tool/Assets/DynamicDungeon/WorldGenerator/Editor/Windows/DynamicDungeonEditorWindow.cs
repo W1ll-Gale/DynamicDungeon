@@ -221,7 +221,7 @@ namespace DynamicDungeon.Editor.Windows
             _diagnosticsPanel = BuildDiagnosticsPanel();
             rootVisualElement.Add(_diagnosticsPanel);
 
-            _generationOrchestrator = new GenerationOrchestrator(_graphView, SetStatus, OnDiagnosticsUpdated);
+            _generationOrchestrator = new GenerationOrchestrator(_graphView, SetStatus, OnDiagnosticsUpdated, Repaint);
             _graphView.SetGenerationOrchestrator(_generationOrchestrator);
             _graphView.SetAfterMutationCallback(OnAfterGraphMutation);
             _graphView.SetSubGraphEnterCallback(OnEnterSubGraph);
