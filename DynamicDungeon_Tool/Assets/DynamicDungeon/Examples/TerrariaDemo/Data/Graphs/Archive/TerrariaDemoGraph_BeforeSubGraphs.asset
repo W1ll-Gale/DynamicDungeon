@@ -1,0 +1,5359 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: TerrariaDemoGraph_BeforeSubGraphs
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 5
+  WorldWidth: 512
+  WorldHeight: 192
+  DefaultSeed: 246813579
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: graph-output-node
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
+    NodeName: Output
+    Position: {x: 245, y: 2191}
+    Ports:
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 0
+      Type: 1
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 0
+      Type: 1
+    - PortName: __PrefabPlacements
+      DisplayName: __PrefabPlacements
+      Direction: 0
+      Type: 4
+    Parameters: []
+  - NodeId: 30729321-8c26-440a-8c37-54ed6a10e047
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SurfaceNoiseNode
+    NodeName: Surface Profile
+    Position: {x: -4506.5737, y: -784.50635}
+    Ports:
+    - PortName: TerrainMass
+      DisplayName: TerrainMass
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: baseHeight
+      Value: 0.56
+      ObjectReference: {fileID: 0}
+    - Name: amplitude
+      Value: 0.17
+      ObjectReference: {fileID: 0}
+    - Name: frequency
+      Value: 0.016
+      ObjectReference: {fileID: 0}
+    - Name: octaves
+      Value: 3
+      ObjectReference: {fileID: 0}
+    - Name: persistence
+      Value: 0.45
+      ObjectReference: {fileID: 0}
+    - Name: lacunarity
+      Value: 1.85
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 17
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 128
+      ObjectReference: {fileID: 0}
+  - NodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Terrain Mass Mask
+    Position: {x: -4186.5737, y: -784.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: TerrainMassMask
+      DisplayName: TerrainMassMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+  - NodeId: c51a5de2-490c-438f-a05e-106d9a02247b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Surface Band
+    Position: {x: -4506.5737, y: -504.50635}
+    Ports:
+    - PortName: SurfaceBand
+      DisplayName: SurfaceBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.05
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: c41ad5c5-4bd8-43d8-8373-376a74d37254
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Surface Crust Band
+    Position: {x: -4506.5737, y: -384.50635}
+    Ports:
+    - PortName: SurfaceCrustBand
+      DisplayName: SurfaceCrustBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.03
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Underground Band
+    Position: {x: -4506.5737, y: -284.50635}
+    Ports:
+    - PortName: UndergroundBand
+      DisplayName: UndergroundBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.48
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Deep Cave Band
+    Position: {x: -4506.5737, y: -64.50635}
+    Ports:
+    - PortName: DeepBand
+      DisplayName: DeepBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.42
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Sky Band
+    Position: {x: -4506.5737, y: 155.49365}
+    Ports:
+    - PortName: SkyBand
+      DisplayName: SkyBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 08271325-c52e-41cc-aa71-693805aad513
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave Region
+    Position: {x: -4186.5737, y: -174.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveBand
+      DisplayName: CaveBand
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: e9fa758c-4c63-4a03-b791-79b84175d7dc
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Surface Cave Buffer
+    Position: {x: -3866.5737, y: -704.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceCaveBuffer
+      DisplayName: SurfaceCaveBuffer
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 8
+      ObjectReference: {fileID: 0}
+  - NodeId: 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Cave Depth Mask
+    Position: {x: -3546.5737, y: -704.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CaveDepthMask
+      DisplayName: CaveDepthMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputType
+      Value: BoolMask
+      ObjectReference: {fileID: 0}
+  - NodeId: cdb97ee3-de33-443b-bc14-174c947b8f41
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Caves Under Surface
+    Position: {x: -3866.5737, y: -344.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveAllowed
+      DisplayName: CaveAllowed
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Caves Below Surface Buffer
+    Position: {x: -3226.5737, y: -544.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveAllowedDepth
+      DisplayName: CaveAllowedDepth
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Shallow Cave Band
+    Position: {x: -3306.5737, y: -1040.5063}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: ShallowCaveBand
+      DisplayName: ShallowCaveBand
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 34
+      ObjectReference: {fileID: 0}
+  - NodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Shallow Cave Region
+    Position: {x: -2911.5737, y: -919.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: ShallowCaveRegion
+      DisplayName: ShallowCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Shallow Cave Pockets
+    Position: {x: -2586.5737, y: -1175.5063}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: ShallowCavePockets
+      DisplayName: ShallowCavePockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.62
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.76
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 10
+      ObjectReference: {fileID: 0}
+  - NodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Cave Automata
+    Position: {x: -3546.5737, y: -384.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: AutomataCaves
+      DisplayName: AutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.45
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: forest-deep-cave-region
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Forest Deep Cave Region
+    Position: {x: -3680, y: 203.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: ForestDeepCaveRegion
+      DisplayName: ForestDeepCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: forest-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Forest Deep Cave Automata
+    Position: {x: -3914.5737, y: 25.493652}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: ForestDeepAutomataCaves
+      DisplayName: ForestDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 7
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.48
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: jungle-deep-cave-region
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Deep Cave Region
+    Position: {x: -3680, y: 363.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleDeepCaveRegion
+      DisplayName: JungleDeepCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: jungle-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Jungle Deep Cave Automata
+    Position: {x: -3360, y: 363.47998}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: JungleDeepAutomataCaves
+      DisplayName: JungleDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.52
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: desert-deep-cave-region
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Desert Deep Cave Region
+    Position: {x: -3680, y: 523.48}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DesertDeepCaveRegion
+      DisplayName: DesertDeepCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: desert-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Desert Deep Cave Automata
+    Position: {x: -3360, y: 523.48}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: DesertDeepAutomataCaves
+      DisplayName: DesertDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-deep-cave-region
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Deep Cave Region
+    Position: {x: -3680, y: 683.48}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceDeepCaveRegion
+      DisplayName: IceDeepCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Ice Deep Cave Automata
+    Position: {x: -3360, y: 683.48}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: IceDeepAutomataCaves
+      DisplayName: IceDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.46
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: biome-deep-cave-automata-a
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Biome Deep Cave Automata A
+    Position: {x: -3040, y: 283.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: BiomeDeepAutomataA
+      DisplayName: BiomeDeepAutomataA
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: biome-deep-cave-automata-b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Biome Deep Cave Automata B
+    Position: {x: -3040, y: 603.48}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: BiomeDeepAutomataB
+      DisplayName: BiomeDeepAutomataB
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: biome-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Biome Deep Cave Automata
+    Position: {x: -2720, y: 363.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: BiomeDeepAutomataCaves
+      DisplayName: BiomeDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: combined-automata-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Combined Automata Caves
+    Position: {x: -2720, y: 103.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CombinedAutomataCaves
+      DisplayName: CombinedAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Deep Cavern Pockets
+    Position: {x: -3546.5737, y: -104.50635}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: DeepCaverns
+      DisplayName: DeepCaverns
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 20
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.8
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.9
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 18
+      ObjectReference: {fileID: 0}
+  - NodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Primary Open Caves
+    Position: {x: -3226.5737, y: -244.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: PrimaryOpenCaves
+      DisplayName: PrimaryOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Base Open Caves
+    Position: {x: -2906.5737, y: -244.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: BaseOpenCaves
+      DisplayName: BaseOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: upper-underground-cave-band
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Upper Underground Cave Band
+    Position: {x: -2400, y: -696.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: UpperUndergroundCaveBand
+      DisplayName: UpperUndergroundCaveBand
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 44
+      ObjectReference: {fileID: 0}
+  - NodeId: upper-underground-cave-pockets
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Upper Underground Small Caves
+    Position: {x: -2080, y: -696.52}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: UpperUndergroundSmallCaves
+      DisplayName: UpperUndergroundSmallCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 9
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.66
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.8
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 8
+      ObjectReference: {fileID: 0}
+  - NodeId: mid-underground-cave-band
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Mid Underground Cave Band
+    Position: {x: -2400, y: -576.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: MidUndergroundCaveBand
+      DisplayName: MidUndergroundCaveBand
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 14
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 82
+      ObjectReference: {fileID: 0}
+  - NodeId: mid-underground-cave-pockets
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Mid Underground Growing Caves
+    Position: {x: -2080, y: -576.52}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: MidUndergroundGrowingCaves
+      DisplayName: MidUndergroundGrowingCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 22
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.92
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 7
+      ObjectReference: {fileID: 0}
+  - NodeId: staged-underground-pockets
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Staged Underground Pockets
+    Position: {x: -1760, y: -636.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: StagedUndergroundPockets
+      DisplayName: StagedUndergroundPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: staged-base-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Staged Base Open Caves
+    Position: {x: -1440, y: -636.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: StagedBaseOpenCaves
+      DisplayName: StagedBaseOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: surface-entrance-worms
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
+    NodeName: Surface Entrance Worms
+    Position: {x: -2400, y: -456.52002}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceEntranceWorms
+      DisplayName: SurfaceEntranceWorms
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: wormCount
+      Value: 12
+      ObjectReference: {fileID: 0}
+    - Name: lengthMin
+      Value: 70
+      ObjectReference: {fileID: 0}
+    - Name: lengthMax
+      Value: 130
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: endRadius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: turnFrequency
+      Value: 0.026
+      ObjectReference: {fileID: 0}
+    - Name: turnStrength
+      Value: 0.32
+      ObjectReference: {fileID: 0}
+    - Name: stepSize
+      Value: 1.05
+      ObjectReference: {fileID: 0}
+    - Name: horizontalBias
+      Value: 0.68
+      ObjectReference: {fileID: 0}
+    - Name: downwardBias
+      Value: 0.96
+      ObjectReference: {fileID: 0}
+    - Name: startMode
+      Value: SurfaceColumn
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 7
+      ObjectReference: {fileID: 0}
+  - NodeId: surface-access-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Surface Access Open Caves
+    Position: {x: -2080, y: -456.52002}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceAccessOpenCaves
+      DisplayName: SurfaceAccessOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: shallow-perlin-worm-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
+    NodeName: Shallow Perlin Worm Caves
+    Position: {x: -1760, y: -456.52002}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: ShallowPerlinWormCaves
+      DisplayName: ShallowPerlinWormCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: wormCount
+      Value: 12
+      ObjectReference: {fileID: 0}
+    - Name: lengthMin
+      Value: 14
+      ObjectReference: {fileID: 0}
+    - Name: lengthMax
+      Value: 34
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: endRadius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: turnFrequency
+      Value: 0.055
+      ObjectReference: {fileID: 0}
+    - Name: turnStrength
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+    - Name: stepSize
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: horizontalBias
+      Value: 0.55
+      ObjectReference: {fileID: 0}
+    - Name: downwardBias
+      Value: 0.15
+      ObjectReference: {fileID: 0}
+    - Name: startMode
+      Value: RandomInMask
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 11
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: shallow-worm-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Shallow Worm Open Caves
+    Position: {x: -1760, y: -236.52002}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: ShallowWormOpenCaves
+      DisplayName: ShallowWormOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: perlin-worm-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
+    NodeName: Deep Perlin Worm Caves
+    Position: {x: -2400, y: 123.47998}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: PerlinWormCaves
+      DisplayName: PerlinWormCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: wormCount
+      Value: 14
+      ObjectReference: {fileID: 0}
+    - Name: lengthMin
+      Value: 64
+      ObjectReference: {fileID: 0}
+    - Name: lengthMax
+      Value: 170
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: endRadius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: turnFrequency
+      Value: 0.032
+      ObjectReference: {fileID: 0}
+    - Name: turnStrength
+      Value: 0.42
+      ObjectReference: {fileID: 0}
+    - Name: stepSize
+      Value: 1.15
+      ObjectReference: {fileID: 0}
+    - Name: horizontalBias
+      Value: 0.75
+      ObjectReference: {fileID: 0}
+    - Name: downwardBias
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: startMode
+      Value: RandomInMask
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 17
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: worm-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Worm Open Caves
+    Position: {x: -2080, y: 123.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: WormOpenCaves
+      DisplayName: WormOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: large-deep-perlin-worm-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
+    NodeName: Large Deep Perlin Worm Caves
+    Position: {x: -2400, y: 343.47998}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: LargeDeepPerlinWormCaves
+      DisplayName: LargeDeepPerlinWormCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: wormCount
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: lengthMin
+      Value: 90
+      ObjectReference: {fileID: 0}
+    - Name: lengthMax
+      Value: 190
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: endRadius
+      Value: 3
+      ObjectReference: {fileID: 0}
+    - Name: turnFrequency
+      Value: 0.026
+      ObjectReference: {fileID: 0}
+    - Name: turnStrength
+      Value: 0.34
+      ObjectReference: {fileID: 0}
+    - Name: stepSize
+      Value: 1.2
+      ObjectReference: {fileID: 0}
+    - Name: horizontalBias
+      Value: 0.72
+      ObjectReference: {fileID: 0}
+    - Name: downwardBias
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: startMode
+      Value: RandomInMask
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 31
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: combined-deep-worm-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Combined Deep Worm Caves
+    Position: {x: -2080, y: 343.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CombinedDeepWormCaves
+      DisplayName: CombinedDeepWormCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-feature-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Moss Feature Open Caves
+    Position: {x: -2586.5737, y: -244.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: MossFeatureOpenCaves
+      DisplayName: MossFeatureOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: feature-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Open Caves
+    Position: {x: -2266.5737, y: -244.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: OpenCaves
+      DisplayName: OpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-feature-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Feature Open Caves
+    Position: {x: -1440, y: -136.52002}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: FeatureOpenCavesWithIce
+      DisplayName: FeatureOpenCavesWithIce
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: 253fc19f-6ac0-4cf6-a7ef-9e24cbe475fe
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Solid Mask
+    Position: {x: -3226.5737, y: -484.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: NotCaves
+      DisplayName: NotCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputType
+      Value: BoolMask
+      ObjectReference: {fileID: 0}
+  - NodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Terrain Solid
+    Position: {x: -2638.5737, y: -542.50635}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: FinalSolid
+      DisplayName: FinalSolid
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Base Terrain IDs
+    Position: {x: -4093, y: 1483}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: BaseLogicalIds
+      DisplayName: BaseLogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: trueLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: falseLogicalId
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 085d0f8b-3f82-4c28-b1ad-d84bcabe64d5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
+    NodeName: Surface Ledge Points
+    Position: {x: -4093, y: 1183}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: SurfaceLedgePoints
+      DisplayName: SurfaceLedgePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: conditions
+      Value: '{"Entries":[{"Offset":{"x":0,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":0,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":-1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":-1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: 6cd9eea0-9ae5-415d-86c8-2709427db4c4
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
+    NodeName: Surface Ledge Mask
+    Position: {x: -3603.0002, y: 1203.8175}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: SurfaceLedgeMask
+      DisplayName: SurfaceLedgeMask
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: 9e1054e5-cc0d-4368-8e22-7164072c9b7e
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Surface Floor Mask
+    Position: {x: -3333.0002, y: 1322.0002}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceFloorMask
+      DisplayName: SurfaceFloorMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: ea8ac51f-ba19-44df-977c-899da7d0deca
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Surface Crust Depth
+    Position: {x: -3724.4998, y: 1552.3922}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceCrustDepthMask
+      DisplayName: SurfaceCrustDepthMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: subsurface-biome-transition
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceTransitionMaskNode
+    NodeName: Subsurface Biome Transition
+    Position: {x: -3724.4998, y: 1752.3922}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: SubsurfaceBiomeTransition
+      DisplayName: SubsurfaceBiomeTransition
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: startDepth
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: endDepth
+      Value: 34
+      ObjectReference: {fileID: 0}
+    - Name: noiseFrequency
+      Value: 0.09
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: SubsurfaceBiomeTransition
+      ObjectReference: {fileID: 0}
+  - NodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Surface Crust Shape
+    Position: {x: -3333.0002, y: 1621.0002}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceCrustShapeMask
+      DisplayName: SurfaceCrustShapeMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Surface Crust Mask
+    Position: {x: -3363.0005, y: 1891.0004}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceCrustMask
+      DisplayName: SurfaceCrustMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
+    NodeName: Final Terrain IDs
+    Position: {x: -3013.0005, y: 1422.0004}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overlayLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: biome-layout-randomized
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeLayoutNode
+    NodeName: Random Biome Layout
+    Position: {x: -847.714, y: 591.3216}
+    Ports:
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: layoutMode
+      Value: Strips
+      ObjectReference: {fileID: 0}
+    - Name: axis
+      Value: X
+      ObjectReference: {fileID: 0}
+    - Name: minRegionSize
+      Value: 28
+      ObjectReference: {fileID: 0}
+    - Name: maxRegionSize
+      Value: 72
+      ObjectReference: {fileID: 0}
+    - Name: cellSize
+      Value: 32
+      ObjectReference: {fileID: 0}
+    - Name: blendWidth
+      Value: 16
+      ObjectReference: {fileID: 0}
+    - Name: rules
+      Value: '{"Entries":[{"Biome":"51fe096708f655e40a649cfeee3e895b","Weight":1.2,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"3be4ddcae4c96414792c22259a877e32","Weight":1.0,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"1b2f425e07827a04d85c36901bf9e45e","Weight":0.95,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"efc61188ae998b342b58212389e649eb","Weight":0.85,"MinSize":28,"MaxSize":72,"Enabled":true}],"Constraints":[{"Type":0,"Biome":"51fe096708f655e40a649cfeee3e895b","Size":64,"Enabled":true},{"Type":3,"Biome":"3be4ddcae4c96414792c22259a877e32","Size":32,"Enabled":true},{"Type":3,"Biome":"1b2f425e07827a04d85c36901bf9e45e","Size":32,"Enabled":true},{"Type":3,"Biome":"efc61188ae998b342b58212389e649eb","Size":32,"Enabled":true}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Jungle Presence
+    Position: {x: -90.12457, y: 590.99976}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: JungleBiomeMask
+      DisplayName: JungleBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 3be4ddcae4c96414792c22259a877e32
+      ObjectReference: {fileID: 0}
+  - NodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Cave Region
+    Position: {x: 611, y: -875.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleCaveRegion
+      DisplayName: JungleCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Moss Cave Pockets
+    Position: {x: 931, y: -875.3999}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: MossPockets
+      DisplayName: MossPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.86
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.94
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 14
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-pocket-ids
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Moss Pocket IDs
+    Position: {x: 1251, y: -1155.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: MossPocketIds
+      DisplayName: MossPocketIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: trueLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: falseLogicalId
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-pocket-neighbour-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
+    NodeName: Moss Pocket Wall Neighbourhood
+    Position: {x: 1571, y: -1155.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: MossPocketNeighbourMask
+      DisplayName: MossPocketNeighbourMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: matchById
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: logicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: distanceMode
+      Value: Euclidean
+      ObjectReference: {fileID: 0}
+    - Name: tagName
+      Value: 
+      ObjectReference: {fileID: 0}
+  - NodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Moss Cave Override
+    Position: {x: 1251, y: -875.3999}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: baaee848be418e34d8662b0e76a2de46
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Ice Presence
+    Position: {x: -90.12457, y: 830.99976}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: IceBiomeMask
+      DisplayName: IceBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: efc61188ae998b342b58212389e649eb
+      ObjectReference: {fileID: 0}
+  - NodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Cave Region
+    Position: {x: 611, y: -595.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceCaveRegion
+      DisplayName: IceCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Ice Cave Pockets
+    Position: {x: 931, y: -595.3999}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: IcePockets
+      DisplayName: IcePockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 12
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 15
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.8
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.9
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 16
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-pocket-ids
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Ice Pocket IDs
+    Position: {x: 1251, y: -395.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: IcePocketIds
+      DisplayName: IcePocketIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: trueLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: falseLogicalId
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-pocket-neighbour-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
+    NodeName: Ice Pocket Wall Neighbourhood
+    Position: {x: 1571, y: -395.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: IcePocketNeighbourMask
+      DisplayName: IcePocketNeighbourMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: matchById
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: logicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: distanceMode
+      Value: Euclidean
+      ObjectReference: {fileID: 0}
+    - Name: tagName
+      Value: 
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-cave-wall-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Cave Wall Mask
+    Position: {x: 1891, y: -395.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceWallPockets
+      DisplayName: IceWallPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Cave Override
+    Position: {x: 1251, y: -595.3999}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 4a3017a94c069e6448e4c6f527624dba
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
+    NodeName: Wall Mask
+    Position: {x: 1251, y: -1335.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: WallMask
+      DisplayName: WallMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: matchById
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: logicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: distanceMode
+      Value: Chebyshev
+      ObjectReference: {fileID: 0}
+    - Name: tagName
+      Value: 
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-cave-wall-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Moss Cave Wall Mask
+    Position: {x: 1891, y: -1155.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: MossWallPockets
+      DisplayName: MossWallPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 54a82da2-7200-4468-9eea-b57e1770069a
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Lower Crystal Region
+    Position: {x: 611, y: -355.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CrystalRegion
+      DisplayName: CrystalRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Crystal Cave Pockets
+    Position: {x: 931, y: -355.3999}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: CrystalPockets
+      DisplayName: CrystalPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 16
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.9
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 28
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-pocket-ids
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Crystal Pocket IDs
+    Position: {x: 1251, y: -155.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CrystalPocketIds
+      DisplayName: CrystalPocketIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: trueLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: falseLogicalId
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-pocket-neighbour-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.NeighbourhoodCheckNode
+    NodeName: Crystal Pocket Wall Neighbourhood
+    Position: {x: 1571, y: -155.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: CrystalPocketNeighbourMask
+      DisplayName: CrystalPocketNeighbourMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: matchById
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: logicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: distanceMode
+      Value: Euclidean
+      ObjectReference: {fileID: 0}
+    - Name: tagName
+      Value: 
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-cave-wall-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Crystal Cave Wall Mask
+    Position: {x: 1891, y: -155.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CrystalWallPockets
+      DisplayName: CrystalWallPockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 246c68d4-6427-4de7-8e42-3859c3a495fb
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Ore Surface Buffer
+    Position: {x: 1571, y: -1715.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: OreSurfaceBuffer
+      DisplayName: OreSurfaceBuffer
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 20
+      ObjectReference: {fileID: 0}
+  - NodeId: e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Ore Depth Mask
+    Position: {x: 1891, y: -1715.3999}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: OreDepthMask
+      DisplayName: OreDepthMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputType
+      Value: BoolMask
+      ObjectReference: {fileID: 0}
+  - NodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ore Wall Mask
+    Position: {x: 2223, y: -1805}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: OreWallMask
+      DisplayName: OreWallMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 4978ff0f-b00f-40ef-8464-ceeb214dec50
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Upper Ore Band
+    Position: {x: 1571, y: -1455.3999}
+    Ports:
+    - PortName: UpperOreBand
+      DisplayName: UpperOreBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.24
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.42
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 7c2aced2-da86-4c3d-ade5-719168a576fc
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Mid Ore Band
+    Position: {x: 1571, y: -1255.3999}
+    Ports:
+    - PortName: MidOreBand
+      DisplayName: MidOreBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.12
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.3
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 8953ba8a-f86a-42cc-b3ba-f5d21f4bcc3d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Gold Ore Band
+    Position: {x: 1571, y: -1055.3999}
+    Ports:
+    - PortName: GoldOreBand
+      DisplayName: GoldOreBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.05
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 0449a063-05b1-4877-95ae-9dcc15ba320f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Diamond Ore Band
+    Position: {x: 1571, y: -855.3999}
+    Ports:
+    - PortName: DiamondOreBand
+      DisplayName: DiamondOreBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.02
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.09
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Coal Zone
+    Position: {x: 1891, y: -1455.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CoalZone
+      DisplayName: CoalZone
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: 868da92d-18cc-4e91-a39b-35f4b2569640
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Coal Clumps
+    Position: {x: 2223, y: -1660.4171}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: CoalClusters
+      DisplayName: CoalClusters
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 28
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.74
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.8
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 4
+      ObjectReference: {fileID: 0}
+  - NodeId: 6f076013-c3de-435c-aa1f-c8c9f46607c9
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Coal Veins
+    Position: {x: 2223, y: -1535.9998}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: CoalVeins
+      DisplayName: CoalVeins
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 20
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMin
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMax
+      Value: 9
+      ObjectReference: {fileID: 0}
+    - Name: wanderProbability
+      Value: 0.3
+      ObjectReference: {fileID: 0}
+    - Name: forkProbability
+      Value: 0.12
+      ObjectReference: {fileID: 0}
+    - Name: forkAngleRange
+      Value: 45
+      ObjectReference: {fileID: 0}
+  - NodeId: 79db410b-8dcb-4a46-af55-26bb112b5717
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Coal Mask
+    Position: {x: 2531, y: -1805.0001}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CoalMask
+      DisplayName: CoalMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Coal Ore Override
+    Position: {x: 2852, y: -1804.96}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 18914d738c5d9e44cb2c39ae01763b84
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: c6b64ae4-2807-494d-9adb-069f6c9d9979
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Iron Zone
+    Position: {x: 1891, y: -1255.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IronZone
+      DisplayName: IronZone
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: c7572979-2da5-44be-bfee-1762ed82425a
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Iron Clumps
+    Position: {x: 2222.9998, y: -1389.9998}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: IronClusters
+      DisplayName: IronClusters
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.72
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.79
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 5
+      ObjectReference: {fileID: 0}
+  - NodeId: 09faa8f3-9fce-4aa8-b428-5f7b980a5b49
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Iron Veins
+    Position: {x: 2223, y: -1244.5}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: IronVeins
+      DisplayName: IronVeins
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 14
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMin
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMax
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: wanderProbability
+      Value: 0.28
+      ObjectReference: {fileID: 0}
+    - Name: forkProbability
+      Value: 0.14
+      ObjectReference: {fileID: 0}
+    - Name: forkAngleRange
+      Value: 50
+      ObjectReference: {fileID: 0}
+  - NodeId: 5c4ed9a0-d941-4874-ba2e-8fbbd290b79f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Iron Mask
+    Position: {x: 2531, y: -1499.0001}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IronMask
+      DisplayName: IronMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Iron Ore Override
+    Position: {x: 2851, y: -1498.9998}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 79e09ec09101bf944b041249e2736e76
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 2778bedb-770f-44ea-a2d3-c7f685eb199a
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Gold Zone
+    Position: {x: 1891, y: -1055.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: GoldZone
+      DisplayName: GoldZone
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: dda42942-e1e4-4651-be72-924eb8b517b7
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Gold Clumps
+    Position: {x: 2223, y: -1115.935}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: GoldClusters
+      DisplayName: GoldClusters
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.7
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.77
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 7
+      ObjectReference: {fileID: 0}
+  - NodeId: cce810a0-8818-44f3-9b61-2c8d72a5bdd5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Gold Veins
+    Position: {x: 2223, y: -985}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: GoldVeins
+      DisplayName: GoldVeins
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 9
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMin
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMax
+      Value: 9
+      ObjectReference: {fileID: 0}
+    - Name: wanderProbability
+      Value: 0.24
+      ObjectReference: {fileID: 0}
+    - Name: forkProbability
+      Value: 0.08
+      ObjectReference: {fileID: 0}
+    - Name: forkAngleRange
+      Value: 38
+      ObjectReference: {fileID: 0}
+  - NodeId: c4fd252a-8972-465d-a833-cf46a30effe5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Gold Mask
+    Position: {x: 2531, y: -1204}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: GoldMask
+      DisplayName: GoldMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: 272ed66d-0521-4890-855c-c570cba4af92
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Gold Ore Override
+    Position: {x: 2852, y: -1204.0002}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 5f36cd43e17737d4e96cbb60df5a21be
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Diamond Zone
+    Position: {x: 1891, y: -855.3999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DiamondZone
+      DisplayName: DiamondZone
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: d7f3563e-cf6f-4c75-97b6-9149b3af394b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Diamond Clumps
+    Position: {x: 2211, y: -825.5}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: DiamondClusters
+      DisplayName: DiamondClusters
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.66
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.76
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 9
+      ObjectReference: {fileID: 0}
+  - NodeId: ebbbd407-9d4c-4be8-9b51-d3fbea5a112b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
+    NodeName: Diamond Veins
+    Position: {x: 2223, y: -666}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: DiamondVeins
+      DisplayName: DiamondVeins
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 5
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMin
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: veinLengthMax
+      Value: 7
+      ObjectReference: {fileID: 0}
+    - Name: wanderProbability
+      Value: 0.2
+      ObjectReference: {fileID: 0}
+    - Name: forkProbability
+      Value: 0.05
+      ObjectReference: {fileID: 0}
+    - Name: forkAngleRange
+      Value: 32
+      ObjectReference: {fileID: 0}
+  - NodeId: c6a6d713-9cfe-4e17-b39b-7b896fcf9c24
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Diamond Mask
+    Position: {x: 2531, y: -890.9999}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DiamondMask
+      DisplayName: DiamondMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Diamond Ore Override
+    Position: {x: 2850.0002, y: -895.0001}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 1864c3e44e2102d48a7770ea2a601075
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Crystal Cave Override
+    Position: {x: 2855, y: -589.0001}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 9b64401900a722143b09f2d0bde4dfb2
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: moss-cave-visual-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Moss Cave Visual Override
+    Position: {x: 1886, y: -205}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: baaee848be418e34d8662b0e76a2de46
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-cave-visual-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Ice Cave Visual Override
+    Position: {x: 2206, y: -205}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 4a3017a94c069e6448e4c6f527624dba
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: crystal-cave-visual-override
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeOverrideNode
+    NodeName: Crystal Cave Visual Override
+    Position: {x: 2525.9998, y: -205}
+    Ports:
+    - PortName: Biome Input
+      DisplayName: Biome Input
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overrideBiome
+      Value: 9b64401900a722143b09f2d0bde4dfb2
+      ObjectReference: {fileID: 0}
+    - Name: blendEdgeWidth
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: probability
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: visual-biome-channel-copy
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.IntChannelCopyNode
+    NodeName: Visual Biome Channel
+    Position: {x: 2972.995, y: -205.01001}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: VisualBiomeChannel
+      DisplayName: VisualBiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: VisualBiomeChannel
+      ObjectReference: {fileID: 0}
+  - NodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
+    NodeName: One
+    Position: {x: 1788, y: 898.52}
+    Ports:
+    - PortName: OneFloat
+      DisplayName: OneFloat
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputType
+      Value: Float
+      ObjectReference: {fileID: 0}
+    - Name: floatValue
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: intValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 6999daac-7624-464b-9308-87663f179e01
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
+    NodeName: Zero
+    Position: {x: 1816, y: 1266.52}
+    Ports:
+    - PortName: ZeroFloat
+      DisplayName: ZeroFloat
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: outputType
+      Value: Float
+      ObjectReference: {fileID: 0}
+    - Name: floatValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: intValue
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: ced59584-f592-4d05-b4b5-487143502736
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
+    NodeName: Surface Floor Weights
+    Position: {x: 2136, y: 951.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceFloorWeights
+      DisplayName: SurfaceFloorWeights
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: surface-prop-placement-points
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
+    NodeName: Surface Prop Ground Points
+    Position: {x: 1759, y: 1697.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: SurfacePropGroundPoints
+      DisplayName: SurfacePropGroundPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: conditions
+      Value: '{"Entries":[{"Offset":{"x":-1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":0,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":2,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":3,"y":0},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":-1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":0,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":-1,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":0,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":2},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":2},"MatchById":true,"LogicalId":0,"TagName":""}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: surface-prop-placement-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
+    NodeName: Surface Prop Placement Mask
+    Position: {x: 2270, y: 1606.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: SurfacePropPlacementMask
+      DisplayName: SurfacePropPlacementMask
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: surface-prop-surface-mask
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Surface Prop Surface Mask
+    Position: {x: 2426, y: 1646.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: SurfacePropSurfaceMask
+      DisplayName: SurfacePropSurfaceMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: surface-prop-placement-weights
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
+    NodeName: Surface Prop Placement Weights
+    Position: {x: 2563, y: 1463.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SurfacePropPlacementWeights
+      DisplayName: SurfacePropPlacementWeights
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Forest Mask
+    Position: {x: 374.286, y: 470.3216}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: ForestBiomeMask
+      DisplayName: ForestBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 51fe096708f655e40a649cfeee3e895b
+      ObjectReference: {fileID: 0}
+  - NodeId: 8104437b-0d86-42e7-b702-88b0035651e6
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Final Jungle Mask
+    Position: {x: 372.286, y: 748.3216}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: FinalJungleBiomeMask
+      DisplayName: FinalJungleBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 3be4ddcae4c96414792c22259a877e32
+      ObjectReference: {fileID: 0}
+  - NodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Desert Mask
+    Position: {x: 372.286, y: 1023.3216}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: DesertBiomeMask
+      DisplayName: DesertBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 1b2f425e07827a04d85c36901bf9e45e
+      ObjectReference: {fileID: 0}
+  - NodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Final Ice Mask
+    Position: {x: 372.286, y: 1289.3215}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: FinalIceBiomeMask
+      DisplayName: FinalIceBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: efc61188ae998b342b58212389e649eb
+      ObjectReference: {fileID: 0}
+  - NodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Forest Tree Weight
+    Position: {x: 2484, y: 898.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: ForestTreeWeight
+      DisplayName: ForestTreeWeight
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 62c2d399-7023-4628-b07a-c035317a8f19
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Jungle Tree Weight Base
+    Position: {x: 2484, y: 1181.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: JungleTreeWeightBase
+      DisplayName: JungleTreeWeightBase
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Jungle Tree Weight
+    Position: {x: 2776, y: 911.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: JungleTreeWeight
+      DisplayName: JungleTreeWeight
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+  - NodeId: ceb72be0-5035-400a-a151-3a859daedd51
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Desert Cactus Weight Base
+    Position: {x: 2164, y: 1253.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: DesertTreeWeightBase
+      DisplayName: DesertTreeWeightBase
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Desert Cactus Weight
+    Position: {x: 2776, y: 1181.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: DesertTreeWeight
+      DisplayName: DesertTreeWeight
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.42
+      ObjectReference: {fileID: 0}
+  - NodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Ice Tree Weight Base
+    Position: {x: 2484, y: 1721.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: IceTreeWeightBase
+      DisplayName: IceTreeWeightBase
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Ice Tree Weight
+    Position: {x: 3200, y: 1388.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: IceTreeWeight
+      DisplayName: IceTreeWeight
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.6
+      ObjectReference: {fileID: 0}
+  - NodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Forest Tree Scatter
+    Position: {x: 4056, y: 1467.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: TreePoints
+      DisplayName: TreePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 18
+      ObjectReference: {fileID: 0}
+  - NodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Forest Tree Prefabs
+    Position: {x: 4879, y: 1317}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"51f71faa81cc4f741b4c2886c00273df","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: forest-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Forest Tree Placement Points
+    Position: {x: 4381, y: 1330.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: ForestTreePlacementPoints
+      DisplayName: ForestTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: ForestTreePlacementPoints
+      ObjectReference: {fileID: 0}
+  - NodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Jungle Tree Scatter
+    Position: {x: 4056, y: 1209.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: JungleTreePoints
+      DisplayName: JungleTreePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.16
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 18
+      ObjectReference: {fileID: 0}
+  - NodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Jungle Tree Prefabs
+    Position: {x: 5188, y: 856.00006}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"ea5fc636fbbbe474cb55b6095ad39959","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: jungle-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Jungle Tree Placement Points
+    Position: {x: 4815, y: 1042.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: JungleTreePlacementPoints
+      DisplayName: JungleTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: JungleTreePlacementPoints
+      ObjectReference: {fileID: 0}
+  - NodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Ice Tree Scatter
+    Position: {x: 4056, y: 1994.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: IceTreePoints
+      DisplayName: IceTreePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 14
+      ObjectReference: {fileID: 0}
+  - NodeId: 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Ice Tree Prefabs
+    Position: {x: 5085, y: 2236.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"3d29a499903e6c44b847b85c2c81242a","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-tree-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Ice Tree Placement Points
+    Position: {x: 4511, y: 2121.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: IceTreePlacementPoints
+      DisplayName: IceTreePlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: IceTreePlacementPoints
+      ObjectReference: {fileID: 0}
+  - NodeId: 68905719-fc24-450e-8b09-869ff286d755
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Cactus Scatter
+    Position: {x: 4056, y: 1721.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: CactusPoints
+      DisplayName: CactusPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.28
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 12
+      ObjectReference: {fileID: 0}
+  - NodeId: 598ec486-5ceb-4977-9ff6-cf36bb53fca2
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Cactus Prefabs
+    Position: {x: 4993, y: 1744.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"adcaa141de6eba940af9ebb2e4fc664e","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: cactus-point-offset
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
+    NodeName: Cactus Placement Points
+    Position: {x: 4614, y: 1709.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: CactusPlacementPoints
+      DisplayName: CactusPlacementPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: offsetX
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: offsetY
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: CactusPlacementPoints
+      ObjectReference: {fileID: 0}
+  - NodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.StochasticScatterNode
+    NodeName: Cloud Scatter
+    Position: {x: 3476, y: 887.52}
+    Ports:
+    - PortName: Weights
+      DisplayName: Weights
+      Direction: 0
+      Type: 0
+    - PortName: CloudPoints
+      DisplayName: CloudPoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: threshold
+      Value: 0.7
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 20
+      ObjectReference: {fileID: 0}
+  - NodeId: 7d91fd3c-0f1a-4313-b849-600a81f07311
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Cloud Prefabs
+    Position: {x: 4041, y: 816.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: footprintMode
+      Value: None
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"75f965a629c6fb54e8f21780cf4b4f3c","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ContextualQueryNode
+    NodeName: Cave House Anchors
+    Position: {x: 1893, y: 1994.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: HouseCandidatePoints
+      DisplayName: HouseCandidatePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: conditions
+      Value: '{"Entries":[{"Offset":{"x":1,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":3,"y":0},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":2,"y":1},"MatchById":true,"LogicalId":0,"TagName":""},{"Offset":{"x":1,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":2,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""},{"Offset":{"x":3,"y":-1},"MatchById":true,"LogicalId":2,"TagName":""}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListToMaskNode
+    NodeName: House Candidate Mask
+    Position: {x: 2461, y: 2062.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: HouseCandidateMask
+      DisplayName: HouseCandidateMask
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: cave-house-depth-band
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Cave House Depth Band
+    Position: {x: 2461, y: 2222.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CaveHouseDepthMask
+      DisplayName: CaveHouseDepthMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 38
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 160
+      ObjectReference: {fileID: 0}
+  - NodeId: cave-house-depth-candidates
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave House Depth Candidates
+    Position: {x: 2776, y: 2222.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveHouseDepthCandidates
+      DisplayName: CaveHouseDepthCandidates
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: cave-house-room-candidates
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave House Room Candidates
+    Position: {x: 3096, y: 2222.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveHouseRoomCandidates
+      DisplayName: CaveHouseRoomCandidates
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskBlendNode
+    NodeName: House Candidate Weights
+    Position: {x: 2776, y: 1721.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: HouseWeightsBase
+      DisplayName: HouseWeightsBase
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: cdf66d27-6d46-44ed-97d5-101ecbe82a90
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: House Band
+    Position: {x: 2776, y: 1996.52}
+    Ports:
+    - PortName: HouseBand
+      DisplayName: HouseBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.18
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.55
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: House Weights
+    Position: {x: 3132, y: 2121.52}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 0
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 0
+    - PortName: HouseWeights
+      DisplayName: HouseWeights
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.75
+      ObjectReference: {fileID: 0}
+  - NodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: House Eligibility Mask
+    Position: {x: 3416, y: 2170.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: HouseEligibilityMask
+      DisplayName: HouseEligibilityMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+  - NodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
+    NodeName: House Poisson
+    Position: {x: 3713, y: 2170.52}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SpacedHousePoints
+      DisplayName: SpacedHousePoints
+      Direction: 1
+      Type: 3
+    Parameters:
+    - Name: minDistance
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: maxAttempts
+      Value: 24
+      ObjectReference: {fileID: 0}
+    - Name: pointCount
+      Value: 4
+      ObjectReference: {fileID: 0}
+  - NodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabStamperNode
+    NodeName: Cave House Prefabs
+    Position: {x: 4076, y: 2297.52}
+    Ports:
+    - PortName: Points
+      DisplayName: Points
+      Direction: 0
+      Type: 3
+    - PortName: LogicalIds
+      DisplayName: LogicalIds
+      Direction: 1
+      Type: 1
+    - PortName: CaveHouseReservedMask
+      DisplayName: ReservedMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: footprintMode
+      Value: CarveInterior
+      ObjectReference: {fileID: 0}
+    - Name: outlineLogicalId
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: blendMode
+      Value: Overwrite
+      ObjectReference: {fileID: 0}
+    - Name: mirrorX
+      Value: True
+      ObjectReference: {fileID: 0}
+    - Name: interiorLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: mirrorY
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: allowRotation
+      Value: false
+      ObjectReference: {fileID: 0}
+    - Name: maxOverlapTiles
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: reservedMaskChannelName
+      Value: CaveHouseReservedMask
+      ObjectReference: {fileID: 0}
+    - Name: prefabVariants
+      Value: '{"Variants":[{"Prefab":"33b4e04847c26624186a988d845dfcdf","Weight":1.0}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
+    NodeName: Deep Underground Band
+    Position: {x: -4013, y: 1924}
+    Ports:
+    - PortName: DeepUndergroundBand
+      DisplayName: DeepUndergroundBand
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: minHeight
+      Value: 0.08
+      ObjectReference: {fileID: 0}
+    - Name: maxHeight
+      Value: 0.34
+      ObjectReference: {fileID: 0}
+    - Name: referenceHeight
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: minAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+    - Name: maxAnchor
+      Value: Normalized
+      ObjectReference: {fileID: 0}
+  - NodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
+    NodeName: Cave Distance Field
+    Position: {x: -3653, y: 2166}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CaveDistanceField
+      DisplayName: CaveDistanceField
+      Direction: 1
+      Type: 0
+    Parameters: []
+  - NodeId: 7a3d7211-74a3-4ef4-b3ae-cdc4a5dfe87d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Cave Proximity
+    Position: {x: -3333, y: 2166}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: CaveProximity
+      DisplayName: CaveProximity
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: inputType
+      Value: Float
+      ObjectReference: {fileID: 0}
+  - NodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Cave Material Proximity Mask
+    Position: {x: -3013, y: 2166}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 0
+    - PortName: CaveMaterialProximityMask
+      DisplayName: CaveMaterialProximityMask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: threshold
+      Value: 0.45
+      ObjectReference: {fileID: 0}
+  - NodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave Material Region
+    Position: {x: -2693, y: 2166}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveMaterialRegion
+      DisplayName: CaveMaterialRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: cave-material-depth-transition
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceTransitionMaskNode
+    NodeName: Cave Material Depth Transition
+    Position: {x: -3653, y: 2426}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: CaveMaterialDepthTransition
+      DisplayName: CaveMaterialDepthTransition
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: startDepth
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: endDepth
+      Value: 78
+      ObjectReference: {fileID: 0}
+    - Name: noiseFrequency
+      Value: 0.12
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: CaveMaterialDepthTransition
+      ObjectReference: {fileID: 0}
+  - NodeId: cave-material-depth-gate
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Cave Material Depth Gate
+    Position: {x: -3333, y: 2426}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CaveMaterialDepthGate
+      DisplayName: CaveMaterialDepthGate
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: logical-id-material-context
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
+    NodeName: Material Context IDs
+    Position: {x: -2721, y: 1322.0002}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Mask 1
+      DisplayName: Mask 1
+      Direction: 0
+      Type: 2
+    - PortName: Mask 2
+      DisplayName: Mask 2
+      Direction: 0
+      Type: 2
+    - PortName: Mask 3
+      DisplayName: Mask 3
+      Direction: 0
+      Type: 2
+    - PortName: Mask 4
+      DisplayName: Mask 4
+      Direction: 0
+      Type: 2
+    - PortName: MaterialContextLogicalIds
+      DisplayName: MaterialContextLogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: rules
+      Value: '{"Rules":[{"Enabled":true,"MaskSlot":0,"SourceLogicalId":1,"TargetLogicalId":10},{"Enabled":true,"MaskSlot":0,"SourceLogicalId":2,"TargetLogicalId":18},{"Enabled":true,"MaskSlot":1,"SourceLogicalId":10,"TargetLogicalId":10},{"Enabled":true,"MaskSlot":1,"SourceLogicalId":18,"TargetLogicalId":11},{"Enabled":true,"MaskSlot":2,"SourceLogicalId":10,"TargetLogicalId":12},{"Enabled":true,"MaskSlot":2,"SourceLogicalId":18,"TargetLogicalId":13},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":10,"TargetLogicalId":14},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":12,"TargetLogicalId":14},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":18,"TargetLogicalId":15},{"Enabled":true,"MaskSlot":3,"SourceLogicalId":13,"TargetLogicalId":15},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":10,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":12,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":14,"TargetLogicalId":16},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":11,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":18,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":13,"TargetLogicalId":17},{"Enabled":true,"MaskSlot":4,"SourceLogicalId":15,"TargetLogicalId":17}]}'
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: MaterialContextLogicalIds
+      ObjectReference: {fileID: 0}
+  - NodeId: prefab-reserved-void-overlay
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
+    NodeName: Prefab Reserved Void
+    Position: {x: -581.9729, y: 2420.96}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Mask 1
+      DisplayName: Mask 1
+      Direction: 0
+      Type: 2
+    - PortName: Mask 2
+      DisplayName: Mask 2
+      Direction: 0
+      Type: 2
+    - PortName: Mask 3
+      DisplayName: Mask 3
+      Direction: 0
+      Type: 2
+    - PortName: Mask 4
+      DisplayName: Mask 4
+      Direction: 0
+      Type: 2
+    - PortName: FinalLogicalIds
+      DisplayName: FinalLogicalIds
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: rules
+      Value: '{"Rules":[{"Enabled":true,"MaskSlot":1,"SourceLogicalId":-1,"TargetLogicalId":0}]}'
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: FinalLogicalIds
+      ObjectReference: {fileID: 0}
+  Connections:
+  - FromNodeId: 30729321-8c26-440a-8c37-54ed6a10e047
+    FromPortName: TerrainMass
+    ToNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: 08271325-c52e-41cc-aa71-693805aad513
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: 08271325-c52e-41cc-aa71-693805aad513
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: e9fa758c-4c63-4a03-b791-79b84175d7dc
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: e9fa758c-4c63-4a03-b791-79b84175d7dc
+    FromPortName: SurfaceCaveBuffer
+    ToNodeId: 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: cdb97ee3-de33-443b-bc14-174c947b8f41
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 08271325-c52e-41cc-aa71-693805aad513
+    FromPortName: CaveBand
+    ToNodeId: cdb97ee3-de33-443b-bc14-174c947b8f41
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: cdb97ee3-de33-443b-bc14-174c947b8f41
+    FromPortName: CaveAllowed
+    ToNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
+    FromPortName: CaveDepthMask
+    ToNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
+    FromPortName: ShallowCaveBand
+    ToNodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    FromPortName: UndergroundBand
+    ToNodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    FromPortName: ShallowCaveRegion
+    ToNodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
+    ToPortName: Mask
+    CastMode: 3
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: forest-deep-cave-region
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    FromPortName: ForestBiomeMask
+    ToNodeId: forest-deep-cave-region
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: forest-deep-cave-region
+    FromPortName: ForestDeepCaveRegion
+    ToNodeId: forest-deep-cave-automata
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: jungle-deep-cave-region
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: 8104437b-0d86-42e7-b702-88b0035651e6
+    FromPortName: FinalJungleBiomeMask
+    ToNodeId: jungle-deep-cave-region
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: jungle-deep-cave-region
+    FromPortName: JungleDeepCaveRegion
+    ToNodeId: jungle-deep-cave-automata
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: desert-deep-cave-region
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    FromPortName: DesertBiomeMask
+    ToNodeId: desert-deep-cave-region
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: desert-deep-cave-region
+    FromPortName: DesertDeepCaveRegion
+    ToNodeId: desert-deep-cave-automata
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: ice-deep-cave-region
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
+    FromPortName: FinalIceBiomeMask
+    ToNodeId: ice-deep-cave-region
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: ice-deep-cave-region
+    FromPortName: IceDeepCaveRegion
+    ToNodeId: ice-deep-cave-automata
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: forest-deep-cave-automata
+    FromPortName: ForestDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata-a
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: jungle-deep-cave-automata
+    FromPortName: JungleDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata-a
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: desert-deep-cave-automata
+    FromPortName: DesertDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata-b
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: ice-deep-cave-automata
+    FromPortName: IceDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata-b
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: biome-deep-cave-automata-a
+    FromPortName: BiomeDeepAutomataA
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: biome-deep-cave-automata-b
+    FromPortName: BiomeDeepAutomataB
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
+    FromPortName: AutomataCaves
+    ToNodeId: combined-automata-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: biome-deep-cave-automata
+    FromPortName: BiomeDeepAutomataCaves
+    ToNodeId: combined-automata-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: combined-automata-caves
+    FromPortName: CombinedAutomataCaves
+    ToNodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
+    FromPortName: DeepCaverns
+    ToNodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: c7b9cacb-aa1f-432d-bf37-24a13f9fd773
+    FromPortName: PrimaryOpenCaves
+    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    FromPortName: ShallowCavePockets
+    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: upper-underground-cave-band
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: upper-underground-cave-band
+    FromPortName: UpperUndergroundCaveBand
+    ToNodeId: upper-underground-cave-pockets
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: mid-underground-cave-band
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: mid-underground-cave-band
+    FromPortName: MidUndergroundCaveBand
+    ToNodeId: mid-underground-cave-pockets
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: upper-underground-cave-pockets
+    FromPortName: UpperUndergroundSmallCaves
+    ToNodeId: staged-underground-pockets
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: mid-underground-cave-pockets
+    FromPortName: MidUndergroundGrowingCaves
+    ToNodeId: staged-underground-pockets
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    FromPortName: BaseOpenCaves
+    ToNodeId: staged-base-open-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: staged-underground-pockets
+    FromPortName: StagedUndergroundPockets
+    ToNodeId: staged-base-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: surface-entrance-worms
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: staged-base-open-caves
+    FromPortName: StagedBaseOpenCaves
+    ToNodeId: surface-access-open-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: surface-entrance-worms
+    FromPortName: SurfaceEntranceWorms
+    ToNodeId: surface-access-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
+    FromPortName: ShallowCaveRegion
+    ToNodeId: shallow-perlin-worm-caves
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: surface-access-open-caves
+    FromPortName: SurfaceAccessOpenCaves
+    ToNodeId: shallow-worm-open-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: shallow-perlin-worm-caves
+    FromPortName: ShallowPerlinWormCaves
+    ToNodeId: shallow-worm-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: perlin-worm-caves
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: fd837542-e32b-45ff-8499-937f33125ff1
+    FromPortName: DeepBand
+    ToNodeId: large-deep-perlin-worm-caves
+    ToPortName: Mask
+    CastMode: 3
+  - FromNodeId: perlin-worm-caves
+    FromPortName: PerlinWormCaves
+    ToNodeId: combined-deep-worm-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: large-deep-perlin-worm-caves
+    FromPortName: LargeDeepPerlinWormCaves
+    ToNodeId: combined-deep-worm-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: shallow-worm-open-caves
+    FromPortName: ShallowWormOpenCaves
+    ToNodeId: worm-open-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: combined-deep-worm-caves
+    FromPortName: CombinedDeepWormCaves
+    ToNodeId: worm-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: worm-open-caves
+    FromPortName: WormOpenCaves
+    ToNodeId: moss-feature-open-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    FromPortName: MossPockets
+    ToNodeId: moss-feature-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: moss-feature-open-caves
+    FromPortName: MossFeatureOpenCaves
+    ToNodeId: feature-open-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    FromPortName: CrystalPockets
+    ToNodeId: feature-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: feature-open-caves
+    FromPortName: OpenCaves
+    ToNodeId: ice-feature-open-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    FromPortName: IcePockets
+    ToNodeId: ice-feature-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: ice-feature-open-caves
+    FromPortName: FeatureOpenCavesWithIce
+    ToNodeId: 253fc19f-6ac0-4cf6-a7ef-9e24cbe475fe
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 253fc19f-6ac0-4cf6-a7ef-9e24cbe475fe
+    FromPortName: NotCaves
+    ToNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
+    FromPortName: BaseLogicalIds
+    ToNodeId: 085d0f8b-3f82-4c28-b1ad-d84bcabe64d5
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 085d0f8b-3f82-4c28-b1ad-d84bcabe64d5
+    FromPortName: SurfaceLedgePoints
+    ToNodeId: 6cd9eea0-9ae5-415d-86c8-2709427db4c4
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 6cd9eea0-9ae5-415d-86c8-2709427db4c4
+    FromPortName: SurfaceLedgeMask
+    ToNodeId: 9e1054e5-cc0d-4368-8e22-7164072c9b7e
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: ea8ac51f-ba19-44df-977c-899da7d0deca
+    FromPortName: SurfaceCrustDepthMask
+    ToNodeId: 9e1054e5-cc0d-4368-8e22-7164072c9b7e
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: ea8ac51f-ba19-44df-977c-899da7d0deca
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: subsurface-biome-transition
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ea8ac51f-ba19-44df-977c-899da7d0deca
+    FromPortName: SurfaceCrustDepthMask
+    ToNodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: c41ad5c5-4bd8-43d8-8373-376a74d37254
+    FromPortName: SurfaceCrustBand
+    ToNodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: bc7383e3-b531-4f40-bd6d-40c60d3f078d
+    FromPortName: SurfaceCrustShapeMask
+    ToNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
+    FromPortName: BaseLogicalIds
+    ToNodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
+    FromPortName: SurfaceCrustMask
+    ToNodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    FromPortName: JungleBiomeMask
+    ToNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    FromPortName: JungleCaveRegion
+    ToNodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    FromPortName: MossPockets
+    ToNodeId: moss-pocket-ids
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: moss-pocket-ids
+    FromPortName: MossPocketIds
+    ToNodeId: moss-pocket-neighbour-mask
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: moss-cave-wall-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: moss-pocket-neighbour-mask
+    FromPortName: MossPocketNeighbourMask
+    ToNodeId: moss-cave-wall-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: moss-cave-wall-mask
+    FromPortName: MossWallPockets
+    ToNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    FromPortName: IceBiomeMask
+    ToNodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 65af7331-f5f3-4902-8c01-c33a711e9871
+    FromPortName: IceCaveRegion
+    ToNodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    FromPortName: IcePockets
+    ToNodeId: ice-pocket-ids
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ice-pocket-ids
+    FromPortName: IcePocketIds
+    ToNodeId: ice-pocket-neighbour-mask
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: ice-cave-wall-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: ice-pocket-neighbour-mask
+    FromPortName: IcePocketNeighbourMask
+    ToNodeId: ice-cave-wall-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: ice-cave-wall-mask
+    FromPortName: IceWallPockets
+    ToNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
+    FromPortName: LogicalIds
+    ToNodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
+    ToPortName: A
+    CastMode: 3
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 54a82da2-7200-4468-9eea-b57e1770069a
+    FromPortName: CrystalRegion
+    ToNodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    FromPortName: CrystalPockets
+    ToNodeId: crystal-pocket-ids
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: crystal-pocket-ids
+    FromPortName: CrystalPocketIds
+    ToNodeId: crystal-pocket-neighbour-mask
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: crystal-cave-wall-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: crystal-pocket-neighbour-mask
+    FromPortName: CrystalPocketNeighbourMask
+    ToNodeId: crystal-cave-wall-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: crystal-cave-wall-mask
+    FromPortName: CrystalWallPockets
+    ToNodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 04d569af-2156-41d1-baf7-a6d264adee89
+    FromPortName: CrystalPockets
+    ToNodeId: crystal-cave-visual-override
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: 246c68d4-6427-4de7-8e42-3859c3a495fb
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 246c68d4-6427-4de7-8e42-3859c3a495fb
+    FromPortName: OreSurfaceBuffer
+    ToNodeId: e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 957e9086-5624-41ab-a22e-62e9ceb9721c
+    FromPortName: WallMask
+    ToNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
+    FromPortName: OreDepthMask
+    ToNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    FromPortName: OreWallMask
+    ToNodeId: 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 4978ff0f-b00f-40ef-8464-ceeb214dec50
+    FromPortName: UpperOreBand
+    ToNodeId: 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
+    FromPortName: CoalZone
+    ToNodeId: 868da92d-18cc-4e91-a39b-35f4b2569640
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
+    FromPortName: CoalZone
+    ToNodeId: 6f076013-c3de-435c-aa1f-c8c9f46607c9
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 868da92d-18cc-4e91-a39b-35f4b2569640
+    FromPortName: CoalClusters
+    ToNodeId: 79db410b-8dcb-4a46-af55-26bb112b5717
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 6f076013-c3de-435c-aa1f-c8c9f46607c9
+    FromPortName: CoalVeins
+    ToNodeId: 79db410b-8dcb-4a46-af55-26bb112b5717
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 79db410b-8dcb-4a46-af55-26bb112b5717
+    FromPortName: CoalMask
+    ToNodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    FromPortName: OreWallMask
+    ToNodeId: c6b64ae4-2807-494d-9adb-069f6c9d9979
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 7c2aced2-da86-4c3d-ade5-719168a576fc
+    FromPortName: MidOreBand
+    ToNodeId: c6b64ae4-2807-494d-9adb-069f6c9d9979
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: c6b64ae4-2807-494d-9adb-069f6c9d9979
+    FromPortName: IronZone
+    ToNodeId: c7572979-2da5-44be-bfee-1762ed82425a
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: c6b64ae4-2807-494d-9adb-069f6c9d9979
+    FromPortName: IronZone
+    ToNodeId: 09faa8f3-9fce-4aa8-b428-5f7b980a5b49
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: c7572979-2da5-44be-bfee-1762ed82425a
+    FromPortName: IronClusters
+    ToNodeId: 5c4ed9a0-d941-4874-ba2e-8fbbd290b79f
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 09faa8f3-9fce-4aa8-b428-5f7b980a5b49
+    FromPortName: IronVeins
+    ToNodeId: 5c4ed9a0-d941-4874-ba2e-8fbbd290b79f
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 5c4ed9a0-d941-4874-ba2e-8fbbd290b79f
+    FromPortName: IronMask
+    ToNodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    FromPortName: OreWallMask
+    ToNodeId: 2778bedb-770f-44ea-a2d3-c7f685eb199a
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 8953ba8a-f86a-42cc-b3ba-f5d21f4bcc3d
+    FromPortName: GoldOreBand
+    ToNodeId: 2778bedb-770f-44ea-a2d3-c7f685eb199a
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 2778bedb-770f-44ea-a2d3-c7f685eb199a
+    FromPortName: GoldZone
+    ToNodeId: dda42942-e1e4-4651-be72-924eb8b517b7
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 2778bedb-770f-44ea-a2d3-c7f685eb199a
+    FromPortName: GoldZone
+    ToNodeId: cce810a0-8818-44f3-9b61-2c8d72a5bdd5
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: dda42942-e1e4-4651-be72-924eb8b517b7
+    FromPortName: GoldClusters
+    ToNodeId: c4fd252a-8972-465d-a833-cf46a30effe5
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: cce810a0-8818-44f3-9b61-2c8d72a5bdd5
+    FromPortName: GoldVeins
+    ToNodeId: c4fd252a-8972-465d-a833-cf46a30effe5
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: c4fd252a-8972-465d-a833-cf46a30effe5
+    FromPortName: GoldMask
+    ToNodeId: 272ed66d-0521-4890-855c-c570cba4af92
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    FromPortName: OreWallMask
+    ToNodeId: 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 0449a063-05b1-4877-95ae-9dcc15ba320f
+    FromPortName: DiamondOreBand
+    ToNodeId: 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
+    ToPortName: B
+    CastMode: 3
+  - FromNodeId: 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
+    FromPortName: DiamondZone
+    ToNodeId: d7f3563e-cf6f-4c75-97b6-9149b3af394b
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
+    FromPortName: DiamondZone
+    ToNodeId: ebbbd407-9d4c-4be8-9b51-d3fbea5a112b
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: d7f3563e-cf6f-4c75-97b6-9149b3af394b
+    FromPortName: DiamondClusters
+    ToNodeId: c6a6d713-9cfe-4e17-b39b-7b896fcf9c24
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: ebbbd407-9d4c-4be8-9b51-d3fbea5a112b
+    FromPortName: DiamondVeins
+    ToNodeId: c6a6d713-9cfe-4e17-b39b-7b896fcf9c24
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: c6a6d713-9cfe-4e17-b39b-7b896fcf9c24
+    FromPortName: DiamondMask
+    ToNodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    FromPortName: OneFloat
+    ToNodeId: ced59584-f592-4d05-b4b5-487143502736
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 6999daac-7624-464b-9308-87663f179e01
+    FromPortName: ZeroFloat
+    ToNodeId: ced59584-f592-4d05-b4b5-487143502736
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 9e1054e5-cc0d-4368-8e22-7164072c9b7e
+    FromPortName: SurfaceFloorMask
+    ToNodeId: ced59584-f592-4d05-b4b5-487143502736
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: f6db3222-23d5-4394-ae9e-e3cc35fa6b96
+    FromPortName: BaseLogicalIds
+    ToNodeId: surface-prop-placement-points
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-points
+    FromPortName: SurfacePropGroundPoints
+    ToNodeId: surface-prop-placement-mask
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-mask
+    FromPortName: SurfacePropPlacementMask
+    ToNodeId: surface-prop-surface-mask
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 9e1054e5-cc0d-4368-8e22-7164072c9b7e
+    FromPortName: SurfaceFloorMask
+    ToNodeId: surface-prop-surface-mask
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    FromPortName: OneFloat
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 6999daac-7624-464b-9308-87663f179e01
+    FromPortName: ZeroFloat
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: surface-prop-surface-mask
+    FromPortName: SurfacePropSurfaceMask
+    ToNodeId: surface-prop-placement-weights
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
+    ToNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    FromPortName: ForestBiomeMask
+    ToNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
+    ToNodeId: 62c2d399-7023-4628-b07a-c035317a8f19
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 8104437b-0d86-42e7-b702-88b0035651e6
+    FromPortName: FinalJungleBiomeMask
+    ToNodeId: 62c2d399-7023-4628-b07a-c035317a8f19
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 62c2d399-7023-4628-b07a-c035317a8f19
+    FromPortName: JungleTreeWeightBase
+    ToNodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
+    ToNodeId: ceb72be0-5035-400a-a151-3a859daedd51
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    FromPortName: DesertBiomeMask
+    ToNodeId: ceb72be0-5035-400a-a151-3a859daedd51
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: ceb72be0-5035-400a-a151-3a859daedd51
+    FromPortName: DesertTreeWeightBase
+    ToNodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: surface-prop-placement-weights
+    FromPortName: SurfacePropPlacementWeights
+    ToNodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
+    FromPortName: FinalIceBiomeMask
+    ToNodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    FromPortName: IceTreeWeightBase
+    ToNodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    FromPortName: ForestTreeWeight
+    ToNodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: 10da511d-88ff-4bba-afc1-6df4beb35703
+    FromPortName: DesertTreeWeight
+    ToNodeId: 68905719-fc24-450e-8b09-869ff286d755
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: 757d030a-42ab-4f59-8055-d42881b78bd5
+    FromPortName: JungleTreeWeight
+    ToNodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: 6510aebd-0ebe-4c96-9b81-a5be340738b8
+    FromPortName: IceTreeWeight
+    ToNodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: 480778a2-45e3-4772-96ff-64c8852c0f60
+    FromPortName: TreePoints
+    ToNodeId: forest-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: forest-tree-point-offset
+    FromPortName: ForestTreePlacementPoints
+    ToNodeId: fe4f3b73-12a8-4542-8106-2c0323c44b71
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    FromPortName: JungleTreePoints
+    ToNodeId: jungle-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: jungle-tree-point-offset
+    FromPortName: JungleTreePlacementPoints
+    ToNodeId: 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: ab33acfc-89ad-47f4-b87a-1c2921219c01
+    FromPortName: IceTreePoints
+    ToNodeId: ice-tree-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: ice-tree-point-offset
+    FromPortName: IceTreePlacementPoints
+    ToNodeId: 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 68905719-fc24-450e-8b09-869ff286d755
+    FromPortName: CactusPoints
+    ToNodeId: cactus-point-offset
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: cactus-point-offset
+    FromPortName: CactusPlacementPoints
+    ToNodeId: 598ec486-5ceb-4977-9ff6-cf36bb53fca2
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
+    FromPortName: SkyBand
+    ToNodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    ToPortName: Weights
+    CastMode: 0
+  - FromNodeId: f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    FromPortName: CloudPoints
+    ToNodeId: 7d91fd3c-0f1a-4313-b849-600a81f07311
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
+    FromPortName: LogicalIds
+    ToNodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 49666b0d-cd49-4568-b6a9-cc45174cc315
+    FromPortName: HouseCandidatePoints
+    ToNodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    FromPortName: TerrainMassMask
+    ToNodeId: cave-house-depth-band
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    FromPortName: HouseCandidateMask
+    ToNodeId: cave-house-depth-candidates
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: cave-house-depth-band
+    FromPortName: CaveHouseDepthMask
+    ToNodeId: cave-house-depth-candidates
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: cave-house-depth-candidates
+    FromPortName: CaveHouseDepthCandidates
+    ToNodeId: cave-house-room-candidates
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: combined-automata-caves
+    FromPortName: CombinedAutomataCaves
+    ToNodeId: cave-house-room-candidates
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    FromPortName: OneFloat
+    ToNodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 6999daac-7624-464b-9308-87663f179e01
+    FromPortName: ZeroFloat
+    ToNodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: cave-house-room-candidates
+    FromPortName: CaveHouseRoomCandidates
+    ToNodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    FromPortName: HouseWeightsBase
+    ToNodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: cdf66d27-6d46-44ed-97d5-101ecbe82a90
+    FromPortName: HouseBand
+    ToNodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    FromPortName: HouseWeights
+    ToNodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 681448c3-fc8a-48ac-9237-e6a486c1e035
+    FromPortName: HouseEligibilityMask
+    ToNodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: 9bedff46-3f82-482d-b30a-caff2a462f45
+    FromPortName: SpacedHousePoints
+    ToNodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
+    ToPortName: Points
+    CastMode: 0
+  - FromNodeId: ice-feature-open-caves
+    FromPortName: FeatureOpenCavesWithIce
+    ToNodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 4b019fec-f546-49ce-846f-42038cbf5e98
+    FromPortName: CaveDistanceField
+    ToNodeId: 7a3d7211-74a3-4ef4-b3ae-cdc4a5dfe87d
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 7a3d7211-74a3-4ef4-b3ae-cdc4a5dfe87d
+    FromPortName: CaveProximity
+    ToNodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
+    FromPortName: CaveMaterialProximityMask
+    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
+    FromPortName: FinalSolid
+    ToNodeId: cave-material-depth-transition
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: d575842c-79cc-4180-adb5-8cc87584971d
+    FromPortName: CaveAllowedDepth
+    ToNodeId: cave-material-depth-gate
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: cave-material-depth-transition
+    FromPortName: CaveMaterialDepthTransition
+    ToNodeId: cave-material-depth-gate
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: cave-material-depth-gate
+    FromPortName: CaveMaterialDepthGate
+    ToNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    FromPortName: BiomeChannel
+    ToNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: f236cfd2-a015-4d8e-ae61-072ab4760977
+    FromPortName: BiomeChannel
+    ToNodeId: moss-cave-visual-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 84e4b550-802d-4a30-831a-0442e24ae6af
+    FromPortName: MossPockets
+    ToNodeId: moss-cave-visual-override
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: moss-cave-visual-override
+    FromPortName: BiomeChannel
+    ToNodeId: ice-cave-visual-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    FromPortName: IcePockets
+    ToNodeId: ice-cave-visual-override
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: ice-cave-visual-override
+    FromPortName: BiomeChannel
+    ToNodeId: crystal-cave-visual-override
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: crystal-cave-visual-override
+    FromPortName: BiomeChannel
+    ToNodeId: visual-biome-channel-copy
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: visual-biome-channel-copy
+    FromPortName: VisualBiomeChannel
+    ToNodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
+    FromPortName: BiomeChannel
+    ToNodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: ad193fee-9786-4676-bafd-2f0aec2cba1f
+    FromPortName: BiomeChannel
+    ToNodeId: 272ed66d-0521-4890-855c-c570cba4af92
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 272ed66d-0521-4890-855c-c570cba4af92
+    FromPortName: BiomeChannel
+    ToNodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: 1d73503d-a764-4eba-8c67-42d61b2897b4
+    FromPortName: BiomeChannel
+    ToNodeId: 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    ToPortName: Biome Input
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 8104437b-0d86-42e7-b702-88b0035651e6
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: 75c243e1-f40e-4bf9-99e5-ebccd3334959
+    FromPortName: LogicalIds
+    ToNodeId: logical-id-material-context
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
+    FromPortName: SurfaceCrustMask
+    ToNodeId: logical-id-material-context
+    ToPortName: Mask 1
+    CastMode: 0
+  - FromNodeId: subsurface-biome-transition
+    FromPortName: SubsurfaceBiomeTransition
+    ToNodeId: logical-id-material-context
+    ToPortName: Mask 2
+    CastMode: 0
+  - FromNodeId: e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    FromPortName: DeepUndergroundBand
+    ToNodeId: logical-id-material-context
+    ToPortName: Mask 3
+    CastMode: 3
+  - FromNodeId: 10ea94de-cb91-4c82-b307-5787df60dcca
+    FromPortName: CaveMaterialRegion
+    ToNodeId: logical-id-material-context
+    ToPortName: Mask 4
+    CastMode: 0
+  - FromNodeId: logical-id-material-context
+    FromPortName: MaterialContextLogicalIds
+    ToNodeId: prefab-reserved-void-overlay
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: fac00bf5-5235-4ccb-8116-1fe0fd349484
+    FromPortName: CaveHouseReservedMask
+    ToNodeId: prefab-reserved-void-overlay
+    ToPortName: Mask 1
+    CastMode: 0
+  - FromNodeId: prefab-reserved-void-overlay
+    FromPortName: FinalLogicalIds
+    ToNodeId: graph-output-node
+    ToPortName: LogicalIds
+    CastMode: 0
+  StickyNotes: []
+  Groups:
+  - GroupId: terrain-shape-group
+    Title: Terrain Shape
+    Position:
+      serializedVersion: 2
+      x: -4531.573
+      y: -1234.5062
+      width: 2530
+      height: 1718
+    ContainedNodeIds:
+    - 30729321-8c26-440a-8c37-54ed6a10e047
+    - 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
+    - c51a5de2-490c-438f-a05e-106d9a02247b
+    - c41ad5c5-4bd8-43d8-8373-376a74d37254
+    - ef3990c1-682a-4d17-9bbb-3466d9b8b343
+    - fd837542-e32b-45ff-8499-937f33125ff1
+    - a371735b-35b3-4f2d-8172-f715f8b697b8
+    - 08271325-c52e-41cc-aa71-693805aad513
+    - e9fa758c-4c63-4a03-b791-79b84175d7dc
+    - 3816ea24-15cb-4051-9aff-4f9c9e6d7e11
+    - cdb97ee3-de33-443b-bc14-174c947b8f41
+    - d575842c-79cc-4180-adb5-8cc87584971d
+    - 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
+    - 0df84640-7648-45db-93fd-2e6a5af2d270
+    - 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    - e7ffce99-ad02-423f-ba30-a5f7898c635d
+    - 38ae7165-dbb6-4aa0-9718-2724031e98af
+    - c7b9cacb-aa1f-432d-bf37-24a13f9fd773
+    - 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    - moss-feature-open-caves
+    - feature-open-caves
+    - 253fc19f-6ac0-4cf6-a7ef-9e24cbe475fe
+    - 13755560-5c3d-4731-9e15-ceedd338fc84
+    - forest-deep-cave-automata
+    BackgroundColor: {r: 0.13, g: 0.18, b: 0.2, a: 0.28}
+  - GroupId: material-context-group
+    Title: Material Context
+    Position:
+      serializedVersion: 2
+      x: -6038
+      y: 1124
+      width: 3859
+      height: 3094
+    ContainedNodeIds:
+    - f6db3222-23d5-4394-ae9e-e3cc35fa6b96
+    - 085d0f8b-3f82-4c28-b1ad-d84bcabe64d5
+    - 6cd9eea0-9ae5-415d-86c8-2709427db4c4
+    - 9e1054e5-cc0d-4368-8e22-7164072c9b7e
+    - ea8ac51f-ba19-44df-977c-899da7d0deca
+    - subsurface-biome-transition
+    - bc7383e3-b531-4f40-bd6d-40c60d3f078d
+    - 78481ce6-80f1-4922-9248-42531f3b19b2
+    - 75c243e1-f40e-4bf9-99e5-ebccd3334959
+    - e8ad4c8f-1e52-4a9b-9d9c-c7c83bf6a141
+    - 4b019fec-f546-49ce-846f-42038cbf5e98
+    - 7a3d7211-74a3-4ef4-b3ae-cdc4a5dfe87d
+    - 0c6a2118-60b8-4d5c-aefa-86d0c3ee9271
+    - cave-material-depth-transition
+    - cave-material-depth-gate
+    - 10ea94de-cb91-4c82-b307-5787df60dcca
+    - logical-id-material-context
+    BackgroundColor: {r: 0.18, g: 0.16, b: 0.11, a: 0.3}
+  - GroupId: biome-layout-group
+    Title: Biome Layout
+    Position:
+      serializedVersion: 2
+      x: -872.71405
+      y: 397.32166
+      width: 1565
+      height: 1159
+    ContainedNodeIds:
+    - biome-layout-randomized
+    - 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    - 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    - b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    - 8104437b-0d86-42e7-b702-88b0035651e6
+    - 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    - 50201328-914f-4481-9b5a-2d6229ea5c38
+    BackgroundColor: {r: 0.12, g: 0.2, b: 0.15, a: 0.3}
+  - GroupId: feature-overrides-group
+    Title: Feature Overrides
+    Position:
+      serializedVersion: 2
+      x: 586
+      y: -1774.3999
+      width: 2615
+      height: 1775
+    ContainedNodeIds:
+    - 58d42ad7-a022-4e97-aee7-bcc63ed869a5
+    - 84e4b550-802d-4a30-831a-0442e24ae6af
+    - moss-pocket-ids
+    - moss-pocket-neighbour-mask
+    - c1d57d10-cedc-46c0-9ff3-1a2a26f0fb80
+    - 65af7331-f5f3-4902-8c01-c33a711e9871
+    - 9a77c8cb-5b90-4874-a695-60e79f2532c8
+    - f236cfd2-a015-4d8e-ae61-072ab4760977
+    - 957e9086-5624-41ab-a22e-62e9ceb9721c
+    - moss-cave-wall-mask
+    - 54a82da2-7200-4468-9eea-b57e1770069a
+    - 04d569af-2156-41d1-baf7-a6d264adee89
+    - crystal-pocket-ids
+    - crystal-pocket-neighbour-mask
+    - crystal-cave-wall-mask
+    - crystal-cave-visual-override
+    - visual-biome-channel-copy
+    - 246c68d4-6427-4de7-8e42-3859c3a495fb
+    - e573b9e0-f08d-48fb-8c0c-2caa8c60d1fb
+    - 1b380de3-4c27-4f2f-a7c7-c2b5a41bf331
+    - 4978ff0f-b00f-40ef-8464-ceeb214dec50
+    - 7c2aced2-da86-4c3d-ade5-719168a576fc
+    - 8953ba8a-f86a-42cc-b3ba-f5d21f4bcc3d
+    - 0449a063-05b1-4877-95ae-9dcc15ba320f
+    - 9fdd4be1-5c39-4b02-9bd4-c09be4799cf1
+    - 868da92d-18cc-4e91-a39b-35f4b2569640
+    - 6f076013-c3de-435c-aa1f-c8c9f46607c9
+    - 79db410b-8dcb-4a46-af55-26bb112b5717
+    - 5afdbfd9-b13f-42fb-966e-52ed0b28d75a
+    - c6b64ae4-2807-494d-9adb-069f6c9d9979
+    - c7572979-2da5-44be-bfee-1762ed82425a
+    - 09faa8f3-9fce-4aa8-b428-5f7b980a5b49
+    - 5c4ed9a0-d941-4874-ba2e-8fbbd290b79f
+    - ad193fee-9786-4676-bafd-2f0aec2cba1f
+    - 2778bedb-770f-44ea-a2d3-c7f685eb199a
+    - dda42942-e1e4-4651-be72-924eb8b517b7
+    - cce810a0-8818-44f3-9b61-2c8d72a5bdd5
+    - c4fd252a-8972-465d-a833-cf46a30effe5
+    - 272ed66d-0521-4890-855c-c570cba4af92
+    - 13c03c2f-d3ca-4c45-b92b-72bd4eeae374
+    - d7f3563e-cf6f-4c75-97b6-9149b3af394b
+    - ebbbd407-9d4c-4be8-9b51-d3fbea5a112b
+    - c6a6d713-9cfe-4e17-b39b-7b896fcf9c24
+    - 1d73503d-a764-4eba-8c67-42d61b2897b4
+    - 13a4b7aa-7a2b-4458-b35a-4672fce9f86b
+    BackgroundColor: {r: 0.19, g: 0.13, b: 0.16, a: 0.28}
+  - GroupId: props-group
+    Title: Props
+    Position:
+      serializedVersion: 2
+      x: 1734
+      y: 757.52
+      width: 3767
+      height: 1894
+    ContainedNodeIds:
+    - d200aa4b-459f-43ea-baa1-3b7bd15f8b40
+    - 6999daac-7624-464b-9308-87663f179e01
+    - ced59584-f592-4d05-b4b5-487143502736
+    - surface-prop-placement-points
+    - surface-prop-placement-mask
+    - surface-prop-placement-weights
+    - 810ae1cf-7a53-4772-ba1a-9e254c858fa3
+    - 62c2d399-7023-4628-b07a-c035317a8f19
+    - 757d030a-42ab-4f59-8055-d42881b78bd5
+    - ceb72be0-5035-400a-a151-3a859daedd51
+    - 10da511d-88ff-4bba-afc1-6df4beb35703
+    - fd53d2e5-1d01-4a01-90e7-6ddfdba092ed
+    - 6510aebd-0ebe-4c96-9b81-a5be340738b8
+    - 480778a2-45e3-4772-96ff-64c8852c0f60
+    - forest-tree-point-offset
+    - fe4f3b73-12a8-4542-8106-2c0323c44b71
+    - 8a0b369f-9d63-4d17-9385-22f5589bc2e9
+    - jungle-tree-point-offset
+    - 9c8e16ec-5cfd-416a-8f72-e4fd5f7d28d5
+    - ab33acfc-89ad-47f4-b87a-1c2921219c01
+    - ice-tree-point-offset
+    - 6b32f7ef-a1b1-4a67-b3c0-52e115762b98
+    - 68905719-fc24-450e-8b09-869ff286d755
+    - cactus-point-offset
+    - 598ec486-5ceb-4977-9ff6-cf36bb53fca2
+    - f5a86bb7-261c-4dfa-bd8f-cb006763428c
+    - 7d91fd3c-0f1a-4313-b849-600a81f07311
+    - 49666b0d-cd49-4568-b6a9-cc45174cc315
+    - ab9dffb4-407f-4fcd-a3fb-ae01ba3194cf
+    - f77b1c22-d0ba-46e5-ae8a-486c1fc92ee7
+    - cdf66d27-6d46-44ed-97d5-101ecbe82a90
+    - 3f29eb2a-e049-4862-8f96-33e0f7f88106
+    - 681448c3-fc8a-48ac-9237-e6a486c1e035
+    - 9bedff46-3f82-482d-b30a-caff2a462f45
+    - fac00bf5-5235-4ccb-8116-1fe0fd349484
+    BackgroundColor: {r: 0.16, g: 0.15, b: 0.2, a: 0.28}
+  - GroupId: output-group
+    Title: Output
+    Position:
+      serializedVersion: 2
+      x: -606.9729
+      y: 2361.9597
+      width: 1039
+      height: 443
+    ContainedNodeIds:
+    - prefab-reserved-void-overlay
+    - graph-output-node
+    BackgroundColor: {r: 0.18, g: 0.18, b: 0.18, a: 0.3}
+  ExposedProperties: []

@@ -1,0 +1,112 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03cc925ee1b03d84b89d02be1bd6313b, type: 3}
+  m_Name: TerrariaTileSemanticRegistry
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Semantic.TileSemanticRegistry
+  Entries:
+  - LogicalId: 0
+    DisplayName: Void
+    Tags: []
+  - LogicalId: 1
+    DisplayName: Floor
+    Tags:
+    - Walkable
+  - LogicalId: 2
+    DisplayName: Wall
+    Tags:
+    - Solid
+  - LogicalId: 3
+    DisplayName: Liquid
+    Tags:
+    - Liquid
+  - LogicalId: 4
+    DisplayName: Access
+    Tags:
+    - Trigger
+  - LogicalId: 10
+    DisplayName: Surface Floor
+    Tags:
+    - Walkable
+  - LogicalId: 11
+    DisplayName: Stone Wall
+    Tags:
+    - Solid
+  - LogicalId: 12
+    DisplayName: Underground Floor
+    Tags:
+    - Walkable
+  - LogicalId: 13
+    DisplayName: Underground Wall
+    Tags:
+    - Solid
+  - LogicalId: 14
+    DisplayName: Deep Floor
+    Tags:
+    - Walkable
+  - LogicalId: 15
+    DisplayName: Deepslate Wall
+    Tags:
+    - Solid
+  - LogicalId: 16
+    DisplayName: Cave Floor
+    Tags:
+    - Walkable
+  - LogicalId: 17
+    DisplayName: Cave Wall
+    Tags:
+    - Solid
+  - LogicalId: 18
+    DisplayName: Andesite
+    Tags:
+    - Solid
+  - LogicalId: 19
+    DisplayName: Cave Background
+    Tags:
+    - Decorative
+  - LogicalId: 20
+    DisplayName: Coal Ore
+    Tags:
+    - Solid
+  - LogicalId: 21
+    DisplayName: Deepslate Coal Ore
+    Tags:
+    - Solid
+  - LogicalId: 22
+    DisplayName: Iron Ore
+    Tags:
+    - Solid
+  - LogicalId: 23
+    DisplayName: Deepslate Iron Ore
+    Tags:
+    - Solid
+  - LogicalId: 24
+    DisplayName: Gold Ore
+    Tags:
+    - Solid
+  - LogicalId: 25
+    DisplayName: Deepslate Gold Ore
+    Tags:
+    - Solid
+  - LogicalId: 26
+    DisplayName: Diamond Ore
+    Tags:
+    - Solid
+  - LogicalId: 27
+    DisplayName: Deepslate Diamond Ore
+    Tags:
+    - Solid
+  AllTags:
+  - Walkable
+  - Solid
+  - Decorative
+  - Liquid
+  - Trigger

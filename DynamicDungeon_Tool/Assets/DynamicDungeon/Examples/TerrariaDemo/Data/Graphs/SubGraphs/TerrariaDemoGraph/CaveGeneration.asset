@@ -1,0 +1,1138 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: CaveGeneration
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 5
+  WorldWidth: 512
+  WorldHeight: 192
+  DefaultSeed: 246813579
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Shallow Cave Pockets
+    Position: {x: -2586.5737, y: -1175.5063}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: ShallowCavePockets
+      DisplayName: ShallowCavePockets
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.62
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.76
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 10
+      ObjectReference: {fileID: 0}
+  - NodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Cave Automata
+    Position: {x: -3546.5737, y: -384.50635}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: AutomataCaves
+      DisplayName: AutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.45
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: forest-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Forest Deep Cave Automata
+    Position: {x: -3914.5737, y: 25.493652}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: ForestDeepAutomataCaves
+      DisplayName: ForestDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 7
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.48
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: jungle-deep-cave-region
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Jungle Deep Cave Region
+    Position: {x: -3680, y: 363.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: JungleDeepCaveRegion
+      DisplayName: JungleDeepCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: jungle-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Jungle Deep Cave Automata
+    Position: {x: -3360, y: 363.47998}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: JungleDeepAutomataCaves
+      DisplayName: JungleDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.52
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: desert-deep-cave-region
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Desert Deep Cave Region
+    Position: {x: -3680, y: 523.48}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: DesertDeepCaveRegion
+      DisplayName: DesertDeepCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: desert-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Desert Deep Cave Automata
+    Position: {x: -3360, y: 523.48}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: DesertDeepAutomataCaves
+      DisplayName: DesertDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-deep-cave-region
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Deep Cave Region
+    Position: {x: -3680, y: 683.48}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: IceDeepCaveRegion
+      DisplayName: IceDeepCaveRegion
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Ice Deep Cave Automata
+    Position: {x: -3360, y: 683.48}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: IceDeepAutomataCaves
+      DisplayName: IceDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.46
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: RandomFillInsideInputMask
+      ObjectReference: {fileID: 0}
+  - NodeId: biome-deep-cave-automata
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
+    NodeName: Biome Deep Cave Automata
+    Position: {x: -2720, y: 363.47998}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: BiomeDeepAutomataCaves
+      DisplayName: BiomeDeepAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: BiomeDeepAutomataCaves
+      ObjectReference: {fileID: 0}
+  - NodeId: combined-automata-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Combined Automata Caves
+    Position: {x: -2720, y: 103.47998}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: CombinedAutomataCaves
+      DisplayName: CombinedAutomataCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Deep Cavern Pockets
+    Position: {x: -3546.5737, y: -104.50635}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: DeepCaverns
+      DisplayName: DeepCaverns
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 8
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 20
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.8
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.9
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 18
+      ObjectReference: {fileID: 0}
+  - NodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
+    NodeName: Base Open Caves
+    Position: {x: -2906.5737, y: -244.50635}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: BaseOpenCaves
+      DisplayName: BaseOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: BaseOpenCaves
+      ObjectReference: {fileID: 0}
+  - NodeId: upper-underground-cave-band
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Upper Underground Cave Band
+    Position: {x: -2400, y: -696.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: UpperUndergroundCaveBand
+      DisplayName: UpperUndergroundCaveBand
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 44
+      ObjectReference: {fileID: 0}
+  - NodeId: upper-underground-cave-pockets
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Upper Underground Small Caves
+    Position: {x: -2080, y: -696.52}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: UpperUndergroundSmallCaves
+      DisplayName: UpperUndergroundSmallCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 9
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.66
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.8
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 8
+      ObjectReference: {fileID: 0}
+  - NodeId: mid-underground-cave-band
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
+    NodeName: Mid Underground Cave Band
+    Position: {x: -2400, y: -576.52}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: MidUndergroundCaveBand
+      DisplayName: MidUndergroundCaveBand
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: minDepth
+      Value: 14
+      ObjectReference: {fileID: 0}
+    - Name: maxDepth
+      Value: 82
+      ObjectReference: {fileID: 0}
+  - NodeId: mid-underground-cave-pockets
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
+    NodeName: Mid Underground Growing Caves
+    Position: {x: -2080, y: -576.52}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: MidUndergroundGrowingCaves
+      DisplayName: MidUndergroundGrowingCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: seedCount
+      Value: 22
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: initialSpreadProbability
+      Value: 0.82
+      ObjectReference: {fileID: 0}
+    - Name: falloff
+      Value: 0.92
+      ObjectReference: {fileID: 0}
+    - Name: minClusterSeparation
+      Value: 7
+      ObjectReference: {fileID: 0}
+  - NodeId: staged-base-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
+    NodeName: Staged Base Open Caves
+    Position: {x: -1440, y: -636.52}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: StagedBaseOpenCaves
+      DisplayName: StagedBaseOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: StagedBaseOpenCaves
+      ObjectReference: {fileID: 0}
+  - NodeId: surface-entrance-worms
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
+    NodeName: Surface Entrance Worms
+    Position: {x: -2400, y: -456.52002}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: SurfaceEntranceWorms
+      DisplayName: SurfaceEntranceWorms
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: wormCount
+      Value: 12
+      ObjectReference: {fileID: 0}
+    - Name: lengthMin
+      Value: 70
+      ObjectReference: {fileID: 0}
+    - Name: lengthMax
+      Value: 130
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: endRadius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: turnFrequency
+      Value: 0.026
+      ObjectReference: {fileID: 0}
+    - Name: turnStrength
+      Value: 0.32
+      ObjectReference: {fileID: 0}
+    - Name: stepSize
+      Value: 1.05
+      ObjectReference: {fileID: 0}
+    - Name: horizontalBias
+      Value: 0.68
+      ObjectReference: {fileID: 0}
+    - Name: downwardBias
+      Value: 0.96
+      ObjectReference: {fileID: 0}
+    - Name: startMode
+      Value: SurfaceColumn
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 18
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 7
+      ObjectReference: {fileID: 0}
+  - NodeId: shallow-perlin-worm-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
+    NodeName: Shallow Perlin Worm Caves
+    Position: {x: -1760, y: -456.52002}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: ShallowPerlinWormCaves
+      DisplayName: ShallowPerlinWormCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: wormCount
+      Value: 12
+      ObjectReference: {fileID: 0}
+    - Name: lengthMin
+      Value: 14
+      ObjectReference: {fileID: 0}
+    - Name: lengthMax
+      Value: 34
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: endRadius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: turnFrequency
+      Value: 0.055
+      ObjectReference: {fileID: 0}
+    - Name: turnStrength
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+    - Name: stepSize
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: horizontalBias
+      Value: 0.55
+      ObjectReference: {fileID: 0}
+    - Name: downwardBias
+      Value: 0.15
+      ObjectReference: {fileID: 0}
+    - Name: startMode
+      Value: RandomInMask
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 11
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: shallow-worm-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
+    NodeName: Shallow Worm Open Caves
+    Position: {x: -1760, y: -236.52002}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: ShallowWormOpenCaves
+      DisplayName: ShallowWormOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: ShallowWormOpenCaves
+      ObjectReference: {fileID: 0}
+  - NodeId: perlin-worm-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
+    NodeName: Deep Perlin Worm Caves
+    Position: {x: -2400, y: 123.47998}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: PerlinWormCaves
+      DisplayName: PerlinWormCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: wormCount
+      Value: 14
+      ObjectReference: {fileID: 0}
+    - Name: lengthMin
+      Value: 64
+      ObjectReference: {fileID: 0}
+    - Name: lengthMax
+      Value: 170
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: endRadius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: turnFrequency
+      Value: 0.032
+      ObjectReference: {fileID: 0}
+    - Name: turnStrength
+      Value: 0.42
+      ObjectReference: {fileID: 0}
+    - Name: stepSize
+      Value: 1.15
+      ObjectReference: {fileID: 0}
+    - Name: horizontalBias
+      Value: 0.75
+      ObjectReference: {fileID: 0}
+    - Name: downwardBias
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: startMode
+      Value: RandomInMask
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 17
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: worm-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
+    NodeName: Worm Open Caves
+    Position: {x: -2080, y: 123.47998}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: WormOpenCaves
+      DisplayName: WormOpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: WormOpenCaves
+      ObjectReference: {fileID: 0}
+  - NodeId: large-deep-perlin-worm-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.PerlinWormNode
+    NodeName: Large Deep Perlin Worm Caves
+    Position: {x: -2400, y: 343.47998}
+    Ports:
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: LargeDeepPerlinWormCaves
+      DisplayName: LargeDeepPerlinWormCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: wormCount
+      Value: 4
+      ObjectReference: {fileID: 0}
+    - Name: lengthMin
+      Value: 90
+      ObjectReference: {fileID: 0}
+    - Name: lengthMax
+      Value: 190
+      ObjectReference: {fileID: 0}
+    - Name: radius
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: endRadius
+      Value: 3
+      ObjectReference: {fileID: 0}
+    - Name: turnFrequency
+      Value: 0.026
+      ObjectReference: {fileID: 0}
+    - Name: turnStrength
+      Value: 0.34
+      ObjectReference: {fileID: 0}
+    - Name: stepSize
+      Value: 1.2
+      ObjectReference: {fileID: 0}
+    - Name: horizontalBias
+      Value: 0.72
+      ObjectReference: {fileID: 0}
+    - Name: downwardBias
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: startMode
+      Value: RandomInMask
+      ObjectReference: {fileID: 0}
+    - Name: seedOffset
+      Value: 31
+      ObjectReference: {fileID: 0}
+    - Name: mouthRadius
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: mouthLength
+      Value: 0
+      ObjectReference: {fileID: 0}
+    - Name: biasFadeSteps
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: feature-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
+    NodeName: Open Caves
+    Position: {x: -2266.5737, y: -244.50635}
+    Ports:
+    - PortName: Masks
+      DisplayName: Masks
+      Direction: 0
+      Type: 2
+    - PortName: OpenCaves
+      DisplayName: OpenCaves
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+    - Name: invertOutput
+      Value: False
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: OpenCaves
+      ObjectReference: {fileID: 0}
+  - NodeId: ice-feature-open-caves
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Ice Feature Open Caves
+    Position: {x: -1440, y: -136.52002}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: FeatureOpenCavesWithIce
+      DisplayName: FeatureOpenCavesWithIce
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: operation
+      Value: OR
+      ObjectReference: {fileID: 0}
+  - NodeId: CaveGeneration-input
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
+    NodeName: Sub Graph Input
+    Position: {x: -4174.5737, y: -166.01318}
+    Ports:
+    - PortName: ForestDeepCaveRegion
+      DisplayName: ForestDeepCaveRegion
+      Direction: 1
+      Type: 2
+    - PortName: MossPockets
+      DisplayName: MossPockets
+      Direction: 1
+      Type: 2
+    - PortName: CrystalPockets
+      DisplayName: CrystalPockets
+      Direction: 1
+      Type: 2
+    - PortName: IcePockets
+      DisplayName: IcePockets
+      Direction: 1
+      Type: 2
+    - PortName: FinalJungleBiomeMask
+      DisplayName: FinalJungleBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: DesertBiomeMask
+      DisplayName: DesertBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: FinalIceBiomeMask
+      DisplayName: FinalIceBiomeMask
+      Direction: 1
+      Type: 2
+    - PortName: ShallowCaveRegion
+      DisplayName: ShallowCaveRegion
+      Direction: 1
+      Type: 2
+    - PortName: CaveAllowedDepth
+      DisplayName: CaveAllowedDepth
+      Direction: 1
+      Type: 2
+    - PortName: DeepBand
+      DisplayName: DeepBand
+      Direction: 1
+      Type: 2
+    - PortName: TerrainMassMask
+      DisplayName: TerrainMassMask
+      Direction: 1
+      Type: 2
+    Parameters: []
+  - NodeId: CaveGeneration-output
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
+    NodeName: Sub Graph Output
+    Position: {x: -960, y: -166.01318}
+    Ports:
+    - PortName: CombinedAutomataCaves
+      DisplayName: CombinedAutomataCaves
+      Direction: 0
+      Type: 2
+    - PortName: FeatureOpenCavesWithIce
+      DisplayName: FeatureOpenCavesWithIce
+      Direction: 0
+      Type: 2
+    Parameters: []
+  Connections:
+  - FromNodeId: CaveGeneration-input
+    FromPortName: ForestDeepCaveRegion
+    ToNodeId: forest-deep-cave-automata
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: IcePockets
+    ToNodeId: ice-feature-open-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: FinalJungleBiomeMask
+    ToNodeId: jungle-deep-cave-region
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: DesertBiomeMask
+    ToNodeId: desert-deep-cave-region
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: FinalIceBiomeMask
+    ToNodeId: ice-deep-cave-region
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: ShallowCaveRegion
+    ToNodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: ShallowCaveRegion
+    ToNodeId: shallow-perlin-worm-caves
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: CaveAllowedDepth
+    ToNodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: CaveAllowedDepth
+    ToNodeId: perlin-worm-caves
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: DeepBand
+    ToNodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: DeepBand
+    ToNodeId: jungle-deep-cave-region
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: DeepBand
+    ToNodeId: desert-deep-cave-region
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: DeepBand
+    ToNodeId: ice-deep-cave-region
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: DeepBand
+    ToNodeId: large-deep-perlin-worm-caves
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: TerrainMassMask
+    ToNodeId: upper-underground-cave-band
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: TerrainMassMask
+    ToNodeId: mid-underground-cave-band
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: TerrainMassMask
+    ToNodeId: surface-entrance-worms
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: combined-automata-caves
+    FromPortName: CombinedAutomataCaves
+    ToNodeId: CaveGeneration-output
+    ToPortName: CombinedAutomataCaves
+    CastMode: 0
+  - FromNodeId: ice-feature-open-caves
+    FromPortName: FeatureOpenCavesWithIce
+    ToNodeId: CaveGeneration-output
+    ToPortName: FeatureOpenCavesWithIce
+    CastMode: 0
+  - FromNodeId: jungle-deep-cave-region
+    FromPortName: JungleDeepCaveRegion
+    ToNodeId: jungle-deep-cave-automata
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: desert-deep-cave-region
+    FromPortName: DesertDeepCaveRegion
+    ToNodeId: desert-deep-cave-automata
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ice-deep-cave-region
+    FromPortName: IceDeepCaveRegion
+    ToNodeId: ice-deep-cave-automata
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
+    FromPortName: AutomataCaves
+    ToNodeId: combined-automata-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: biome-deep-cave-automata
+    FromPortName: BiomeDeepAutomataCaves
+    ToNodeId: combined-automata-caves
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: upper-underground-cave-band
+    FromPortName: UpperUndergroundCaveBand
+    ToNodeId: upper-underground-cave-pockets
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: mid-underground-cave-band
+    FromPortName: MidUndergroundCaveBand
+    ToNodeId: mid-underground-cave-pockets
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: feature-open-caves
+    FromPortName: OpenCaves
+    ToNodeId: ice-feature-open-caves
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: forest-deep-cave-automata
+    FromPortName: ForestDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: jungle-deep-cave-automata
+    FromPortName: JungleDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: desert-deep-cave-automata
+    FromPortName: DesertDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: ice-deep-cave-automata
+    FromPortName: IceDeepAutomataCaves
+    ToNodeId: biome-deep-cave-automata
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: combined-automata-caves
+    FromPortName: CombinedAutomataCaves
+    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 38ae7165-dbb6-4aa0-9718-2724031e98af
+    FromPortName: DeepCaverns
+    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    FromPortName: ShallowCavePockets
+    ToNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    FromPortName: BaseOpenCaves
+    ToNodeId: staged-base-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: upper-underground-cave-pockets
+    FromPortName: UpperUndergroundSmallCaves
+    ToNodeId: staged-base-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: mid-underground-cave-pockets
+    FromPortName: MidUndergroundGrowingCaves
+    ToNodeId: staged-base-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: staged-base-open-caves
+    FromPortName: StagedBaseOpenCaves
+    ToNodeId: shallow-worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: surface-entrance-worms
+    FromPortName: SurfaceEntranceWorms
+    ToNodeId: shallow-worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: shallow-perlin-worm-caves
+    FromPortName: ShallowPerlinWormCaves
+    ToNodeId: shallow-worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: shallow-worm-open-caves
+    FromPortName: ShallowWormOpenCaves
+    ToNodeId: worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: perlin-worm-caves
+    FromPortName: PerlinWormCaves
+    ToNodeId: worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: large-deep-perlin-worm-caves
+    FromPortName: LargeDeepPerlinWormCaves
+    ToNodeId: worm-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: worm-open-caves
+    FromPortName: WormOpenCaves
+    ToNodeId: feature-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: MossPockets
+    ToNodeId: feature-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  - FromNodeId: CaveGeneration-input
+    FromPortName: CrystalPockets
+    ToNodeId: feature-open-caves
+    ToPortName: Masks
+    CastMode: 0
+  StickyNotes: []
+  Groups:
+  - GroupId: CaveGeneration-group
+    Title: Cave Masks
+    Position:
+      serializedVersion: 2
+      x: -4034.5737
+      y: -1295.5063
+      width: 2934.5737
+      height: 2258.9863
+    ContainedNodeIds:
+    - 117ee7e3-3ac7-4ff7-9338-20d1e57e3f22
+    - e7ffce99-ad02-423f-ba30-a5f7898c635d
+    - forest-deep-cave-automata
+    - jungle-deep-cave-region
+    - jungle-deep-cave-automata
+    - desert-deep-cave-region
+    - desert-deep-cave-automata
+    - ice-deep-cave-region
+    - ice-deep-cave-automata
+    - biome-deep-cave-automata
+    - combined-automata-caves
+    - 38ae7165-dbb6-4aa0-9718-2724031e98af
+    - 3b7350ec-6d79-4a06-97c3-0f2d98a4c5d5
+    - upper-underground-cave-band
+    - upper-underground-cave-pockets
+    - mid-underground-cave-band
+    - mid-underground-cave-pockets
+    - staged-base-open-caves
+    - surface-entrance-worms
+    - shallow-perlin-worm-caves
+    - shallow-worm-open-caves
+    - perlin-worm-caves
+    - worm-open-caves
+    - large-deep-perlin-worm-caves
+    - feature-open-caves
+    - ice-feature-open-caves
+    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+  ExposedProperties: []

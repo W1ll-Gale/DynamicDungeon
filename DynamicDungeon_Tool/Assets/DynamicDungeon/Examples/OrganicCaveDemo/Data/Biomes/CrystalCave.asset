@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38a9e45a561565446a68d8149bca61cf, type: 3}
+  m_Name: CrystalCave
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Biome.BiomeAsset
+  TileMappings:
+  - LogicalId: 0
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 72bc1e25697979e4d83b74937e2a9890, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 1
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 72bc1e25697979e4d83b74937e2a9890, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 11
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 72bc1e25697979e4d83b74937e2a9890, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 15
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 3b294627562aafc4aaa8c25ac61e83ac, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 18
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 91d3f58ad7fa2254182bf9191c9af7dc, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 20
+    TileType: 0
+    Tile: {fileID: 11400000, guid: f2daa2e70c742714c9ec33cfda053601, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 21
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 4f7c199a1ca00cb47aefa5382e691294, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 22
+    TileType: 0
+    Tile: {fileID: 11400000, guid: 72b8e9a7ef8296345845036cb68b1f2e, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 23
+    TileType: 0
+    Tile: {fileID: 11400000, guid: e7ffac982c93b524592889b7ba75a87d, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 24
+    TileType: 0
+    Tile: {fileID: 11400000, guid: efcdfad7c8fea6c459b354d2e4daa61d, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 25
+    TileType: 0
+    Tile: {fileID: 11400000, guid: efcdfad7c8fea6c459b354d2e4daa61d, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 26
+    TileType: 0
+    Tile: {fileID: 11400000, guid: cfb82d111af3bdb49a2e9e0de5260ee5, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []
+  - LogicalId: 27
+    TileType: 0
+    Tile: {fileID: 11400000, guid: cfb82d111af3bdb49a2e9e0de5260ee5, type: 2}
+    SpriteAsset: {fileID: 0}
+    WeightedTiles: []

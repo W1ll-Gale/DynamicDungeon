@@ -1,0 +1,283 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f86ba72fb48efef488c2488674752737, type: 3}
+  m_Name: BiomeLayout
+  m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
+  SchemaVersion: 5
+  WorldWidth: 512
+  WorldHeight: 192
+  DefaultSeed: 246813579
+  DefaultSeedMode: 1
+  MaxValidationRetries: 1
+  Biome: {fileID: 11400000, guid: 51fe096708f655e40a649cfeee3e895b, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
+  PromoteBlackboardToParentScope: 0
+  Nodes:
+  - NodeId: biome-layout-randomized
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeLayoutNode
+    NodeName: Random Biome Layout
+    Position: {x: -847.714, y: 591.3216}
+    Ports:
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: layoutMode
+      Value: Strips
+      ObjectReference: {fileID: 0}
+    - Name: axis
+      Value: X
+      ObjectReference: {fileID: 0}
+    - Name: minRegionSize
+      Value: 28
+      ObjectReference: {fileID: 0}
+    - Name: maxRegionSize
+      Value: 72
+      ObjectReference: {fileID: 0}
+    - Name: cellSize
+      Value: 32
+      ObjectReference: {fileID: 0}
+    - Name: blendWidth
+      Value: 16
+      ObjectReference: {fileID: 0}
+    - Name: rules
+      Value: '{"Entries":[{"Biome":"51fe096708f655e40a649cfeee3e895b","Weight":1.2,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"3be4ddcae4c96414792c22259a877e32","Weight":1.0,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"1b2f425e07827a04d85c36901bf9e45e","Weight":0.95,"MinSize":28,"MaxSize":72,"Enabled":true},{"Biome":"efc61188ae998b342b58212389e649eb","Weight":0.85,"MinSize":28,"MaxSize":72,"Enabled":true}],"Constraints":[{"Type":0,"Biome":"51fe096708f655e40a649cfeee3e895b","Size":64,"Enabled":true},{"Type":3,"Biome":"3be4ddcae4c96414792c22259a877e32","Size":32,"Enabled":true},{"Type":3,"Biome":"1b2f425e07827a04d85c36901bf9e45e","Size":32,"Enabled":true},{"Type":3,"Biome":"efc61188ae998b342b58212389e649eb","Size":32,"Enabled":true}]}'
+      ObjectReference: {fileID: 0}
+  - NodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Jungle Presence
+    Position: {x: -90.12457, y: 590.99976}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: JungleBiomeMask
+      DisplayName: JungleBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 3be4ddcae4c96414792c22259a877e32
+      ObjectReference: {fileID: 0}
+  - NodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Ice Presence
+    Position: {x: -90.12457, y: 830.99976}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: IceBiomeMask
+      DisplayName: IceBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: efc61188ae998b342b58212389e649eb
+      ObjectReference: {fileID: 0}
+  - NodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Forest Mask
+    Position: {x: 374.286, y: 470.3216}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: ForestBiomeMask
+      DisplayName: ForestBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 51fe096708f655e40a649cfeee3e895b
+      ObjectReference: {fileID: 0}
+  - NodeId: 8104437b-0d86-42e7-b702-88b0035651e6
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Final Jungle Mask
+    Position: {x: 372.286, y: 748.3216}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: FinalJungleBiomeMask
+      DisplayName: FinalJungleBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 3be4ddcae4c96414792c22259a877e32
+      ObjectReference: {fileID: 0}
+  - NodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Desert Mask
+    Position: {x: 372.286, y: 1023.3216}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: DesertBiomeMask
+      DisplayName: DesertBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: 1b2f425e07827a04d85c36901bf9e45e
+      ObjectReference: {fileID: 0}
+  - NodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
+    NodeName: Final Ice Mask
+    Position: {x: 372.286, y: 1289.3215}
+    Ports:
+    - PortName: Biome Channel
+      DisplayName: Biome Channel
+      Direction: 0
+      Type: 1
+    - PortName: FinalIceBiomeMask
+      DisplayName: FinalIceBiomeMask
+      Direction: 1
+      Type: 0
+    Parameters:
+    - Name: biome
+      Value: efc61188ae998b342b58212389e649eb
+      ObjectReference: {fileID: 0}
+  - NodeId: BiomeLayout-input
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
+    NodeName: Sub Graph Input
+    Position: {x: -1107.714, y: 959.82153}
+    Ports: []
+    Parameters: []
+  - NodeId: BiomeLayout-output
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
+    NodeName: Sub Graph Output
+    Position: {x: 854.286, y: 959.82153}
+    Ports:
+    - PortName: ForestBiomeMask
+      DisplayName: ForestBiomeMask
+      Direction: 0
+      Type: 0
+    - PortName: FinalJungleBiomeMask
+      DisplayName: FinalJungleBiomeMask
+      Direction: 0
+      Type: 0
+    - PortName: DesertBiomeMask
+      DisplayName: DesertBiomeMask
+      Direction: 0
+      Type: 0
+    - PortName: FinalIceBiomeMask
+      DisplayName: FinalIceBiomeMask
+      Direction: 0
+      Type: 0
+    - PortName: JungleBiomeMask
+      DisplayName: JungleBiomeMask
+      Direction: 0
+      Type: 0
+    - PortName: IceBiomeMask
+      DisplayName: IceBiomeMask
+      Direction: 0
+      Type: 0
+    - PortName: BiomeChannel
+      DisplayName: BiomeChannel
+      Direction: 0
+      Type: 1
+    Parameters: []
+  Connections:
+  - FromNodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    FromPortName: ForestBiomeMask
+    ToNodeId: BiomeLayout-output
+    ToPortName: ForestBiomeMask
+    CastMode: 0
+  - FromNodeId: 8104437b-0d86-42e7-b702-88b0035651e6
+    FromPortName: FinalJungleBiomeMask
+    ToNodeId: BiomeLayout-output
+    ToPortName: FinalJungleBiomeMask
+    CastMode: 0
+  - FromNodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    FromPortName: DesertBiomeMask
+    ToNodeId: BiomeLayout-output
+    ToPortName: DesertBiomeMask
+    CastMode: 0
+  - FromNodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
+    FromPortName: FinalIceBiomeMask
+    ToNodeId: BiomeLayout-output
+    ToPortName: FinalIceBiomeMask
+    CastMode: 0
+  - FromNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    FromPortName: JungleBiomeMask
+    ToNodeId: BiomeLayout-output
+    ToPortName: JungleBiomeMask
+    CastMode: 0
+  - FromNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    FromPortName: IceBiomeMask
+    ToNodeId: BiomeLayout-output
+    ToPortName: IceBiomeMask
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: BiomeLayout-output
+    ToPortName: BiomeChannel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 8104437b-0d86-42e7-b702-88b0035651e6
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    ToPortName: Biome Channel
+    CastMode: 0
+  - FromNodeId: biome-layout-randomized
+    FromPortName: BiomeChannel
+    ToNodeId: 50201328-914f-4481-9b5a-2d6229ea5c38
+    ToPortName: Biome Channel
+    CastMode: 0
+  StickyNotes: []
+  Groups:
+  - GroupId: BiomeLayout-group
+    Title: Biome Layout
+    Position:
+      serializedVersion: 2
+      x: -967.714
+      y: 350.3216
+      width: 1682
+      height: 1219
+    ContainedNodeIds:
+    - biome-layout-randomized
+    - 2c999f26-725b-48aa-b73b-eabb740d6e8b
+    - 7591bc97-48a0-4aff-804c-d59fb590d3ba
+    - b1a47d07-6fc3-4c81-9515-989be3c0bfe4
+    - 8104437b-0d86-42e7-b702-88b0035651e6
+    - 61392cbf-7b6b-4f3a-9954-7dd29f160245
+    - 50201328-914f-4481-9b5a-2d6229ea5c38
+    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+  ExposedProperties: []
