@@ -608,7 +608,7 @@ namespace DynamicDungeon.Editor.Inspectors
             if (layerDefinition != null && elementProperty.isExpanded)
             {
                 float bodyWidth = Mathf.Max(rect.width - 20.0f - (InlineInspectorPadding * 2.0f), 240.0f);
-                float contentHeight = TilemapLayerDefinitionEditor.GetEmbeddedInspectorHeight(layerDefinition, TileSemanticRegistry.GetOrLoad(), bodyWidth);
+                float contentHeight = TilemapLayerDefinitionEditor.GetEmbeddedInspectorHeight(layerDefinition, GetActiveRegistry(), bodyWidth);
                 Rect bodyRect = new Rect(
                     rect.x + 20.0f,
                     rect.yMax + InlineInspectorSpacing,
@@ -623,7 +623,7 @@ namespace DynamicDungeon.Editor.Inspectors
                     bodyRect.height - (InlineInspectorPadding * 2.0f));
 
                 SerializedObject layerSerializedObject = new SerializedObject(layerDefinition);
-                TilemapLayerDefinitionEditor.DrawEmbeddedInspector(contentRect, layerSerializedObject, layerDefinition, TileSemanticRegistry.GetOrLoad());
+                TilemapLayerDefinitionEditor.DrawEmbeddedInspector(contentRect, layerSerializedObject, layerDefinition, GetActiveRegistry());
             }
         }
 
@@ -674,6 +674,12 @@ namespace DynamicDungeon.Editor.Inspectors
         private static void EndSection()
         {
             CollapsibleInspectorSection.End();
+        }
+
+        private TileSemanticRegistry GetActiveRegistry()
+        {
+            GenGraph graph = _graphProperty.objectReferenceValue as GenGraph;
+            return (graph != null ? graph.TileSemanticRegistry : null) ?? TileSemanticRegistry.GetOrLoad();
         }
 
         private void OpenAssignedGraph()

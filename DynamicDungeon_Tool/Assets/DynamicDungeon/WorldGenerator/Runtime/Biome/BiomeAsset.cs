@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DynamicDungeon.Runtime.Semantic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -6,6 +7,7 @@ namespace DynamicDungeon.Runtime.Biome
 {
     public sealed class BiomeAsset : ScriptableObject
     {
+        public TileSemanticRegistry SemanticRegistry;
         public List<BiomeTileMapping> TileMappings = new List<BiomeTileMapping>();
 
         private void OnDisable()
@@ -24,7 +26,7 @@ namespace DynamicDungeon.Runtime.Biome
             for (index = 0; index < TileMappings.Count; index++)
             {
                 BiomeTileMapping mapping = TileMappings[index];
-                if (mapping != null && mapping.LogicalId == logicalId)
+                if (mapping != null && mapping.LogicalIds != null && mapping.LogicalIds.Contains(logicalId))
                 {
                     return TryResolveTile(mapping, cellPosition, out tile);
                 }

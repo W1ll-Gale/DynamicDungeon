@@ -83,7 +83,7 @@ namespace DynamicDungeon.Tests.Editor
             try
             {
                 BiomeTileMapping mapping = new BiomeTileMapping();
-                mapping.LogicalId = LogicalTileId.Wall;
+                mapping.LogicalIds = new System.Collections.Generic.List<ushort> { (ushort)LogicalTileId.Wall };
                 biome.TileMappings.Add(mapping);
                 layerDefinition.RoutingTags.Add("Solid");
 

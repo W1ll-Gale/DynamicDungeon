@@ -19,7 +19,7 @@ MonoBehaviour:
   - LogicalId: 1
     DisplayName: Shallow Water
     Tags:
-    - Walkable
+    - Liquid
   - LogicalId: 2
     DisplayName: Wall
     Tags:
@@ -32,6 +32,10 @@ MonoBehaviour:
     DisplayName: Access
     Tags:
     - Trigger
+  - LogicalId: 10
+    DisplayName: Grass
+    Tags:
+    - Walkable
   - LogicalId: 12
     DisplayName: Sand
     Tags:
@@ -39,11 +43,11 @@ MonoBehaviour:
   - LogicalId: 14
     DisplayName: Deep Water
     Tags:
-    - Walkable
+    - Liquid
   - LogicalId: 16
     DisplayName: Medium Water
     Tags:
-    - Walkable
+    - Liquid
   - LogicalId: 21
     DisplayName: Land
     Tags:

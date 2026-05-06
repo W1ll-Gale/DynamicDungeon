@@ -248,7 +248,7 @@ namespace DynamicDungeon.Tests.Runtime
                 AddRegistryEntry(registry, LogicalTileId.Floor, "Floor", "Walkable");
                 biome.TileMappings.Add(new BiomeTileMapping
                 {
-                    LogicalId = LogicalTileId.Floor,
+                    LogicalIds = new List<ushort> { (ushort)LogicalTileId.Floor },
                     TileType = TileMappingType.Sprite,
                     SpriteAsset = sprite
                 });
@@ -283,7 +283,7 @@ namespace DynamicDungeon.Tests.Runtime
         private static void AddBiomeMapping(BiomeAsset biome, ushort logicalId, TileBase tile)
         {
             BiomeTileMapping mapping = new BiomeTileMapping();
-            mapping.LogicalId = logicalId;
+            mapping.LogicalIds = new System.Collections.Generic.List<ushort> { logicalId };
             mapping.Tile = tile;
             biome.TileMappings.Add(mapping);
         }
@@ -291,7 +291,7 @@ namespace DynamicDungeon.Tests.Runtime
         private static void AddWeightedBiomeMapping(BiomeAsset biome, ushort logicalId, TileBase firstTile, float firstWeight, TileBase secondTile, float secondWeight)
         {
             BiomeTileMapping mapping = new BiomeTileMapping();
-            mapping.LogicalId = logicalId;
+            mapping.LogicalIds = new System.Collections.Generic.List<ushort> { logicalId };
             mapping.TileType = TileMappingType.WeightedRandom;
             mapping.WeightedTiles.Add(new WeightedTileEntry
             {
