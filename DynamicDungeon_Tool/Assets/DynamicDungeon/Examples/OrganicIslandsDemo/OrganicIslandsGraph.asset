@@ -13,19 +13,603 @@ MonoBehaviour:
   m_Name: OrganicIslandsGraph
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Graph.GenGraph
   SchemaVersion: 5
-  WorldWidth: 256
+  WorldWidth: 512
   WorldHeight: 256
   DefaultSeed: 777
   DefaultSeedMode: 1
   MaxValidationRetries: 1
-  Biome: {fileID: 0}
-  TileSemanticRegistry: {fileID: 0}
+  Biome: {fileID: 11400000, guid: 3820e94f8767a444b9b8cc01e5db27a2, type: 2}
+  TileSemanticRegistry: {fileID: 11400000, guid: 46308191b3595fb49ac076fae88de623, type: 2}
   PromoteBlackboardToParentScope: 0
   Nodes:
+  - NodeId: island-noise
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SimplexNoiseNode
+    NodeName: Island Noise
+    Position: {x: -3200, y: 0}
+    Ports:
+    - PortName: island-raw-noise
+      DisplayName: island-raw-noise
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: island-raw-noise
+      ObjectReference: {fileID: 0}
+    - Name: frequency
+      Value: 0.006
+      ObjectReference: {fileID: 0}
+    - Name: amplitude
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: offset
+      Value: 0,0
+      ObjectReference: {fileID: 0}
+  - NodeId: island-fractal
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.FractalNoiseNode
+    NodeName: Island Fractal
+    Position: {x: -2850, y: 0}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: island-fractal-noise
+      DisplayName: island-fractal-noise
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: island-fractal-noise
+      ObjectReference: {fileID: 0}
+    - Name: octaves
+      Value: 6
+      ObjectReference: {fileID: 0}
+    - Name: lacunarity
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: persistence
+      Value: 0.55
+      ObjectReference: {fileID: 0}
+  - NodeId: island-voronoi
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.VoronoiNoiseNode
+    NodeName: Island Voronoi
+    Position: {x: -3200, y: -300}
+    Ports:
+    - PortName: Distance__island-voronoi
+      DisplayName: Distance
+      Direction: 1
+      Type: 1
+    - PortName: CellId__island-voronoi
+      DisplayName: CellId
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: frequency
+      Value: 0.015
+      ObjectReference: {fileID: 0}
+    - Name: offset
+      Value: 0,0
+      ObjectReference: {fileID: 0}
+  - NodeId: voronoi-scale
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Voronoi Scale
+    Position: {x: -2850, y: -300}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 1
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 1
+    - PortName: voronoi-scaled
+      DisplayName: voronoi-scaled
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: voronoi-scaled
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.35
+      ObjectReference: {fileID: 0}
+  - NodeId: terrain-subtract
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Voronoi Terrain Blend
+    Position: {x: -2500, y: -150}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 1
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 1
+    - PortName: terrain-combined
+      DisplayName: terrain-combined
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: terrain-combined
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: Subtract
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: land-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Land Threshold
+    Position: {x: -2100, y: 0}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: raw-land-mask
+      DisplayName: raw-land-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: terrain-combined
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: raw-land-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.45
+      ObjectReference: {fileID: 0}
+  - NodeId: island-smooth
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
+    NodeName: Island Smooth
+    Position: {x: -1750, y: 0}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: smooth-land-mask
+      DisplayName: smooth-land-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: raw-land-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: smooth-land-mask
+      ObjectReference: {fileID: 0}
+    - Name: iterations
+      Value: 2
+      ObjectReference: {fileID: 0}
+    - Name: initialFillProbability
+      Value: 0.5
+      ObjectReference: {fileID: 0}
+    - Name: birthRule
+      Value: 5678
+      ObjectReference: {fileID: 0}
+    - Name: survivalRule
+      Value: 45678
+      ObjectReference: {fileID: 0}
+    - Name: inputMode
+      Value: UseInputAsInitialState
+      ObjectReference: {fileID: 0}
+  - NodeId: ocean-invert
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Ocean Mask
+    Position: {x: -1400, y: -200}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: ocean-mask
+      DisplayName: ocean-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: smooth-land-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: ocean-mask
+      ObjectReference: {fileID: 0}
+  - NodeId: ocean-df
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
+    NodeName: Ocean Distance Field
+    Position: {x: -1050, y: -200}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: ocean-distance
+      DisplayName: ocean-distance
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: ocean-distance
+      ObjectReference: {fileID: 0}
+  - NodeId: beach-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Beach Distance Threshold
+    Position: {x: -700, y: -200}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: beach-far-mask
+      DisplayName: beach-far-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: ocean-distance
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: beach-far-mask
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.007
+      ObjectReference: {fileID: 0}
+  - NodeId: beach-near-invert
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.InvertNode
+    NodeName: Beach Near Mask
+    Position: {x: -350, y: -200}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: beach-near-mask
+      DisplayName: beach-near-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: beach-far-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: beach-near-mask
+      ObjectReference: {fileID: 0}
+  - NodeId: beach-and
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Beach Mask
+    Position: {x: 100, y: -100}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: beach-mask
+      DisplayName: beach-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputAChannelName
+      Value: beach-near-mask
+      ObjectReference: {fileID: 0}
+    - Name: inputBChannelName
+      Value: smooth-land-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: beach-mask
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: land-df
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.DistanceFieldNode
+    NodeName: Land Distance Field
+    Position: {x: -1400, y: 300}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: land-distance
+      DisplayName: land-distance
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: land-distance
+      ObjectReference: {fileID: 0}
+  - NodeId: shore-noise
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.SimplexNoiseNode
+    NodeName: Shore Noise
+    Position: {x: -1400, y: 500}
+    Ports:
+    - PortName: shore-noise-raw
+      DisplayName: shore-noise-raw
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: shore-noise-raw
+      ObjectReference: {fileID: 0}
+    - Name: frequency
+      Value: 0.025
+      ObjectReference: {fileID: 0}
+    - Name: amplitude
+      Value: 1
+      ObjectReference: {fileID: 0}
+    - Name: offset
+      Value: 0,0
+      ObjectReference: {fileID: 0}
+  - NodeId: shore-noise-scale
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Shore Noise Scale
+    Position: {x: -1050, y: 500}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 1
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 1
+    - PortName: shore-noise-scaled
+      DisplayName: shore-noise-scaled
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: shore-noise-scaled
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: Multiply
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0.025
+      ObjectReference: {fileID: 0}
+  - NodeId: land-dist-noisy
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.MathNode
+    NodeName: Land Dist Noisy
+    Position: {x: -700, y: 400}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 1
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 1
+    - PortName: land-dist-noisy-out
+      DisplayName: land-dist-noisy-out
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: land-dist-noisy-out
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: Add
+      ObjectReference: {fileID: 0}
+    - Name: scalarB
+      Value: 0
+      ObjectReference: {fileID: 0}
+  - NodeId: deep-water-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Deep Water Threshold
+    Position: {x: -1050, y: 300}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: deep-water-raw
+      DisplayName: deep-water-raw
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: land-dist-noisy-out
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: deep-water-raw
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.05
+      ObjectReference: {fileID: 0}
+  - NodeId: deep-water-and
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Deep Water Ocean Mask
+    Position: {x: -700, y: 300}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: deep-water-mask
+      DisplayName: deep-water-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputAChannelName
+      Value: deep-water-raw
+      ObjectReference: {fileID: 0}
+    - Name: inputBChannelName
+      Value: ocean-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: deep-water-mask
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: medium-threshold
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
+    NodeName: Medium Water Threshold
+    Position: {x: -350, y: 500}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 1
+    - PortName: medium-far-raw
+      DisplayName: medium-far-raw
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputChannelName
+      Value: land-dist-noisy-out
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: medium-far-raw
+      ObjectReference: {fileID: 0}
+    - Name: threshold
+      Value: 0.015
+      ObjectReference: {fileID: 0}
+  - NodeId: medium-water-and
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
+    NodeName: Medium Water Mask
+    Position: {x: 100, y: 500}
+    Ports:
+    - PortName: A
+      DisplayName: A
+      Direction: 0
+      Type: 2
+    - PortName: B
+      DisplayName: B
+      Direction: 0
+      Type: 2
+    - PortName: medium-water-mask
+      DisplayName: medium-water-mask
+      Direction: 1
+      Type: 2
+    Parameters:
+    - Name: inputAChannelName
+      Value: medium-far-raw
+      ObjectReference: {fileID: 0}
+    - Name: inputBChannelName
+      Value: ocean-mask
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: medium-water-mask
+      ObjectReference: {fileID: 0}
+    - Name: operation
+      Value: AND
+      ObjectReference: {fileID: 0}
+  - NodeId: medium-water-overlay
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
+    NodeName: Medium Water Overlay
+    Position: {x: 450, y: 500}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: with-medium-ids
+      DisplayName: with-medium-ids
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overlayLogicalId
+      Value: 16
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: with-medium-ids
+      ObjectReference: {fileID: 0}
+  - NodeId: base-ids
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.BoolMaskToLogicalIdNode
+    NodeName: Base Logical IDs
+    Position: {x: 100, y: 200}
+    Ports:
+    - PortName: Input
+      DisplayName: Input
+      Direction: 0
+      Type: 2
+    - PortName: base-logical-ids
+      DisplayName: base-logical-ids
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: outputChannelName
+      Value: base-logical-ids
+      ObjectReference: {fileID: 0}
+    - Name: trueLogicalId
+      Value: 10
+      ObjectReference: {fileID: 0}
+    - Name: falseLogicalId
+      Value: 1
+      ObjectReference: {fileID: 0}
+  - NodeId: deep-water-overlay
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
+    NodeName: Deep Water Overlay
+    Position: {x: 450, y: 300}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: with-deep-ids
+      DisplayName: with-deep-ids
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overlayLogicalId
+      Value: 14
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: with-deep-ids
+      ObjectReference: {fileID: 0}
+  - NodeId: beach-overlay
+    NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdOverlayNode
+    NodeName: Beach Overlay
+    Position: {x: 800, y: 0}
+    Ports:
+    - PortName: Base
+      DisplayName: Base
+      Direction: 0
+      Type: 1
+    - PortName: Mask
+      DisplayName: Mask
+      Direction: 0
+      Type: 2
+    - PortName: final-island-ids
+      DisplayName: final-island-ids
+      Direction: 1
+      Type: 1
+    Parameters:
+    - Name: overlayLogicalId
+      Value: 12
+      ObjectReference: {fileID: 0}
+    - Name: outputChannelName
+      Value: final-island-ids
+      ObjectReference: {fileID: 0}
   - NodeId: graph-output
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Graph Output
-    Position: {x: 1114.9071, y: 61.99996}
+    Position: {x: 1200, y: 61.99996}
     Ports:
     - PortName: LogicalIds
       DisplayName: LogicalIds
@@ -36,7 +620,157 @@ MonoBehaviour:
       Direction: 0
       Type: 1
     Parameters: []
-  Connections: []
+  Connections:
+  - FromNodeId: island-noise
+    FromPortName: island-raw-noise
+    ToNodeId: island-fractal
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: island-fractal
+    FromPortName: island-fractal-noise
+    ToNodeId: terrain-subtract
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: island-voronoi
+    FromPortName: Distance__island-voronoi
+    ToNodeId: voronoi-scale
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: voronoi-scale
+    FromPortName: voronoi-scaled
+    ToNodeId: terrain-subtract
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: terrain-subtract
+    FromPortName: terrain-combined
+    ToNodeId: land-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: land-threshold
+    FromPortName: raw-land-mask
+    ToNodeId: island-smooth
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: island-smooth
+    FromPortName: smooth-land-mask
+    ToNodeId: ocean-invert
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: island-smooth
+    FromPortName: smooth-land-mask
+    ToNodeId: beach-and
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: island-smooth
+    FromPortName: smooth-land-mask
+    ToNodeId: base-ids
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: island-smooth
+    FromPortName: smooth-land-mask
+    ToNodeId: land-df
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ocean-invert
+    FromPortName: ocean-mask
+    ToNodeId: ocean-df
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: ocean-invert
+    FromPortName: ocean-mask
+    ToNodeId: deep-water-and
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: ocean-df
+    FromPortName: ocean-distance
+    ToNodeId: beach-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: beach-threshold
+    FromPortName: beach-far-mask
+    ToNodeId: beach-near-invert
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: beach-near-invert
+    FromPortName: beach-near-mask
+    ToNodeId: beach-and
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: land-df
+    FromPortName: land-distance
+    ToNodeId: land-dist-noisy
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: shore-noise
+    FromPortName: shore-noise-raw
+    ToNodeId: shore-noise-scale
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: shore-noise-scale
+    FromPortName: shore-noise-scaled
+    ToNodeId: land-dist-noisy
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: land-dist-noisy
+    FromPortName: land-dist-noisy-out
+    ToNodeId: deep-water-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: deep-water-threshold
+    FromPortName: deep-water-raw
+    ToNodeId: deep-water-and
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: base-ids
+    FromPortName: base-logical-ids
+    ToNodeId: medium-water-overlay
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: land-dist-noisy
+    FromPortName: land-dist-noisy-out
+    ToNodeId: medium-threshold
+    ToPortName: Input
+    CastMode: 0
+  - FromNodeId: medium-threshold
+    FromPortName: medium-far-raw
+    ToNodeId: medium-water-and
+    ToPortName: A
+    CastMode: 0
+  - FromNodeId: ocean-invert
+    FromPortName: ocean-mask
+    ToNodeId: medium-water-and
+    ToPortName: B
+    CastMode: 0
+  - FromNodeId: medium-water-and
+    FromPortName: medium-water-mask
+    ToNodeId: medium-water-overlay
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: medium-water-overlay
+    FromPortName: with-medium-ids
+    ToNodeId: deep-water-overlay
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: deep-water-and
+    FromPortName: deep-water-mask
+    ToNodeId: deep-water-overlay
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: deep-water-overlay
+    FromPortName: with-deep-ids
+    ToNodeId: beach-overlay
+    ToPortName: Base
+    CastMode: 0
+  - FromNodeId: beach-and
+    FromPortName: beach-mask
+    ToNodeId: beach-overlay
+    ToPortName: Mask
+    CastMode: 0
+  - FromNodeId: beach-overlay
+    FromPortName: final-island-ids
+    ToNodeId: graph-output
+    ToPortName: LogicalIds
+    CastMode: 0
   StickyNotes: []
   Groups: []
   ExposedProperties: []
