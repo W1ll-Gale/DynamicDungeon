@@ -10,7 +10,7 @@ The **World Generator** is a node-based procedural generation tool designed to c
 The "brain" of the generator. A `GenGraph` is a node graph asset where you define your generation logic.
 *   **Nodes**: The individual operations (e.g., Perlin Noise, Threshold, Math).
 *   **Ports**: Connection points that pass data between nodes.
-*   **Channels**: The data flowing through ports (Float, Int, Bool Mask, Point List, Placements).
+*   **Channels**: The data flowing through ports (![](https://placehold.co/10/808080/808080.png) Float, ![](https://placehold.co/10/3366E6/3366E6.png) Int, ![](https://placehold.co/10/FFD700/FFD700.png) Bool Mask, ![](https://placehold.co/10/FF69B4/FF69B4.png) Point List, ![](https://placehold.co/10/33CC33/33CC33.png) Placements).
 
 ### 2. Biomes
 A `BiomeAsset` defines how **Logical IDs** are translated into actual Unity tiles.

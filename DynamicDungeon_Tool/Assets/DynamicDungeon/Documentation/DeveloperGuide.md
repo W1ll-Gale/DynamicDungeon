@@ -63,11 +63,11 @@ The system supports five primary data types for ports:
 
 | Type | Port Definition | C# Underlying Type |
 |---|---|---|
-| **Float** | `ChannelType.Float` | `NativeArray<float>` |
-| **Int** | `ChannelType.Int` | `NativeArray<int>` |
-| **Bool Mask**| `ChannelType.BoolMask`| `NativeArray<byte>` (0 or 1) |
-| **Point List**| `ChannelType.PointList`| `NativeList<float2>` |
-| **Placements**| `ChannelType.Placements`| `NativeList<PlacementRecord>` |
+| ![](https://placehold.co/10/808080/808080.png) **Float** | `ChannelType.Float` | `NativeArray<float>` |
+| ![](https://placehold.co/10/3366E6/3366E6.png) **Int** | `ChannelType.Int` | `NativeArray<int>` |
+| ![](https://placehold.co/10/FFD700/FFD700.png) **Bool Mask**| `ChannelType.BoolMask`| `NativeArray<byte>` (0 or 1) |
+| ![](https://placehold.co/10/FF69B4/FF69B4.png) **Point List**| `ChannelType.PointList`| `NativeList<float2>` |
+| ![](https://placehold.co/10/33CC33/33CC33.png) **Placements**| `ChannelType.Placements`| `NativeList<PlacementRecord>` |
 
 ---
 
@@ -120,4 +120,5 @@ if (result.Success)
 
 ---
 
-[← Back to README](../../../../../README.md)
+[← Back to README](../../../../README.md)
+

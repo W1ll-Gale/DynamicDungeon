@@ -1,6 +1,6 @@
 # Glossary of Terms
 
-[← Back to README](../../README.md)
+[← Back to README](../../../../README.md)
 
 This document provides definitions for the key concepts and terminology used within the **Dynamic Dungeon** toolset.
 
@@ -63,4 +63,4 @@ A starting value for the pseudo-random number generator. Using the same seed wit
 
 ---
 
-[← Back to README](../../README.md)
+[← Back to README](../../../../README.md)
