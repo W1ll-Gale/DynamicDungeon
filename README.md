@@ -4,15 +4,10 @@
 
 ---
 
-## Node Reference
-
-This comprehensive reference documents all available nodes in the Dynamic Dungeon toolset, categorized by their functional role. Each entry outlines the required port connections and provides a summary of the node's procedural logic.
-
----
-
 ### Quick Navigation
 
 *   [Data Types Legend](#data-types-legend)
+*   [Detailed Tool Documentation](#detailed-tool-documentation)
 *   [Noise Nodes](#noise-nodes)
 *   [Filter & Transform Nodes](#filter--transform-nodes)
 *   [Maths & Composite Nodes](#maths--composite-nodes)
@@ -38,6 +33,22 @@ Understanding the data types flowing between ports is essential for building val
 | **Placements** | Green Port | Advanced records including asset references, rotation, and mirroring. |
 
 ---
+
+## Detailed Tool Documentation
+
+For in-depth guides on the two primary systems in Dynamic Dungeon, please refer to the following documents:
+
+*   **[Constraint Generator](DynamicDungeon_Tool/Assets/DynamicDungeon/ConstraintDungeon/Documentation/ConstraintGenerator.md)**: High-level layout engine for rooms, corridors, and connectivity.
+*   **[World Generator](DynamicDungeon_Tool/Assets/DynamicDungeon/WorldGenerator/Documentation/WorldGenerator.md)**: Low-level node-based graph tool for tilemaps and prefab placement.
+
+---
+
+## Node Reference
+
+This comprehensive reference documents all available nodes in the Dynamic Dungeon toolset, categorised by their functional role. Each entry outlines the required port connections and provides a summary of the node's procedural logic.
+
+---
+
 
 ### Noise Nodes
 
@@ -74,7 +85,7 @@ Nodes that modify existing channels to refine shapes or extract specific feature
 | `AxisBandNode` | *(none)* | Float | Generates a horizontal or vertical band at a fixed coordinate range. |
 | `HeightBandNode` | *(none)* | Float | Specialised Axis Band for vertical height with support for anchoring to world top/bottom. |
 | `HeightGradient` | *(none)* | Float | Simple vertical 0-1 gradient covering the full world height. |
-| `ColumnSurfaceBand` | *(none)* | Float | Specialized Axis Band for surface-relative features in column-based maps. |
+| `ColumnSurfaceBand` | *(none)* | Float | Specialised Axis Band for surface-relative features in column-based maps. |
 
 ---
 
