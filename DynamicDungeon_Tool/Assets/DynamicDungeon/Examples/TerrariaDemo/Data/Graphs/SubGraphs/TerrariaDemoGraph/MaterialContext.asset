@@ -143,7 +143,7 @@ MonoBehaviour:
   - NodeId: 78481ce6-80f1-4922-9248-42531f3b19b2
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskStackNode
     NodeName: Surface Crust Mask (Mask Stack)
-    Position: {x: -3363.0005, y: 1891.0004}
+    Position: {x: -3363, y: 1888}
     Ports:
     - PortName: Masks
       DisplayName: Masks

@@ -8,6 +8,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [HideInNodeSearch]
     [SubGraphNode(SubGraphNode.NestedGraphParameterName)]
+    [NodeDisplayName("Sub Graph")]
     public sealed class SubGraphNode : IGenNode
     {
         public const string NestedGraphParameterName = "NestedGraph";
@@ -133,6 +134,7 @@ namespace DynamicDungeon.Runtime.Nodes
     }
 
     [HideInNodeSearch]
+    [NodeDisplayName("Sub Graph Input")]
     public sealed class SubGraphInputNode : IGenNode
     {
         public const string DefaultNodeName = "Sub Graph Input";
@@ -211,6 +213,7 @@ namespace DynamicDungeon.Runtime.Nodes
     }
 
     [HideInNodeSearch]
+    [NodeDisplayName("Sub Graph Output")]
     public sealed class SubGraphOutputNode : IGenNode, IInputConnectionReceiver
     {
         public const string DefaultNodeName = "Sub Graph Output";

@@ -9,7 +9,7 @@ namespace DynamicDungeon.Editor.Utilities
 {
     internal static class RegistryDropdown
     {
-        private readonly struct SearchOption
+        internal readonly struct SearchOption
         {
             public readonly string DisplayName;
             public readonly string SearchText;
@@ -25,7 +25,7 @@ namespace DynamicDungeon.Editor.Utilities
             }
         }
 
-        private sealed class SearchableOptionPopup : PopupWindowContent
+        internal sealed class SearchableOptionPopup : PopupWindowContent
         {
             private readonly List<SearchOption> _options;
             private readonly string _emptyStateText;
@@ -480,7 +480,7 @@ namespace DynamicDungeon.Editor.Utilities
             return -1;
         }
 
-        private static string GetSafeSearchTags(TileEntry entry)
+        internal static string GetSafeSearchTags(TileEntry entry)
         {
             if (entry == null || entry.Tags == null || entry.Tags.Count == 0)
             {

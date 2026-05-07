@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: SolidLayer
   m_EditorClassIdentifier: DynamicDungeon.Runtime::DynamicDungeon.Runtime.Semantic.TilemapLayerDefinition
   LayerName: Solid
+  ExcludedRegistryGuids: []
   RoutingTags:
   - Solid
   ComponentsToAdd:

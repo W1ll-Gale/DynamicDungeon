@@ -56,7 +56,7 @@ MonoBehaviour:
   - NodeId: 2c999f26-725b-48aa-b73b-eabb740d6e8b
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Jungle Presence (Biome Mask)
-    Position: {x: -90.12457, y: 590.99976}
+    Position: {x: -89.999954, y: 470.00003}
     Ports:
     - PortName: Biome Channel
       DisplayName: Biome Channel
@@ -73,7 +73,7 @@ MonoBehaviour:
   - NodeId: 7591bc97-48a0-4aff-804c-d59fb590d3ba
     NodeTypeName: DynamicDungeon.Runtime.Nodes.BiomeMaskNode
     NodeName: Ice Presence (Biome Mask)
-    Position: {x: -90.12457, y: 830.99976}
+    Position: {x: -70.99985, y: 780.99994}
     Ports:
     - PortName: Biome Channel
       DisplayName: Biome Channel
@@ -158,13 +158,13 @@ MonoBehaviour:
   - NodeId: BiomeLayout-input
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
     NodeName: Sub Graph Input
-    Position: {x: -1107.714, y: 959.82153}
+    Position: {x: -1926.3823, y: 936.85004}
     Ports: []
     Parameters: []
   - NodeId: BiomeLayout-output
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
     NodeName: Sub Graph Output
-    Position: {x: 854.286, y: 959.82153}
+    Position: {x: 1256.2715, y: 836}
     Ports:
     - PortName: ForestBiomeMask
       DisplayName: ForestBiomeMask

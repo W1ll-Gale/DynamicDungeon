@@ -304,7 +304,7 @@ MonoBehaviour:
   - NodeId: andesite-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Andesite Mask (Threshold)
-    Position: {x: 100, y: 650}
+    Position: {x: 279.99985, y: 457.99985}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -362,7 +362,7 @@ MonoBehaviour:
   - NodeId: iron-vein
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Iron Vein (Vein)
-    Position: {x: 340.0001, y: 892}
+    Position: {x: 279.99985, y: 764.9998}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -397,7 +397,7 @@ MonoBehaviour:
   - NodeId: gold-vein
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Gold Vein (Vein)
-    Position: {x: 372.00003, y: 1310.1993}
+    Position: {x: 279.99985, y: 1150.7104}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -432,7 +432,7 @@ MonoBehaviour:
   - NodeId: diamond-vein
     NodeTypeName: DynamicDungeon.Runtime.Nodes.VeinNode
     NodeName: Diamond Vein (Vein)
-    Position: {x: 744.30725, y: 1310.0001}
+    Position: {x: 827.99994, y: 699.9999}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -467,7 +467,7 @@ MonoBehaviour:
   - NodeId: wall-base-const
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ConstantNode
     NodeName: Stone ID (Constant)
-    Position: {x: 400, y: 500}
+    Position: {x: 707.9999, y: 143.99997}
     Ports:
     - PortName: wall-base-id
       DisplayName: wall-base-id
@@ -667,7 +667,7 @@ MonoBehaviour:
   - NodeId: wall-rule-stack
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleStackNode
     NodeName: Wall Variants (Logical ID Rule Stack)
-    Position: {x: 1145.9996, y: 374.00006}
+    Position: {x: 1068.0001, y: 192.00002}
     Ports:
     - PortName: Base
       DisplayName: Base

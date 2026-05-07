@@ -63,15 +63,18 @@ MonoBehaviour:
     useDirectionBias: 0
     preferredDirection: 2
     directionBias: 0.5
-  targetRoomCount: 50
+  targetRoomCount: 100
   useRoomCountRange: 0
   minRoomCount: 10
   maxRoomCount: 10
-  corridorChance: 0.65
+  corridorChance: 0.264
   maxCorridorChain: 3
-  branchingProbability: 0.4
+  branchingProbability: 0.587
   branchingBias: 0
-  branchingBiasStrength: 0.5
+  branchingBiasStrength: 1
   useDirectionalGrowthHeuristic: 0
-  preferredGrowthDirection: 2
+  preferredGrowthDirection: 1
   directionalGrowthBias: 0.75
+  useGlobalTemplateDirectionBias: 0
+  globalTemplateDirection: 2
+  globalTemplateDirectionBias: 0.5

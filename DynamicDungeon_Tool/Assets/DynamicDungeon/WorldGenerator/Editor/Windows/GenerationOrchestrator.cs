@@ -16,6 +16,7 @@ namespace DynamicDungeon.Editor.Windows
     {
         private const double DebounceDelaySeconds = 0.05d;
         private const double LoadingIndicatorDelaySeconds = 0.2d;
+        private const int MaxPreviewsPerUpdate = 4;
         private const string IdleStatusText = "Idle";
         private const string GeneratingStatusText = "Generating...";
         private const string DoneStatusText = "Done";
@@ -24,6 +25,7 @@ namespace DynamicDungeon.Editor.Windows
         private readonly DynamicDungeonGraphView _graphView;
         private readonly Action<string> _statusChanged;
         private readonly Action<IReadOnlyList<GraphDiagnostic>> _diagnosticsUpdated;
+        private readonly Action _repaintRequested;
         private readonly Executor _executor;
         private readonly HashSet<string> _pendingDirtyNodeIds;
         private readonly object _pendingPreviewUpdatesLock;
@@ -109,11 +111,12 @@ namespace DynamicDungeon.Editor.Windows
             }
         }
 
-        public GenerationOrchestrator(DynamicDungeonGraphView graphView, Action<string> statusChanged, Action<IReadOnlyList<GraphDiagnostic>> diagnosticsUpdated)
+        public GenerationOrchestrator(DynamicDungeonGraphView graphView, Action<string> statusChanged, Action<IReadOnlyList<GraphDiagnostic>> diagnosticsUpdated, Action repaintRequested = null)
         {
             _graphView = graphView;
             _statusChanged = statusChanged;
             _diagnosticsUpdated = diagnosticsUpdated;
+            _repaintRequested = repaintRequested;
             _executor = new Executor();
             _pendingDirtyNodeIds = new HashSet<string>(StringComparer.Ordinal);
             _pendingPreviewUpdatesLock = new object();
@@ -634,7 +637,8 @@ namespace DynamicDungeon.Editor.Windows
                 return;
             }
 
-            while (true)
+            int processedCount = 0;
+            while (processedCount < MaxPreviewsPerUpdate)
             {
                 PreviewUpdateData previewUpdate;
                 lock (_pendingPreviewUpdatesLock)
@@ -668,6 +672,12 @@ namespace DynamicDungeon.Editor.Windows
                 }
 
                 _graphView.SetNodePreview(previewUpdate.NodeId, texture);
+                processedCount++;
+            }
+
+            if (processedCount > 0)
+            {
+                _repaintRequested?.Invoke();
             }
 
             ReleaseEditorUpdateSubscriptionIfIdle();

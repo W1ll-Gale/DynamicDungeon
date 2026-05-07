@@ -7,7 +7,7 @@ namespace DynamicDungeon.Runtime.Biome
 {
     public sealed class BiomeAsset : ScriptableObject
     {
-        public TileSemanticRegistry SemanticRegistry;
+        public List<string> ExcludedRegistryGuids = new List<string>();
         public List<BiomeTileMapping> TileMappings = new List<BiomeTileMapping>();
 
         private void OnDisable()

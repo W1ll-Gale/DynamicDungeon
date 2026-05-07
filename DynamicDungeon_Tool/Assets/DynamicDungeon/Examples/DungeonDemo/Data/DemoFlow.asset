@@ -21,19 +21,19 @@ MonoBehaviour:
     - {fileID: 7044713205017155395, guid: 802fc1dc85dc497409005a1e947261eb, type: 3}
   - id: HUB
     displayName: Catacomb Junction
-    position: {x: 164, y: -590}
+    position: {x: 20, y: -590}
     type: 6
     allowedTemplates:
     - {fileID: 1116707898338037279, guid: 77782bd2933875d47af645963f918f73, type: 3}
   - id: RM_E
     displayName: Eastern Vault
-    position: {x: 1062, y: -169}
+    position: {x: 793, y: -342}
     type: 0
     allowedTemplates:
     - {fileID: 7310797877720484564, guid: 8be76e923bc556040a9b20e5ee4c13ed, type: 3}
   - id: RM_B
     displayName: Big Hall
-    position: {x: 1260, y: -547}
+    position: {x: 793, y: -776}
     type: 0
     allowedTemplates:
     - {fileID: 1116707898338037279, guid: 77782bd2933875d47af645963f918f73, type: 3}
@@ -58,6 +58,79 @@ MonoBehaviour:
     allowedTemplates:
     - {fileID: 6432150833363729143, guid: c4ae1febd695cc94e9419abf1745f16b, type: 3}
     - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: d04fc53e
+    displayName: BOSS
+    position: {x: 1314, y: -1134}
+    type: 7
+    allowedTemplates:
+    - {fileID: 1116707898338037279, guid: 77782bd2933875d47af645963f918f73, type: 3}
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: 4f9fd498
+    displayName: SHOP
+    position: {x: 1453, y: -629}
+    type: 5
+    allowedTemplates:
+    - {fileID: 4731777390107429886, guid: 0962a1050f3322247962c706d91db305, type: 3}
+  - id: corr_e586
+    displayName: Connector
+    position: {x: 1164, y: -839}
+    type: 1
+    allowedTemplates:
+    - {fileID: 6432150833363729143, guid: c4ae1febd695cc94e9419abf1745f16b, type: 3}
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: 1bd40246
+    displayName: REWARD
+    position: {x: 2056, y: -1451}
+    type: 4
+    allowedTemplates:
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: corr_1d1b
+    displayName: Connector
+    position: {x: 635.5, y: -1273.5}
+    type: 1
+    allowedTemplates:
+    - {fileID: 6432150833363729143, guid: c4ae1febd695cc94e9419abf1745f16b, type: 3}
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: corr_6778
+    displayName: Connector
+    position: {x: 1249.5, y: -559}
+    type: 1
+    allowedTemplates:
+    - {fileID: 6432150833363729143, guid: c4ae1febd695cc94e9419abf1745f16b, type: 3}
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: 8fc3517f
+    displayName: BOSSFOYER
+    position: {x: 2056, y: -1041}
+    type: 8
+    allowedTemplates:
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: corr_0b86
+    displayName: Connector
+    position: {x: 1306, y: -1180.5}
+    type: 1
+    allowedTemplates:
+    - {fileID: 6432150833363729143, guid: c4ae1febd695cc94e9419abf1745f16b, type: 3}
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: corr_aded
+    displayName: Connector
+    position: {x: 1583, y: -835}
+    type: 1
+    allowedTemplates:
+    - {fileID: 6432150833363729143, guid: c4ae1febd695cc94e9419abf1745f16b, type: 3}
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: 5377b1e8
+    displayName: EXIT
+    position: {x: 2800.2295, y: -1357.9001}
+    type: 3
+    allowedTemplates:
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
+  - id: corr_2cdc
+    displayName: Connector
+    position: {x: 2428.1147, y: -1404.4501}
+    type: 1
+    allowedTemplates:
+    - {fileID: 6432150833363729143, guid: c4ae1febd695cc94e9419abf1745f16b, type: 3}
+    - {fileID: 5861605693896615277, guid: 223cd5a35cf8f33488638b65a53e67a7, type: 3}
   edges:
   - fromId: ENT
     toId: corr_da0c
@@ -71,6 +144,30 @@ MonoBehaviour:
     toId: corr_cdf5
   - fromId: corr_cdf5
     toId: RM_B
+  - fromId: RM_B
+    toId: corr_e586
+  - fromId: corr_e586
+    toId: 4f9fd498
+  - fromId: 1bd40246
+    toId: corr_1d1b
+  - fromId: corr_1d1b
+    toId: d04fc53e
+  - fromId: RM_E
+    toId: corr_6778
+  - fromId: corr_6778
+    toId: 4f9fd498
+  - fromId: d04fc53e
+    toId: corr_0b86
+  - fromId: corr_0b86
+    toId: 8fc3517f
+  - fromId: 4f9fd498
+    toId: corr_aded
+  - fromId: corr_aded
+    toId: 8fc3517f
+  - fromId: 1bd40246
+    toId: corr_2cdc
+  - fromId: corr_2cdc
+    toId: 5377b1e8
   defaultTemplates:
   - type: 2
     templates:

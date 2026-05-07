@@ -31,7 +31,7 @@ namespace DynamicDungeon.Runtime.Nodes
         private const string Mask3PortName = "Mask 3";
         private const string Mask4PortName = "Mask 4";
         private const string DefaultOutputChannelName = GraphOutputUtility.OutputInputPortName;
-        private const string PreferredOutputDisplayName = DefaultOutputChannelName;
+        private const string PreferredOutputDisplayName = "Logical IDs";
 
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();
 
@@ -116,7 +116,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _inputMask2ChannelName = inputMask2ChannelName ?? string.Empty;
             _inputMask3ChannelName = inputMask3ChannelName ?? string.Empty;
             _inputMask4ChannelName = inputMask4ChannelName ?? string.Empty;
-            _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, outputChannelName, DefaultOutputChannelName);
+            _outputChannelName = GraphPortNameUtility.ResolveOwnedOutputChannelName(nodeId, outputChannelName, PreferredOutputDisplayName);
             _rules = rules ?? string.Empty;
             _parsedRules = ParseRules(_rules);
             _resolvedRules = ResolveRules(_parsedRules);

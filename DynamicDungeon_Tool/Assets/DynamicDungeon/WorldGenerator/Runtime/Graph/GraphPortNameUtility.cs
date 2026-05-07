@@ -33,7 +33,7 @@ namespace DynamicDungeon.Runtime.Graph
         {
             if (nodeType == typeof(BoolMaskToLogicalIdNode))
             {
-                return "LogicalIds";
+                return "Logical IDs";
             }
 
             string desiredName = ResolveDesiredName(parameterName);
@@ -85,8 +85,13 @@ namespace DynamicDungeon.Runtime.Graph
         private static bool IsNamedOutput(string outputChannelName, string nodeId, string displayName)
         {
             string safeDisplayName = NormaliseDisplayName(displayName, DefaultGenericOutputDisplayName);
+            string technicalName = safeDisplayName.Replace(" ", string.Empty);
+
             return string.Equals(outputChannelName, safeDisplayName, StringComparison.Ordinal) ||
-                   string.Equals(outputChannelName, CreateGeneratedOutputPortName(nodeId, safeDisplayName), StringComparison.Ordinal);
+                   string.Equals(outputChannelName, technicalName, StringComparison.Ordinal) ||
+                   string.Equals(outputChannelName, CreateGeneratedOutputPortName(nodeId, safeDisplayName), StringComparison.Ordinal) ||
+                   string.Equals(outputChannelName, CreateGeneratedOutputPortName(nodeId, technicalName), StringComparison.Ordinal) ||
+                   string.Equals(outputChannelName, CreateGeneratedOutputPortName(nodeId, DefaultGenericOutputDisplayName), StringComparison.Ordinal);
         }
 
         private static string ResolveDesiredName(string parameterName)

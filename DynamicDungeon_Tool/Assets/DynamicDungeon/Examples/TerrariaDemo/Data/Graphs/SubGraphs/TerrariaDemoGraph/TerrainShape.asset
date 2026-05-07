@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: 30729321-8c26-440a-8c37-54ed6a10e047
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SurfaceNoiseNode
     NodeName: Surface Profile (Surface 1D Noise)
-    Position: {x: -4506.5737, y: -784.50635}
+    Position: {x: -4506.999, y: -1077.0001}
     Ports:
     - PortName: TerrainMass
       DisplayName: TerrainMass
@@ -59,7 +59,7 @@ MonoBehaviour:
   - NodeId: 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ThresholdNode
     NodeName: Terrain Mass Mask (Threshold)
-    Position: {x: -4186.5737, y: -784.50635}
+    Position: {x: -4186.9985, y: -1041}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -73,35 +73,10 @@ MonoBehaviour:
     - Name: threshold
       Value: 0.5
       ObjectReference: {fileID: 0}
-  - NodeId: c51a5de2-490c-438f-a05e-106d9a02247b
-    NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
-    NodeName: Surface Band (Height Band)
-    Position: {x: -4506.5737, y: -504.50635}
-    Ports:
-    - PortName: SurfaceBand
-      DisplayName: SurfaceBand
-      Direction: 1
-      Type: 0
-    Parameters:
-    - Name: minHeight
-      Value: 0.05
-      ObjectReference: {fileID: 0}
-    - Name: maxHeight
-      Value: 0.82
-      ObjectReference: {fileID: 0}
-    - Name: referenceHeight
-      Value: 0
-      ObjectReference: {fileID: 0}
-    - Name: minAnchor
-      Value: Normalized
-      ObjectReference: {fileID: 0}
-    - Name: maxAnchor
-      Value: Normalized
-      ObjectReference: {fileID: 0}
   - NodeId: c41ad5c5-4bd8-43d8-8373-376a74d37254
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Surface Crust Band (Height Band)
-    Position: {x: -4506.5737, y: -384.50635}
+    Position: {x: -4506.999, y: -670.99976}
     Ports:
     - PortName: SurfaceCrustBand
       DisplayName: SurfaceCrustBand
@@ -126,7 +101,7 @@ MonoBehaviour:
   - NodeId: ef3990c1-682a-4d17-9bbb-3466d9b8b343
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Underground Band (Height Band)
-    Position: {x: -4506.5737, y: -284.50635}
+    Position: {x: -4506.999, y: -346.99997}
     Ports:
     - PortName: UndergroundBand
       DisplayName: UndergroundBand
@@ -151,7 +126,7 @@ MonoBehaviour:
   - NodeId: fd837542-e32b-45ff-8499-937f33125ff1
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Deep Cave Band (Height Band)
-    Position: {x: -4506.5737, y: -64.50635}
+    Position: {x: -4506.999, y: -10.693371}
     Ports:
     - PortName: DeepBand
       DisplayName: DeepBand
@@ -176,7 +151,7 @@ MonoBehaviour:
   - NodeId: a371735b-35b3-4f2d-8172-f715f8b697b8
     NodeTypeName: DynamicDungeon.Runtime.Nodes.HeightBandNode
     NodeName: Sky Band (Height Band)
-    Position: {x: -4506.5737, y: 155.49365}
+    Position: {x: -4506.999, y: 317.9199}
     Ports:
     - PortName: SkyBand
       DisplayName: SkyBand
@@ -201,7 +176,7 @@ MonoBehaviour:
   - NodeId: 08271325-c52e-41cc-aa71-693805aad513
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Cave Region (Combine Masks)
-    Position: {x: -4186.5737, y: -174.50635}
+    Position: {x: -3866.9995, y: -368.00006}
     Ports:
     - PortName: A
       DisplayName: A
@@ -323,7 +298,7 @@ MonoBehaviour:
   - NodeId: 13755560-5c3d-4731-9e15-ceedd338fc84
     NodeTypeName: DynamicDungeon.Runtime.Nodes.MaskExpressionNode
     NodeName: Terrain Solid (Mask Expression)
-    Position: {x: -2638.5737, y: -542.50635}
+    Position: {x: -3146, y: 95.00006}
     Ports:
     - PortName: Masks
       DisplayName: Masks
@@ -334,9 +309,6 @@ MonoBehaviour:
       Direction: 1
       Type: 2
     Parameters:
-    - Name: operation
-      Value: AND
-      ObjectReference: {fileID: 0}
     - Name: outputChannelName
       Value: FinalSolid
       ObjectReference: {fileID: 0}
@@ -346,7 +318,7 @@ MonoBehaviour:
   - NodeId: TerrainShape-input
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
     NodeName: Sub Graph Input
-    Position: {x: -4766.5737, y: -362.50635}
+    Position: {x: -3666.9995, y: 194.99997}
     Ports:
     - PortName: FeatureOpenCavesWithIce
       DisplayName: FeatureOpenCavesWithIce
@@ -356,7 +328,7 @@ MonoBehaviour:
   - NodeId: TerrainShape-output
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphOutputNode
     NodeName: Sub Graph Output
-    Position: {x: -2158.5737, y: -362.50635}
+    Position: {x: -1758.7399, y: -471.99982}
     Ports:
     - PortName: ShallowCaveRegion
       DisplayName: ShallowCaveRegion
@@ -501,7 +473,6 @@ MonoBehaviour:
     ContainedNodeIds:
     - 30729321-8c26-440a-8c37-54ed6a10e047
     - 5d1f523a-ffbc-43a5-b23e-9b31d32f3afe
-    - c51a5de2-490c-438f-a05e-106d9a02247b
     - c41ad5c5-4bd8-43d8-8373-376a74d37254
     - ef3990c1-682a-4d17-9bbb-3466d9b8b343
     - fd837542-e32b-45ff-8499-937f33125ff1
@@ -513,5 +484,6 @@ MonoBehaviour:
     - 6c0f9a56-1f78-4d2d-9e1d-f922b0b1f690
     - 0df84640-7648-45db-93fd-2e6a5af2d270
     - 13755560-5c3d-4731-9e15-ceedd338fc84
+    - TerrainShape-input
     BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
   ExposedProperties: []

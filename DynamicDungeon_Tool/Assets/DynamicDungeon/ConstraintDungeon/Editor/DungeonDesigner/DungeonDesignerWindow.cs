@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DynamicDungeon.Editor.Shared;
 using UnityEditor;
+using UnityEditor.Callbacks;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -83,6 +84,19 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
             window.Show();
             window.LoadFlow(flow);
             window.Focus();
+        }
+
+        [OnOpenAsset]
+        public static bool OnOpenAsset(int instanceId, int line)
+        {
+            DungeonFlow flow = EditorUtility.EntityIdToObject(instanceId) as DungeonFlow;
+            if (flow != null)
+            {
+                Open(flow);
+                return true;
+            }
+
+            return false;
         }
 
         private void OnEnable()

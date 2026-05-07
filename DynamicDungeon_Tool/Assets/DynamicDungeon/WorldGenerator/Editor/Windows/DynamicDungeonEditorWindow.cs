@@ -81,9 +81,9 @@ namespace DynamicDungeon.Editor.Windows
         [Serializable]
         internal sealed class PanelViewSettings
         {
-            public bool IsBlackboardVisible = true;
+            public bool IsBlackboardVisible = false;
             public bool IsGraphSettingsVisible = true;
-            public bool IsGroupNavigatorVisible = true;
+            public bool IsGroupNavigatorVisible = false;
             public bool IsMiniMapVisible = true;
             public bool IsDiagnosticsVisible = true;
             public bool IsBlackboardCollapsed;
@@ -162,7 +162,7 @@ namespace DynamicDungeon.Editor.Windows
         [OnOpenAsset]
         public static bool TryOpenGraphAsset(int instanceId, int line)
         {
-            GenGraph graph = Selection.activeObject as GenGraph;
+            GenGraph graph = EditorUtility.EntityIdToObject(instanceId) as GenGraph;
             if (graph == null)
             {
                 return false;
@@ -221,7 +221,7 @@ namespace DynamicDungeon.Editor.Windows
             _diagnosticsPanel = BuildDiagnosticsPanel();
             rootVisualElement.Add(_diagnosticsPanel);
 
-            _generationOrchestrator = new GenerationOrchestrator(_graphView, SetStatus, OnDiagnosticsUpdated);
+            _generationOrchestrator = new GenerationOrchestrator(_graphView, SetStatus, OnDiagnosticsUpdated, Repaint);
             _graphView.SetGenerationOrchestrator(_generationOrchestrator);
             _graphView.SetAfterMutationCallback(OnAfterGraphMutation);
             _graphView.SetSubGraphEnterCallback(OnEnterSubGraph);
