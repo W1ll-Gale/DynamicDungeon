@@ -125,7 +125,7 @@ namespace DynamicDungeon.Runtime.Nodes
             {
                 new NodePortDefinition(BiomeInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, false),
                 new NodePortDefinition(MaskPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Single, true),
-                new NodePortDefinition(BiomeChannelUtility.ChannelName, PortDirection.Output, ChannelType.Int)
+                new NodePortDefinition(BiomeChannelUtility.ChannelName, PortDirection.Output, ChannelType.Int, displayName: "Biomes")
             };
 
             RefreshChannelDeclarations();

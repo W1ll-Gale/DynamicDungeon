@@ -72,9 +72,9 @@ namespace DynamicDungeon.Runtime.Nodes
             _nodeName = string.IsNullOrWhiteSpace(nodeName) ? GraphOutputUtility.OutputNodeDisplayName : nodeName;
             _ports = new[]
             {
-                new NodePortDefinition(GraphOutputUtility.OutputInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, true, "Primary logical ID channel used to render tiles."),
-                new NodePortDefinition(GraphOutputUtility.BiomeInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, false, "Optional biome channel used by biome-aware output passes."),
-                new NodePortDefinition(GraphOutputUtility.PrefabPlacementInputPortName, PortDirection.Input, ChannelType.PrefabPlacementList, PortCapacity.Multi, false, "Optional prefab placement writers used by placement output passes.")
+                new NodePortDefinition(GraphOutputUtility.OutputInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, true, "Primary logical ID channel used to render tiles.", "Logical IDs"),
+                new NodePortDefinition(GraphOutputUtility.BiomeInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, false, "Optional biome channel used by biome-aware output passes.", "Biomes"),
+                new NodePortDefinition(GraphOutputUtility.PrefabPlacementInputPortName, PortDirection.Input, ChannelType.PrefabPlacementList, PortCapacity.Multi, false, "Optional prefab placement writers used by placement output passes.", "Placements")
             };
 
             RefreshChannelDeclarations();

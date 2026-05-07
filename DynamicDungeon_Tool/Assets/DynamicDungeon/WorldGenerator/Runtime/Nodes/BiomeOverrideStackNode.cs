@@ -69,7 +69,7 @@ namespace DynamicDungeon.Runtime.Nodes
             {
                 new NodePortDefinition(BiomeInputPortName, PortDirection.Input, ChannelType.Int, PortCapacity.Single, false, "Optional ordering dependency from an existing biome channel."),
                 new NodePortDefinition(MasksPortName, PortDirection.Input, ChannelType.BoolMask, PortCapacity.Multi, true, "Masks are addressed by one-based Mask Slot in the override table."),
-                new NodePortDefinition(BiomeChannelUtility.ChannelName, PortDirection.Output, ChannelType.Int)
+                new NodePortDefinition(BiomeChannelUtility.ChannelName, PortDirection.Output, ChannelType.Int, displayName: "Biomes")
             };
 
             RefreshChannelDeclarations();

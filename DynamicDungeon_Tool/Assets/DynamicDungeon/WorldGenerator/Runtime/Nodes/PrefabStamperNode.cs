@@ -447,8 +447,8 @@ namespace DynamicDungeon.Runtime.Nodes
             _ports = new[]
             {
                 new NodePortDefinition(PointsPortName, PortDirection.Input, ChannelType.PointList, PortCapacity.Single, false),
-                new NodePortDefinition(LogicalIdsChannelName, PortDirection.Output, ChannelType.Int),
-                new NodePortDefinition(PrefabPlacementChannelUtility.ChannelName, PortDirection.Output, ChannelType.PrefabPlacementList),
+                new NodePortDefinition(LogicalIdsChannelName, PortDirection.Output, ChannelType.Int, displayName: "Logical IDs"),
+                new NodePortDefinition(PrefabPlacementChannelUtility.ChannelName, PortDirection.Output, ChannelType.PrefabPlacementList, displayName: "Placements"),
                 new NodePortDefinition(_reservedMaskChannelName, PortDirection.Output, ChannelType.BoolMask, displayName: GraphPortNameUtility.ResolveOutputDisplayName(_nodeId, _reservedMaskChannelName, ReservedMaskFallbackOutputName))
             };
         }

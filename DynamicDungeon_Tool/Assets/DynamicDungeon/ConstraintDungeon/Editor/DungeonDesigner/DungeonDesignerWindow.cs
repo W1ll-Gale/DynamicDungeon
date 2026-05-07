@@ -89,7 +89,7 @@ namespace DynamicDungeon.ConstraintDungeon.Editor.DungeonDesigner
         [OnOpenAsset]
         public static bool OnOpenAsset(int instanceId, int line)
         {
-            DungeonFlow flow = EditorUtility.InstanceIDToObject(instanceId) as DungeonFlow;
+            DungeonFlow flow = EditorUtility.EntityIdToObject(instanceId) as DungeonFlow;
             if (flow != null)
             {
                 Open(flow);

@@ -13,6 +13,7 @@ using UnityEngine;
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [NodeDisplayName("Prefab Spawner")]
     [Description("Places a single prefab at each specified point without modifying footprints or logical IDs.")]
     [DynamicDungeon.Runtime.Core.NodeCategory("Placement")]
     public sealed class PrefabSpawnerNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IPrefabPlacementNode
@@ -188,7 +189,7 @@ namespace DynamicDungeon.Runtime.Nodes
             _ports = new[]
             {
                 new NodePortDefinition(PointsPortName, PortDirection.Input, ChannelType.PointList, PortCapacity.Single, false),
-                new NodePortDefinition(PrefabPlacementChannelUtility.ChannelName, PortDirection.Output, ChannelType.PrefabPlacementList)
+                new NodePortDefinition(PrefabPlacementChannelUtility.ChannelName, PortDirection.Output, ChannelType.PrefabPlacementList, displayName: "Placements")
             };
         }
 

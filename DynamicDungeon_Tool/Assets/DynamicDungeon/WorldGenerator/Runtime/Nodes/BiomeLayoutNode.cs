@@ -183,8 +183,8 @@ namespace DynamicDungeon.Runtime.Nodes
             _resolvedConstraints = Array.Empty<ResolvedConstraint>();
             _ports = new[]
             {
-                new NodePortDefinition(OutputPortName, PortDirection.Output, ChannelType.Int)
-            };
+                                new NodePortDefinition(OutputPortName, PortDirection.Output, ChannelType.Int, displayName: "Biomes")
+            };;
             _channelDeclarations = new[]
             {
                 new ChannelDeclaration(BiomeChannelUtility.ChannelName, ChannelType.Int, true)
