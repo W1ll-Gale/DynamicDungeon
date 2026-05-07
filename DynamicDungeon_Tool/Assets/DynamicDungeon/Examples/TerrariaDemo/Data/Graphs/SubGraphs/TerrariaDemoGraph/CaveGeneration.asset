@@ -54,7 +54,7 @@ MonoBehaviour:
   - NodeId: e7ffce99-ad02-423f-ba30-a5f7898c635d
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CellularAutomataNode
     NodeName: Cave Automata (Cellular Automata)
-    Position: {x: -3546.5737, y: -384.50635}
+    Position: {x: -3624, y: -577}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -358,7 +358,7 @@ MonoBehaviour:
   - NodeId: upper-underground-cave-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ColumnSurfaceBandNode
     NodeName: Upper Underground Cave Band (Column Surface Band)
-    Position: {x: -2400, y: -696.52}
+    Position: {x: -3086.5005, y: -699.0002}
     Ports:
     - PortName: Input
       DisplayName: Input
@@ -378,7 +378,7 @@ MonoBehaviour:
   - NodeId: upper-underground-cave-pockets
     NodeTypeName: DynamicDungeon.Runtime.Nodes.ClusterNode
     NodeName: Upper Underground Small Caves (Cluster)
-    Position: {x: -2080, y: -696.52}
+    Position: {x: -2003.6691, y: -968.0002}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -805,7 +805,7 @@ MonoBehaviour:
   - NodeId: CaveGeneration-input
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphInputNode
     NodeName: Sub Graph Input
-    Position: {x: -4174.5737, y: -166.01318}
+    Position: {x: -4627.3477, y: -246.00008}
     Ports:
     - PortName: ForestDeepCaveRegion
       DisplayName: ForestDeepCaveRegion

@@ -25,7 +25,7 @@ MonoBehaviour:
   - NodeId: graph-output-node
     NodeTypeName: DynamicDungeon.Runtime.Nodes.TilemapOutputNode
     NodeName: Output (Output)
-    Position: {x: 2560, y: 0}
+    Position: {x: 3636.2913, y: -666.99994}
     Ports:
     - PortName: LogicalIds
       DisplayName: LogicalIds
@@ -43,7 +43,7 @@ MonoBehaviour:
   - NodeId: prefab-reserved-void-overlay
     NodeTypeName: DynamicDungeon.Runtime.Nodes.LogicalIdRuleOverlayNode
     NodeName: Prefab Reserved Void (Logical ID Rule Overlay)
-    Position: {x: 2240, y: 0}
+    Position: {x: 2943.5752, y: -822.8773}
     Ports:
     - PortName: Base
       DisplayName: Base
@@ -79,7 +79,7 @@ MonoBehaviour:
   - NodeId: organized-subgraph-BiomeLayout
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Biome Layout
-    Position: {x: 0, y: 0}
+    Position: {x: -2194.1353, y: -333.99994}
     Ports:
     - PortName: ForestBiomeMask
       DisplayName: ForestBiomeMask
@@ -116,7 +116,7 @@ MonoBehaviour:
   - NodeId: organized-subgraph-TerrainShape
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Terrain Profile
-    Position: {x: 320, y: 0}
+    Position: {x: -1660.8073, y: -605.7534}
     Ports:
     - PortName: FeatureOpenCavesWithIce
       DisplayName: FeatureOpenCavesWithIce
@@ -157,7 +157,7 @@ MonoBehaviour:
   - NodeId: organized-subgraph-CaveGeneration
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Cave Masks
-    Position: {x: 640, y: 0}
+    Position: {x: 274.48352, y: -424.76923}
     Ports:
     - PortName: ForestDeepCaveRegion
       DisplayName: ForestDeepCaveRegion
@@ -218,7 +218,7 @@ MonoBehaviour:
   - NodeId: organized-subgraph-MaterialContext
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Material IDs
-    Position: {x: 960, y: 0}
+    Position: {x: -577.40295, y: -334.00012}
     Ports:
     - PortName: CaveAllowedDepth
       DisplayName: CaveAllowedDepth
@@ -263,7 +263,7 @@ MonoBehaviour:
   - NodeId: organized-subgraph-CaveFeatureOverrides
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Feature Overrides
-    Position: {x: 1280, y: 0}
+    Position: {x: -932.6621, y: -1458}
     Ports:
     - PortName: BiomeChannel
       DisplayName: BiomeChannel
@@ -324,7 +324,7 @@ MonoBehaviour:
   - NodeId: organized-subgraph-OreFeatureOverrides
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Ore Overrides
-    Position: {x: 1600, y: 0}
+    Position: {x: -363.0001, y: -1458}
     Ports:
     - PortName: ForestBiomeMask
       DisplayName: ForestBiomeMask
@@ -361,7 +361,7 @@ MonoBehaviour:
   - NodeId: organized-subgraph-SurfacePropPlacement
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Surface Placement
-    Position: {x: 1920, y: 0}
+    Position: {x: 353.5725, y: 415.655}
     Ports:
     - PortName: ForestBiomeMask
       DisplayName: ForestBiomeMask
@@ -406,7 +406,7 @@ MonoBehaviour:
   - NodeId: organized-subgraph-CaveHousePlacement
     NodeTypeName: DynamicDungeon.Runtime.Nodes.SubGraphNode
     NodeName: Structure Placement
-    Position: {x: 1920, y: 210}
+    Position: {x: 783.385, y: 416}
     Ports:
     - PortName: TerrainMassMask
       DisplayName: TerrainMassMask
@@ -439,7 +439,7 @@ MonoBehaviour:
   - NodeId: dungeon-spawn-exclusion-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.AxisBandNode
     NodeName: Dungeon Spawn Exclusion Band (Axis Band)
-    Position: {x: 1600, y: 430}
+    Position: {x: 205.49997, y: 960.00006}
     Ports:
     - PortName: DungeonSpawnExclusionBand
       DisplayName: DungeonSpawnExclusionBand
@@ -461,7 +461,7 @@ MonoBehaviour:
   - NodeId: dungeon-outside-middle-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Dungeon Outside Middle (Combine Masks)
-    Position: {x: 1920, y: 430}
+    Position: {x: 610, y: 929.43536}
     Ports:
     - PortName: A
       DisplayName: A
@@ -485,7 +485,7 @@ MonoBehaviour:
   - NodeId: dungeon-surface-start-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Dungeon Surface Start Mask (Combine Masks)
-    Position: {x: 2160, y: 430}
+    Position: {x: 955.00006, y: 928.99994}
     Ports:
     - PortName: A
       DisplayName: A
@@ -509,7 +509,7 @@ MonoBehaviour:
   - NodeId: dungeon-start-point-scatter
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
     NodeName: Dungeon Start Point (Poisson Disc Sampler)
-    Position: {x: 2400, y: 430}
+    Position: {x: 1352.1908, y: 914.2266}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -535,7 +535,7 @@ MonoBehaviour:
   - NodeId: dungeon-generator-organic
     NodeTypeName: DynamicDungeon.Runtime.Nodes.DungeonGeneratorNode
     NodeName: Surface Dungeon
-    Position: {x: 2640, y: 430}
+    Position: {x: 1788.9999, y: 882.00006}
     Ports:
     - PortName: StartPoints
       DisplayName: Start Points
@@ -584,7 +584,7 @@ MonoBehaviour:
   - NodeId: player-spawn-center-band
     NodeTypeName: DynamicDungeon.Runtime.Nodes.AxisBandNode
     NodeName: Player Center Band (Axis Band)
-    Position: {x: 1600, y: 640}
+    Position: {x: 249.53674, y: 1277}
     Ports:
     - PortName: PlayerCenterBand
       DisplayName: PlayerCenterBand
@@ -606,7 +606,7 @@ MonoBehaviour:
   - NodeId: player-surface-center-mask
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Player Surface Center Mask (Combine Masks)
-    Position: {x: 1920, y: 640}
+    Position: {x: 629.50006, y: 1264}
     Ports:
     - PortName: A
       DisplayName: A
@@ -630,7 +630,7 @@ MonoBehaviour:
   - NodeId: player-start-point-scatter
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PoissonDiscSamplerNode
     NodeName: Player Start Point (Poisson Disc Sampler)
-    Position: {x: 2160, y: 640}
+    Position: {x: 989, y: 1277}
     Ports:
     - PortName: Mask
       DisplayName: Mask
@@ -656,7 +656,7 @@ MonoBehaviour:
   - NodeId: player-start-point-offset
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PointListOffsetNode
     NodeName: Player Start Offset (Point List Offset)
-    Position: {x: 2300, y: 640}
+    Position: {x: 1436.2167, y: 1338}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -679,7 +679,7 @@ MonoBehaviour:
   - NodeId: player-prefab-spawner
     NodeTypeName: DynamicDungeon.Runtime.Nodes.PrefabSpawnerNode
     NodeName: Player Spawner
-    Position: {x: 2400, y: 640}
+    Position: {x: 1788.9999, y: 1338}
     Ports:
     - PortName: Points
       DisplayName: Points
@@ -980,36 +980,36 @@ MonoBehaviour:
     Title: World Shape
     Position:
       serializedVersion: 2
-      x: -80
-      y: -80
-      width: 1540
-      height: 410
+      x: -1436.7761
+      y: -536.8467
+      width: 1372
+      height: 670
     ContainedNodeIds:
     - organized-subgraph-BiomeLayout
     - organized-subgraph-TerrainShape
     - organized-subgraph-CaveGeneration
     - organized-subgraph-MaterialContext
-    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+    BackgroundColor: {r: 0.2, g: 0.8, b: 0.8, a: 0.3}
   - GroupId: organized-features
     Title: Feature Overrides
     Position:
       serializedVersion: 2
-      x: 1200
-      y: -80
-      width: 900
-      height: 200
+      x: -805.4756
+      y: -1516.5374
+      width: 686
+      height: 586
     ContainedNodeIds:
     - organized-subgraph-CaveFeatureOverrides
     - organized-subgraph-OreFeatureOverrides
-    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+    BackgroundColor: {r: 1, g: 0.2, b: 0.2, a: 0.3}
   - GroupId: organized-placement
     Title: Placement
     Position:
       serializedVersion: 2
-      x: 1520
-      y: -80
-      width: 1260
-      height: 700
+      x: 404
+      y: 518
+      width: 1614
+      height: 994
     ContainedNodeIds:
     - organized-subgraph-SurfacePropPlacement
     - player-spawn-center-band
@@ -1023,17 +1023,17 @@ MonoBehaviour:
     - dungeon-surface-start-mask
     - dungeon-start-point-scatter
     - dungeon-generator-organic
-    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+    BackgroundColor: {r: 0.2, g: 0.2, b: 1, a: 0.3}
   - GroupId: organized-output
     Title: Output
     Position:
       serializedVersion: 2
-      x: 2160
-      y: -80
-      width: 600
-      height: 200
+      x: 2918.5752
+      y: -881.8773
+      width: 610
+      height: 470
     ContainedNodeIds:
     - prefab-reserved-void-overlay
     - graph-output-node
-    BackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.3}
+    BackgroundColor: {r: 0.8, g: 0.2, b: 0.8, a: 0.3}
   ExposedProperties: []
