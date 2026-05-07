@@ -163,6 +163,14 @@ namespace DynamicDungeon.Runtime.Component
             }
         }
 
+        public BiomeAsset ResolvedBiome
+        {
+            get
+            {
+                return _biome != null ? _biome : (_graph != null ? _graph.Biome : null);
+            }
+        }
+
         public GenGraph Graph
         {
             get
@@ -834,9 +842,9 @@ namespace DynamicDungeon.Runtime.Component
                 throw new InvalidOperationException("WorldHeight must be greater than zero.");
             }
 
-            if (_biome == null)
+            if (ResolvedBiome == null)
             {
-                throw new InvalidOperationException("TilemapWorldGenerator requires a Biome assignment.");
+                throw new InvalidOperationException("TilemapWorldGenerator requires a Biome assignment (either directly or via the associated Graph).");
             }
 
             if (_layerDefinitions == null || _layerDefinitions.Count == 0)
@@ -1105,7 +1113,7 @@ namespace DynamicDungeon.Runtime.Component
                 _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
                 _tilemapLayerWriter.ClearAll();
                 cancellationToken.ThrowIfCancellationRequested();
-                _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, resolvedTilemapOffset);
+                _tilemapOutputPass.Execute(snapshot, outputChannelName, ResolvedBiome, registry, _tilemapLayerWriter, _layerDefinitions, resolvedTilemapOffset);
                 cancellationToken.ThrowIfCancellationRequested();
                 if (_renderBackgroundFromFloorTiles)
                 {
@@ -1115,7 +1123,7 @@ namespace DynamicDungeon.Runtime.Component
                     }
 
                     ushort backgroundLogicalId = unchecked((ushort)Mathf.Max(0, _backgroundLogicalId));
-                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, resolvedTilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
+                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, ResolvedBiome, _tilemapLayerWriter, _backgroundLayerDefinition, resolvedTilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
                     cancellationToken.ThrowIfCancellationRequested();
                 }
             }
@@ -1167,14 +1175,14 @@ namespace DynamicDungeon.Runtime.Component
                 _tilemapLayerWriter.EnsureTimelapsCreated(resolvedGrid, _layerDefinitions);
                 _tilemapLayerWriter.ClearAll();
                 cancellationToken.ThrowIfCancellationRequested();
-                _tilemapOutputPass.Execute(snapshot, outputChannelName, _biome, registry, _tilemapLayerWriter, _layerDefinitions, resolvedTilemapOffset);
+                _tilemapOutputPass.Execute(snapshot, outputChannelName, ResolvedBiome, registry, _tilemapLayerWriter, _layerDefinitions, resolvedTilemapOffset);
                 cancellationToken.ThrowIfCancellationRequested();
 
                 if (_renderBackgroundFromFloorTiles)
                 {
                     await SetGenerationProgressAndYield(OutputBackgroundProgress, "Writing generated background tilemap...", cancellationToken);
                     ushort backgroundLogicalId = unchecked((ushort)Mathf.Max(0, _backgroundLogicalId));
-                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, _biome, _tilemapLayerWriter, _backgroundLayerDefinition, resolvedTilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
+                    _tilemapOutputPass.ExecuteBackgroundFill(snapshot, outputChannelName, ResolvedBiome, _tilemapLayerWriter, _backgroundLayerDefinition, resolvedTilemapOffset, backgroundLogicalId, _backgroundBiomeChannelName);
                     cancellationToken.ThrowIfCancellationRequested();
                 }
             }

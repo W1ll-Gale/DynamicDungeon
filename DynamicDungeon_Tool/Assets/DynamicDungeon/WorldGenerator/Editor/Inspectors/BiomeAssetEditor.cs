@@ -72,33 +72,185 @@ namespace DynamicDungeon.Editor.Inspectors
             EnsureStyles();
             serializedObject.Update();
 
-            SerializedProperty registryProp = serializedObject.FindProperty("SemanticRegistry");
-            EditorGUILayout.PropertyField(registryProp, new GUIContent("Semantic Registry"));
+            Rect registrySelectorRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+            DrawRegistrySelector(registrySelectorRect, Biome);
             EditorGUILayout.Space(2.0f);
 
-            TileSemanticRegistry registry = Biome.SemanticRegistry ?? TileSemanticRegistry.GetOrLoad();
-            List<int> visibleIndices = BuildVisibleIndices(registry);
+            (List<string> mergedTags, List<TileEntry> mergedEntries) = FindAndMergeAllRegistries(Biome);
+            List<int> visibleIndices = BuildVisibleIndices(mergedTags, mergedEntries);
             if (_pendingScrollToSelection)
             {
                 ScrollToSelectedEntry(visibleIndices);
             }
 
-            DrawMappingColumn(registry, visibleIndices);
+            DrawMappingColumn(mergedTags, mergedEntries, visibleIndices);
             GUILayout.FlexibleSpace();
             GUILayout.Space(4.0f);
-            DrawPreviewColumn(registry);
+            DrawPreviewColumn(mergedTags, mergedEntries);
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawMappingColumn(TileSemanticRegistry registry, IList<int> visibleIndices)
+
+
+        private static (List<string> tags, List<TileEntry> entries) FindAndMergeAllRegistries(BiomeAsset biome)
+        {
+            string[] guids = AssetDatabase.FindAssets("t:TileSemanticRegistry");
+
+            if (guids == null || guids.Length == 0)
+            {
+                return (null, null);
+            }
+
+            IList<string> excluded = biome != null && biome.ExcludedRegistryGuids != null
+                ? biome.ExcludedRegistryGuids
+                : (IList<string>)System.Array.Empty<string>();
+
+            HashSet<string> tagSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            List<string> tags = new List<string>();
+            Dictionary<ushort, TileEntry> entryMap = new Dictionary<ushort, TileEntry>();
+
+            int guidIndex;
+            for (guidIndex = 0; guidIndex < guids.Length; guidIndex++)
+            {
+                string guid = guids[guidIndex];
+                if (excluded.Contains(guid))
+                {
+                    continue;
+                }
+
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                TileSemanticRegistry reg = AssetDatabase.LoadAssetAtPath<TileSemanticRegistry>(path);
+                if (reg == null)
+                {
+                    continue;
+                }
+
+                if (reg.AllTags != null)
+                {
+                    int tagIndex;
+                    for (tagIndex = 0; tagIndex < reg.AllTags.Count; tagIndex++)
+                    {
+                        string tag = reg.AllTags[tagIndex];
+                        if (!string.IsNullOrWhiteSpace(tag) && tagSet.Add(tag))
+                        {
+                            tags.Add(tag);
+                        }
+                    }
+                }
+
+                if (reg.Entries != null)
+                {
+                    int entryIndex;
+                    for (entryIndex = 0; entryIndex < reg.Entries.Count; entryIndex++)
+                    {
+                        TileEntry entry = reg.Entries[entryIndex];
+                        if (entry != null && !entryMap.ContainsKey(entry.LogicalId))
+                        {
+                            entryMap[entry.LogicalId] = entry;
+                        }
+                    }
+                }
+            }
+
+            tags.Sort(StringComparer.OrdinalIgnoreCase);
+            List<TileEntry> entries = new List<TileEntry>(entryMap.Values);
+            entries.Sort((a, b) => a.LogicalId.CompareTo(b.LogicalId));
+            return (tags, entries);
+        }
+
+        private static void DrawRegistrySelector(Rect rect, BiomeAsset biome)
+        {
+            string[] allGuids = AssetDatabase.FindAssets("t:TileSemanticRegistry");
+            int total = allGuids != null ? allGuids.Length : 0;
+            int excludedCount = biome != null && biome.ExcludedRegistryGuids != null
+                ? biome.ExcludedRegistryGuids.Count
+                : 0;
+            int activeCount = total - excludedCount;
+
+            Rect labelRect = new Rect(rect.x, rect.y, EditorGUIUtility.labelWidth - 4.0f, rect.height);
+            Rect buttonRect = new Rect(rect.x + EditorGUIUtility.labelWidth, rect.y, rect.width - EditorGUIUtility.labelWidth, rect.height);
+
+            EditorGUI.LabelField(labelRect, "Semantic Registries");
+
+            string buttonLabel = total == 0
+                ? "None found"
+                : activeCount == total
+                    ? "All (" + total + ")"
+                    : activeCount + " / " + total + " selected";
+
+            if (GUI.Button(buttonRect, buttonLabel, EditorStyles.popup))
+            {
+                GenericMenu menu = new GenericMenu();
+                
+                if (total == 0)
+                {
+                    menu.AddDisabledItem(new GUIContent("No registries found"));
+                }
+                else
+                {
+                    for (int i = 0; i < allGuids.Length; i++)
+                    {
+                        string guid = allGuids[i];
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        TileSemanticRegistry reg = AssetDatabase.LoadAssetAtPath<TileSemanticRegistry>(path);
+                        
+                        if (reg != null)
+                        {
+                            string displayName = reg.name ?? "Unnamed";
+                            bool isExcluded = biome.ExcludedRegistryGuids.Contains(guid);
+                            
+                            menu.AddItem(new GUIContent(displayName), !isExcluded, () =>
+                            {
+                                if (isExcluded)
+                                {
+                                    biome.ExcludedRegistryGuids.Remove(guid);
+                                }
+                                else
+                                {
+                                    biome.ExcludedRegistryGuids.Add(guid);
+                                }
+                                EditorUtility.SetDirty(biome);
+                            });
+                        }
+                    }
+                }
+                
+                menu.ShowAsContext();
+            }
+        }
+
+        private static bool TryGetEntryFromList(ushort id, List<TileEntry> entries, out TileEntry entry)
+        {
+            if (entries == null)
+            {
+                entry = null;
+                return false;
+            }
+
+            int index;
+            for (index = 0; index < entries.Count; index++)
+            {
+                TileEntry candidate = entries[index];
+                if (candidate != null && candidate.LogicalId == id)
+                {
+                    entry = candidate;
+                    return true;
+                }
+            }
+
+            entry = null;
+            return false;
+        }
+
+        private void DrawMappingColumn(List<string> mergedTags, List<TileEntry> mergedEntries, IList<int> visibleIndices)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Mapping List", _sectionTitleStyle);
             GUILayout.Space(2.0f);
 
             _search = EditorGUILayout.TextField("Search", _search);
-            if (registry == null)
+            if (mergedEntries == null || mergedEntries.Count == 0)
             {
                 EditorGUILayout.HelpBox("Registry not found — type ID manually", MessageType.Warning);
             }
@@ -119,7 +271,7 @@ namespace DynamicDungeon.Editor.Inspectors
                     continue;
                 }
 
-                DrawMappingCard(mappingIndex, mapping, registry);
+                DrawMappingCard(mappingIndex, mapping, mergedEntries);
                 GUILayout.Space(4.0f);
             }
             EditorGUILayout.EndScrollView();
@@ -132,9 +284,9 @@ namespace DynamicDungeon.Editor.Inspectors
 
             if (addClicked)
             {
-                if (registry != null && registry.Entries != null && registry.Entries.Count > 0)
+                if (mergedEntries != null && mergedEntries.Count > 0)
                 {
-                    PopupWindow.Show(_addMappingButtonRect, new BiomeAddMappingPopup(Biome, registry, AddMappingsForTile));
+                    PopupWindow.Show(_addMappingButtonRect, new BiomeAddMappingPopup(Biome, mergedEntries, AddMappingsForTile));
                 }
                 else
                 {
@@ -150,7 +302,7 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawPreviewColumn(TileSemanticRegistry registry)
+        private void DrawPreviewColumn(List<string> mergedTags, List<TileEntry> mergedEntries)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             bool newIsPreviewExpanded = EditorGUILayout.Foldout(_isPreviewExpanded, "Preview", true, _previewFoldoutStyle);
@@ -170,13 +322,13 @@ namespace DynamicDungeon.Editor.Inspectors
 
             DrawPreviewResizeHandle();
             _previewScrollPosition = EditorGUILayout.BeginScrollView(_previewScrollPosition, GUILayout.Height(_previewHeight));
-            DrawPreviewGrid(registry);
+            DrawPreviewGrid(mergedEntries);
             EditorGUILayout.EndScrollView();
 
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawMappingCard(int mappingIndex, BiomeTileMapping mapping, TileSemanticRegistry registry)
+        private void DrawMappingCard(int mappingIndex, BiomeTileMapping mapping, List<TileEntry> mergedEntries)
         {
             bool isSelected = mappingIndex == _selectedMappingIndex;
             Color previousBackground = GUI.backgroundColor;
@@ -189,7 +341,7 @@ namespace DynamicDungeon.Editor.Inspectors
             GUI.backgroundColor = previousBackground;
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(BuildMappingHeaderLabel(mapping, registry), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(BuildMappingHeaderLabel(mapping, mergedEntries), EditorStyles.boldLabel);
             if (GUILayout.Button("Delete", GUILayout.Width(58.0f)))
             {
                 DeleteMappingAt(mappingIndex);
@@ -199,7 +351,7 @@ namespace DynamicDungeon.Editor.Inspectors
             }
             EditorGUILayout.EndHorizontal();
 
-            DrawLogicalIdChips(mappingIndex, mapping, registry);
+            DrawLogicalIdChips(mappingIndex, mapping, mergedEntries);
             bool deletedByChip = mapping == null || !Biome.TileMappings.Contains(mapping);
             if (deletedByChip)
             {
@@ -271,7 +423,7 @@ namespace DynamicDungeon.Editor.Inspectors
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawLogicalIdChips(int mappingIndex, BiomeTileMapping mapping, TileSemanticRegistry registry)
+        private void DrawLogicalIdChips(int mappingIndex, BiomeTileMapping mapping, List<TileEntry> mergedEntries)
         {
             float labelWidth = EditorGUIUtility.labelWidth - 4.0f;
             float chipsAvailableWidth = Mathf.Max(60.0f, EditorGUIUtility.currentViewWidth - labelWidth - 34.0f);
@@ -282,7 +434,7 @@ namespace DynamicDungeon.Editor.Inspectors
                 int i;
                 for (i = 0; i < mapping.LogicalIds.Count; i++)
                 {
-                    chipLabels.Add(BuildIdChipLabel(mapping.LogicalIds[i], registry) + " ×");
+                    chipLabels.Add(BuildIdChipLabel(mapping.LogicalIds[i], mergedEntries) + " ×");
                 }
             }
 
@@ -334,7 +486,7 @@ namespace DynamicDungeon.Editor.Inspectors
             if (GUI.Button(addButtonRect, "+", EditorStyles.miniButton))
             {
                 Rect storedRect = _idAddButtonRects.TryGetValue(mappingIndex, out Rect r) ? r : addButtonRect;
-                ShowAddIdToMappingMenu(mapping, registry, storedRect);
+                ShowAddIdToMappingMenu(mapping, mergedEntries, storedRect);
             }
 
             if (deleteIndex >= 0 && mapping.LogicalIds != null)
@@ -372,10 +524,10 @@ namespace DynamicDungeon.Editor.Inspectors
             return height;
         }
 
-        private string BuildIdChipLabel(ushort id, TileSemanticRegistry registry)
+        private static string BuildIdChipLabel(ushort id, List<TileEntry> mergedEntries)
         {
             TileEntry entry;
-            if (registry != null && registry.TryGetEntry(id, out entry) && entry != null && !string.IsNullOrWhiteSpace(entry.DisplayName))
+            if (TryGetEntryFromList(id, mergedEntries, out entry) && entry != null && !string.IsNullOrWhiteSpace(entry.DisplayName))
             {
                 return entry.DisplayName;
             }
@@ -383,7 +535,7 @@ namespace DynamicDungeon.Editor.Inspectors
             return id.ToString();
         }
 
-        private string BuildMappingHeaderLabel(BiomeTileMapping mapping, TileSemanticRegistry registry)
+        private static string BuildMappingHeaderLabel(BiomeTileMapping mapping, List<TileEntry> mergedEntries)
         {
             if (mapping.LogicalIds == null || mapping.LogicalIds.Count == 0)
             {
@@ -393,7 +545,7 @@ namespace DynamicDungeon.Editor.Inspectors
             ushort firstId = mapping.LogicalIds[0];
             string firstName;
             TileEntry entry;
-            if (registry != null && registry.TryGetEntry(firstId, out entry) && entry != null && !string.IsNullOrWhiteSpace(entry.DisplayName))
+            if (TryGetEntryFromList(firstId, mergedEntries, out entry) && entry != null && !string.IsNullOrWhiteSpace(entry.DisplayName))
             {
                 firstName = entry.DisplayName + " (" + firstId + ")";
             }
@@ -410,18 +562,17 @@ namespace DynamicDungeon.Editor.Inspectors
             return firstName;
         }
 
-        private void ShowAddIdToMappingMenu(BiomeTileMapping mapping, TileSemanticRegistry registry, Rect buttonRect)
+        private void ShowAddIdToMappingMenu(BiomeTileMapping mapping, List<TileEntry> mergedEntries, Rect buttonRect)
         {
-            if (registry == null || registry.Entries == null)
+            if (mergedEntries == null)
             {
                 return;
             }
 
-            GenericMenu menu = new GenericMenu();
-            List<TileEntry> entries = new List<TileEntry>(registry.Entries);
+            List<RegistryDropdown.SearchOption> options = new List<RegistryDropdown.SearchOption>();
+            List<TileEntry> entries = new List<TileEntry>(mergedEntries);
             entries.Sort((a, b) => a.LogicalId.CompareTo(b.LogicalId));
 
-            bool any = false;
             int index;
             for (index = 0; index < entries.Count; index++)
             {
@@ -439,7 +590,13 @@ namespace DynamicDungeon.Editor.Inspectors
                 }
 
                 ushort capturedId = entry.LogicalId;
-                menu.AddItem(new GUIContent(RegistryDropdown.BuildLogicalIdLabel(entry.LogicalId, registry)), false, () =>
+                string displayName = string.IsNullOrWhiteSpace(entry.DisplayName) ? "Unnamed" : entry.DisplayName;
+                string label = displayName + " (" + entry.LogicalId + ")";
+                
+                string searchTags = RegistryDropdown.GetSafeSearchTags(entry);
+                string searchText = label + " " + searchTags;
+
+                options.Add(new RegistryDropdown.SearchOption(label, searchText, false, () =>
                 {
                     Undo.RecordObject(Biome, "Add Logical ID");
                     if (mapping.LogicalIds == null)
@@ -449,16 +606,13 @@ namespace DynamicDungeon.Editor.Inspectors
 
                     mapping.LogicalIds.Add(capturedId);
                     EditorUtility.SetDirty(Biome);
-                });
-                any = true;
+                    
+                    // We might need to repaint since this happens in a popup callback
+                    Repaint();
+                }));
             }
 
-            if (!any)
-            {
-                menu.AddDisabledItem(new GUIContent("No more IDs available"));
-            }
-
-            menu.ShowAsContext();
+            PopupWindow.Show(buttonRect, new RegistryDropdown.SearchableOptionPopup(options, "No more IDs available", buttonRect.width + 40.0f));
         }
 
         private void DrawWeightedTileList(int mappingIndex, BiomeTileMapping mapping)
@@ -573,7 +727,7 @@ namespace DynamicDungeon.Editor.Inspectors
             }
         }
 
-        private void DrawPreviewGrid(TileSemanticRegistry registry)
+        private void DrawPreviewGrid(List<TileEntry> mergedEntries)
         {
             float availableWidth = Mathf.Max(EditorGUIUtility.currentViewWidth - 48.0f, PreviewTileSize);
             int columns = Mathf.Max(1, Mathf.FloorToInt(availableWidth / (PreviewTileSize + 6.0f)));
@@ -593,7 +747,7 @@ namespace DynamicDungeon.Editor.Inspectors
                     EditorGUILayout.BeginHorizontal();
                 }
 
-                string previewLabel = BuildPreviewLabel(mapping, registry);
+                string previewLabel = BuildPreviewLabel(mapping, mergedEntries);
                 Rect previewRect = GUILayoutUtility.GetRect(PreviewTileSize, PreviewTileSize, GUILayout.Width(PreviewTileSize), GUILayout.Height(PreviewTileSize));
                 if (DrawPreviewCell(previewRect, mapping, previewLabel, index == _selectedMappingIndex))
                 {
@@ -732,14 +886,14 @@ namespace DynamicDungeon.Editor.Inspectors
             return ushort.MaxValue;
         }
 
-        private List<int> BuildVisibleIndices(TileSemanticRegistry registry)
+        private List<int> BuildVisibleIndices(List<string> mergedTags, List<TileEntry> mergedEntries)
         {
             List<int> visibleIndices = new List<int>();
             int index;
             for (index = 0; index < Biome.TileMappings.Count; index++)
             {
                 BiomeTileMapping mapping = Biome.TileMappings[index];
-                if (mapping == null || !MatchesSearch(mapping, registry, _search))
+                if (mapping == null || !MatchesSearch(mapping, mergedEntries, _search))
                 {
                     continue;
                 }
@@ -981,7 +1135,7 @@ namespace DynamicDungeon.Editor.Inspectors
             }
         }
 
-        private static bool MatchesSearch(BiomeTileMapping mapping, TileSemanticRegistry registry, string search)
+        private static bool MatchesSearch(BiomeTileMapping mapping, List<TileEntry> mergedEntries, string search)
         {
             if (mapping == null || string.IsNullOrWhiteSpace(search))
             {
@@ -1006,7 +1160,7 @@ namespace DynamicDungeon.Editor.Inspectors
                 }
 
                 TileEntry registryEntry;
-                if (registry != null && registry.TryGetEntry(id, out registryEntry) && registryEntry != null)
+                if (TryGetEntryFromList(id, mergedEntries, out registryEntry) && registryEntry != null)
                 {
                     if (!string.IsNullOrWhiteSpace(registryEntry.DisplayName) &&
                         registryEntry.DisplayName.IndexOf(trimmedSearch, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -1032,7 +1186,7 @@ namespace DynamicDungeon.Editor.Inspectors
             return false;
         }
 
-        private static string BuildPreviewLabel(BiomeTileMapping mapping, TileSemanticRegistry registry)
+        private static string BuildPreviewLabel(BiomeTileMapping mapping, List<TileEntry> mergedEntries)
         {
             if (mapping.LogicalIds == null || mapping.LogicalIds.Count == 0)
             {
@@ -1041,7 +1195,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
             ushort firstId = mapping.LogicalIds[0];
             TileEntry registryEntry;
-            string firstName = registry != null && registry.TryGetEntry(firstId, out registryEntry) && registryEntry != null
+            string firstName = TryGetEntryFromList(firstId, mergedEntries, out registryEntry) && registryEntry != null
                 ? GetSafeDisplayName(registryEntry.DisplayName)
                 : "?";
 
@@ -1401,19 +1555,19 @@ namespace DynamicDungeon.Editor.Inspectors
             private readonly HashSet<ushort> _selectedIds = new HashSet<ushort>();
             private Vector2 _scrollPosition;
 
-            public BiomeAddMappingPopup(BiomeAsset biome, TileSemanticRegistry registry, Action<TileBase, IList<ushort>> onConfirm)
+            public BiomeAddMappingPopup(BiomeAsset biome, List<TileEntry> mergedEntries, Action<TileBase, IList<ushort>> onConfirm)
             {
                 _biome = biome;
-                _registry = registry;
+                // _registry = registry;
                 _onConfirm = onConfirm;
 
                 _availableEntries = new List<TileEntry>();
-                if (registry != null && registry.Entries != null)
+                if (mergedEntries != null)
                 {
                     int index;
-                    for (index = 0; index < registry.Entries.Count; index++)
+                    for (index = 0; index < mergedEntries.Count; index++)
                     {
-                        TileEntry entry = registry.Entries[index];
+                        TileEntry entry = mergedEntries[index];
                         if (entry != null && !IsMapped(entry.LogicalId))
                         {
                             _availableEntries.Add(entry);

@@ -5,6 +5,7 @@ using DynamicDungeon.Runtime.Biome;
 using DynamicDungeon.Runtime.Semantic;
 using UnityEditor;
 using UnityEngine;
+using static DynamicDungeon.Editor.Shared.InspectorSharedControls;
 
 namespace DynamicDungeon.Editor.Inspectors
 {
@@ -78,8 +79,8 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private GUIStyle _sectionTitleStyle;
         private GUIStyle _chipStyle;
-        private GUIStyle _systemPillStyle;
         private GUIStyle _mutedLabelStyle;
+        private GUIStyle _systemPillStyle;
 
         private TileSemanticRegistry Registry
         {
@@ -98,7 +99,6 @@ namespace DynamicDungeon.Editor.Inspectors
 
         public override void OnInspectorGUI()
         {
-            EnsureStyles();
             serializedObject.Update();
 
             DrawTagVocabularySection();
@@ -126,30 +126,27 @@ namespace DynamicDungeon.Editor.Inspectors
             }
 
             bool changed = false;
-            int definitionIndex;
-            for (definitionIndex = 0; definitionIndex < _builtInEntries.Length; definitionIndex++)
+            for (int i = 0; i < _builtInEntries.Length; i++)
             {
-                BuiltInEntryDefinition definition = _builtInEntries[definitionIndex];
+                BuiltInEntryDefinition definition = _builtInEntries[i];
                 if (!registry.TryGetEntry(definition.LogicalId, out TileEntry existingEntry) || existingEntry == null)
                 {
                     TileEntry newEntry = new TileEntry();
                     newEntry.LogicalId = definition.LogicalId;
                     newEntry.DisplayName = definition.DisplayName;
 
-                    int tagIndex;
-                    for (tagIndex = 0; tagIndex < definition.DefaultTags.Length; tagIndex++)
+                    for (int j = 0; j < definition.DefaultTags.Length; j++)
                     {
-                        newEntry.Tags.Add(definition.DefaultTags[tagIndex]);
+                        newEntry.Tags.Add(definition.DefaultTags[j]);
                     }
 
                     registry.Entries.Add(newEntry);
                     changed = true;
                 }
 
-                int defaultTagIndex;
-                for (defaultTagIndex = 0; defaultTagIndex < definition.DefaultTags.Length; defaultTagIndex++)
+                for (int j = 0; j < definition.DefaultTags.Length; j++)
                 {
-                    string defaultTag = definition.DefaultTags[defaultTagIndex];
+                    string defaultTag = definition.DefaultTags[j];
                     if (!ContainsIgnoreCase(registry.AllTags, defaultTag))
                     {
                         registry.AllTags.Add(defaultTag);
@@ -174,10 +171,9 @@ namespace DynamicDungeon.Editor.Inspectors
             }
 
             int count = 0;
-            int index;
-            for (index = 0; index < registry.Entries.Count; index++)
+            for (int i = 0; i < registry.Entries.Count; i++)
             {
-                TileEntry entry = registry.Entries[index];
+                TileEntry entry = registry.Entries[i];
                 if (entry == null || entry.Tags == null)
                 {
                     continue;
@@ -261,20 +257,18 @@ namespace DynamicDungeon.Editor.Inspectors
         {
             int biomeAssetCount = 0;
             string[] biomeGuids = AssetDatabase.FindAssets("t:BiomeAsset", searchFolders);
-            int biomeGuidIndex;
-            for (biomeGuidIndex = 0; biomeGuidIndex < biomeGuids.Length; biomeGuidIndex++)
+            for (int i = 0; i < biomeGuids.Length; i++)
             {
-                string biomePath = AssetDatabase.GUIDToAssetPath(biomeGuids[biomeGuidIndex]);
+                string biomePath = AssetDatabase.GUIDToAssetPath(biomeGuids[i]);
                 BiomeAsset biomeAsset = AssetDatabase.LoadAssetAtPath<BiomeAsset>(biomePath);
                 if (biomeAsset == null || biomeAsset.TileMappings == null)
                 {
                     continue;
                 }
 
-                int mappingIndex;
-                for (mappingIndex = 0; mappingIndex < biomeAsset.TileMappings.Count; mappingIndex++)
+                for (int j = 0; j < biomeAsset.TileMappings.Count; j++)
                 {
-                    BiomeTileMapping mapping = biomeAsset.TileMappings[mappingIndex];
+                    BiomeTileMapping mapping = biomeAsset.TileMappings[j];
                     if (mapping != null && mapping.LogicalIds != null && mapping.LogicalIds.Contains(logicalId))
                     {
                         biomeAssetCount++;
@@ -285,10 +279,9 @@ namespace DynamicDungeon.Editor.Inspectors
 
             int layerDefinitionCount = 0;
             string[] layerGuids = AssetDatabase.FindAssets("t:TilemapLayerDefinition", searchFolders);
-            int layerGuidIndex;
-            for (layerGuidIndex = 0; layerGuidIndex < layerGuids.Length; layerGuidIndex++)
+            for (int i = 0; i < layerGuids.Length; i++)
             {
-                string layerPath = AssetDatabase.GUIDToAssetPath(layerGuids[layerGuidIndex]);
+                string layerPath = AssetDatabase.GUIDToAssetPath(layerGuids[i]);
                 TilemapLayerDefinition layerDefinition = AssetDatabase.LoadAssetAtPath<TilemapLayerDefinition>(layerPath);
                 if (layerDefinition == null || layerDefinition.RoutingTags == null || entryTags == null)
                 {
@@ -306,6 +299,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void DrawTagVocabularySection()
         {
+            EnsureStyles();
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Tag Vocabulary", _sectionTitleStyle);
             GUILayout.Space(2.0f);
@@ -314,10 +308,9 @@ namespace DynamicDungeon.Editor.Inspectors
             string renameOldTag = null;
             string renameNewTag = null;
 
-            int index;
-            for (index = 0; index < Registry.AllTags.Count; index++)
+            for (int i = 0; i < Registry.AllTags.Count; i++)
             {
-                string currentTag = Registry.AllTags[index];
+                string currentTag = Registry.AllTags[i];
                 EditorGUILayout.BeginHorizontal();
                 string updatedTag = EditorGUILayout.DelayedTextField(currentTag);
                 if (!string.Equals(updatedTag, currentTag, StringComparison.Ordinal))
@@ -369,6 +362,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void DrawTileEntriesSection()
         {
+            EnsureStyles();
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Tile Entries", _sectionTitleStyle);
             GUILayout.Space(2.0f);
@@ -380,10 +374,9 @@ namespace DynamicDungeon.Editor.Inspectors
             List<int> visibleIndices = BuildVisibleEntryIndexList();
             _entryScrollPosition = EditorGUILayout.BeginScrollView(_entryScrollPosition, GUILayout.MinHeight(340.0f));
 
-            int visibleIndex;
-            for (visibleIndex = 0; visibleIndex < visibleIndices.Count; visibleIndex++)
+            for (int i = 0; i < visibleIndices.Count; i++)
             {
-                int entryIndex = visibleIndices[visibleIndex];
+                int entryIndex = visibleIndices[i];
                 if (entryIndex < 0 || entryIndex >= Registry.Entries.Count)
                 {
                     continue;
@@ -580,10 +573,9 @@ namespace DynamicDungeon.Editor.Inspectors
         private List<int> BuildVisibleEntryIndexList()
         {
             List<int> visibleIndices = new List<int>();
-            int index;
-            for (index = 0; index < Registry.Entries.Count; index++)
+            for (int i = 0; i < Registry.Entries.Count; i++)
             {
-                TileEntry entry = Registry.Entries[index];
+                TileEntry entry = Registry.Entries[i];
                 if (entry == null)
                 {
                     continue;
@@ -594,7 +586,7 @@ namespace DynamicDungeon.Editor.Inspectors
                     continue;
                 }
 
-                visibleIndices.Add(index);
+                visibleIndices.Add(i);
             }
 
             visibleIndices.Sort((leftIndex, rightIndex) => CompareEntries(Registry.Entries[leftIndex], Registry.Entries[rightIndex], _entrySortMode));
@@ -603,6 +595,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void DrawEditableTagChips(IList<string> tags, Action<int> onRemove)
         {
+            EnsureStyles();
             if (tags == null || tags.Count == 0)
             {
                 EditorGUILayout.LabelField("No tags assigned.", _mutedLabelStyle);
@@ -617,6 +610,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void DrawSystemPill(ushort logicalId)
         {
+            EnsureStyles();
             BuiltInEntryDefinition? definition = GetBuiltInDefinition(logicalId);
             if (!definition.HasValue)
             {
@@ -632,13 +626,13 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void DrawChipArea(Rect rect, IList<string> values, bool removable, Action<int> onRemove)
         {
+            EnsureStyles();
             float currentX = rect.x;
             float currentY = rect.y;
 
-            int index;
-            for (index = 0; index < values.Count; index++)
+            for (int i = 0; i < values.Count; i++)
             {
-                string value = values[index];
+                string value = values[i];
                 string chipLabel = removable ? value + " ×" : value;
                 Vector2 chipSize = _chipStyle.CalcSize(new GUIContent(chipLabel));
                 float chipWidth = chipSize.x + ChipPadding;
@@ -653,7 +647,7 @@ namespace DynamicDungeon.Editor.Inspectors
                 {
                     if (GUI.Button(chipRect, chipLabel, _chipStyle))
                     {
-                        onRemove?.Invoke(index);
+                        onRemove?.Invoke(i);
                     }
                 }
                 else
@@ -667,6 +661,7 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private float CalculateChipAreaHeight(IList<string> values, float availableWidth, bool removable)
         {
+            EnsureStyles();
             if (values == null || values.Count == 0)
             {
                 return ChipHeight;
@@ -675,10 +670,9 @@ namespace DynamicDungeon.Editor.Inspectors
             float currentWidth = 0.0f;
             float height = ChipHeight;
 
-            int index;
-            for (index = 0; index < values.Count; index++)
+            for (int i = 0; i < values.Count; i++)
             {
-                string value = values[index];
+                string value = values[i];
                 string chipLabel = removable ? value + " ×" : value;
                 Vector2 chipSize = _chipStyle.CalcSize(new GUIContent(chipLabel));
                 float chipWidth = chipSize.x + ChipPadding;
@@ -696,31 +690,11 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private void EnsureStyles()
         {
-            if (_sectionTitleStyle == null)
-            {
-                _sectionTitleStyle = new GUIStyle(EditorStyles.boldLabel);
-                _sectionTitleStyle.fontSize = 11;
-            }
-
-            if (_chipStyle == null)
-            {
-                _chipStyle = new GUIStyle(EditorStyles.miniButton);
-                _chipStyle.alignment = TextAnchor.MiddleCenter;
-            }
-
-            if (_systemPillStyle == null)
-            {
-                _systemPillStyle = new GUIStyle(EditorStyles.miniButtonMid);
-                _systemPillStyle.alignment = TextAnchor.MiddleCenter;
-                _systemPillStyle.normal.textColor = Color.white;
-                _systemPillStyle.fontStyle = FontStyle.Bold;
-            }
-
-            if (_mutedLabelStyle == null)
-            {
-                _mutedLabelStyle = new GUIStyle(EditorStyles.miniLabel);
-                _mutedLabelStyle.normal.textColor = new Color(0.72f, 0.72f, 0.72f, 1.0f);
-            }
+            if (_sectionTitleStyle != null) return;
+            _sectionTitleStyle = new GUIStyle(EditorStyles.boldLabel);
+            _chipStyle = new GUIStyle(EditorStyles.miniButton);
+            _mutedLabelStyle = new GUIStyle(EditorStyles.miniLabel);
+            _systemPillStyle = new GUIStyle(EditorStyles.miniButton) { alignment = TextAnchor.MiddleCenter };
         }
 
         private static bool MatchesSearch(TileEntry entry, string search)
@@ -747,10 +721,9 @@ namespace DynamicDungeon.Editor.Inspectors
                 return false;
             }
 
-            int tagIndex;
-            for (tagIndex = 0; tagIndex < entry.Tags.Count; tagIndex++)
+            for (int i = 0; i < entry.Tags.Count; i++)
             {
-                string tag = entry.Tags[tagIndex];
+                string tag = entry.Tags[i];
                 if (!string.IsNullOrWhiteSpace(tag) &&
                     tag.IndexOf(trimmedSearch, StringComparison.OrdinalIgnoreCase) >= 0)
                 {
@@ -834,19 +807,17 @@ namespace DynamicDungeon.Editor.Inspectors
                 return true;
             }
 
-            int definitionIndex;
-            for (definitionIndex = 0; definitionIndex < _builtInEntries.Length; definitionIndex++)
+            for (int i = 0; i < _builtInEntries.Length; i++)
             {
-                BuiltInEntryDefinition definition = _builtInEntries[definitionIndex];
+                BuiltInEntryDefinition definition = _builtInEntries[i];
                 if (!registry.TryGetEntry(definition.LogicalId, out TileEntry existingEntry) || existingEntry == null)
                 {
                     return true;
                 }
 
-                int tagIndex;
-                for (tagIndex = 0; tagIndex < definition.DefaultTags.Length; tagIndex++)
+                for (int j = 0; j < definition.DefaultTags.Length; j++)
                 {
-                    if (!ContainsIgnoreCase(registry.AllTags, definition.DefaultTags[tagIndex]))
+                    if (!ContainsIgnoreCase(registry.AllTags, definition.DefaultTags[j]))
                     {
                         return true;
                     }
@@ -879,13 +850,12 @@ namespace DynamicDungeon.Editor.Inspectors
                 return -1;
             }
 
-            int index;
-            for (index = 0; index < registry.Entries.Count; index++)
+            for (int i = 0; i < registry.Entries.Count; i++)
             {
-                TileEntry entry = registry.Entries[index];
+                TileEntry entry = registry.Entries[i];
                 if (entry != null && entry.LogicalId == logicalId)
                 {
-                    return index;
+                    return i;
                 }
             }
 
@@ -904,12 +874,11 @@ namespace DynamicDungeon.Editor.Inspectors
                 return -1;
             }
 
-            int index;
-            for (index = 0; index < values.Count; index++)
+            for (int i = 0; i < values.Count; i++)
             {
-                if (string.Equals(values[index], value, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(values[i], value, StringComparison.OrdinalIgnoreCase))
                 {
-                    return index;
+                    return i;
                 }
             }
 
@@ -923,21 +892,19 @@ namespace DynamicDungeon.Editor.Inspectors
                 return;
             }
 
-            int entryIndex;
-            for (entryIndex = 0; entryIndex < registry.Entries.Count; entryIndex++)
+            for (int i = 0; i < registry.Entries.Count; i++)
             {
-                TileEntry entry = registry.Entries[entryIndex];
+                TileEntry entry = registry.Entries[i];
                 if (entry == null || entry.Tags == null)
                 {
                     continue;
                 }
 
-                int tagIndex;
-                for (tagIndex = 0; tagIndex < entry.Tags.Count; tagIndex++)
+                for (int j = 0; j < entry.Tags.Count; j++)
                 {
-                    if (string.Equals(entry.Tags[tagIndex], oldTag, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(entry.Tags[j], oldTag, StringComparison.OrdinalIgnoreCase))
                     {
-                        entry.Tags[tagIndex] = newTag;
+                        entry.Tags[j] = newTag;
                     }
                 }
             }
@@ -950,21 +917,19 @@ namespace DynamicDungeon.Editor.Inspectors
                 return;
             }
 
-            int entryIndex;
-            for (entryIndex = 0; entryIndex < registry.Entries.Count; entryIndex++)
+            for (int i = 0; i < registry.Entries.Count; i++)
             {
-                TileEntry entry = registry.Entries[entryIndex];
+                TileEntry entry = registry.Entries[i];
                 if (entry == null || entry.Tags == null)
                 {
                     continue;
                 }
 
-                int tagIndex = entry.Tags.Count - 1;
-                for (; tagIndex >= 0; tagIndex--)
+                for (int j = entry.Tags.Count - 1; j >= 0; j--)
                 {
-                    if (string.Equals(entry.Tags[tagIndex], tag, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(entry.Tags[j], tag, StringComparison.OrdinalIgnoreCase))
                     {
-                        entry.Tags.RemoveAt(tagIndex);
+                        entry.Tags.RemoveAt(j);
                     }
                 }
             }
@@ -973,10 +938,9 @@ namespace DynamicDungeon.Editor.Inspectors
         private static void CascadeTagRenameToLayers(string oldTag, string newTag, string[] searchFolders)
         {
             string[] layerGuids = AssetDatabase.FindAssets("t:TilemapLayerDefinition", searchFolders);
-            int layerGuidIndex;
-            for (layerGuidIndex = 0; layerGuidIndex < layerGuids.Length; layerGuidIndex++)
+            for (int i = 0; i < layerGuids.Length; i++)
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(layerGuids[layerGuidIndex]);
+                string assetPath = AssetDatabase.GUIDToAssetPath(layerGuids[i]);
                 TilemapLayerDefinition layerDefinition = AssetDatabase.LoadAssetAtPath<TilemapLayerDefinition>(assetPath);
                 if (layerDefinition == null || layerDefinition.RoutingTags == null)
                 {
@@ -984,10 +948,9 @@ namespace DynamicDungeon.Editor.Inspectors
                 }
 
                 bool changed = false;
-                int tagIndex;
-                for (tagIndex = 0; tagIndex < layerDefinition.RoutingTags.Count; tagIndex++)
+                for (int j = 0; j < layerDefinition.RoutingTags.Count; j++)
                 {
-                    if (string.Equals(layerDefinition.RoutingTags[tagIndex], oldTag, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(layerDefinition.RoutingTags[j], oldTag, StringComparison.OrdinalIgnoreCase))
                     {
                         if (!changed)
                         {
@@ -995,7 +958,7 @@ namespace DynamicDungeon.Editor.Inspectors
                             changed = true;
                         }
 
-                        layerDefinition.RoutingTags[tagIndex] = newTag;
+                        layerDefinition.RoutingTags[j] = newTag;
                     }
                 }
 
@@ -1009,10 +972,9 @@ namespace DynamicDungeon.Editor.Inspectors
         private static void CascadeTagDeleteToLayers(string tag, string[] searchFolders)
         {
             string[] layerGuids = AssetDatabase.FindAssets("t:TilemapLayerDefinition", searchFolders);
-            int layerGuidIndex;
-            for (layerGuidIndex = 0; layerGuidIndex < layerGuids.Length; layerGuidIndex++)
+            for (int i = 0; i < layerGuids.Length; i++)
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(layerGuids[layerGuidIndex]);
+                string assetPath = AssetDatabase.GUIDToAssetPath(layerGuids[i]);
                 TilemapLayerDefinition layerDefinition = AssetDatabase.LoadAssetAtPath<TilemapLayerDefinition>(assetPath);
                 if (layerDefinition == null || layerDefinition.RoutingTags == null)
                 {
@@ -1020,10 +982,9 @@ namespace DynamicDungeon.Editor.Inspectors
                 }
 
                 bool changed = false;
-                int tagIndex = layerDefinition.RoutingTags.Count - 1;
-                for (; tagIndex >= 0; tagIndex--)
+                for (int j = layerDefinition.RoutingTags.Count - 1; j >= 0; j--)
                 {
-                    if (string.Equals(layerDefinition.RoutingTags[tagIndex], tag, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(layerDefinition.RoutingTags[j], tag, StringComparison.OrdinalIgnoreCase))
                     {
                         if (!changed)
                         {
@@ -1031,7 +992,7 @@ namespace DynamicDungeon.Editor.Inspectors
                             changed = true;
                         }
 
-                        layerDefinition.RoutingTags.RemoveAt(tagIndex);
+                        layerDefinition.RoutingTags.RemoveAt(j);
                     }
                 }
 
@@ -1046,10 +1007,9 @@ namespace DynamicDungeon.Editor.Inspectors
         {
             int layerDefinitionCount = 0;
             string[] layerGuids = AssetDatabase.FindAssets("t:TilemapLayerDefinition", searchFolders);
-            int layerGuidIndex;
-            for (layerGuidIndex = 0; layerGuidIndex < layerGuids.Length; layerGuidIndex++)
+            for (int i = 0; i < layerGuids.Length; i++)
             {
-                string layerPath = AssetDatabase.GUIDToAssetPath(layerGuids[layerGuidIndex]);
+                string layerPath = AssetDatabase.GUIDToAssetPath(layerGuids[i]);
                 TilemapLayerDefinition layerDefinition = AssetDatabase.LoadAssetAtPath<TilemapLayerDefinition>(layerPath);
                 if (layerDefinition == null || layerDefinition.RoutingTags == null)
                 {
@@ -1072,11 +1032,9 @@ namespace DynamicDungeon.Editor.Inspectors
                 return false;
             }
 
-            int comparisonIndex;
-            for (comparisonIndex = 0; comparisonIndex < comparisonTags.Count; comparisonIndex++)
+            for (int i = 0; i < comparisonTags.Count; i++)
             {
-                string comparisonTag = comparisonTags[comparisonIndex];
-                if (ContainsIgnoreCase(sourceTags, comparisonTag))
+                if (ContainsIgnoreCase(sourceTags, comparisonTags[i]))
                 {
                     return true;
                 }
@@ -1087,12 +1045,11 @@ namespace DynamicDungeon.Editor.Inspectors
 
         private static BuiltInEntryDefinition? GetBuiltInDefinition(ushort logicalId)
         {
-            int index;
-            for (index = 0; index < _builtInEntries.Length; index++)
+            for (int i = 0; i < _builtInEntries.Length; i++)
             {
-                if (_builtInEntries[index].LogicalId == logicalId)
+                if (_builtInEntries[i].LogicalId == logicalId)
                 {
-                    return _builtInEntries[index];
+                    return _builtInEntries[i];
                 }
             }
 

@@ -162,7 +162,7 @@ namespace DynamicDungeon.Editor.Windows
         [OnOpenAsset]
         public static bool TryOpenGraphAsset(int instanceId, int line)
         {
-            GenGraph graph = Selection.activeObject as GenGraph;
+            GenGraph graph = EditorUtility.InstanceIDToObject(instanceId) as GenGraph;
             if (graph == null)
             {
                 return false;
