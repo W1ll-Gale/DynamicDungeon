@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Biome")]
     [NodeDisplayName("Biome Weight Blend")]
     [Description("Blends up to 4 biomes based on float weight channels. The biome with the highest weight wins per cell.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/biome/biome-weight-blend")]
     public sealed class BiomeWeightBlendNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IBiomeChannelNode
     {
         private const int DefaultBatchSize = 64;

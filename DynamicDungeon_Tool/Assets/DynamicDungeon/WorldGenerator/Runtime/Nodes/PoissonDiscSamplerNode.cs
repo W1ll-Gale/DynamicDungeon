@@ -8,12 +8,15 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Point Generation")]
     [NodeDisplayName("Poisson Disc Sampler")]
     [Description("Generates a point list from eligible tiles while enforcing a minimum distance between accepted points.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/sampling/poisson-disc-sampler")]
     public sealed class PoissonDiscSamplerNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const string DefaultNodeName = "Poisson Disc Sampler";

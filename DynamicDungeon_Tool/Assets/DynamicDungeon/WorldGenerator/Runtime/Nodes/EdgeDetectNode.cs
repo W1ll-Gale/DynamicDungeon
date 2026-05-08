@@ -15,6 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Filter")]
     [NodeDisplayName("Edge Detect")]
     [Description("Marks tiles whose four cardinal neighbours differ from the input value.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/edgedetectnode")]
     public sealed class EdgeDetectNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IParameterVisibilityProvider
     {
         private const int DefaultBatchSize = 64;

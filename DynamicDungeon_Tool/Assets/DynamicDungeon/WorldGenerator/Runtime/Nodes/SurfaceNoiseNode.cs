@@ -13,6 +13,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Generator")]
     [NodeDisplayName("Surface 1D Noise")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/noise/surfacenoise")]
     [Description("Generates a vertical surface mask using 1D perlin noise applied horizontally. Outputs 1.0 below the surface and 0.0 above.")]
     public sealed class SurfaceNoiseNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

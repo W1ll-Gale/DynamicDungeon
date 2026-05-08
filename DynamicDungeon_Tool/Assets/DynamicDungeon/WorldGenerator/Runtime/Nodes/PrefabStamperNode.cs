@@ -17,6 +17,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Placement")]
     [NodeDisplayName("Prefab Stamper")]
     [Description("Places prefabs into the generated world using a prefab-authored footprint, with optional logical ID edits and deterministic transform variation.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/placement/prefab-stamper")]
     public sealed class PrefabStamperNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IParameterVisibilityProvider, IPrefabPlacementNode
     {
         private const string DefaultNodeName = "Prefab Stamper";

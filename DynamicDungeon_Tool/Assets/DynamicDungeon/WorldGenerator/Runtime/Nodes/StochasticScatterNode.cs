@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Point Generation")]
     [NodeDisplayName("Stochastic Scatter")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/sampling/stochastic-scatter")]
     [Description("Generates scattered points by rolling a deterministic per-tile random value against an input weight map.")]
     public sealed class StochasticScatterNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

@@ -13,6 +13,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Generator")]
     [NodeDisplayName("Height Gradient")]
     [Description("Generates a linear vertical gradient from 0.0 at the bottom to 1.0 at the top.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/heightgradient")]
     public sealed class HeightGradientNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

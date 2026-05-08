@@ -13,6 +13,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Blend")]
     [NodeDisplayName("Mask Expression")]
     [Description("Combines ordered mask slots with per-row operations, including inverted inputs and subtract steps.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/mask-expression")]
     public sealed class MaskExpressionNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private struct ResolvedRule

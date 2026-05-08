@@ -8,11 +8,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Noise")]
     [NodeDisplayName("Constant")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/generator/constantnode")]
     [Description("Emits a single constant float or int value to every tile in the channel.")]
     public sealed class ConstantNode : IGenNode, IParameterReceiver
     {

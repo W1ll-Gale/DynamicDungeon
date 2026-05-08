@@ -7,11 +7,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
+using UnityEngine;
+
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Math")]
     [NodeDisplayName("Copy Int Channel")]
     [Description("Copies an int channel to a named output channel so later graph stages can preserve an intermediate result.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/int-channel-copy")]
     public sealed class IntChannelCopyNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

@@ -12,6 +12,7 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Noise")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/noise/voronoinoise")]
     [NodeDisplayName("Voronoi Noise")]
     [Description("Voronoi/Worley noise. Outputs a normalised distance float channel and a stable per-cell integer ID channel.")]
     public sealed class VoronoiNoiseNode : IGenNode, IParameterReceiver

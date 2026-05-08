@@ -16,6 +16,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Biome")]
     [NodeDisplayName("Biome Mask")]
     [Description("Extracts a single biome's presence from a biome channel into a float mask (1.0 if present, 0.0 if not).")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/biome/biome-mask")]
     public sealed class BiomeMaskNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IBiomeChannelNode
     {
         private const int DefaultBatchSize = 64;

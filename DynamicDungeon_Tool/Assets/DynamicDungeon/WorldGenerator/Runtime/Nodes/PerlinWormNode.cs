@@ -13,6 +13,7 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Growth")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/noise/perlinworm")]
     [NodeDisplayName("Perlin Worm")]
     [Description("Carves smooth worm-like paths by walking noise-steered routes through an optional mask.")]
     public sealed class PerlinWormNode : IGenNode, IInputConnectionReceiver, IParameterReceiver

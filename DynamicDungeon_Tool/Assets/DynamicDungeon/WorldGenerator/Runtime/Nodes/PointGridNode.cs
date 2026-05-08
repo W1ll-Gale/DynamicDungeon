@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Point Generation")]
     [NodeDisplayName("Point Grid")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/generator/gridnode")]
     [Description("Generates one point per grid cell at the cell centre, with optional deterministic jitter.")]
     public sealed class PointGridNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

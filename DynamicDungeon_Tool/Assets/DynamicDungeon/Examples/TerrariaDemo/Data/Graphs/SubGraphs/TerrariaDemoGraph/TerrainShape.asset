@@ -277,7 +277,7 @@ MonoBehaviour:
   - NodeId: 0df84640-7648-45db-93fd-2e6a5af2d270
     NodeTypeName: DynamicDungeon.Runtime.Nodes.CombineMasksNode
     NodeName: Shallow Cave Region (Combine Masks)
-    Position: {x: -2911.5737, y: -919.50635}
+    Position: {x: -2912, y: -959.88525}
     Ports:
     - PortName: A
       DisplayName: A

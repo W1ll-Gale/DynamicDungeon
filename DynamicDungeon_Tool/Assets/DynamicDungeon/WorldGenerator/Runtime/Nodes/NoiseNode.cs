@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Noise")]
     [NodeDisplayName("Noise")]
     [Description("Single noise node covering all algorithms. Select the algorithm from the dropdown; relevant parameters are shown automatically.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/noise/noisenode")]
     public sealed class NoiseNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IParameterVisibilityProvider
     {
         private const int DefaultBatchSize = 64;

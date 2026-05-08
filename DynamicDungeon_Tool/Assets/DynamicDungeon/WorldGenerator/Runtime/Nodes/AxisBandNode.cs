@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Generator")]
     [NodeDisplayName("Axis Band")]
     [Description("Generates a normalized X or Y band mask. Outputs 1.0 inside the band, and 0.0 outside.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/sampling/axis-band")]
     public sealed class AxisBandNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

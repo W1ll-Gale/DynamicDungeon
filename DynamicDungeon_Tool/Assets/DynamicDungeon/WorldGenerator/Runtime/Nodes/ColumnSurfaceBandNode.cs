@@ -8,12 +8,15 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Filter")]
     [NodeDisplayName("Column Surface Band")]
     [Description("For each column in a bool mask, marks tiles within an inclusive depth range beneath that column's highest true cell.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/columnsurfaceband")]
     public sealed class ColumnSurfaceBandNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const string DefaultNodeName = "Column Surface Band";

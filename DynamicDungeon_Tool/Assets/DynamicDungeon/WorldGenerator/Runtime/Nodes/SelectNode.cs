@@ -8,11 +8,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Blend")]
     [NodeDisplayName("Select")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/selectnode")]
     [Description("Selects one of up to four float channels per tile according to threshold bands on a control input.")]
     public sealed class SelectNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

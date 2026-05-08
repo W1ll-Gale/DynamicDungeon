@@ -15,6 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Filter")]
     [NodeDisplayName("Cellular Automata")]
     [Description("Smooths or grows cave-like masks by repeatedly applying cellular automata rules.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/cellularautomata")]
     public sealed class CellularAutomataNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         public enum CellularAutomataInputMode

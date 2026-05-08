@@ -12,6 +12,7 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Noise")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/noise/simplexnoise")]
     [NodeDisplayName("Simplex Noise")]
     [Description("Generates simplex noise as a float map. Smoother than Perlin with fewer directional artefacts.")]
     public sealed class SimplexNoiseNode : IGenNode, IParameterReceiver

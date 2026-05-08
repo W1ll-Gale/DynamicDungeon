@@ -7,11 +7,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
+using UnityEngine;
+
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Generator")]
     [NodeDisplayName("Flat Fill")]
     [Description("Outputs a flat float map where every cell uses the same fill value.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/flatfill")]
     public sealed class FlatFillNode : IGenNode, IParameterReceiver
     {
         private const string DefaultNodeName = "Flat Fill";
