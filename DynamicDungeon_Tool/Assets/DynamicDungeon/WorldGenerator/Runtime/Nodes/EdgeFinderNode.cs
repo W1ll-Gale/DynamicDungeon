@@ -8,12 +8,15 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Point Generation")]
     [NodeDisplayName("Edge Finder")]
     [Description("Finds tile positions along the boundary where type A and type B meet.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/edgefinder")]
     public sealed class EdgeFinderNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IParameterVisibilityProvider
     {
         private const int DefaultBatchSize = 64;

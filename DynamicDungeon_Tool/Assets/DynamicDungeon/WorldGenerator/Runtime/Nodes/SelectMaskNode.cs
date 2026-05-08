@@ -13,6 +13,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Blend")]
     [NodeDisplayName("Select Mask")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/selectmask")]
     [Description("Selects between boolean mask inputs A, B, C, and D based on a control float channel and defined thresholds.")]
     public sealed class SelectMaskNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

@@ -16,6 +16,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Biome")]
     [NodeDisplayName("Biome Selector")]
     [Description("Assigns biomes from float or int input channels using range, matrix, or cell lookup modes.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/biome/biome-selector")]
     public sealed class BiomeSelectorNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IParameterVisibilityProvider, IBiomeChannelNode
     {
         [Serializable]

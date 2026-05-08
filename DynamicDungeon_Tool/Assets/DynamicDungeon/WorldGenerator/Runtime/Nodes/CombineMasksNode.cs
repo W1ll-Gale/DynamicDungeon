@@ -7,11 +7,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
+using UnityEngine;
+
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Blend")]
     [NodeDisplayName("Combine Masks")]
     [Description("Combines bool mask inputs using AND, OR, XOR, or NOT operations.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/combine-masks")]
     public sealed class CombineMasksNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

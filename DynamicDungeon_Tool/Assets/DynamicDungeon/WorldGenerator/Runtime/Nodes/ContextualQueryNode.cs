@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Query")]
     [NodeDisplayName("Contextual Query")]
     [Description("Returns all tile positions whose surrounding neighbourhood matches every configured relative-offset condition.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/spatial-query/contextual-query")]
     public sealed class ContextualQueryNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         [Serializable]

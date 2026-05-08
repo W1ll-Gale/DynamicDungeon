@@ -13,6 +13,7 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Noise")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/noise/gradientnoise")]
     [NodeDisplayName("Gradient")]
     [Description("Deterministic spatial gradient with no randomness. Direction selectable: X, Y, Radial, Diagonal. Output is always 0–1.")]
     public sealed class GradientNoiseNode : IGenNode, IParameterReceiver, IParameterVisibilityProvider

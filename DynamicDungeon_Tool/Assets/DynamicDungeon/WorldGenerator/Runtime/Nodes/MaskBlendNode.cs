@@ -1,3 +1,4 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
@@ -8,10 +9,12 @@ using Unity.Collections;
 using Unity.Jobs;
 
 namespace DynamicDungeon.Runtime.Nodes
+
 {
     [NodeCategory("Blend")]
     [NodeDisplayName("Mask Blend")]
     [Description("Selects per tile between float inputs A and B using a bool mask.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/blend/mask-blend-blend")]
     public sealed class MaskBlendNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Growth")]
     [NodeDisplayName("Vein")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/vein")]
     [Description("Grows chain-like filaments from explicit seed points or from sampled mask tiles.")]
     public sealed class VeinNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Output")]
     [NodeDisplayName("Logical ID Overlay")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/logical-id/logicalidoverlay")]
     [Description("Writes one logical ID anywhere a bool mask is true, while preserving the base logical IDs elsewhere.")]
     public sealed class LogicalIdOverlayNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

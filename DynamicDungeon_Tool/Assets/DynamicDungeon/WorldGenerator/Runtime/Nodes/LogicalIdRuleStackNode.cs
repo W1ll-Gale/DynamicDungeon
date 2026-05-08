@@ -13,6 +13,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Output")]
     [NodeDisplayName("Logical ID Rule Stack")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/logical-id/logicalidrulestack")]
     [Description("Applies ordered logical ID rewrite rules using a multi-input mask stack.")]
     public sealed class LogicalIdRuleStackNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

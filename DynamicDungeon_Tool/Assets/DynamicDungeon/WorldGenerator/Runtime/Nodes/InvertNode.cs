@@ -7,11 +7,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
+using UnityEngine;
+
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Filter")]
     [NodeDisplayName("Invert")]
     [Description("Inverts an input channel, flipping floats, ints, or bool mask values cell by cell.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/invertnode")]
     public sealed class InvertNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

@@ -16,6 +16,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Biome")]
     [NodeDisplayName("Biome Override")]
     [Description("Overrides the biome channel inside a mask, with optional boundary blending and probabilistic scatter.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/biome/biome-override")]
     public sealed class BiomeOverrideNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IBiomeChannelNode
     {
         private enum BlendMode

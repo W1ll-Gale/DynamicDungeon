@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using DynamicDungeon.Runtime.Core;
 using DynamicDungeon.Runtime.Graph;
 using Unity.Jobs;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Output")]
     [NodeDisplayName("Output")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/tilemap-output")]
     public sealed class TilemapOutputNode : IGenNode, IInputConnectionReceiver
     {
         private static readonly BlackboardKey[] _blackboardDeclarations = Array.Empty<BlackboardKey>();

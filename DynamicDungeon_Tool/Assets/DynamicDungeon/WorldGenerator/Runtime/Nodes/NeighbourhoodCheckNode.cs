@@ -15,6 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Query")]
     [NodeDisplayName("Neighbourhood Check")]
     [Description("Checks whether a logical ID or semantic tag exists within a configurable neighbourhood radius around each tile.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/spatial-query/neighbourhood-check")]
     public sealed class NeighbourhoodCheckNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IParameterVisibilityProvider
     {
         private const int DefaultBatchSize = 64;

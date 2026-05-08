@@ -13,6 +13,7 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Noise")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/noise/fractalnoise")]
     [NodeDisplayName("Fractal Noise")]
     [Description("Stacks multiple octaves of any float input channel (FBM) to add detail at increasing frequencies. Output is normalised to 0–1.")]
     public sealed class FractalNoiseNode : IGenNode, IInputConnectionReceiver, IParameterReceiver

@@ -15,6 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Filter")]
     [NodeDisplayName("Threshold")]
     [Description("Turns a float input into a bool mask by comparing each cell against a threshold.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/thresholdnode")]
     public sealed class ThresholdNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

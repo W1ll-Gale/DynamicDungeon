@@ -8,11 +8,14 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 
+using UnityEngine;
+
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Blend")]
     [NodeDisplayName("Layer Blend")]
     [Description("Combines two float inputs using a configurable layer blend mode with 0 to 1 clamped output.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/blend/layer-blend")]
     public sealed class LayerBlendNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

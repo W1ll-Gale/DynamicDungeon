@@ -8,11 +8,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Math")]
     [NodeDisplayName("Math")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/mathnode")]
     [Description("Applies a math operation to float input A with either float input B or a fallback scalar.")]
     public sealed class MathNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

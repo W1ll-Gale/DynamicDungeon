@@ -16,6 +16,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeDisplayName("Prefab Spawner")]
     [Description("Places a single prefab at each specified point without modifying footprints or logical IDs.")]
     [DynamicDungeon.Runtime.Core.NodeCategory("Placement")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/placement/prefab-spawner")]
     public sealed class PrefabSpawnerNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IPrefabPlacementNode
     {
         private const string DefaultNodeName = "Prefab Spawner";

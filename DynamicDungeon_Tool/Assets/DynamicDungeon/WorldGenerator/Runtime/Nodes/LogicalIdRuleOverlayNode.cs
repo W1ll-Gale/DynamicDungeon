@@ -13,6 +13,7 @@ namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Output")]
     [NodeDisplayName("Logical ID Rule Overlay")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/logical-id/logicalidruleoverlay")]
     [Description("Applies ordered logical ID rewrite rules using optional mask slots.")]
     public sealed class LogicalIdRuleOverlayNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {

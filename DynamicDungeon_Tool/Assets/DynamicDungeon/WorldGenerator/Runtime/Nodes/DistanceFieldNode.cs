@@ -7,12 +7,15 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Filter")]
     [NodeDisplayName("Distance Field")]
     [Description("Computes a normalised distance field from a bool mask using forward and backward sweeps.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/distancefieldnode")]
     public sealed class DistanceFieldNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

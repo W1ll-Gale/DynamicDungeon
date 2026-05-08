@@ -1,3 +1,4 @@
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
@@ -13,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Blend")]
     [NodeDisplayName("Weighted Blend")]
     [Description("Blends float inputs A and B using a per-tile weight clamped to the 0 to 1 range.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/blend/weighted-blend")]
     public sealed class WeightedBlendNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

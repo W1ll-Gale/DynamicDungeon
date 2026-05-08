@@ -63,7 +63,7 @@ MonoBehaviour:
     useDirectionBias: 0
     preferredDirection: 2
     directionBias: 0.5
-  targetRoomCount: 100
+  targetRoomCount: 1000
   useRoomCountRange: 0
   minRoomCount: 10
   maxRoomCount: 10

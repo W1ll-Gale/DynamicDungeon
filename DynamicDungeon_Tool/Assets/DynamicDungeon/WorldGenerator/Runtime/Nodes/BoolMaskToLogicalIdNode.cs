@@ -8,6 +8,8 @@ using DynamicDungeon.Runtime.Semantic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
@@ -30,6 +32,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Output")]
     [NodeDisplayName("Bool Mask to Logical ID")]
     [Description("Converts a bool mask into logical tile IDs for true and false cells.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/boolmask-to-logicalid")]
     public sealed class BoolMaskToLogicalIdNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

@@ -13,6 +13,7 @@ using UnityEngine;
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Growth")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/cluster")]
     [NodeDisplayName("Cluster")]
     [Description("Grows blob-like clusters from explicit seed points or from sampled mask tiles.")]
     public sealed class ClusterNode : IGenNode, IInputConnectionReceiver, IParameterReceiver

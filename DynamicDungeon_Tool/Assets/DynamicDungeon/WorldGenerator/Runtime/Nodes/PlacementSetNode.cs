@@ -15,6 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Placement")]
     [NodeDisplayName("Placement Set")]
     [Description("Generates and stamps multiple prefab placement rows from one multi-input weight stack.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/placement/placement-set")]
     public sealed class PlacementSetNode : IGenNode, IInputConnectionReceiver, IParameterReceiver, IPrefabPlacementNode
     {
         private struct ResolvedRule

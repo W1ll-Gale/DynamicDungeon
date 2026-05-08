@@ -14,6 +14,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Generator")]
     [NodeDisplayName("Height Band")]
     [Description("Generates a vertical band mask. Outputs 1.0 inside the band, and 0.0 outside.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/heightbandnode")]
     public sealed class HeightBandNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         public enum BoundAnchor

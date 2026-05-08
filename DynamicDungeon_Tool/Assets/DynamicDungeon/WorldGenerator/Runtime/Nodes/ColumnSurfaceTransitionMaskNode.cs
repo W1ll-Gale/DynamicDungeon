@@ -15,6 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Filter")]
     [NodeDisplayName("Column Surface Transition Mask")]
     [Description("For each solid column, creates a coherent mask that gradually becomes true with depth beneath that column's highest solid tile.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/column-surface-transition-mask")]
     public sealed class ColumnSurfaceTransitionMaskNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const string DefaultNodeName = "Column Surface Transition Mask";

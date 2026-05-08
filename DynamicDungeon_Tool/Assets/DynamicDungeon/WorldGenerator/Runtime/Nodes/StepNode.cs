@@ -15,6 +15,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Filter")]
     [NodeDisplayName("Step")]
     [Description("Quantises float values to evenly spaced step boundaries between 0 and 1.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/filter-transform/step")]
     public sealed class StepNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

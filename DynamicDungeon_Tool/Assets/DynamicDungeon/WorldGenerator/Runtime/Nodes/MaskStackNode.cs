@@ -7,11 +7,14 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 
+using UnityEngine;
+
 namespace DynamicDungeon.Runtime.Nodes
 {
     [NodeCategory("Blend")]
     [NodeDisplayName("Mask Stack")]
     [Description("Combines any number of bool mask inputs into one mask using a single ordered stack.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/utility/mask-stack")]
     public sealed class MaskStackNode : IGenNode, IInputConnectionReceiver, IParameterReceiver
     {
         private const int DefaultBatchSize = 64;

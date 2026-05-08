@@ -16,6 +16,7 @@ namespace DynamicDungeon.Runtime.Nodes
     [NodeCategory("Biome")]
     [NodeDisplayName("Biome Layout")]
     [Description("Builds a deterministic random biome channel from weighted entries and layout constraints.")]
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/biome/biome-layout")]
     public sealed class BiomeLayoutNode : IGenNode, IParameterReceiver, IParameterVisibilityProvider, IBiomeChannelNode
     {
         private struct ResolvedEntry

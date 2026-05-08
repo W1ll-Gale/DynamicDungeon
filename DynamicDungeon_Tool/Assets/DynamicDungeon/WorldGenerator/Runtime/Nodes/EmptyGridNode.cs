@@ -7,9 +7,12 @@ using DynamicDungeon.Runtime.Graph;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEngine;
+
 
 namespace DynamicDungeon.Runtime.Nodes
 {
+    [HelpURL("https://dynamicdungeon.mrbytesized.com/docs/nodes/generator/gridnode")]
     [NodeCategory("Generator")]
     [NodeDisplayName("Empty Grid")]
     [Description("Creates a fresh float grid and fills every cell with the same value.")]
